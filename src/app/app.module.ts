@@ -8,6 +8,9 @@ import { SessionComponent } from './pages/session/session.component';
 import { GuideComponent } from './widgets/guide/guide.component';
 import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
 import { VideoComponent } from './widgets/video/video.component';
+import { CalibrationComponent } from './widgets/calibration/calibration.component';
+import { StoreModule } from '@ngrx/store';
+import { calibrationReducer } from './store/reducers/calibration/calibration.reducer';
 
 @NgModule({
   declarations: [
@@ -16,11 +19,13 @@ import { VideoComponent } from './widgets/video/video.component';
     SessionComponent,
     GuideComponent,
     SpotlightComponent,
-    VideoComponent
+    VideoComponent,
+    CalibrationComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    StoreModule.forRoot({calibration: calibrationReducer})
   ],
   providers: [],
   bootstrap: [AppComponent]
