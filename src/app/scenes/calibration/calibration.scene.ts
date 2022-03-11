@@ -12,28 +12,39 @@ export class CalibrationScene extends Phaser.Scene {
   invalid = false;
   webcam: any;
   frame$?: Observable<any>;
+  calibration$?: Observable<any>;
   texture?: string;
+
+  calibrationRectangle?: Phaser.GameObjects.Rectangle
   constructor(
     private videoService: VideoService,
-    private store: Store<{ calibration: String; frame: any }>
+    private store: Store<{ calibration: any; frame: any }>
   ) {
     super({ key: 'calibration' });
     this.frame$ = store.select('frame');
     this.frame$.subscribe((update: any) => {
-      // console.log(update.frame)
-      // const img = new Image(400, 500)
-      // img.src = update.frame
-      // // const texture = new Phaser.Textures.Texture()
-      // this.texture = update.frame
-      // if(this.texture) {
-      //   // console.log(this.texture);
-      //   this.textures.remove('webcam')
-      //   this.textures.once('addtexture',  () => {
-      //     // this.add.image(200, 300, 'webcam');
-      //   }, this);
-      //   this.textures.addBase64('webcam', update.frame);
-      // }
     });
+
+    this.calibration$ = store.select('calibration')
+    this.calibration$.subscribe((result)=> {
+      if(result && result.status) {
+        console.log(result.status);
+        
+        switch(result.status) {
+          case 'error':
+            this.calibrationRectangle?.setStrokeStyle(5, 0xFF0000)
+            break;
+          case 'warning':
+            this.calibrationRectangle?.setStrokeStyle(5, 0xFFFF00)
+            break;
+          case 'success': 
+          this.calibrationRectangle?.setStrokeStyle(5, 0x00FF00)
+            break;
+        }
+      }
+      
+    })
+    
   }
 
   preload() {
@@ -52,32 +63,26 @@ export class CalibrationScene extends Phaser.Scene {
 
   create() {
     // this.cameras.main.setBackgroundColor()
-    this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0)');
+    // this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0)');
     // const webcam = this.add.dom(window.innerWidth/2, window.innerHeight/2, this.videoService.getVideoElement())
-    var circle = this.add.circle(10, 10, 180, 0x6666ff);
+    // var circle = this.add.circle(10, 10, 180, 0x6666ff);
     // var image = this.add.image(300, 300, 'webcam')
     // Phaser.Display.Align.In.Center(image, this.add.zone(0, 0, window.innerWidth, window.innerHeight))
 
     // add a rectangle
     // use proper x, y co-ordinates here.
-    var r1 = this.add.rectangle(
+    this.calibrationRectangle = this.add.rectangle(
       window.innerWidth / 2,
       window.innerHeight / 2,
-      900,
-      900
+      window.innerWidth/2,
+      window.innerHeight * 0.8
     );
 
-    // define color status
-    var colorStatus = {
-      'green': 0x00ff00,
-      'red': 0xFF0000
-    }
-
     // set linewidth=3 and lineColor=red
-    r1.setStrokeStyle(3, colorStatus['red']);
+    this.calibrationRectangle.setStrokeStyle(5, 0xFF0000);
 
-    this.add.image(300, 300, 'move-back').setScale(0.5);
-    this.add.image(300, 600, 'move-left').setScale(0.5);
+    // this.add.image(300, 300, 'move-back').setScale(0.5);
+    // this.add.image(300, 600, 'move-left').setScale(0.5);
   }
 
   override update(time: number, delta: number): void {

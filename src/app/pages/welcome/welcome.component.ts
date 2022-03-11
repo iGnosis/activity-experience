@@ -25,10 +25,10 @@ export class WelcomeComponent implements OnInit {
   }
 
   invalid() {
-    this.store.dispatch(calibration.invalid())
+    this.store.dispatch(calibration.error({pose: {}, reason: ''}))
   }
 
   noPerson() {
-    this.store.dispatch(calibration.noPersonDetected())
+    this.store.dispatch(calibration.success({pose: {}, reason: ''}))
   }
 }
