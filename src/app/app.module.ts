@@ -11,6 +11,7 @@ import { VideoComponent } from './widgets/video/video.component';
 import { CalibrationComponent } from './widgets/calibration/calibration.component';
 import { StoreModule } from '@ngrx/store';
 import { calibrationReducer } from './store/reducers/calibration/calibration.reducer';
+import { frameReducer } from './store/reducers/frame/frame.reducer';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,7 @@ import { calibrationReducer } from './store/reducers/calibration/calibration.red
   imports: [
     BrowserModule,
     AppRoutingModule,
-    StoreModule.forRoot({calibration: calibrationReducer})
+    StoreModule.forRoot({calibration: calibrationReducer, frame: frameReducer})
   ],
   providers: [],
   bootstrap: [AppComponent]

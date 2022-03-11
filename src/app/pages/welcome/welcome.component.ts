@@ -11,8 +11,14 @@ import { calibration } from 'src/app/store/actions/calibration.actions';
 export class WelcomeComponent implements OnInit {
 
   calibration$?: Observable<String>
-  constructor(private store: Store<{calibration: String}>) {
+  frame$?: Observable<any>
+
+  constructor(private store: Store<{calibration: String, frame: String}>) {
     this.calibration$ = store.select('calibration')
+    this.frame$ = store.select('frame')
+    this.frame$.subscribe((result) => {
+      // console.log(result)
+    })
   }
 
   ngOnInit(): void {
