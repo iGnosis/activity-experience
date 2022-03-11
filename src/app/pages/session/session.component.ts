@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
+import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
 
 @Component({
@@ -35,6 +36,7 @@ export class SessionComponent implements AfterViewInit {
   constructor(
     private calibrationScene: CalibrationScene,
     private holisticService: HolisticService,
+    private uiHelperService: UiHelperService,
     private videoService: VideoService) { }
   
   async ngAfterViewInit() {
@@ -52,6 +54,9 @@ export class SessionComponent implements AfterViewInit {
 
     this.videoService.setVideoElement(this.video.nativeElement)
     this.holisticService.start(this.video.nativeElement, 30)
+    const box = this.uiHelperService.setBoundingBox(stream)
+    console.log(box)
+    
   }
   
 }
