@@ -58,7 +58,7 @@ export class VideoService {
     const context = canvas.getContext('2d')
     context?.drawImage(video, 0, 0, this.width, this.height)
     // const data = context?.getImageData(0, 0, this.width, this.height).data
-    const data = canvas.toDataURL('jpeg')
+    const data = canvas.toDataURL('jpg')
     if(data) {
       const update = {frame: data}
       this.store.dispatch(frame.send(update))

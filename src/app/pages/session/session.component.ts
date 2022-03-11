@@ -17,6 +17,11 @@ export class SessionComponent implements AfterViewInit {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
+    parent: 'phaser-canvas',
+    // @ts-ignore
+    'render.transparent': true,
+    transparent: true,
+    // backgroundColor: 'rgba(0,0,0,0)',
     physics: {
       default: 'arcade',
       arcade: {
@@ -34,8 +39,10 @@ export class SessionComponent implements AfterViewInit {
 
     // get frames for the frames store
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    this.video.nativeElement.width = stream.getTracks()[0].getSettings().width
-    this.video.nativeElement.height = stream.getTracks()[0].getSettings().height
+    // this.video.nativeElement.width = stream.getTracks()[0].getSettings().width
+    // this.video.nativeElement.height = stream.getTracks()[0].getSettings().height
+    this.video.nativeElement.width = window.innerWidth
+    this.video.nativeElement.height = window.innerHeight
     this.video.nativeElement.srcObject = stream
     
     
@@ -51,7 +58,7 @@ export class SessionComponent implements AfterViewInit {
     //   height: window.innerHeight
     // });
     // camera.start();
-    // this.videoService.setVideoElement(this.video.nativeElement)
+    this.videoService.setVideoElement(this.video.nativeElement)
   }
   
 }
