@@ -12,6 +12,7 @@ import { CalibrationComponent } from './widgets/calibration/calibration.componen
 import { StoreModule } from '@ngrx/store';
 import { calibrationReducer } from './store/reducers/calibration/calibration.reducer';
 import { frameReducer } from './store/reducers/frame/frame.reducer';
+import { poseReducer } from './store/reducers/pose/pose.reducer';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,11 @@ import { frameReducer } from './store/reducers/frame/frame.reducer';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    StoreModule.forRoot({calibration: calibrationReducer, frame: frameReducer})
+    StoreModule.forRoot({
+      calibration: calibrationReducer, 
+      frame: frameReducer,
+      pose: poseReducer,
+    })
   ],
   providers: [],
   bootstrap: [AppComponent]

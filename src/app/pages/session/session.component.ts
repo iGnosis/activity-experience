@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { VideoService } from 'src/app/services/video/video.service';
 
 @Component({
@@ -31,7 +32,10 @@ export class SessionComponent implements AfterViewInit {
   }
   
   // DI the needed scenes
-  constructor(private calibrationScene: CalibrationScene, private videoService: VideoService) { }
+  constructor(
+    private calibrationScene: CalibrationScene,
+    private holisticService: HolisticService,
+    private videoService: VideoService) { }
   
   async ngAfterViewInit() {
     this.config.scene = [this.calibrationScene]
@@ -39,26 +43,15 @@ export class SessionComponent implements AfterViewInit {
 
     // get frames for the frames store
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    // this.video.nativeElement.width = stream.getTracks()[0].getSettings().width
-    // this.video.nativeElement.height = stream.getTracks()[0].getSettings().height
     this.video.nativeElement.width = window.innerWidth
     this.video.nativeElement.height = window.innerHeight
     this.video.nativeElement.srcObject = stream
     
     
-    this.videoService.startExtractingFramesFromStream(stream, this.video.nativeElement, 30)
-    // @ts-ignore
-    // const camera = new window.Camera(this.video.nativeElement, {
-    //   onFrame: async () => {
-    //     // @ts-ignore
-    //     // await window.holistic.send({image: videoElement});
-    //     // console.log(this.video.nativeElement);
-    //   },
-    //   width: window.innerWidth,
-    //   height: window.innerHeight
-    // });
-    // camera.start();
+    // this.videoService.startExtractingFramesFromStream(stream, this.video.nativeElement, 30)
+
     this.videoService.setVideoElement(this.video.nativeElement)
+    this.holisticService.start(this.video.nativeElement, 30)
   }
   
 }
