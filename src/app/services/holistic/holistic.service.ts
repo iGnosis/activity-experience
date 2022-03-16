@@ -46,7 +46,7 @@ export class HolisticService {
       } catch(err) {
         console.error('error sending image to the model')
       }
-    }, 1000)
+    }, 500)
   }
 
   stop() {

@@ -4,6 +4,7 @@ import { calibration } from 'src/app/store/actions/calibration.actions';
 import { VideoService } from 'src/app/services/video/video.service';
 import { Observable } from 'rxjs';
 import { ColdObservable } from 'rxjs/internal/testing/ColdObservable';
+import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,6 +19,7 @@ export class CalibrationScene extends Phaser.Scene {
   calibrationRectangle?: Phaser.GameObjects.Rectangle
   constructor(
     private videoService: VideoService,
+    private uiHelperService: UiHelperService,
     private store: Store<{ calibration: any; frame: any }>
   ) {
     super({ key: 'calibration' });
@@ -28,7 +30,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.calibration$ = store.select('calibration')
     this.calibration$.subscribe((result)=> {
       if(result && result.status) {
-        console.log(result.status);
+        // console.log(result.status);
+        // console.log(result.details.pose.faceLandmarks);
         
         switch(result.status) {
           case 'error':
@@ -42,6 +45,12 @@ export class CalibrationScene extends Phaser.Scene {
             break;
         }
       }
+
+      // if(result.details.pose.faceLandmarks) {
+      //   result.details.pose.faceLandmarks.forEach((landmark: {x: number, y: number}, idx: number) => {
+      //     // this.uiHelperService.locatePoint()
+      //   })
+      // }
       
     })
     
@@ -71,11 +80,12 @@ export class CalibrationScene extends Phaser.Scene {
 
     // add a rectangle
     // use proper x, y co-ordinates here.
+    const bounds = this.uiHelperService.getBoundingBox()
     this.calibrationRectangle = this.add.rectangle(
       window.innerWidth / 2,
       window.innerHeight / 2,
-      window.innerWidth/2,
-      window.innerHeight * 0.8
+      bounds.topRight.x - bounds.topLeft.x,
+      bounds.bottomLeft.y - bounds.topLeft.y
     );
 
     // set linewidth=3 and lineColor=red

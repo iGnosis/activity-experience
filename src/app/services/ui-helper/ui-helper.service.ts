@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 })
 export class UiHelperService {
 
-  boundingBox: any
+  private boundingBox: any
   constructor() { }
 
   setBoundingBox(stream: MediaStream) {
@@ -57,4 +57,8 @@ export class UiHelperService {
   getBoundingBox() {
     return this.boundingBox
   }
+
+  // locatePoint(x: number, y: number) {
+
+  // }
 }
