@@ -1,11 +1,11 @@
-import { Action } from "./action";
+import { SessionEvent } from "./session-event";
 import { Therapist } from "./therapist";
-import { Trigger } from "./trigger";
 
 export type CarePlan = {
     name: string
-    createdBy: Therapist
+    createdBy?: Therapist
     assets: any
-    trigger: Trigger
-    actions: Array<Action>
+    events: Array<SessionEvent>
+    // trigger: Trigger
+    // actions: Array<Action>
 }

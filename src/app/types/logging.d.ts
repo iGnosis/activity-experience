@@ -1,9 +1,9 @@
 export type Logging = {
-    level: LogLevel
-    debug: boolean
-    error: boolean
-    info: boolean
-    verbose: boolean
+    level?: LogLevel
+    debug?: boolean
+    error?: boolean
+    info?: boolean
+    verbose?: boolean
 }
 
 

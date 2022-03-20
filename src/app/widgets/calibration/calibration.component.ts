@@ -8,7 +8,7 @@ import { Action, ActionHandler } from 'src/app/types/action-handler.interface';
   templateUrl: './calibration.component.html',
   styleUrls: ['./calibration.component.scss']
 })
-export class CalibrationComponent implements OnInit, ActionHandler{
+export class CalibrationComponent implements OnInit {
 
   calibration$: Observable<any>
   status?: string = ''
@@ -18,10 +18,6 @@ export class CalibrationComponent implements OnInit, ActionHandler{
     this.calibration$ = this.store.select('calibration')
   }
   
-  getActions(): Action[] {
-    throw new Error('Method not implemented.');
-  }
-
   ngOnInit(): void {
     this.calibration$.subscribe((result) => {
       this.status = result.status

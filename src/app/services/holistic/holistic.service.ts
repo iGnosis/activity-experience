@@ -24,8 +24,8 @@ export class HolisticService {
     this.options = {
       modelComplexity: 1,
       smoothLandmarks: true,
-      enableSegmentation: true,
-      smoothSegmentation: true,
+      enableSegmentation: false,
+      smoothSegmentation: false,
       refineFaceLandmarks: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5
