@@ -34,6 +34,7 @@ export class SessionComponent implements AfterViewInit {
     },
   }
   careplan: any
+  dispatcher?: {dispatchEventName: Function, dispatchEventId: Function}
   
   // DI the needed scenes
   constructor(
@@ -42,42 +43,38 @@ export class SessionComponent implements AfterViewInit {
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private eventsService: EventsService,
-    private videoService: VideoService) { }
+    private videoService: VideoService) { 
+    }
   
   async ngAfterViewInit() {
     // Download the careplan. do it in the welcome page later
     this.careplan = this.careplanService.downloadCarePlan('')
+    this.dispatcher = this.eventsService.addContext('system', this)
 
     // TODO: Set the assets to be preloaded for the activity
-    this.config.scene = [this.calibrationScene]
-    this.session = new Phaser.Game(this.config)
+    // this.config.scene = [this.calibrationScene]
+    // this.session = new Phaser.Game(this.config)
 
     
 
     // get frames for the frames store
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    this.video.nativeElement.width = window.innerWidth
-    this.video.nativeElement.height = window.innerHeight
-    this.video.nativeElement.srcObject = stream
+    // const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    // this.video.nativeElement.width = window.innerWidth
+    // this.video.nativeElement.height = window.innerHeight
+    // this.video.nativeElement.srcObject = stream
     
     
     // this.videoService.startExtractingFramesFromStream(stream, this.video.nativeElement, 30)
 
-    this.videoService.setVideoElement(this.video.nativeElement)
+    // this.videoService.setVideoElement(this.video.nativeElement)
     // this.holisticService.start(this.video.nativeElement, 30)
-    const box = this.uiHelperService.setBoundingBox(stream)
-    console.log(box)
+    // const box = this.uiHelperService.setBoundingBox(stream)
+    // console.log(box)
 
     setTimeout(() => {
-      this.dispatch('ready')
-    }, 500);
+      this.dispatcher?.dispatchEventName('ready')
+    }, 1000)
+
   }
   
-
-  dispatch(event: string) {
-    // this.eventsService.events.system$.next({
-    //   name: event
-    // })
-  }
-
 }

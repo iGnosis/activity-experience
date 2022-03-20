@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { CarePlan } from 'src/app/types/careplan';
-import { EventSource } from 'src/app/types/event-source.d';
+// import { CarePlan } from 'src/app/types/pointmotion';
+import { CarePlan } from '../../types/pointmotion.d';
+import { EventsService } from '../events/events.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,20 +21,20 @@ export class CareplanService {
     "events": [
       {
         "id": "event0",
-        "source": EventSource.system,
+        "source": 'system',
         "description": "Show a welcome message",
         "logging": {
           "debug": true,
           "error": true
         },
         "trigger": {
-          "source": EventSource.system,
+          "source": 'system',
           "name": "ready",
           "comment": "When the assets are loaded"
         },
         "actions": [
           {
-            "component": EventSource.spotlight,
+            "component": 'spotlight',
             "handler": "welcome",
             "params": {
               "id": 'someid',
@@ -49,16 +50,16 @@ export class CareplanService {
         ]
       }, 
       {
-        "source": EventSource.system,
+        "source": 'system',
         "description": "Introduce the guide",
         "trigger": {
-          "source": EventSource.spotlight,
+          "source": 'spotlight',
           "name": "hidden",
           "id": "spotlight0",
         },
         "actions": [
           {
-            "component": EventSource.guide,
+            "component": 'guide',
             "handler": "showMessages",
             "hooks": {
               "beforeAction": [
@@ -97,24 +98,18 @@ export class CareplanService {
     ]
   }
   
-  constructor() { }
+  constructor(private eventService: EventsService) { }
   
   async downloadCarePlan(sessionId: string) {
+    console.log('downloading careplan');
+    
     localStorage.setItem('careplan', JSON.stringify(this.careplan))
-    this.registerEventListeners()
+    this.eventService.setEventListeners(this.careplan)
     return this.careplan
   }
 
   getCarePlan() {
     this.careplan
   }
-
-  registerEventListeners() {
-    this.careplan.events.forEach(event => {
-      const actions = event.actions
-      actions.forEach(action => {
-        // From each action, find the component and add the event listeners
-      })
-    })
-  }
+  
 }
