@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Action, CarePlan } from 'src/app/types/pointmotion';
 
 @Injectable({
@@ -31,7 +31,7 @@ export class EventsService {
 
   dispatcher: any = {}
 
-  constructor() {}
+  constructor(private ngZone: NgZone) {}
 
   setEventListeners(careplan:CarePlan) {
     if(careplan && Array.isArray(careplan.events)) {
@@ -64,6 +64,14 @@ export class EventsService {
   addContext(key: string, context: any) {
     this.contexts = this.contexts || {}
     this.contexts[key] = context
+
+    // Add the context to window object for debugging
+    // @ts-ignore
+    window.pm = window.pm || {}
+    // @ts-ignore
+    window.pm[key] = context
+    // @ts-ignore
+    window.ng = this.ngZone
     
     this.dispatcher[key] = new Object()
     this.dispatcher[key].dispatchEventName = (event: string, data: any) => {
@@ -89,9 +97,9 @@ export class EventsService {
       // Execute the events
       this.registeredEvents[source][event].forEach((action: Action) => {
         if (this.contexts[action.component]) {
-          if (typeof (this.contexts[action.component]['event_' + action.handler]) == 'function') {
+          if (typeof (this.contexts[action.component]['action_' + action.handler]) == 'function') {
             // TODO: Handle hooks
-            this.contexts[action.component]['event_' + action.handler].call(this.contexts[action.component], action.params)
+            this.contexts[action.component]['action_' + action.handler].call(this.contexts[action.component], action.params)
           } else {
             throw new Error(`event_${action.handler} function not defined in ${action.component}`)
           }

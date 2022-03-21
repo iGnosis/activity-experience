@@ -35,15 +35,14 @@ export class CareplanService {
         "actions": [
           {
             "component": 'spotlight',
-            "handler": "welcome",
+            "handler": "showMessages",
             "params": {
-              "id": 'someid',
-              "data": {
-                "messages": [
-                  "Hi! ${user.name}",
-                  "Welcome back."
-                ],
-                "interval": 1000
+              id: '123',
+              data: {
+                messages: [
+                  {text: 'hi', timeout: 1000},
+                  {text: 'hello', timeout: 1000},
+                ]
               }
             }
           }

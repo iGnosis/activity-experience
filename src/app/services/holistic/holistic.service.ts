@@ -58,5 +58,5 @@ export class HolisticService {
     // console.log(results)
     this.store.dispatch(pose.send({pose: results}))
   }
-  
+
 }

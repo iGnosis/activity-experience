@@ -58,10 +58,10 @@ export class SessionComponent implements AfterViewInit {
     
 
     // get frames for the frames store
-    // const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    // this.video.nativeElement.width = window.innerWidth
-    // this.video.nativeElement.height = window.innerHeight
-    // this.video.nativeElement.srcObject = stream
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    this.video.nativeElement.width = window.innerWidth
+    this.video.nativeElement.height = window.innerHeight
+    this.video.nativeElement.srcObject = stream
     
     
     // this.videoService.startExtractingFramesFromStream(stream, this.video.nativeElement, 30)

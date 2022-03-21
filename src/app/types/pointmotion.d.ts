@@ -124,3 +124,16 @@ export type Therapist = {
 }
 
 
+export type SpotlightActionShowMessagesDTO = {
+    id?: string
+    data : {
+        messages: Array<SpotlightActionShowMessageDTO>
+    }
+}
+
+export type SpotlightActionShowMessageDTO = {
+    text: string
+    icon: string
+    timeout: number
+}
+
