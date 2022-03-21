@@ -40,7 +40,7 @@ export class CareplanService {
               id: '123',
               data: {
                 messages: [
-                  {text: 'hi', timeout: 1000},
+                  {text: 'hi', timeout: 3000},
                   {text: 'hello', timeout: 1000},
                 ]
               }

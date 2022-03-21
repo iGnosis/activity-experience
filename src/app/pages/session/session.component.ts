@@ -51,30 +51,36 @@ export class SessionComponent implements AfterViewInit {
     this.careplan = this.careplanService.downloadCarePlan('')
     this.dispatcher = this.eventsService.addContext('system', this)
 
-    // TODO: Set the assets to be preloaded for the activity
-    // this.config.scene = [this.calibrationScene]
-    // this.session = new Phaser.Game(this.config)
-
-    
-
-    // get frames for the frames store
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    this.video.nativeElement.width = window.innerWidth
-    this.video.nativeElement.height = window.innerHeight
     this.video.nativeElement.srcObject = stream
     
-    
-    // this.videoService.startExtractingFramesFromStream(stream, this.video.nativeElement, 30)
+    const box = this.uiHelperService.setBoundingBox(stream)
+    this.updateVideoDimensions()
 
-    // this.videoService.setVideoElement(this.video.nativeElement)
+    // Start the ML model
     // this.holisticService.start(this.video.nativeElement, 30)
-    // const box = this.uiHelperService.setBoundingBox(stream)
-    // console.log(box)
 
     setTimeout(() => {
+      this.config.scene = [this.calibrationScene]
+      this.session = new Phaser.Game(this.config)
+      
       this.dispatcher?.dispatchEventName('ready')
-    }, 1000)
+    })
 
+  }
+
+  updateVideoDimensions() {
+    const box = this.uiHelperService.getBoundingBox()
+    if( box.topLeft.x ) {
+      // the video needs padding on the left
+      this.video.nativeElement.style.paddingLeft = box.topLeft.x +'px'
+    } else if ( box.topLeft.y ) {
+      // the video needs padding on the top
+      this.video.nativeElement.style.paddingTop = box.topLeft.y +'px'
+    }
+
+    this.video.nativeElement.width = box.topRight.x - box.topLeft.x 
+    this.video.nativeElement.height = box.bottomLeft.y - box.topLeft.y
   }
   
 }

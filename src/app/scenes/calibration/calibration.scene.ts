@@ -57,14 +57,6 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   preload() {
-    // this.load.image('webcam', 'assets/images/loading.png')
-    // this.input.mouse.disableContextMenu()
-    // this.input.on('pointerdown', (e: any) => {
-    //   this.invalid? this.store.dispatch(calibration.invalid()) : this.store.dispatch(calibration.noPersonDetected())
-    //   this.invalid = !this.invalid
-    // })
-    // this.webcam = this.load.image('webcam', '')
-
     // load calibration guide images
     this.load.image('move-back', 'assets/images/move-back.png');
     this.load.image('move-left', 'assets/images/move-left.png');
@@ -74,7 +66,7 @@ export class CalibrationScene extends Phaser.Scene {
     // this.cameras.main.setBackgroundColor()
     // this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0)');
     // const webcam = this.add.dom(window.innerWidth/2, window.innerHeight/2, this.videoService.getVideoElement())
-    // var circle = this.add.circle(10, 10, 180, 0x6666ff);
+    var circle = this.add.circle(10, 10, 180, 0x6666ff);
     // var image = this.add.image(300, 300, 'webcam')
     // Phaser.Display.Align.In.Center(image, this.add.zone(0, 0, window.innerWidth, window.innerHeight))
 
