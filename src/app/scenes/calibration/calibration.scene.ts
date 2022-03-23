@@ -115,23 +115,14 @@ export class CalibrationScene extends Phaser.Scene {
 
     if (type == 'success') {
       this.tweens.add({
-        targets: this.calibrationRectangle.left,
-        alphaTopLeft: { value: 1, duration: 5000, ease: 'Power1' },
-        alphaBottomRight: { value: 1, duration: 10000, ease: 'Power1' },
-        alphaBottomLeft: { value: 1, duration: 5000, ease: 'Power1', delay: 5000 },
-        yoyo: true,
-        loop: -1
-
+        targets: [this.calibrationRectangle.top, this.calibrationRectangle.right, this.calibrationRectangle.bottom, this.calibrationRectangle.left],
+        alpha: 0,
+        duration: 3000,
+        onComplete: () => {
+          this.scene.start('sit2stand')
+        }
     });
     }
-    // leftBox.setInteractive()
-    // this.input.setDraggable(leftBox);
-    // this.input.on('drag', function (pointer:any, gameObject: any, dragX: number, dragY: number) {
-    //   gameObject.x = dragX;
-    //   gameObject.y = dragY;
-    //   console.log('x,y', leftBox.getCenter());
-      
-    // });
   }
 
 }

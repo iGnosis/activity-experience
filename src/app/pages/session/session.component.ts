@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { EventsService } from 'src/app/services/events/events.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
@@ -39,6 +40,7 @@ export class SessionComponent implements AfterViewInit {
   // DI the needed scenes
   constructor(
     private calibrationScene: CalibrationScene,
+    private sit2standScene: SitToStandScene,
     // private holisticService: HolisticService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
@@ -59,7 +61,7 @@ export class SessionComponent implements AfterViewInit {
 
     // Start the ML model
     // this.holisticService.start(this.video.nativeElement, 30)
-    this.config.scene = [this.calibrationScene]
+    this.config.scene = [this.calibrationScene, this.sit2standScene]
     this.session = new Phaser.Game(this.config)
     this.dispatcher?.dispatchEventName('ready')
     setTimeout(() => {
