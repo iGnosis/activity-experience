@@ -55,32 +55,34 @@ export class SessionComponent implements AfterViewInit {
     this.video.nativeElement.srcObject = stream
     
     const box = this.uiHelperService.setBoundingBox(stream)
-    this.updateVideoDimensions()
+    this.updateDimensions(this.video.nativeElement)
 
     // Start the ML model
     // this.holisticService.start(this.video.nativeElement, 30)
-
+    this.config.scene = [this.calibrationScene]
+    this.session = new Phaser.Game(this.config)
+    this.dispatcher?.dispatchEventName('ready')
     setTimeout(() => {
-      this.config.scene = [this.calibrationScene]
-      this.session = new Phaser.Game(this.config)
-      
-      this.dispatcher?.dispatchEventName('ready')
+      // Set the canvas to take up the same space as the video. Simplifying all the calculations
+      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
+      this.updateDimensions(canvas)
     })
 
   }
 
-  updateVideoDimensions() {
+  updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
     const box = this.uiHelperService.getBoundingBox()
     if( box.topLeft.x ) {
       // the video needs padding on the left
-      this.video.nativeElement.style.paddingLeft = box.topLeft.x +'px'
+      elm.style.marginLeft = box.topLeft.x +'px'
     } else if ( box.topLeft.y ) {
       // the video needs padding on the top
-      this.video.nativeElement.style.paddingTop = box.topLeft.y +'px'
+      elm.style.marginTop = box.topLeft.y +'px'
+      elm.style.marginTop = box.topLeft.y +'px'
     }
 
-    this.video.nativeElement.width = box.topRight.x - box.topLeft.x 
-    this.video.nativeElement.height = box.bottomLeft.y - box.topLeft.y
+    elm.width = box.topRight.x - box.topLeft.x 
+    elm.height = box.bottomLeft.y - box.topLeft.y
   }
   
 }

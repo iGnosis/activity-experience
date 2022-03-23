@@ -16,7 +16,16 @@ export class CalibrationScene extends Phaser.Scene {
   calibration$?: Observable<any>;
   texture?: string;
 
-  calibrationRectangle?: Phaser.GameObjects.Rectangle
+  calibrationStatus = 'success'
+
+  // @ts-ignore
+  calibrationRectangle: {
+    top?:  Phaser.GameObjects.Rectangle,
+    right?:  Phaser.GameObjects.Rectangle,
+    bottom?:  Phaser.GameObjects.Rectangle,
+    left?:  Phaser.GameObjects.Rectangle,
+  }
+
   constructor(
     private videoService: VideoService,
     private uiHelperService: UiHelperService,
@@ -29,22 +38,22 @@ export class CalibrationScene extends Phaser.Scene {
 
     this.calibration$ = store.select('calibration')
     this.calibration$.subscribe((result)=> {
-      if(result && result.status) {
-        // console.log(result.status);
-        // console.log(result.details.pose.faceLandmarks);
+      // if(result && result.status) {
+      //   // console.log(result.status);
+      //   // console.log(result.details.pose.faceLandmarks);
         
-        switch(result.status) {
-          case 'error':
-            this.calibrationRectangle?.setStrokeStyle(5, 0xFF0000)
-            break;
-          case 'warning':
-            this.calibrationRectangle?.setStrokeStyle(5, 0xFFFF00)
-            break;
-          case 'success': 
-          this.calibrationRectangle?.setStrokeStyle(5, 0x00FF00)
-            break;
-        }
-      }
+      //   switch(result.status) {
+      //     case 'error':
+      //       this.calibrationRectangle?.setStrokeStyle(5, 0xFF0000)
+      //       break;
+      //     case 'warning':
+      //       this.calibrationRectangle?.setStrokeStyle(5, 0xFFFF00)
+      //       break;
+      //     case 'success': 
+      //     this.calibrationRectangle?.setStrokeStyle(5, 0x00FF00)
+      //       break;
+      //   }
+      // }
 
       // if(result.details.pose.faceLandmarks) {
       //   result.details.pose.faceLandmarks.forEach((landmark: {x: number, y: number}, idx: number) => {
@@ -53,7 +62,8 @@ export class CalibrationScene extends Phaser.Scene {
       // }
       
     })
-    
+    this.calibrationRectangle = {
+    }
   }
 
   preload() {
@@ -63,34 +73,65 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   create() {
-    // this.cameras.main.setBackgroundColor()
-    // this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0)');
-    // const webcam = this.add.dom(window.innerWidth/2, window.innerHeight/2, this.videoService.getVideoElement())
-    var circle = this.add.circle(10, 10, 180, 0x6666ff);
-    // var image = this.add.image(300, 300, 'webcam')
-    // Phaser.Display.Align.In.Center(image, this.add.zone(0, 0, window.innerWidth, window.innerHeight))
-
-    // add a rectangle
-    // use proper x, y co-ordinates here.
-    const bounds = this.uiHelperService.getBoundingBox()
-    this.calibrationRectangle = this.add.rectangle(
-      window.innerWidth / 2,
-      window.innerHeight / 2,
-      bounds.topRight.x - bounds.topLeft.x,
-      bounds.bottomLeft.y - bounds.topLeft.y
-    );
-
-    // set linewidth=3 and lineColor=red
-    this.calibrationRectangle.setStrokeStyle(5, 0xFF0000);
-
-    // this.add.image(300, 300, 'move-back').setScale(0.5);
-    // this.add.image(300, 600, 'move-left').setScale(0.5);
+    this.drawCalibrationBox(50, 90, 'success')
   }
 
   override update(time: number, delta: number): void {
-    // const image = new Image()
-    // image.src = this.texture || ''
-    // debugger
-    // Put the image on the scene
+    // if (this.calibrationStatus == 'success') {
+    //   // if the box is present
+    //   if(this.calibrationRectangle.top && this.calibrationRectangle.right && this.calibrationRectangle.bottom && this.calibrationRectangle.left) {
+    //     this.calibrationRectangle.top.fillAlpha -= 0.1
+    //     this.calibrationRectangle.right.fillAlpha -= 0.1
+    //     this.calibrationRectangle.bottom.fillAlpha -= 0.1
+    //     this.calibrationRectangle.left.fillAlpha -= 0.1 
+    //   }
+    // }
   }
+
+  /**
+   * 
+   * @param percentWidth percentage of the bounding-box width
+   * @param percentHeight percentage of the bounding-box height
+   */
+  drawCalibrationBox(percentWidth: number, percentHeight: number, type: string) {
+    let { width, height } = this.sys.game.canvas;
+    const calibrationBoxWidth = width * percentWidth / 100 
+    const calibrationBoxHeight = height * percentHeight / 100
+    let fillColor = 0xFF0000
+    switch(type) {
+      case 'error': 
+        fillColor = 0xFF0000
+        break
+      case 'warning':
+        fillColor = 0xFFFF00
+        break 
+      case 'success':
+        fillColor = 0x00FF00
+    }
+    this.calibrationRectangle.left = this.add.rectangle((width-calibrationBoxWidth)/4, height/2, (width-calibrationBoxWidth)/2, height, fillColor, 0.5)
+    this.calibrationRectangle.right = this.add.rectangle(width - (width-calibrationBoxWidth)/4, height/2, (width-calibrationBoxWidth)/2, height, fillColor, 0.5)
+    this.calibrationRectangle.top = this.add.rectangle(width/2, (height - calibrationBoxHeight)/4, calibrationBoxWidth, (height - calibrationBoxHeight)/2, fillColor, 0.5)
+    this.calibrationRectangle.bottom = this.add.rectangle(width/2, height - (height - calibrationBoxHeight)/4, calibrationBoxWidth, (height - calibrationBoxHeight)/2, fillColor, 0.5)
+
+    if (type == 'success') {
+      this.tweens.add({
+        targets: this.calibrationRectangle.left,
+        alphaTopLeft: { value: 1, duration: 5000, ease: 'Power1' },
+        alphaBottomRight: { value: 1, duration: 10000, ease: 'Power1' },
+        alphaBottomLeft: { value: 1, duration: 5000, ease: 'Power1', delay: 5000 },
+        yoyo: true,
+        loop: -1
+
+    });
+    }
+    // leftBox.setInteractive()
+    // this.input.setDraggable(leftBox);
+    // this.input.on('drag', function (pointer:any, gameObject: any, dragX: number, dragY: number) {
+    //   gameObject.x = dragX;
+    //   gameObject.y = dragY;
+    //   console.log('x,y', leftBox.getCenter());
+      
+    // });
+  }
+
 }
