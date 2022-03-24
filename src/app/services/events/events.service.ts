@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Action, CarePlan } from 'src/app/types/pointmotion';
+import { Action, CarePlan, EventActionDispatchEventIdDTO, EventActionDispatchEventNameDTO } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +31,9 @@ export class EventsService {
 
   dispatcher: any = {}
 
-  constructor(private ngZone: NgZone) {}
+  constructor(private ngZone: NgZone) {
+    this.addContext('event', this)
+  }
 
   setEventListeners(careplan:CarePlan) {
     if(careplan && Array.isArray(careplan.events)) {
@@ -74,49 +76,108 @@ export class EventsService {
     window.ng = this.ngZone
     
     this.dispatcher[key] = new Object()
-    this.dispatcher[key].dispatchEventName = (event: string, data: any) => {
-      this.dispatchEventName(key, event, data)
+    this.dispatcher[key].dispatchEventName = async (event: string, data: any) => {
+      await this.dispatchEventName(key, event, data)
     }
-    this.dispatcher[key].dispatchEventId = (id: string, data: any) => {
-      this.dispatchEventId(id, data)
+    this.dispatcher[key].dispatchEventId = async (id: string, data: any) => {
+      await this.dispatchEventId(id, data)
     }
 
     return this.dispatcher[key]
   }
 
-  dispatchEventName(source: string, event: string, data: any) {
-    console.log(this.contexts[source]);
+  async action_dispatchEvent(data: EventActionDispatchEventNameDTO) {
+    await this.dispatchEventName('event', data.name, data.data)
+  }
+
+  async action_dispatchEventId(data: EventActionDispatchEventIdDTO) {
+    await this.dispatchEventId(data.id, data.data)
+  }
+
+  async dispatchEventName(source: string, event: string, data: any) {
+    console.log('Dispatching Event (source, event):', source, event);
     
     if (!this.registeredEvents[source]) {
       console.log(`Event source ${source} not registered`)
     } else if (!this.registeredEvents[source][event]) {
       console.log(`Event name ${event} not registered`)
     } else if(Array.isArray(this.registeredEvents[source][event])){
-      // Extract the actions from the trigger
-      console.log(this.registeredEvents[source][event])
-      // Execute the events
-      this.registeredEvents[source][event].forEach((action: Action) => {
-        if (this.contexts[action.component]) {
-          if (typeof (this.contexts[action.component]['action_' + action.handler]) == 'function') {
-            // TODO: Handle hooks
-            this.contexts[action.component]['action_' + action.handler].call(this.contexts[action.component], action.params)
-          } else {
-            throw new Error(`event_${action.handler} function not defined in ${action.component}`)
-          }
-        } else {
-          throw new Error(`Component ${action.component} not available to handle events`)
-        }
-      })
-      // this.contexts[source]['event_' + event].call(this.contexts[source], data)
+      // Extract the actions from the trigger and execute the actions
+      for(const action of this.registeredEvents[source][event]) {
+        console.log('Executing actions on (source, event):', source, event);
+        await this.executeAction(action)
+      }
     }
   }
 
-  dispatchEventId(id: string, data: any) {
+  async dispatchEventId(id: string, data: any) {
+    console.log('Dispatching Event (id) ', id);
+    if (!this.registeredEvents[id]) {
+      console.log(`Event id ${id} not registered`)
+    } else if(Array.isArray(this.registeredEvents[id])){
+      // Extract the actions from the trigger and execute the actions
+      for(const action of this.registeredEvents[id]) {
+        console.log('Executing actions on (id):', id);
+        await this.executeAction(action)
+      }
+    }
+  }
 
+  // TODO: Implement a scalable way to 
+  async executeAction(action: Action) {
+    // Check that the action component is registered
+    console.log('executing action ', action.component, action.handler);
+    
+    if (this.contexts[action.component]) {
+      if (typeof (this.contexts[action.component]['action_' + action.handler]) == 'function') {
+        
+        // Execute the beforeAction hooks
+        if(action.hooks && action.hooks.beforeAction) {
+          console.log('Executing beforeAction hooks ', action.component, action.handler);
+          for(const hookAction of action.hooks.beforeAction) {
+            await this.executeAction(hookAction)
+          }
+        }
+
+        // Execute the main action. 
+        try {
+          console.log('Executing the main function', action.component, action.handler);
+          await this.contexts[action.component]['action_' + action.handler].call(this.contexts[action.component], action.params)
+          if(action.hooks && action.hooks.onSuccess) {
+            console.log('Executing onSuccess hook', action.component, action.handler);
+            for(const hookAction of action.hooks.onSuccess) {
+              await this.executeAction(hookAction)
+            }
+          }
+        } catch (err) {
+          console.error(err)
+          // Execute the onError hook, if present
+          if(action.hooks && action.hooks.onFailure) {
+            console.log('Executing onFailure hook', action.component, action.handler);
+            for(const hookAction of action.hooks.onFailure) {
+              await this.executeAction(hookAction)
+            }
+          }
+        } finally {
+          console.log('Executing afterAction hook', action.component, action.handler);
+          if(action.hooks && action.hooks.afterAction) {
+            for(const hookAction of action.hooks.afterAction) {
+              await this.executeAction(hookAction)
+            }
+          }
+        }
+        
+      } else {
+        throw new Error(`event_${action.handler} function not defined in ${action.component}`)
+      }
+    } else {
+      throw new Error(`Component ${action.component} not available to handle events`)
+    }
   }
 
   removeContext(key: string) {
     delete(this.contexts[key])
   }
+
 
 }

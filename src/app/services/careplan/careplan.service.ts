@@ -35,15 +35,33 @@ export class CareplanService {
         "actions": [
           {
             "component": 'spotlight',
+            "handler": "show",
+          },
+          {
+            "component": 'spotlight',
             "handler": "showMessages",
             "params": {
               id: '123',
               data: {
                 messages: [
-                  {text: 'hi', timeout: 3000},
-                  {text: 'hello', timeout: 1000},
+                  { text: 'hi', timeout: 500},
+                  // {text: 'Hi', timeout: 2000},
+                  // {text: 'Welcome to Point Motion', timeout: 3000},
+                  // {text: 'We will start with your calibration', timeout: 3000},
                 ]
               }
+            },
+            "hooks": {
+              "afterAction": [{
+                "component": 'spotlight',
+                "handler": "hide"
+              }, {
+                "component": "event",
+                "handler": "dispatchEventId",
+                "params": {
+                  "id": "start_game"
+                }
+              }]
             }
           }
         ]
@@ -65,12 +83,7 @@ export class CareplanService {
 
               ],
               "onSuccess": [
-                {
-                  "type": "hook",
-                  "hook": {
-                    "name": "onMessagesComplete",
-                  }
-                },
+                
               ],
               "onFailure": [
                 // catch stuff
@@ -93,6 +106,18 @@ export class CareplanService {
             }
           }
         ]
+      },
+      {
+        trigger: {
+          id: "start_game"
+        },
+        actions: [
+          {
+            component: 'session',
+            handler: 'startGame'
+          }
+        ],
+        source: 'event'
       }
     ]
   }

@@ -15,3 +15,10 @@ app-widget-calibration {
     padding: 16px;
     background-color: #FFFFFF;
 }
+
+app-spotlight {
+    position: absolute; 
+    width: 100vw;
+    top: calc(50vh - 60px); 
+    z-index: 3;
+}

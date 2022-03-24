@@ -41,11 +41,10 @@ export class SessionComponent implements AfterViewInit {
   constructor(
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
-    // private holisticService: HolisticService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
-    private eventsService: EventsService,
-    private videoService: VideoService) { 
+    private eventsService: EventsService) {
+      this.eventsService.addContext('session', this)
     }
   
   async ngAfterViewInit() {
@@ -59,17 +58,7 @@ export class SessionComponent implements AfterViewInit {
     const box = this.uiHelperService.setBoundingBox(stream)
     this.updateDimensions(this.video.nativeElement)
 
-    // Start the ML model
-    // this.holisticService.start(this.video.nativeElement, 30)
-    this.config.scene = [this.calibrationScene, this.sit2standScene]
-    this.session = new Phaser.Game(this.config)
     this.dispatcher?.dispatchEventName('ready')
-    setTimeout(() => {
-      // Set the canvas to take up the same space as the video. Simplifying all the calculations
-      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
-      this.updateDimensions(canvas)
-    })
-
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
@@ -85,6 +74,24 @@ export class SessionComponent implements AfterViewInit {
 
     elm.width = box.topRight.x - box.topLeft.x 
     elm.height = box.bottomLeft.y - box.topLeft.y
+  }
+ 
+  async action_startCalibration(data: any) {
+    this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
+      scene.scene.remove()
+    })
+    this.session?.scene.start('calibration')
+  }
+
+  async action_startGame(data: any) {
+    this.config.scene = [this.calibrationScene, this.sit2standScene]
+    this.session = new Phaser.Game(this.config)
+    
+    setTimeout(() => {
+      // Set the canvas to take up the same space as the video. Simplifying all the calculations
+      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
+      this.updateDimensions(canvas)
+    })
   }
   
 }

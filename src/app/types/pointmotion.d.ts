@@ -1,14 +1,14 @@
 export type ActionHook = {
-    beforeAction: Array<any> 
-    afterAction: Array<any>
-    onSuccess: Array<any>
-    onFailure: Array<any>
+    beforeAction?: Array<Action> 
+    afterAction?: Array<Action>
+    onSuccess?: Array<Action>
+    onFailure?: Array<Action>
 }
 
 export type Action = {
     component: string
     handler: string
-    params: ActionParams
+    params?: ActionParams
     hooks?: ActionHook
 }
 
@@ -135,5 +135,16 @@ export type SpotlightActionShowMessageDTO = {
     text: string
     icon: string
     timeout: number
+}
+
+export type EventActionDispatchEventNameDTO = {
+    name: string
+    source?: string
+    data?: any
+}
+
+export type EventActionDispatchEventIdDTO = {
+    id: string 
+    data?: any 
 }
 

@@ -5,6 +5,7 @@ import { VideoService } from 'src/app/services/video/video.service';
 import { Observable } from 'rxjs';
 import { ColdObservable } from 'rxjs/internal/testing/ColdObservable';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
+import { EventsService } from 'src/app/services/events/events.service';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +30,7 @@ export class CalibrationScene extends Phaser.Scene {
   constructor(
     private videoService: VideoService,
     private uiHelperService: UiHelperService,
+    private eventsService: EventsService,
     private store: Store<{ calibration: any; frame: any }>
   ) {
     super({ key: 'calibration' });
@@ -64,7 +66,9 @@ export class CalibrationScene extends Phaser.Scene {
     })
     this.calibrationRectangle = {
     }
+    this.eventsService.addContext('calibration', this)
   }
+
 
   preload() {
     // load calibration guide images
@@ -119,6 +123,7 @@ export class CalibrationScene extends Phaser.Scene {
         alpha: 0,
         duration: 3000,
         onComplete: () => {
+          // Move to whatever activity was going on...
           this.scene.start('sit2stand')
         }
     });
