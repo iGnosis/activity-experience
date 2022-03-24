@@ -9,32 +9,33 @@ import { CalibrationService } from '../calibration/calibration.service';
 })
 export class HolisticService {
 
-  holistic: Holistic
-  options: Options
+  holistic?: Holistic
+  options: Options = {
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: true,
+    smoothSegmentation: true,
+    refineFaceLandmarks: true,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+  }
   interval: any
   videoElm?: HTMLVideoElement
   constructor(
     private store: Store<{pose: Results}>,
     private calibrationService: CalibrationService,
-  ) { 
-    this.holistic = new Holistic({locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-    }});
-
-    this.options = {
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      smoothSegmentation: false,
-      refineFaceLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    }
-
-    this.holistic.setOptions(this.options)
+  ) {
+    
   }
 
   start(videoElm: HTMLVideoElement, fps: number = 1) {
+    this.holistic = new Holistic({locateFile: (file) => {
+      console.log(file);
+      
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+    }});
+
+    this.holistic.setOptions(this.options)
     this.holistic.onResults((results) => {
       this.handleResults(results)
     })
@@ -42,7 +43,7 @@ export class HolisticService {
     this.interval = setInterval(() => {
       try {
         // @ts-ignore
-        this.holistic.send({image: this.videoElm})
+        this.holistic?.send({image: this.videoElm})
       } catch(err) {
         console.error('error sending image to the model')
       }
@@ -54,9 +55,12 @@ export class HolisticService {
     // throw new Error('not implemented')
   }
 
-  handleResults(results: Results) {
+  private handleResults(results: Results) {
     // console.log(results)
-    this.store.dispatch(pose.send({pose: results}))
+    if(results) {
+      this.store.dispatch(pose.send({pose: results}))
+    }
+    
   }
 
 }

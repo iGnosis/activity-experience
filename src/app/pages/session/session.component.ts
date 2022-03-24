@@ -43,6 +43,7 @@ export class SessionComponent implements AfterViewInit {
     private sit2standScene: SitToStandScene,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
+    private mpHolisticService: HolisticService,
     private eventsService: EventsService) {
       this.eventsService.addContext('session', this)
     }
@@ -92,6 +93,13 @@ export class SessionComponent implements AfterViewInit {
       const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
       this.updateDimensions(canvas)
     })
+  }
+
+  action_startMediaPipe(data: any) {
+    // Start MediaPipe Holistic
+    console.log('STARTING MEDIAPIPE');
+    
+    this.mpHolisticService.start(this.video.nativeElement, 20)
   }
   
 }

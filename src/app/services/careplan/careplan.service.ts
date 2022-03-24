@@ -115,6 +115,9 @@ export class CareplanService {
           {
             component: 'session',
             handler: 'startGame'
+          }, {
+            component: 'session',
+            handler: 'startMediaPipe'
           }
         ],
         source: 'event'

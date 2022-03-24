@@ -18,6 +18,8 @@ export class CalibrationService {
   }
 
   handlePose(results:any) {
+    if (!results) return
+    
     // Can have multiple configurations.
     let numHandsVisible = 0
     results.pose.leftHandLandmarks? numHandsVisible += 1: null 
