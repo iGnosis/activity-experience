@@ -7,6 +7,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { CareplanService } from '../careplan/careplan.service';
 import { EventsService } from '../events/events.service';
 import { v4 } from 'uuid';
+import { environment } from 'src/environments/environment';
 @Injectable({
   providedIn: 'root'
 })
@@ -17,6 +18,7 @@ export class CalibrationService {
   calibration$?: Observable<string>
   isCalibrating = false
   taskId = v4()
+  status = 'error'
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
   constructor(
     private store: Store<{pose: Results, calibration: any}>,
@@ -34,14 +36,19 @@ export class CalibrationService {
       this.calibration$ = this.store.select((state) => state.calibration.status)
       this.calibration$.subscribe(status => {
         this.eventDispatcher.dispatchEventName(status)
-        
+
+
+        if(!environment.analytics.calibration) {
+          return
+        }
+
         // calibration score
         let score = 0 // 0 means error
         switch(status) {
           case 'warning': 
-            score = 1; break;
+            score = 0.5; break;
           case 'success':
-            score = 2; break;
+            score = 1; break;
           default:
             score = 0
         }
