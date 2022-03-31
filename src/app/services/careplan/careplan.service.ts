@@ -18,7 +18,11 @@ export class CareplanService {
         "drum": "https://example.com/bg.mp3"
       }
     },
+    "calibration": {
+      type: 'full_body'
+    },
     "events": [
+      // Welcome stuff
       {
         "id": "event0",
         "source": 'system',
@@ -44,9 +48,8 @@ export class CareplanService {
               id: '123',
               data: {
                 messages: [
-                  { text: 'hi', timeout: 500},
-                  // {text: 'Hi', timeout: 2000},
-                  // {text: 'Welcome to Point Motion', timeout: 3000},
+                  {text: 'Hi', timeout: 1000},
+                  // {text: 'Welcome to Sound Health', timeout: 3000},
                   // {text: 'We will start with your calibration', timeout: 3000},
                 ]
               }
@@ -66,47 +69,7 @@ export class CareplanService {
           }
         ]
       }, 
-      {
-        "source": 'system',
-        "description": "Introduce the guide",
-        "trigger": {
-          "source": 'spotlight',
-          "name": "hidden",
-          "id": "spotlight0",
-        },
-        "actions": [
-          {
-            "component": 'guide',
-            "handler": "showMessages",
-            "hooks": {
-              "beforeAction": [
-
-              ],
-              "onSuccess": [
-                
-              ],
-              "onFailure": [
-                // catch stuff
-              ],
-              "afterAction": [
-                // finally stuff
-              ]
-            },
-            "params": {
-              "id": "guide0",
-              "data": {
-                "messages": [
-                  "Hi! ${user.name}",
-                  "Welcome back."
-                ],
-                "customData": "${trigger.data.customData} -- access custom data from trigger", 
-                "interval": 1000
-              },
-              
-            }
-          }
-        ]
-      },
+      // After the welcome, start the game and media pipe
       {
         trigger: {
           id: "start_game"
@@ -115,12 +78,66 @@ export class CareplanService {
           {
             component: 'session',
             handler: 'startGame'
-          }, {
+          }, 
+          {
             component: 'session',
             handler: 'startMediaPipe'
           }
         ],
         source: 'event'
+      }, 
+      // While it's not calibrated
+      {
+        trigger: {
+          source: 'calibration.service',
+          name: 'error'
+        },
+        actions: [
+          {
+            component: 'sit2stand',
+            handler: 'startCalibration'
+          },
+        ],
+      },
+      // When it gets calibrated
+      {
+        trigger: {
+          source: 'calibration.scene',
+          name: 'completed'
+        },
+        actions: [
+          {
+            component: 'spotlight',
+            handler: 'show'
+          },
+          {
+            "component": 'spotlight',
+            "handler": "showMessages",
+            "params": {
+              "id": '123',
+              "data": {
+                "messages": [
+                  {"text": 'Perfect', timeout: 1000},
+                  // {"text": 'Restarting the game', timeout: 3000},
+                ]
+              }
+            },
+            "hooks": {
+              "afterAction": [{
+                "component": 'calibration.scene',
+                "handler": "startActivity",
+                "hooks": {
+                  "beforeAction": [
+                    {
+                      "component": "spotlight",
+                      "handler": "hide"
+                    },
+                  ]
+                }
+              }]
+            }
+          },
+        ],
       }
     ]
   }
@@ -135,8 +152,7 @@ export class CareplanService {
     return this.careplan
   }
 
-  getCarePlan() {
-    this.careplan
+  getCarePlan(): CarePlan {
+    return this.careplan
   }
-  
 }

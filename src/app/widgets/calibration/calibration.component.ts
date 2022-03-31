@@ -15,12 +15,12 @@ export class CalibrationComponent implements OnInit {
   constructor(
     private store: Store<{ calibration: any; frame: any }>
   ) {
-    this.calibration$ = this.store.select('calibration')
+    this.calibration$ = this.store.select((state) => state.calibration.status)
   }
   
   ngOnInit(): void {
     this.calibration$.subscribe((result) => {
-      this.status = result.status
+      this.status = result
     })
   }
 

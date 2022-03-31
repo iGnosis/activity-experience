@@ -54,7 +54,7 @@ export class EventsService {
       throw new Error('No care plan found')
     }
 
-    console.log(this.registeredEvents);
+    this.log(this.registeredEvents);
   }
 
   /**
@@ -95,29 +95,29 @@ export class EventsService {
   }
 
   async dispatchEventName(source: string, event: string, data: any) {
-    console.log('Dispatching Event (source, event):', source, event);
+    this.log('Dispatching Event (source, event):', source, event);
     
     if (!this.registeredEvents[source]) {
-      console.log(`Event source ${source} not registered`)
+      this.log(`Event source ${source} not registered`)
     } else if (!this.registeredEvents[source][event]) {
-      console.log(`Event name ${event} not registered`)
+      this.log(`Event name ${event} not registered`)
     } else if(Array.isArray(this.registeredEvents[source][event])){
       // Extract the actions from the trigger and execute the actions
       for(const action of this.registeredEvents[source][event]) {
-        console.log('Executing actions on (source, event):', source, event);
+        this.log('Executing actions on (source, event):', source, event);
         await this.executeAction(action)
       }
     }
   }
 
   async dispatchEventId(id: string, data: any) {
-    console.log('Dispatching Event (id) ', id);
+    this.log('Dispatching Event (id) ', id);
     if (!this.registeredEvents[id]) {
-      console.log(`Event id ${id} not registered`)
+      this.log(`Event id ${id} not registered`)
     } else if(Array.isArray(this.registeredEvents[id])){
       // Extract the actions from the trigger and execute the actions
       for(const action of this.registeredEvents[id]) {
-        console.log('Executing actions on (id):', id);
+        this.log('Executing actions on (id):', id);
         await this.executeAction(action)
       }
     }
@@ -126,14 +126,14 @@ export class EventsService {
   // TODO: Implement a scalable way to 
   async executeAction(action: Action) {
     // Check that the action component is registered
-    console.log('executing action ', action.component, action.handler);
+    this.log('executing action ', action.component, action.handler);
     
     if (this.contexts[action.component]) {
       if (typeof (this.contexts[action.component]['action_' + action.handler]) == 'function') {
         
         // Execute the beforeAction hooks
         if(action.hooks && action.hooks.beforeAction) {
-          console.log('Executing beforeAction hooks ', action.component, action.handler);
+          this.log('Executing beforeAction hooks ', action.component, action.handler);
           for(const hookAction of action.hooks.beforeAction) {
             await this.executeAction(hookAction)
           }
@@ -141,10 +141,10 @@ export class EventsService {
 
         // Execute the main action. 
         try {
-          console.log('Executing the main function', action.component, action.handler);
+          this.log('Executing the main function', action.component, action.handler);
           await this.contexts[action.component]['action_' + action.handler].call(this.contexts[action.component], action.params)
           if(action.hooks && action.hooks.onSuccess) {
-            console.log('Executing onSuccess hook', action.component, action.handler);
+            this.log('Executing onSuccess hook', action.component, action.handler);
             for(const hookAction of action.hooks.onSuccess) {
               await this.executeAction(hookAction)
             }
@@ -153,13 +153,13 @@ export class EventsService {
           console.error(err)
           // Execute the onError hook, if present
           if(action.hooks && action.hooks.onFailure) {
-            console.log('Executing onFailure hook', action.component, action.handler);
+            this.log('Executing onFailure hook', action.component, action.handler);
             for(const hookAction of action.hooks.onFailure) {
               await this.executeAction(hookAction)
             }
           }
         } finally {
-          console.log('Executing afterAction hook', action.component, action.handler);
+          this.log('Executing afterAction hook', action.component, action.handler);
           if(action.hooks && action.hooks.afterAction) {
             for(const hookAction of action.hooks.afterAction) {
               await this.executeAction(hookAction)
@@ -179,5 +179,11 @@ export class EventsService {
     delete(this.contexts[key])
   }
 
+
+  log(...args: any) {
+    if(true) {
+      console.log(args)
+    }
+  }
 
 }

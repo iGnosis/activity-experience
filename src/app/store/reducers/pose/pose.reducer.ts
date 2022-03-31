@@ -7,7 +7,6 @@ export const initialState: Results = undefined;
 
 const handleSend = (state: any, data:any) => {
   // console.log(data)
-  
   return data
 }
 

@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
+import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { EventsService } from 'src/app/services/events/events.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
@@ -17,6 +18,7 @@ export class SessionComponent implements AfterViewInit {
   
   @ViewChild('videoElm') video!: ElementRef
   @ViewChild('canvasElm') canvas!: ElementRef
+  @ViewChild('sessionElm') sessionElm!: ElementRef
   session?: Phaser.Game
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -44,6 +46,7 @@ export class SessionComponent implements AfterViewInit {
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
+    private calibrationService: CalibrationService,
     private eventsService: EventsService) {
       this.eventsService.addContext('session', this)
     }
@@ -60,6 +63,7 @@ export class SessionComponent implements AfterViewInit {
     this.updateDimensions(this.video.nativeElement)
 
     this.dispatcher?.dispatchEventName('ready')
+    // this.dispatcher?.dispatchEventId('start_game')
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
@@ -78,20 +82,49 @@ export class SessionComponent implements AfterViewInit {
   }
  
   async action_startCalibration(data: any) {
-    this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
-      scene.scene.remove()
-    })
-    this.session?.scene.start('calibration')
+    // If calibration is not already going on...
+    console.log('action_startCalibration: this.calibrationService.isCalibrating', this.calibrationService.isCalibrating);
+    
+    if(! this.calibrationService.isCalibrating) {
+      // If the top scene is already calibration. don't do anything
+      if(this.session && Array.isArray(this.session?.scene.getScenes()) && 
+      this.session?.scene.getScenes().length == 1 && this.session?.scene.getScenes()[0].scene.key === 'calibration') {
+        console.log('action_startCalibration: calibration scene is already on');
+        return
+      } else {
+        console.log('action_startCalibration: need to start the calibration scene');
+      }
+
+      this.calibrationService.isCalibrating = true
+      // @ts-ignore
+      window.session = this.session
+      this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
+        console.log('scene', scene.scene.key);
+        scene.scene.remove()
+      })
+      this.session?.scene.start('calibration')
+    }
+    
   }
 
   async action_startGame(data: any) {
-    this.config.scene = [this.calibrationScene, this.sit2standScene]
-    this.session = new Phaser.Game(this.config)
+    const scenes = [this.calibrationScene, this.sit2standScene]
+    
+    // Scenes are already added to the game
+    if(this.session?.scene.keys && Object.keys(this.session?.scene.keys).length === scenes.length) {
+      // What was I supposed to do here, again?
+    } else {
+      this.config.scene = scenes
+      this.session = new Phaser.Game(this.config)
+    }
     
     setTimeout(() => {
       // Set the canvas to take up the same space as the video. Simplifying all the calculations
       const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
       this.updateDimensions(canvas)
+      // @ts-ignore.
+      window.pm.session = this 
+      // this.sessionElm.nativeElement.requestFullscreen()
     })
   }
 
@@ -102,4 +135,11 @@ export class SessionComponent implements AfterViewInit {
     this.mpHolisticService.start(this.video.nativeElement, 20)
   }
   
+  action_restartGame(data: any) {
+    this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
+      scene.scene.remove()
+    })
+    this.calibrationService.isCalibrating = false
+    this.session?.scene.start('sit2stand')
+  }
 }

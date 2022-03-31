@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Store } from '@ngrx/store';
+import { filter, Observable, pipe } from 'rxjs';
+import { select, Store } from '@ngrx/store';
 import { calibration } from 'src/app/store/actions/calibration.actions';
+import { testStringAction } from 'src/app/store/actions/test.action';
 
 @Component({
   selector: 'app-welcome',
@@ -10,25 +11,30 @@ import { calibration } from 'src/app/store/actions/calibration.actions';
 })
 export class WelcomeComponent implements OnInit {
 
-  calibration$?: Observable<String>
-  frame$?: Observable<any>
+  test$?: Observable<string>
+  // test$? = Observable<String>
 
-  constructor(private store: Store<{calibration: String, frame: String}>) {
-    this.calibration$ = store.select('calibration')
-    this.frame$ = store.select('frame')
-    this.frame$.subscribe((result) => {
-      // console.log(result)
+  constructor(private store: Store<{test: {name: string, age: number}}>) {
+    
+    this.test$ = store.select((state) => state.test.name)
+    this.test$.subscribe(name => {
+      console.log('new name', name);
+      
     })
+    // this.test$.subscribe(value => {
+    //   console.log(value);
+    // })
+
   }
 
   ngOnInit(): void {
   }
 
   invalid() {
-    this.store.dispatch(calibration.error({pose: {}, reason: ''}))
+    this.store.dispatch(testStringAction({name: 'Aman', age: 20}))
   }
 
   noPerson() {
-    this.store.dispatch(calibration.success({pose: {}, reason: ''}))
+    this.store.dispatch(testStringAction({name: 'Gautam', age: 21}))
   }
 }
