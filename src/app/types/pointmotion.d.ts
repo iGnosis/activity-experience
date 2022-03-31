@@ -564,3 +564,26 @@ export type HolisticDTO = {
    status: string,
    reason: string
  }
+
+
+export type AnalyticsRow = {
+  patient: string,
+  session: string,
+  activity?: string,
+  task_id?: string,
+  attempt_id?: string,
+  task_name?: string,
+  event_type: string,
+  created_at: string,
+  score?: number
+}
+
+// A light-weight version of what different context will send
+export type AnalyticsEvent = {
+  activity?: string,
+  task_id?: string,
+  attempt_id?: string,
+  task_name?: string,
+  event_type: string,
+  score?: number
+}
