@@ -47,6 +47,8 @@ export type CarePlan = {
     assets: any
     events: Array<SessionEvent>
     calibration: CalibrationConfig
+    activities: Array<string>
+    config: any
     // trigger: Trigger
     // actions: Array<Action>
 }
@@ -140,6 +142,19 @@ export type SpotlightActionShowMessageDTO = {
     text: string
     icon: string
     timeout: number
+}
+
+export type GuideActionShowMessagesDTO = {
+  id?: string
+  data : {
+      messages: Array<GuideActionShowMessageDTO>
+  }
+}
+
+export type GuideActionShowMessageDTO = {
+  text: string
+  icon?: string
+  timeout: number
 }
 
 export type EventActionDispatchEventNameDTO = {

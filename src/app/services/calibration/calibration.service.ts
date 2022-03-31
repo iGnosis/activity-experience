@@ -8,6 +8,8 @@ import { CareplanService } from '../careplan/careplan.service';
 import { EventsService } from '../events/events.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
+import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
+import { guide } from 'src/app/store/actions/guide.actions';
 @Injectable({
   providedIn: 'root'
 })
@@ -21,7 +23,7 @@ export class CalibrationService {
   status = 'error'
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
   constructor(
-    private store: Store<{pose: Results, calibration: any}>,
+    private store: Store<{pose: Results, calibration: any, guide: GuideActionShowMessagesDTO}>,
     private eventService: EventsService,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
@@ -89,14 +91,26 @@ export class CalibrationService {
     switch(numHandsVisible) {
       case 0:
         this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see hands'}))
+        this.store.dispatch(guide.sendMessages({data: {messages: [{
+          text: 'Cannot see any hand',
+          timeout: 3000
+        }]}}))
         // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
         break;
       case 1:
         this.store.dispatch(calibration.warning({pose: results.pose, reason: 'Can only see one hand'}))
+        this.store.dispatch(guide.sendMessages({data: {messages: [{
+          text: 'Can only see one hand',
+          timeout: 3000
+        }]}}))
         // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
         break;
       case 2: 
         this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
+        this.store.dispatch(guide.sendMessages({data: {messages: [{
+          text: 'Perfect',
+          timeout: 3000
+        }]}}))
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
     }

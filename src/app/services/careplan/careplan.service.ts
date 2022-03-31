@@ -139,7 +139,16 @@ export class CareplanService {
           },
         ],
       }
-    ]
+    ],
+    activities: [
+      'sit2stand'
+    ],
+    config: {
+      'sit2stand': {
+        reps: 5,
+        repTimeout: 3000
+      }
+    }
   }
   
   constructor(private eventService: EventsService) { }

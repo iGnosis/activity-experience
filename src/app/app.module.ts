@@ -14,6 +14,7 @@ import { calibrationReducer } from './store/reducers/calibration/calibration.red
 import { frameReducer } from './store/reducers/frame/frame.reducer';
 import { poseReducer } from './store/reducers/pose/pose.reducer';
 import { testReducer } from './store/reducers/test.reducer';
+import { guideReducer } from './store/reducers/guide.reducer';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { testReducer } from './store/reducers/test.reducer';
       calibration: calibrationReducer, 
       frame: frameReducer,
       pose: poseReducer,
-      test: testReducer
+      test: testReducer,
+      guide: guideReducer
     })
   ],
   providers: [],
