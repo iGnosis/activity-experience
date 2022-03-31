@@ -91,26 +91,17 @@ export class CalibrationService {
     switch(numHandsVisible) {
       case 0:
         this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see hands'}))
-        this.store.dispatch(guide.sendMessages({data: {messages: [{
-          text: 'Cannot see any hand',
-          timeout: 3000
-        }]}}))
+        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Cannot see hands', timeout: 2000}))
         // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
         break;
       case 1:
         this.store.dispatch(calibration.warning({pose: results.pose, reason: 'Can only see one hand'}))
-        this.store.dispatch(guide.sendMessages({data: {messages: [{
-          text: 'Can only see one hand',
-          timeout: 3000
-        }]}}))
+        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Can only see one hand', timeout: 2000}))
         // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
         break;
       case 2: 
         this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
-        this.store.dispatch(guide.sendMessages({data: {messages: [{
-          text: 'Perfect',
-          timeout: 3000
-        }]}}))
+        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'All well', timeout: 2000}))
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
     }

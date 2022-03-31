@@ -152,9 +152,11 @@ export type GuideActionShowMessagesDTO = {
 }
 
 export type GuideActionShowMessageDTO = {
+  title: string,
   text: string
   icon?: string
   timeout: number
+  id?: string // merged text to watch
 }
 
 export type EventActionDispatchEventNameDTO = {

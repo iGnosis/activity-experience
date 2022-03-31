@@ -1,6 +1,6 @@
 import { createAction, props } from "@ngrx/store";
-import { GuideActionShowMessagesDTO } from "src/app/types/pointmotion";
+import { GuideActionShowMessageDTO } from "src/app/types/pointmotion";
 
 export const guide = {
-    sendMessages: createAction('[Guide] Send Messages', props<GuideActionShowMessagesDTO>())
+    sendMessages: createAction('[Guide] Send Messages', props<GuideActionShowMessageDTO>())
 }

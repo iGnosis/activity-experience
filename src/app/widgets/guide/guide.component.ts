@@ -11,29 +11,33 @@ import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO } from 'src/app/t
 })
 export class GuideComponent implements AfterViewInit {
 
-  message: string | undefined = '' 
+  messageTitle: string | undefined = '' 
+  messageBody: string | undefined = ''
   hidden = false
   messagesQueue: Array<GuideActionShowMessageDTO> = []
-  messages$?: Observable<GuideActionShowMessagesDTO>
+  messages$?: Observable<string | undefined>
   handlingQueue = false
   requestQueue: Array<GuideActionShowMessagesDTO> = [] // Queue the incoming requests as well...
 
-  constructor(private eventService: EventsService, private store: Store<{guide: GuideActionShowMessagesDTO}>) { 
+  constructor(private eventService: EventsService, private store: Store<{guide: GuideActionShowMessageDTO}>) { 
     
   }
 
   ngAfterViewInit(): void {
     this.eventService.addContext('guide', this)
 
-    this.messages$ = this.store.select(state => state.guide)
+    // this.messages$ = this.store.select('guide')
+    this.messages$ = this.store.select(state => state.guide.id)
 
-    this.messages$.subscribe(data => {
-      if(this.requestQueue.length == 0) {
-        this.action_showMessages(data)
-      } else {
-        this.requestQueue.push(data)
-      }
-      
+    // hacky way of getting only one value without long running subscription...
+    this.messages$.subscribe((message: string | undefined) => {
+      const guideMessageSubscription = this.store.select('guide').subscribe(data => {
+        this.messageTitle = data.title
+        this.messageBody = data.text
+        setTimeout(() => {
+          guideMessageSubscription.unsubscribe()
+        })
+      })
     })
 
   }
@@ -60,7 +64,7 @@ export class GuideComponent implements AfterViewInit {
         for(let message of this.messagesQueue) {
           console.log('spotlight: updating message', message.text);
           
-          this.message = message.text
+          this.messageBody = message.text
           await this.sleep(message.timeout)
         }
         this.messagesQueue = []
