@@ -25,14 +25,14 @@ export class CareplanService {
       // Welcome stuff
       {
         "id": "event0",
-        "source": 'system',
+        "source": 'session',
         "description": "Show a welcome message",
         "logging": {
           "debug": true,
           "error": true
         },
         "trigger": {
-          "source": 'system',
+          "source": 'session',
           "name": "ready",
           "comment": "When the assets are loaded"
         },
@@ -93,10 +93,10 @@ export class CareplanService {
           name: 'error'
         },
         actions: [
-          {
-            component: 'sit2stand',
-            handler: 'startCalibration'
-          },
+          // {
+          //   component: 'sit2stand',
+          //   handler: 'startCalibration'
+          // },
         ],
       },
       // When it gets calibrated

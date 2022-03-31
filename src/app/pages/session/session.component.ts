@@ -41,12 +41,11 @@ export class SessionComponent implements AfterViewInit {
   
   // DI the needed scenes
   constructor(
-    private calibrationScene: CalibrationScene,
-    private sit2standScene: SitToStandScene,
+    // private calibrationScene: CalibrationScene,
+    // private sit2standScene: SitToStandScene,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
-    private calibrationService: CalibrationService,
     private eventsService: EventsService) {
       this.eventsService.addContext('session', this)
     }
@@ -54,7 +53,9 @@ export class SessionComponent implements AfterViewInit {
   async ngAfterViewInit() {
     // Download the careplan. do it in the welcome page later
     this.careplan = this.careplanService.downloadCarePlan('')
-    this.dispatcher = this.eventsService.addContext('system', this)
+    
+    // Register the session component to send and receive events
+    this.dispatcher = this.eventsService.addContext('session', this)
 
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
     this.video.nativeElement.srcObject = stream
@@ -82,50 +83,18 @@ export class SessionComponent implements AfterViewInit {
   }
  
   async action_startCalibration(data: any) {
-    // If calibration is not already going on...
-    console.log('action_startCalibration: this.calibrationService.isCalibrating', this.calibrationService.isCalibrating);
-    
-    if(! this.calibrationService.isCalibrating) {
-      // If the top scene is already calibration. don't do anything
-      if(this.session && Array.isArray(this.session?.scene.getScenes()) && 
-      this.session?.scene.getScenes().length == 1 && this.session?.scene.getScenes()[0].scene.key === 'calibration') {
-        console.log('action_startCalibration: calibration scene is already on');
-        return
-      } else {
-        console.log('action_startCalibration: need to start the calibration scene');
-      }
-
-      this.calibrationService.isCalibrating = true
-      // @ts-ignore
-      window.session = this.session
-      this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
-        console.log('scene', scene.scene.key);
-        scene.scene.remove()
-      })
-      this.session?.scene.start('calibration')
-    }
     
   }
 
   async action_startGame(data: any) {
-    const scenes = [this.calibrationScene, this.sit2standScene]
-    
-    // Scenes are already added to the game
-    if(this.session?.scene.keys && Object.keys(this.session?.scene.keys).length === scenes.length) {
-      // What was I supposed to do here, again?
-    } else {
-      this.config.scene = scenes
-      this.session = new Phaser.Game(this.config)
-    }
-    
-    setTimeout(() => {
-      // Set the canvas to take up the same space as the video. Simplifying all the calculations
-      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
-      this.updateDimensions(canvas)
-      // @ts-ignore.
-      window.pm.session = this 
-      // this.sessionElm.nativeElement.requestFullscreen()
-    })
+    // setTimeout(() => {
+    //   // Set the canvas to take up the same space as the video. Simplifying all the calculations
+    //   const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
+    //   this.updateDimensions(canvas)
+    //   // @ts-ignore.
+    //   window.pm.session = this 
+    //   // this.sessionElm.nativeElement.requestFullscreen()
+    // })
   }
 
   action_startMediaPipe(data: any) {
@@ -136,10 +105,5 @@ export class SessionComponent implements AfterViewInit {
   }
   
   action_restartGame(data: any) {
-    this.session?.scene.getScenes().forEach((scene: Phaser.Scene) => {
-      scene.scene.remove()
-    })
-    this.calibrationService.isCalibrating = false
-    this.session?.scene.start('sit2stand')
   }
 }
