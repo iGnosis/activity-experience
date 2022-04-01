@@ -14,6 +14,14 @@ const _guideReducer = createReducer(initialState,
             timeout: data.timeout,
             id: data.title + data.text // if either the title or text changes...make the change happen
         }
+    }),
+    on(guide.hide, (state, data) => {
+        return {
+            title: undefined,
+            text: undefined,
+            icon: undefined,
+            id: undefined
+        }
     })
 )
 

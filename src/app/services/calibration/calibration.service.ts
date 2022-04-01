@@ -101,7 +101,7 @@ export class CalibrationService {
         break;
       case 2: 
         this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
-        // this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Perfect!', timeout: 2000}))
+        this.store.dispatch(guide.hide())
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
     }
