@@ -14,7 +14,7 @@ export class AnalyticsService {
   async sendEvent(event: AnalyticsEvent) {
     const analyticsRow: AnalyticsRow = {
       patient: environment.patient, // TODO remove hardcoded
-      session: '2d01273f-d40b-42d7-bfdb-76843668accb', // TODO remove hardcoded
+      session: '0c517e70-a061-4db2-88ee-9bb1b1f7a9a0', // TODO remove hardcoded
       activity: event.activity,
       task_id: event.task_id,
       task_name: event.task_name,
