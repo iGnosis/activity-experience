@@ -48,7 +48,9 @@ export class SitToStandService {
       (leftKnee.visibility && leftKnee.visibility < 0.6) ||
       (rightHip.visibility && rightHip.visibility < 0.6) ||
       (rightKnee.visibility && rightKnee.visibility < 0.6)) {
-        return
+        return {
+          result: 'unknown'
+        }
       }
       
       let distanceBetweenLeftHipAndKnee = this._calcDist(leftHip.x, leftHip.y, leftKnee.x, leftKnee.y)
@@ -63,14 +65,25 @@ export class SitToStandService {
         // this.store.dispatch(calibration.success({ pose: results.pose, reason: 'Sitting down' }))
         console.log('sitting down');
         this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
+        return {
+          result: 'sit'
+        }
       } else {
         // this.store.dispatch(calibration.warning({ pose: results.pose, reason: 'Standing up' }))
         this.store.dispatch(guide.sendMessages({title: 'Standing', text: 'Standing', timeout: 2000}))
+        return {
+          result: 'stand'
+        }
       }
       
+    } else {
+      return {
+        result: 'disabled',
+      }
     }
   }
-  
+
+
   action_enable() {
     this.isEnabled = true
   }
