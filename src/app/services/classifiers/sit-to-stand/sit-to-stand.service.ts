@@ -12,6 +12,9 @@ export class SitToStandService {
 
   private isEnabled = false
   private distanceThreshold = 0.25
+  private currentClass = 'unknown'
+  private repsCompleted = 0
+  private activityExplained = false
 
   constructor(private eventService: EventsService, private careplan: CareplanService, private store: Store<{ calibration: any }>,) {
     this.eventService.addContext('sit2stand.service', this)
@@ -84,6 +87,14 @@ export class SitToStandService {
       }
     }
   }
+
+  async startActivity() {
+    // Do upto 5 reps...
+    if (!this.activityExplained) {
+      this.store.dispatch(guide.sendMessages({text: 'Please sit when you see and EVEN number and STAND when you see ODD number', title: 'Ready?', timeout: 2000}))
+    }
+  }
+
 
 
   action_enable() {

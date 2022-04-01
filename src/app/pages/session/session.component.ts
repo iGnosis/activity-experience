@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { Store } from '@ngrx/store';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
@@ -10,7 +11,7 @@ import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
-
+import { session as sessionAction } from 'src/app/store/actions/session.actions';
 @Component({
   selector: 'app-session',
   templateUrl: './session.component.html',
@@ -43,21 +44,24 @@ export class SessionComponent implements AfterViewInit {
   
   // DI the needed scenes
   constructor(
-    // private calibrationScene: CalibrationScene,
-    // private sit2standScene: SitToStandScene,
+    private store: Store<{}>,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
     private sit2standService: SitToStandService,
     private sessionService: SessionService,
     private eventsService: EventsService) {
-      this.eventsService.addContext('session', this)
-    }
+  }
   
   async ngAfterViewInit() {
 
+    this.eventsService.addContext('session', this)
+    
+    // Use this for analytics
     const session = await this.sessionService.new()
-    alert(session.insert_session_one.id)
+
+    // Set the session id in the global store
+    await this.store.dispatch(sessionAction.startSession(session.insert_session_one))
 
     // Download the careplan. do it in the welcome page later
     this.careplan = this.careplanService.downloadCarePlan(session.insert_session_one.id)

@@ -18,6 +18,7 @@ export class GuideComponent implements AfterViewInit {
   messages$?: Observable<string | undefined>
   handlingQueue = false
   requestQueue: Array<GuideActionShowMessagesDTO> = [] // Queue the incoming requests as well...
+  clearTimeout: any
 
   constructor(private eventService: EventsService, private store: Store<{guide: GuideActionShowMessageDTO}>) { 
     
@@ -32,11 +33,21 @@ export class GuideComponent implements AfterViewInit {
     // hacky way of getting only one value without long running subscription...
     this.messages$.subscribe((message: string | undefined) => {
       const guideMessageSubscription = this.store.select('guide').subscribe(data => {
+        // Stop from the data getting removed from a timeout scheduled for an older message
+        if(this.clearTimeout) clearTimeout(this.clearTimeout)
+
         this.messageTitle = data.title
         this.messageBody = data.text
+        const timeout = data.timeout
         setTimeout(() => {
           guideMessageSubscription.unsubscribe()
         })
+
+        // Remove the message automatically after timeout
+        this.clearTimeout = setTimeout(() => {
+          this.messageTitle = undefined
+          this.messageBody = undefined
+        }, timeout);
       })
     })
 
