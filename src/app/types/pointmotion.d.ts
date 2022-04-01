@@ -607,6 +607,7 @@ export type AnalyticsEvent = {
 
 
 export type SessionState = {
+  session?: SessionRow,
   currentActivity?: ActivityState,
   nextActivity?: ActivityState
 }

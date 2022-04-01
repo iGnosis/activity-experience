@@ -16,6 +16,10 @@ export class SessionService {
     return this.client.req(gql`mutation StartSession($careplan:uuid!, $patient:uuid!) {
       insert_session_one(object: {careplan: $careplan, patient: $patient}) {
         id
+        createdAt
+        updatedAt
+        careplan
+        patient
       }
     }`, {
       careplan: environment.careplan,
