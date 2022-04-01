@@ -9,13 +9,13 @@ import { EventsService } from '../../events/events.service';
   providedIn: 'root'
 })
 export class SitToStandService {
-  
+
   private isEnabled = false
   private distanceThreshold = 0.25
-  
+
   constructor(private eventService: EventsService, private careplan: CareplanService, private store: Store<{calibration: any}>,) {
     this.eventService.addContext('sit2stand.service', this)
-    
+
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {
       this.distanceThreshold = this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold
@@ -31,58 +31,60 @@ export class SitToStandService {
       }
     })
   }
-  
+
   classify(pose: Results) {
     if (this.isEnabled) {
-      let postLandmarkArray = pose.poseLandmarks
-      let leftHip = postLandmarkArray[23]
-      let leftKnee = postLandmarkArray[25]
-      let rightHip = postLandmarkArray[24]
-      let rightKnee = postLandmarkArray[26]
-      
-      // console.log(leftHip, rightHip)
-      // console.log(rightKnee, rightKnee)
-      
+      const postLandmarkArray = pose.poseLandmarks
+      const leftShoulder = postLandmarkArray[11]
+      const leftHip = postLandmarkArray[23]
+      const leftKnee = postLandmarkArray[25]
+
+      const rightShoulder = postLandmarkArray[12]
+      const rightHip = postLandmarkArray[24]
+      const rightKnee = postLandmarkArray[26]
+
       // make sure that body parts are visible
-      if ((leftHip.visibility && leftHip.visibility < 0.6) ||
+      if ((leftShoulder.visibility && leftShoulder.visibility < 0.6) ||
+      (leftHip.visibility && leftHip.visibility < 0.6) ||
       (leftKnee.visibility && leftKnee.visibility < 0.6) ||
+      (rightShoulder.visibility && rightShoulder.visibility < 0.6) ||
       (rightHip.visibility && rightHip.visibility < 0.6) ||
       (rightKnee.visibility && rightKnee.visibility < 0.6)) {
         return
       }
-      
-      let distanceBetweenLeftHipAndKnee = this._calcDist(leftHip.x, leftHip.y, leftKnee.x, leftKnee.y)
-      console.log(`Dist left Hip - Knee: ${distanceBetweenLeftHipAndKnee}`)
-      let distanceBetweenRightHipAndKnee = this._calcDist(rightHip.x, rightHip.y, rightKnee.x, rightKnee.y)
-      console.log(`Dist right Hip - Knee: ${distanceBetweenRightHipAndKnee}`)
-      
-      // 0.25 is distance threshold. We may need to fine tune this parameter.
-      
-      
-      if (distanceBetweenLeftHipAndKnee < this.distanceThreshold && distanceBetweenRightHipAndKnee < this.distanceThreshold) {
-        // this.store.dispatch(calibration.success({ pose: results.pose, reason: 'Sitting down' }))
+
+      const distanceBetweenLeftShoulderAndHip = this._calcDist(leftShoulder.x, leftShoulder.y, leftHip.x, leftHip.y)
+      const distanceBetweenRightShoulderAndHip = this._calcDist(rightShoulder.x, rightShoulder.y, rightHip.x, rightHip.y)
+      const distanceBetweenLeftHipAndKnee = this._calcDist(leftHip.x, leftHip.y, leftKnee.x, leftKnee.y)
+      const distanceBetweenRightHipAndKnee = this._calcDist(rightHip.x, rightHip.y, rightKnee.x, rightKnee.y)
+
+      console.log(`dist - L: s-h: ${distanceBetweenLeftShoulderAndHip} h-k: ${distanceBetweenLeftHipAndKnee}`)
+      console.log(`dist - R: s-h: ${distanceBetweenRightShoulderAndHip} h-k: ${distanceBetweenRightHipAndKnee}`)
+
+      const isSittingL = distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee
+      const isSittingR = distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee
+
+      if (isSittingL && isSittingR) {
         console.log('sitting down');
         this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
       } else {
-        // this.store.dispatch(calibration.warning({ pose: results.pose, reason: 'Standing up' }))
         this.store.dispatch(guide.sendMessages({title: 'Standing', text: 'Standing', timeout: 2000}))
       }
-      
     }
   }
-  
+
   action_enable() {
     this.isEnabled = true
   }
-  
+
   action_disable() {
     this.isEnabled = false
   }
-  
+
   _calcDist(x1: number, y1: number, x2: number, y2: number): any {
     // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
     const distance = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2))
     return distance
   }
-  
+
 }
