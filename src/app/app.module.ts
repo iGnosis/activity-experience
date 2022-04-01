@@ -15,6 +15,7 @@ import { frameReducer } from './store/reducers/frame/frame.reducer';
 import { poseReducer } from './store/reducers/pose/pose.reducer';
 import { testReducer } from './store/reducers/test.reducer';
 import { guideReducer } from './store/reducers/guide.reducer';
+import { sessionReducer } from './store/reducers/session.reducer';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { guideReducer } from './store/reducers/guide.reducer';
       frame: frameReducer,
       pose: poseReducer,
       test: testReducer,
-      guide: guideReducer
+      guide: guideReducer,
+      session: sessionReducer
     })
   ],
   providers: [],

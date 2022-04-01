@@ -50,7 +50,9 @@ export class SitToStandService {
       (rightShoulder.visibility && rightShoulder.visibility < 0.6) ||
       (rightHip.visibility && rightHip.visibility < 0.6) ||
       (rightKnee.visibility && rightKnee.visibility < 0.6)) {
-        return
+        return {
+          result: 'unknown'
+        }
       }
 
       const distanceBetweenLeftShoulderAndHip = this._calcDist(leftShoulder.x, leftShoulder.y, leftHip.x, leftHip.y)
@@ -67,11 +69,23 @@ export class SitToStandService {
       if (isSittingL && isSittingR) {
         console.log('sitting down');
         this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
+        return {
+          result: 'sit'
+        }
       } else {
         this.store.dispatch(guide.sendMessages({title: 'Standing', text: 'Standing', timeout: 2000}))
+        return {
+          result: 'stand'
+        }
+      }
+
+    } else {
+      return {
+        result: 'disabled',
       }
     }
   }
+
 
   action_enable() {
     this.isEnabled = true
