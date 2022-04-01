@@ -20,14 +20,16 @@ export class CalibrationService {
   calibration$?: Observable<string>
   isCalibrating = false
   taskId = v4()
+  attemptId = v4()
+  previousAttemptId = this.attemptId
   status = 'error'
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
   constructor(
-    private store: Store<{pose: Results, calibration: any, guide: GuideActionShowMessagesDTO}>,
+    private store: Store<{ pose: Results, calibration: any, guide: GuideActionShowMessagesDTO }>,
     private eventService: EventsService,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
-    ) {
+  ) {
     this.pose$ = store.select('pose')
     this.pose$.subscribe((results) => {
       this.handlePose(results)
@@ -40,89 +42,112 @@ export class CalibrationService {
         this.eventDispatcher.dispatchEventName(status)
 
 
-        if(!environment.analytics.calibration) {
+        if (!environment.analytics.calibration) {
           return
         }
 
         // calibration score
         let score = 0 // 0 means error
-        switch(status) {
-          case 'warning': 
+        switch (status) {
+          case 'warning':
             score = 0.5; break;
           case 'success':
             score = 1; break;
           default:
             score = 0
         }
-        // Also send it through analytics
+
         const activity = analyticsService.getActivityId('Calibration')
+
+        // renew attemptId
+        this.attemptId = v4()
+        this.taskId = v4()
+
+        // start a task since it'd a retry
         this.analyticsService.sendEvent({
           activity,
-          attempt_id: v4(),
-          event_type: 'calibrationChanged',
+          attempt_id: this.attemptId,
+          event_type: 'taskStarted',
+          task_id: this.taskId,
+          score: 0,
+          task_name: 'calibration'
+        })
+
+        this.analyticsService.sendEvent({
+          activity,
+          attempt_id: this.attemptId,
+          event_type: 'taskReacted',
+          task_id: this.taskId,
+          score: 0,
+          task_name: 'calibration'
+        })
+
+        this.analyticsService.sendEvent({
+          activity,
+          attempt_id: this.attemptId,
+          event_type: 'taskEnded',
           task_id: this.taskId,
           score,
-          task_name: status
+          task_name: 'calibration'
         })
       })
     }, 500)
-    
   }
 
-  handlePose(results: {pose: Results}) {
+  handlePose(results: { pose: Results }) {
     if (!results) return
-    
+
     // Can have multiple configurations.
-    switch(this.careplanService.getCarePlan().calibration.type) {
+    switch (this.careplanService.getCarePlan().calibration.type) {
       case 'full_body':
         this.calibrateFullBody(results)
         break
       case 'hands':
         this.calibrateHands(results)
-        break 
+        break
     }
   }
 
   calibrateHands(results: any) {
     let numHandsVisible = 0
-    results.pose.leftHandLandmarks? numHandsVisible += 1: null 
-    results.pose.rightHandLandmarks? numHandsVisible += 1: null 
+    results.pose.leftHandLandmarks ? numHandsVisible += 1 : null
+    results.pose.rightHandLandmarks ? numHandsVisible += 1 : null
 
-    switch(numHandsVisible) {
+    switch (numHandsVisible) {
       case 0:
-        this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see hands'}))
-        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Show your hands!', timeout: 2000}))
+        this.store.dispatch(calibration.error({ pose: results.pose, reason: 'Cannot see hands' }))
+        this.store.dispatch(guide.sendMessages({ title: 'Calibration', text: 'Show your hands!', timeout: 2000 }))
         // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
         break;
       case 1:
-        this.store.dispatch(calibration.warning({pose: results.pose, reason: 'Can only see one hand'}))
-        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Both hands....', timeout: 2000}))
+        this.store.dispatch(calibration.warning({ pose: results.pose, reason: 'Can only see one hand' }))
+        this.store.dispatch(guide.sendMessages({ title: 'Calibration', text: 'Both hands....', timeout: 2000 }))
         // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
         break;
-      case 2: 
-        this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
+      case 2:
+        this.store.dispatch(calibration.success({ pose: results.pose, reason: 'All well' }))
         this.store.dispatch(guide.hide())
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
     }
   }
 
-  calibrateFullBody(results: {pose: Results}) {
+  calibrateFullBody(results: { pose: Results }) {
     // console.log('calibrateFullBody', results);
-    
+
     const sendError = () => {
-      this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see required points'}))
-      this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Move into the frame, please', timeout: 2000}))
+      this.store.dispatch(calibration.error({ pose: results.pose, reason: 'Cannot see required points' }))
+      this.store.dispatch(guide.sendMessages({ title: 'Calibration', text: 'Move into the frame, please', timeout: 2000 }))
     }
 
     const sendSuccess = () => {
-      this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
+      this.store.dispatch(calibration.success({ pose: results.pose, reason: 'All well' }))
     }
 
     let poseLandmarkArray = results.pose.poseLandmarks
 
-    if(!Array.isArray(poseLandmarkArray)) {
-      
+    if (!Array.isArray(poseLandmarkArray)) {
+
       return sendError()
     } else {
       let leftHip = poseLandmarkArray[23]
@@ -133,24 +158,23 @@ export class CalibrationService {
         (leftKnee.visibility && leftKnee.visibility < 0.6) ||
         (rightHip.visibility && rightHip.visibility < 0.6) ||
         (rightKnee.visibility && rightKnee.visibility < 0.6)) {
-          sendError()
+        sendError()
       } else {
         sendSuccess()
       }
     }
 
-    
-    
+
+
     // console.log(leftHip, rightHip)
     // console.log(rightKnee, rightKnee)
-    
+
     // make sure that body parts are visible
-    
+
   }
 
   dispatchCalibration() {
 
   }
-
 
 }
