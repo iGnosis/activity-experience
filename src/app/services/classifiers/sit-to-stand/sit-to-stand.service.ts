@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
+import { spotlight } from 'src/app/store/actions/spotlight.actions';
 import { Results } from 'src/app/types/pointmotion';
 import { CareplanService } from '../../careplan/careplan.service';
 import { EventsService } from '../../events/events.service';
@@ -14,10 +15,29 @@ export class SitToStandService {
   private distanceThreshold = 0.25
   private currentClass = 'unknown'
   private repsCompleted = 0
+  private totalTasks = 0
   private activityExplained = false
+  private task = {
+    text: 'ONE',
+    title: '1',
+    timeout: 5000,
+    className: 'stand' 
+  }
+  private dispatcher
 
-  constructor(private eventService: EventsService, private careplan: CareplanService, private store: Store<{calibration: any}>,) {
-    this.eventService.addContext('sit2stand.service', this)
+  tasks = [
+    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000},
+    {text: 'ELEVEN', title: '11', className: 'stand', timeout: 5000},
+    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000},
+    {text: 'FOURTEEN', title: '14', className: 'sit', timeout: 5000},
+    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000},
+    {text: 'THREE', title: '3', className: 'stand', timeout: 5000},
+    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000},
+    {text: 'FIFTY ONE', title: '51', className: 'stand', timeout: 5000},
+  ]
+
+  constructor(private eventService: EventsService, private careplan: CareplanService, private store: Store<{calibration: any, spotlight: any}>,) {
+    this.dispatcher = this.eventService.addContext('sit2stand.service', this)
 
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {
@@ -31,6 +51,14 @@ export class SitToStandService {
     this.store.select(state => state.calibration).subscribe((data: any) => {
       if(data && data.pose) {
         this.classify(data.pose)
+      }
+    })
+
+    this.store.select(state => state.calibration.status).subscribe((status: string) => {
+      if(status == 'success') {
+        this.reStartActivity()
+      } else if(status == 'error' && this.activityExplained) {
+        this.pauseActivity()
       }
     })
   }
@@ -63,20 +91,38 @@ export class SitToStandService {
       const distanceBetweenLeftHipAndKnee = this._calcDist(leftHip.x, leftHip.y, leftKnee.x, leftKnee.y)
       const distanceBetweenRightHipAndKnee = this._calcDist(rightHip.x, rightHip.y, rightKnee.x, rightKnee.y)
 
-      console.log(`dist - L: s-h: ${distanceBetweenLeftShoulderAndHip} h-k: ${distanceBetweenLeftHipAndKnee}`)
-      console.log(`dist - R: s-h: ${distanceBetweenRightShoulderAndHip} h-k: ${distanceBetweenRightHipAndKnee}`)
+      // console.log(`dist - L: s-h: ${distanceBetweenLeftShoulderAndHip} h-k: ${distanceBetweenLeftHipAndKnee}`)
+      // console.log(`dist - R: s-h: ${distanceBetweenRightShoulderAndHip} h-k: ${distanceBetweenRightHipAndKnee}`)
 
       const isSittingL = distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee
       const isSittingR = distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');
-        this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
+        // this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
+        if(this.currentClass !== 'sit') {
+          // the class has changed... use it for evaluation
+          this.currentClass = 'sit'
+          if(this.task.className == 'sit') {
+            // this.store.dispatch(guide.hide())
+            // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
+            this.celebrate()
+          }
+        }
         return {
           result: 'sit'
         }
       } else {
-        this.store.dispatch(guide.sendMessages({title: 'Standing', text: 'Standing', timeout: 2000}))
+        // this.store.dispatch(guide.sendMessages({title: 'Standing', text: 'Standing', timeout: 2000}))
+        if(this.currentClass !== 'stand') {
+          // the class has changed... use it for evaluation
+          this.currentClass = 'stand'
+          if(this.task.className == 'stand') {
+            // this.store.dispatch(guide.hide())
+            // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
+            this.celebrate()
+          }
+        }
         return {
           result: 'stand'
         }
@@ -89,14 +135,54 @@ export class SitToStandService {
     }
   }
 
-  async startActivity() {
+  celebrate() {
+    this.repsCompleted += 1
+    this.store.dispatch(spotlight.celebrate())
+  }
+
+  async reStartActivity() {
+    this.celebrate()
+    // if (!this.isEnabled) {
+    //   console.error('sit2stand not enabled');
+    //   return
+    // }
+    // this.store.dispatch(guide.sendMessages({text:'Activity started', title: 'start', timeout: 3000}))
     // Do upto 5 reps...
+    
     if (!this.activityExplained) {
-      this.store.dispatch(guide.sendMessages({text: 'Please sit when you see and EVEN number and STAND when you see ODD number', title: 'Ready?', timeout: 2000}))
+      this.store.dispatch(guide.sendMessages({text: 'Please sit when you see and EVEN number and STAND when you see ODD number', title: 'Ready?', timeout: 1000}))
+      this.activityExplained = true
+      setTimeout(() => {
+        this.runActivity()
+      }, 1000)
+    } else {
+      // activity is already explained... run the activity
+      this.runActivity()
     }
   }
 
+  async pauseActivity() {
+    this.store.dispatch(guide.sendMessages({text:'Activity pause', title: 'pause', timeout: 3000}))
+  }
 
+  async runActivity() {
+    if(this.repsCompleted >= 5) {
+      this.store.dispatch(guide.sendMessages({text: 'DONE', title: 'Thank you!', timeout: 5000}))
+      this.isEnabled = false
+      return
+    }
+    // set the task in a class variable and watch the class from the store.
+    this.store.dispatch(guide.sendMessages({text: this.task.text, title: this.task.title, timeout: this.task.timeout}))
+    setTimeout(() => {
+      this.getNewTask()
+      this.runActivity()
+    }, this.task.timeout)
+  }
+
+  getNewTask() {
+    this.task = this.tasks[this.totalTasks % (this.tasks.length-1)]
+    this.totalTasks += 1
+  }
 
   action_enable() {
     this.isEnabled = true

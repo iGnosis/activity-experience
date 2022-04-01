@@ -16,6 +16,7 @@ import { poseReducer } from './store/reducers/pose/pose.reducer';
 import { testReducer } from './store/reducers/test.reducer';
 import { guideReducer } from './store/reducers/guide.reducer';
 import { sessionReducer } from './store/reducers/session.reducer';
+import { spotlightReducer } from './store/reducers/spotlight.reducer';
 
 @NgModule({
   declarations: [
@@ -36,7 +37,8 @@ import { sessionReducer } from './store/reducers/session.reducer';
       pose: poseReducer,
       test: testReducer,
       guide: guideReducer,
-      session: sessionReducer
+      session: sessionReducer,
+      spotlight: spotlightReducer,
     })
   ],
   providers: [],

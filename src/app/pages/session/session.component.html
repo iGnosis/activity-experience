@@ -1,7 +1,8 @@
 <div #sessionElm>
     <video id="webcam" muted="true" autoplay="true" width="100" height="100" #videoElm></video>
     <div id="phaser-canvas"></div>
-    <app-widget-calibration></app-widget-calibration>
+    <!-- <app-widget-calibration></app-widget-calibration> -->
     <app-spotlight></app-spotlight>
     <app-guide></app-guide>
+    <h2 [hidden]="!showCelebration" style="color: #FFF; background-color: rgb(4, 4, 153);  padding: 16px; position: absolute; bottom: 60; text-align: center; width: 100%;">Perfect!</h2>
 </div>

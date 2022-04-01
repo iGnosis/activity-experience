@@ -41,10 +41,13 @@ export class SessionComponent implements AfterViewInit {
   }
   careplan: any
   dispatcher?: {dispatchEventName: Function, dispatchEventId: Function}
+
+  //temporary
+  showCelebration = false
   
   // DI the needed scenes
   constructor(
-    private store: Store<{}>,
+    private store: Store<{spotlight: any}>,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
@@ -77,6 +80,14 @@ export class SessionComponent implements AfterViewInit {
 
     this.dispatcher?.dispatchEventName('ready')
     // this.dispatcher?.dispatchEventId('start_game')
+
+
+    this.store.select(state => state.spotlight).subscribe(val => {
+      this.showCelebration = true 
+      setTimeout(() => {
+        this.showCelebration = false
+      }, 2000);
+    })
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {

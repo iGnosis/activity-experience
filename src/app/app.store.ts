@@ -8,5 +8,6 @@ export interface AppState {
     frame: Uint8ClampedArray, 
     test: {name: string, age: number},
     guide: GuideActionShowMessagesDTO,
-    session: SessionState
+    session: SessionState,
+    spotlight: any
 }
