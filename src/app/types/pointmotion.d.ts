@@ -1,5 +1,5 @@
 export type ActionHook = {
-    beforeAction?: Array<Action> 
+    beforeAction?: Array<Action>
     afterAction?: Array<Action>
     onSuccess?: Array<Action>
     onFailure?: Array<Action>
@@ -14,7 +14,7 @@ export type Action = {
 
 
 declare type ActionParams = {
-    id?: string 
+    id?: string
     data?: any
 }
 
@@ -38,7 +38,7 @@ export declare  enum CalibrationDetails {
 
 
 export type CarePlanAssets = {
-    
+
 }
 
 export type CarePlan = {
@@ -64,8 +64,8 @@ export type CalibrationConfig = {
 //     Execute: 'x'
 //   } as const;
 //   type Permission = typeof EventSource[keyof typeof EventSource]; // 'r' | 'w' | 'x'
-  
-  
+
+
 
 // export enum EventSource {
 //     system = 'system',
@@ -106,7 +106,7 @@ export type SessionEvent = {
 export type Therapist = {
     id: string
     firstName: string
-    lastName: string 
+    lastName: string
 }
 
 
@@ -126,7 +126,7 @@ export type Therapist = {
      */
     name?: string
     source?: string
-    
+
     comment?: string
 }
 
@@ -166,8 +166,8 @@ export type EventActionDispatchEventNameDTO = {
 }
 
 export type EventActionDispatchEventIdDTO = {
-    id: string 
-    data?: any 
+    id: string
+    data?: any
 }
 
 export type HolisticDTO = {
@@ -190,71 +190,71 @@ export type HolisticDTO = {
   * with lines to provide a skeleton when we draw the points.
   */
  export declare type LandmarkConnectionArray = Array<[number, number]>;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_LIPS: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_LEFT_EYE: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_LEFT_EYEBROW: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_LEFT_IRIS: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_RIGHT_EYE: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_RIGHT_EYEBROW: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_RIGHT_IRIS: LandmarkConnectionArray;
- 
+
  /**
   * Subgroup of FACEMESH_CONNECTIONS.
   */
  export declare const FACEMESH_FACE_OVAL: LandmarkConnectionArray;
- 
+
  /**
   * onResults returns an array of landmarks. This array provides the combination
   * of contours listed above.
   */
  export declare const FACEMESH_CONTOURS: LandmarkConnectionArray;
- 
+
  /**
   * onResults returns an array of landmarks. This array provides the edges of
   * the full set of landmarks.
   */
  export declare const FACEMESH_TESSELATION: LandmarkConnectionArray;
- 
+
  /**
   * PoseEvent.onPose returns an array of landmarks. This array provides the
   * edges to connect those landmarks to one another.
   */
  export declare const POSE_CONNECTIONS: LandmarkConnectionArray;
- 
+
  /**
   * HandEvent.onHand returns an array of landmarks. This array provides the
   * edges to connect those landmarks to one another.
   */
  export declare const HAND_CONNECTIONS: LandmarkConnectionArray;
- 
+
  /**
   * Provide a way to access landmarks by their friendly names. Using an
   * interface allows us to prevent obfuscation for external javascript linkage,
@@ -287,8 +287,8 @@ export type HolisticDTO = {
    RIGHT_HIP: number,
    LEFT_HIP: number
  };
- 
- 
+
+
  /**
   * Just the left-side landmarks for pose.
   */
@@ -310,7 +310,7 @@ export type HolisticDTO = {
    LEFT_HEEL: number,
    LEFT_FOOT_INDEX: number,
  };
- 
+
  /**
   * Just the right-side landmarks for pose.
   */
@@ -332,14 +332,14 @@ export type HolisticDTO = {
    RIGHT_HEEL: number,
    RIGHT_FOOT_INDEX: number
  };
- 
+
  /**
   * Just the neutral landmarks for pose.
   */
  export declare const POSE_LANDMARKS_NEUTRAL: {
    NOSE: number,
  };
- 
+
  /**
   * Represents a single normalized landmark.
   */
@@ -349,44 +349,44 @@ export type HolisticDTO = {
    z: number;
    visibility?: number;
  }
- 
+
  /**
   * One list of landmarks.
   */
  export type NormalizedLandmarkList = NormalizedLandmark[];
- 
+
  /**
   * Multiple lists of landmarks.
   */
  export type NormalizedLandmarkListList = NormalizedLandmarkList[];
- 
+
  /**
   * Represents a single landmark (not normalized).
   */
  export interface Landmark extends NormalizedLandmark {}
- 
+
  /**
   * Detected points are returned as a collection of landmarks.
   */
  export type LandmarkList = Landmark[];
- 
+
  /**
   * We support several ways to get image inputs.
   */
  export type InputImage = HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
- 
+
  /**
   * Legal inputs.
   */
  export interface InputMap {
    image: InputImage;
  }
- 
+
  /**
   * GpuBuffers should all be compatible with Canvas' `drawImage`
   */
  type GpuBuffer = HTMLCanvasElement|HTMLImageElement|ImageBitmap;
- 
+
  /**
   * The descriptiong of the hand represented by the corresponding landmarks.
   */
@@ -404,21 +404,21 @@ export type HolisticDTO = {
     */
    label: 'Right'|'Left';
  }
- 
+
  /**
   * Shows the vertex type of a mesh in order to decode the vertex buffer list.
   */
  export interface VertexType {
    VERTEX_PT: 0;  // Position (XYZ) + Texture (UV)
  }
- 
+
  /**
   * Shows the type of primitive shape in a mesh in order to give shape.
   */
  export interface PrimitiveType {
    TRIANGLE: 0;
  }
- 
+
  /**
   * Represents the Layout of a Matrix for the MatrixData proto
   */
@@ -426,7 +426,7 @@ export type HolisticDTO = {
    COLUMN_MAJOR: 0;
    ROW_MAJOR: 1;
  }
- 
+
  /**
   * Represents the parameters a camera has.
   */
@@ -435,7 +435,7 @@ export type HolisticDTO = {
    near: number;
    far: number;
  }
- 
+
  /**
   * Collects the enums into a single namespace
   */
@@ -445,7 +445,7 @@ export type HolisticDTO = {
    Layout: Layout,
    DEFAULT_CAMERA_PARAMS: CameraParams,
  };
- 
+
  /**
   * A representation of a mesh given by the Mesh3d proto
   * google3/third_party/mediapipe/modules/face_geometry/protos/mesh_3d.proto
@@ -456,7 +456,7 @@ export type HolisticDTO = {
    getIndexBufferList(): Uint32Array;
    getPrimitiveType(): PrimitiveType;
  }
- 
+
  /**
   * A representation of a matrix given by the MatrixData proto.
   * google3/research/drishti/framework/formats/matrix_data.proto
@@ -467,7 +467,7 @@ export type HolisticDTO = {
    getCols(): number;
    getLayout(): Layout;
  }
- 
+
  /**
   * A representation of a face geometry from the face geometry proto.
   * google3/third_party/mediapipe/modules/face_geometry/protos/face_geometry.proto
@@ -476,7 +476,7 @@ export type HolisticDTO = {
    getMesh(): Mesh;
    getPoseTransformMatrix(): MatrixData;
  }
- 
+
  /**
   * Possible results from Holistic.
   */
@@ -489,7 +489,7 @@ export type HolisticDTO = {
    segmentationMask: GpuBuffer;
    image: GpuBuffer;
  }
- 
+
  /**
   * Configurable options for Holistic.
   */
@@ -504,19 +504,19 @@ export type HolisticDTO = {
    minDetectionConfidence?: number;
    minTrackingConfidence?: number;
  }
- 
+
  /**
   * Listener for any results from Holistic.
   */
  export type ResultsListener = (results: Results) => (Promise<void>|void);
- 
+
  /**
   * Contains all of the setup options to drive the hand solution.
   */
  export interface HolisticConfig {
    locateFile?: (path: string, prefix?: string) => string;
  }
- 
+
  /**
   * Declares the interface of Holistic.
   */
@@ -528,7 +528,7 @@ export type HolisticDTO = {
    send(inputs: InputMap): Promise<void>;
    setOptions(options: Options): void;
  }
- 
+
  /**
   * Encapsulates the entire Holistic solution. All that is needed from the
   * developer is the source of the image data. The user will call `send`
@@ -537,18 +537,18 @@ export type HolisticDTO = {
   */
  export declare class Holistic implements HolisticInterface {
    constructor(config?: HolisticConfig);
- 
+
    /**
     * Shuts down the object. Call before creating a new instance.
     */
    close(): Promise<void>;
- 
+
    /**
     * Registers a single callback that will carry any results that occur
     * after calling Send().
     */
    onResults(listener: ResultsListener): void;
- 
+
    /**
     * Initializes the solution. This includes loading ML models and mediapipe
     * configurations, as well as setting up potential listeners for metadata. If
@@ -556,25 +556,25 @@ export type HolisticDTO = {
     * the developer calls `send`.
     */
    initialize(): Promise<void>;
- 
+
    /**
     * Tells the graph to restart before the next frame is sent.
     */
    reset(): void;
- 
+
    /**
     * Processes a single frame of data, which depends on the options sent to the
     * constructor.
     */
    send(inputs: InputMap): Promise<void>;
- 
+
    /**
     * Adjusts options in the solution. This may trigger a graph reload the next
     * time the graph tries to run.
     */
    setOptions(options: Options): void;
  }
- 
+
 
  export interface CalibrationState {
   //  pose: Results,
@@ -591,7 +591,7 @@ export type AnalyticsRow = {
   attempt_id?: string,
   task_name?: string,
   event_type: string,
-  created_at: string,
+  created_at: number,
   score?: number
 }
 
