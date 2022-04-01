@@ -13,7 +13,8 @@ const _calibrationReducer = createReducer(
   on(calibration.success, (state, data) => { 
     return {
       status: 'success', 
-      reason: data.reason
+      reason: data.reason,
+      pose: data.pose
     }
   }),
   // TODO

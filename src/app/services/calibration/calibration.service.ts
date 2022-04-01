@@ -15,7 +15,7 @@ import { guide } from 'src/app/store/actions/guide.actions';
 })
 export class CalibrationService {
 
-  pose$?: Observable<Results>
+  pose$?: Observable<any>
   eventDispatcher: any
   calibration$?: Observable<string>
   isCalibrating = false
@@ -69,7 +69,7 @@ export class CalibrationService {
     
   }
 
-  handlePose(results: Results) {
+  handlePose(results: {pose: Results}) {
     if (!results) return
     
     // Can have multiple configurations.
@@ -101,14 +101,51 @@ export class CalibrationService {
         break;
       case 2: 
         this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
-        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Perfect!', timeout: 2000}))
+        // this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Perfect!', timeout: 2000}))
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
     }
   }
 
-  calibrateFullBody(results: any) {
-    this.calibrateHands(results)
+  calibrateFullBody(results: {pose: Results}) {
+    // console.log('calibrateFullBody', results);
+    
+    const sendError = () => {
+      this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see required points'}))
+      this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Move into the frame, please', timeout: 2000}))
+    }
+
+    const sendSuccess = () => {
+      this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
+    }
+
+    let poseLandmarkArray = results.pose.poseLandmarks
+
+    if(!Array.isArray(poseLandmarkArray)) {
+      
+      return sendError()
+    } else {
+      let leftHip = poseLandmarkArray[23]
+      let leftKnee = poseLandmarkArray[25]
+      let rightHip = poseLandmarkArray[24]
+      let rightKnee = poseLandmarkArray[26]
+      if ((leftHip.visibility && leftHip.visibility < 0.6) ||
+        (leftKnee.visibility && leftKnee.visibility < 0.6) ||
+        (rightHip.visibility && rightHip.visibility < 0.6) ||
+        (rightKnee.visibility && rightKnee.visibility < 0.6)) {
+          sendError()
+      } else {
+        sendSuccess()
+      }
+    }
+
+    
+    
+    // console.log(leftHip, rightHip)
+    // console.log(rightKnee, rightKnee)
+    
+    // make sure that body parts are visible
+    
   }
 
   dispatchCalibration() {

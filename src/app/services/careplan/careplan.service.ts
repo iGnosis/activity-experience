@@ -93,10 +93,10 @@ export class CareplanService {
           name: 'error'
         },
         actions: [
-          // {
-          //   component: 'sit2stand',
-          //   handler: 'startCalibration'
-          // },
+          {
+            component: 'sit2stand.service',
+            handler: 'disable'
+          },
         ],
       },
       // When it gets calibrated
@@ -137,6 +137,23 @@ export class CareplanService {
               }]
             }
           },
+          {
+            component: 'sit2stand.service',
+            handler: 'enable'
+          }
+        ],
+      },
+      // Calibration success
+      {
+        trigger: {
+          source: 'calibration.service',
+          name: 'success'
+        },
+        actions: [
+          {
+            component: 'sit2stand.service',
+            handler: 'enable'
+          },
         ],
       }
     ],
@@ -146,7 +163,8 @@ export class CareplanService {
     config: {
       'sit2stand': {
         reps: 5,
-        repTimeout: 3000
+        repTimeout: 3000,
+        pointDistanceThreshold: 0.25
       }
     }
   }

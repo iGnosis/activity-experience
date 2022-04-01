@@ -4,6 +4,7 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
+import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
 import { EventsService } from 'src/app/services/events/events.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
@@ -46,6 +47,7 @@ export class SessionComponent implements AfterViewInit {
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
+    private sit2standService: SitToStandService,
     private eventsService: EventsService) {
       this.eventsService.addContext('session', this)
     }

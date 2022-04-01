@@ -9,7 +9,7 @@ export const environment = {
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
   analytics: {
     calibration: false
-  }
+  },
 };
 
 /*
