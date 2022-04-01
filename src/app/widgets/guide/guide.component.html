@@ -1,2 +1,4 @@
-<h2>{{ messageTitle }}</h2>
-<p>{{messageBody}}</p>
+<div class="guide" [hidden]="!messageTitle && !messageBody">
+    <h2>{{ messageTitle }}</h2>
+    <p>{{messageBody}}</p>
+</div>
