@@ -10,6 +10,8 @@ export const environment = {
   analytics: {
     calibration: false
   },
+  patient: '3e0339fd-79f6-4559-a94c-788c8891710e',
+  careplan: '4e2aa726-b07f-4f44-a4fd-fc228c93bfc7'
 };
 
 /*

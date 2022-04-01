@@ -7,6 +7,7 @@ import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
 import { EventsService } from 'src/app/services/events/events.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
+import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
 
@@ -48,13 +49,18 @@ export class SessionComponent implements AfterViewInit {
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
     private sit2standService: SitToStandService,
+    private sessionService: SessionService,
     private eventsService: EventsService) {
       this.eventsService.addContext('session', this)
     }
   
   async ngAfterViewInit() {
+
+    const session = await this.sessionService.new()
+    alert(session.insert_session_one.id)
+
     // Download the careplan. do it in the welcome page later
-    this.careplan = this.careplanService.downloadCarePlan('')
+    this.careplan = this.careplanService.downloadCarePlan(session.insert_session_one.id)
     
     // Register the session component to send and receive events
     this.dispatcher = this.eventsService.addContext('session', this)

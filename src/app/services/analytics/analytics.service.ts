@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AnalyticsEvent, AnalyticsRow } from 'src/app/types/pointmotion';
+import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
 
 @Injectable({
@@ -12,7 +13,7 @@ export class AnalyticsService {
   // TODO: batch events, save them in localStorage and let a webworker process the queue
   async sendEvent(event: AnalyticsEvent) {
     const analyticsRow: AnalyticsRow = {
-      patient: '3e0339fd-79f6-4559-a94c-788c8891710e', // TODO remove hardcoded
+      patient: environment.patient, // TODO remove hardcoded
       session: '2d01273f-d40b-42d7-bfdb-76843668accb', // TODO remove hardcoded
       activity: event.activity,
       task_id: event.task_id,

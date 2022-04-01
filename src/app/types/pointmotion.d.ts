@@ -604,3 +604,26 @@ export type AnalyticsEvent = {
   event_type: string,
   score?: number
 }
+
+
+export type SessionState = {
+  currentActivity?: ActivityState,
+  nextActivity?: ActivityState
+}
+
+
+export type ActivityState = {
+  name: string,
+  totalReps: number,
+  repsCompleted: number,
+  timeElapsed?: number
+}
+
+export type SessionRow = {
+  id?: string,
+  createdAt?: Date,
+  updatedAt?: Date,
+  endedAt?: Date,
+  patient: string,
+  careplan: string
+}
