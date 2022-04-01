@@ -21,19 +21,20 @@ export class SitToStandService {
     text: 'ONE',
     title: '1',
     timeout: 5000,
-    className: 'stand' 
+    className: 'stand',
+    celebrated: false
   }
   private dispatcher
 
   tasks = [
-    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000},
-    {text: 'ELEVEN', title: '11', className: 'stand', timeout: 5000},
-    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000},
-    {text: 'FOURTEEN', title: '14', className: 'sit', timeout: 5000},
-    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000},
-    {text: 'THREE', title: '3', className: 'stand', timeout: 5000},
-    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000},
-    {text: 'FIFTY ONE', title: '51', className: 'stand', timeout: 5000},
+    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000, celebrated: false},
+    {text: 'ELEVEN', title: '11', className: 'stand', timeout: 5000, celebrated: false},
+    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000, celebrated: false},
+    {text: 'FOURTEEN', title: '14', className: 'sit', timeout: 5000, celebrated: false},
+    {text: 'EIGHT', title: '8', className: 'sit', timeout: 5000, celebrated: false},
+    {text: 'THREE', title: '3', className: 'stand', timeout: 5000, celebrated: false},
+    {text: 'TWENTY', title: '20', className: 'sit', timeout: 5000, celebrated: false},
+    {text: 'FIFTY ONE', title: '51', className: 'stand', timeout: 5000, celebrated: false},
   ]
 
   constructor(private eventService: EventsService, private careplan: CareplanService, private store: Store<{calibration: any, spotlight: any}>,) {
@@ -137,20 +138,14 @@ export class SitToStandService {
 
   celebrate() {
     this.repsCompleted += 1
+    this.task.celebrated = true
     this.store.dispatch(spotlight.celebrate())
   }
 
   async reStartActivity() {
     this.celebrate()
-    // if (!this.isEnabled) {
-    //   console.error('sit2stand not enabled');
-    //   return
-    // }
-    // this.store.dispatch(guide.sendMessages({text:'Activity started', title: 'start', timeout: 3000}))
-    // Do upto 5 reps...
-    
     if (!this.activityExplained) {
-      this.store.dispatch(guide.sendMessages({text: 'Please sit when you see and EVEN number and STAND when you see ODD number', title: 'Ready?', timeout: 1000}))
+      this.store.dispatch(guide.sendMessages({text: 'Please SIT when you see and EVEN number and STAND when you see ODD number', title: 'Ready?', timeout: 1000}))
       this.activityExplained = true
       setTimeout(() => {
         this.runActivity()
@@ -171,9 +166,15 @@ export class SitToStandService {
       this.isEnabled = false
       return
     }
+
     // set the task in a class variable and watch the class from the store.
     this.store.dispatch(guide.sendMessages({text: this.task.text, title: this.task.title, timeout: this.task.timeout}))
     setTimeout(() => {
+      // Check if the person held the right pose, but we did not celebrate...
+      if(this.currentClass == this.task.className && !this.task.celebrated) {
+        this.celebrate()
+      }
+
       this.getNewTask()
       this.runActivity()
     }, this.task.timeout)
