@@ -44,6 +44,13 @@ jobs:
           npm install --include dev
           npm install -g @angular/cli
           npm run build -- -c "development"
+
+          # Print current env
+          echo "Env: $(echo $ENVIRONMENT)"
+
+          # Printing current path
+          echo "Current path: $(pwd)"
+
           # Listing files
           ls -la
       - uses: jakejarvis/s3-sync-action@v0.5.1
