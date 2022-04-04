@@ -1,0 +1,58 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main, dev, stage ]
+  pull_request:
+    branches: [ main, dev, stage ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  ci-cd:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+#       - name: Setup tmate session
+#         uses: mxschmitt/action-tmate@v3
+#         timeout-minutes: 15
+      - name: Set env to staging
+        if: endsWith(github.ref, '/stage')
+        run: |
+          echo "ENVIRONMENT=stage" >> $GITHUB_ENV
+          echo "NODE_ENV=stage" >> $GITHUB_ENV
+      - name: Set env to production
+        if: endsWith(github.ref, '/main')
+        run: |
+          echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+      - name: npm install and npm run build
+        run: |
+          # Include the devDependencies irrespective of the NODE_ENV
+          npm install --include dev
+          npm install -g @angular/cli
+          npm run build
+      - uses: jakejarvis/s3-sync-action@v0.5.1
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        run: |
+          # Listing files
+          ls -la
+        env:
+          AWS_S3_BUCKET: session.$GITHUB_REF_NAME.pointmotioncontrol.com
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1'
+          SOURCE_DIR: /home/runner/work/activity-experience/activity-experience/dist/activities
