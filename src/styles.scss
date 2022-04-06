@@ -4,7 +4,7 @@
 @import "@webpixels/css/core/functions";
 
 // Your theme's variables
-// @import "./app/variables";
+@import "./app/variables";
 
 // Webpixels' CSS
 @import "@webpixels/css/base";
@@ -13,8 +13,4 @@
 @import "@webpixels/css/utilities";
 
 
-
-body {
-    margin: 0;
-    background-color: #000;
-}
+@import "./app/custom"
