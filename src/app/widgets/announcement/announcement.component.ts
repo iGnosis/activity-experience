@@ -9,6 +9,8 @@ export class AnnouncementComponent implements OnInit {
 
   constructor() { }
 
+  background = '#88EBA9'
+
   ngOnInit(): void {
   }
 

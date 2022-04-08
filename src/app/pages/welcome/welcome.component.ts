@@ -15,7 +15,7 @@ import { session } from 'src/app/store/actions/session.actions';
           animate(800)
       ]),
       transition('* => void', [
-          animate(400, style({opacity: 0}))
+          animate(800, style({opacity: 0}))
       ])
     ]),
     trigger('faceInOut', [
@@ -50,26 +50,31 @@ export class WelcomeComponent implements OnInit {
 
   
   messages = [
+    // {
+    //   type: 'message',
+    //   text: 'Welcome back',
+    //   timeout: 2000,
+    //   bg: '#000066'
+    // }, {
+    //   type: 'message',
+    //   text: 'Great to see you',
+    //   timeout: 2000,
+    //   bg: '#000066'
+    // }, 
+    // {
+    //   type: 'announcement',
+    //   text: `Let's Go`,
+    //   timeout: 3000,
+    //   bg: '#FFFFFF'
+    // }, 
     {
-      type: 'message',
-      text: 'Welcome back',
-      timeout: 2000,
-      bg: '#000066'
-    }, {
-      type: 'message',
-      text: 'Great to see you',
-      timeout: 2000,
-      bg: '#000066'
-    }, 
-    {
-      type: 'announcement',
-      text: `Let's Go`,
-      timeout: 3000,
-      bg: '#FF00BB'
+      type: 'pre-session-survey',
+      bg: '#FFB2B2'
     }
   ]
 
-  currentMessage: {type: string, text: string, timeout: number, bg: string} | undefined
+  currentStep = -1
+  currentMessage: {type: string, text?: string, timeout?: number, bg: string} | undefined
 
   constructor(
     private route: ActivatedRoute,
@@ -83,7 +88,26 @@ export class WelcomeComponent implements OnInit {
   }
 
   async ngOnInit() {
-    await this.initMessageSequence()
+    // await this.initMessageSequence()
+    await this.showNextStep()
+  }
+
+  async showNextStep() {
+    // await this.sleep(500)
+    this.currentStep += 1
+    this.currentMessage = this.messages[this.currentStep]
+    this.currentMessage.bg = this.currentMessage.bg || '#000066'
+    if (this.currentMessage.timeout) {
+      // Blank out the page
+      setTimeout(() => {
+        this.currentMessage = undefined
+      }, this.currentMessage.timeout - 1000)
+
+      // Set the next message
+      setTimeout(() => {
+        this.showNextStep()
+      }, this.currentMessage.timeout)
+    }
   }
 
   async initMessageSequence() {
@@ -92,7 +116,7 @@ export class WelcomeComponent implements OnInit {
       this.currentMessage.bg = this.currentMessage.bg || '#000066'
       console.log(this.currentMessage)
       
-      await this.sleep(this.currentMessage.timeout - 1000) // Keep 1s for the fadeout animation
+      // await this.sleep(this.currentMessage.timeout - 1000) // Keep 1s for the fadeout animation
       this.currentMessage = undefined
       await this.sleep(1000)
     }

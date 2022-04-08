@@ -19,6 +19,7 @@ import { guideReducer } from './store/reducers/guide.reducer';
 import { sessionReducer } from './store/reducers/session.reducer';
 import { spotlightReducer } from './store/reducers/spotlight.reducer';
 import { AnnouncementComponent } from './widgets/announcement/announcement.component';
+import { PreSessionSurveyComponent } from './widgets/pre-session-survey/pre-session-survey.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { AnnouncementComponent } from './widgets/announcement/announcement.compo
     SpotlightComponent,
     VideoComponent,
     CalibrationComponent,
-    AnnouncementComponent
+    AnnouncementComponent,
+    PreSessionSurveyComponent
   ],
   imports: [
     BrowserModule,

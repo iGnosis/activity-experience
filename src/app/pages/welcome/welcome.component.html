@@ -1,6 +1,11 @@
 <div class="welcome" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
-    <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center" [@panelInOut] *ngIf="currentMessage && currentMessage.type =='message'">{{currentMessage.text}}</div>
-    
-    <!-- *ngIf="currentMessage && currentMessage.type =='announcement'" -->
-    <app-announcement *ngIf="currentMessage && currentMessage.type =='announcement'"></app-announcement>
+    <div style="width: 100vw; height: 100vh;" *ngIf="currentMessage">
+
+        <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center"
+        [@panelInOut] *ngIf="currentMessage.type =='message'">{{currentMessage.text}}</div>
+        
+        <app-announcement *ngIf="currentMessage.type =='announcement'"></app-announcement>
+
+        <app-pre-session-survey *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
+    </div>
 </div>
