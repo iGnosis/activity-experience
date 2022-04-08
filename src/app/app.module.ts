@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -17,6 +18,7 @@ import { testReducer } from './store/reducers/test.reducer';
 import { guideReducer } from './store/reducers/guide.reducer';
 import { sessionReducer } from './store/reducers/session.reducer';
 import { spotlightReducer } from './store/reducers/spotlight.reducer';
+import { AnnouncementComponent } from './widgets/announcement/announcement.component';
 
 @NgModule({
   declarations: [
@@ -26,22 +28,25 @@ import { spotlightReducer } from './store/reducers/spotlight.reducer';
     GuideComponent,
     SpotlightComponent,
     VideoComponent,
-    CalibrationComponent
+    CalibrationComponent,
+    AnnouncementComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
+    BrowserAnimationsModule,
     StoreModule.forRoot({
-      calibration: calibrationReducer, 
-      frame: frameReducer,
-      pose: poseReducer,
+      calibration: calibrationReducer, // calibration status, calibrated data
+      frame: frameReducer, // 
+      pose: poseReducer, // all the poses from Media Pipe
       test: testReducer,
-      guide: guideReducer,
-      session: sessionReducer,
-      spotlight: spotlightReducer,
+      guide: guideReducer, // Updating the guide
+      session: sessionReducer, // Top level session
+      spotlight: spotlightReducer, // spotlight component
     })
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AppModule { }

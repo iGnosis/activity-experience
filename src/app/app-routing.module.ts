@@ -4,7 +4,8 @@ import { SessionComponent } from './pages/session/session.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 
 const routes: Routes = [
-  {path: '', component: SessionComponent}
+  { path: '', component: WelcomeComponent},
+  {path: 'session', component: SessionComponent}
 ];
 
 @NgModule({

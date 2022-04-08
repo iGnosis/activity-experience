@@ -1,0 +1,18 @@
+@import '/src/app/variables';
+
+.welcome {
+    height: 100vh;
+    width: 100vw;
+    background-color: $primary;
+    transition: background-color 2s;
+}
+
+.message  {
+    width: 100vw;
+    height: 100vh;
+}
+
+.app-announcement {
+    width: 100vw;
+    height: 100vh;
+}

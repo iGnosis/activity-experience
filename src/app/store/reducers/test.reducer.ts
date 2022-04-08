@@ -8,10 +8,9 @@ let initialState = {
 
 const _testReducer = createReducer(initialState, 
     on(testStringAction, (state, data) => {
-        // console.log('state ', state);
-        // console.log('data', data);
+        
         return {
-            name: data.name,
+            name: ' prefix' + data.name,
             age: data.age
         }
     })
@@ -21,3 +20,7 @@ const _testReducer = createReducer(initialState,
 export function testReducer(state:any, action:any) {
     return _testReducer(state, action);
 }
+
+
+
+// Action Dispatched --> Reducer Executed --> State Updated  --> Subscribed methods updated

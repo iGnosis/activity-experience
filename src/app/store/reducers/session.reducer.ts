@@ -6,8 +6,7 @@ import { session } from "../actions/session.actions";
 
 
 function saveToLocalStorage(session: any) {
-    console.log('session',JSON.stringify(session));
-    
+    console.log('session', JSON.stringify(session));
     // localStorage.setItem('session', JSON.stringify(session))
 }
 
@@ -19,6 +18,12 @@ function getFromLocalStorage() {
 const initialState: SessionState = getFromLocalStorage()
 
 const _sessionReducer = createReducer(initialState, 
+
+    on(session.updateConfig, (state, data) => {
+        console.log(data)
+        
+        return {}
+    }),
     on(session.startSession, (state, data)=> {
         const newState = Object.assign({}, state)
         newState.session = {

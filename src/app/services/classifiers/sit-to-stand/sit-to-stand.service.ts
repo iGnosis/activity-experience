@@ -163,7 +163,7 @@ export class SitToStandService {
   }
 
   async runActivity() {
-    if (this.repsCompleted >= 5) {
+    if (this.repsCompleted >= 10) {
       this.store.dispatch(guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 }))
       const activityId = this.analyticsService.getActivityId('Sit to Stand')
 

@@ -628,3 +628,11 @@ export type SessionRow = {
   patient: string,
   careplan: string
 }
+
+
+export type SessionConfig = {
+  sessionId?: string,
+  enableAnalytics: boolean,
+  mood?: string,
+  genre?: string
+}

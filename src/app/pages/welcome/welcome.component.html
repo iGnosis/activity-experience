@@ -1,6 +1,6 @@
-<span>
-    Calibration Status: {{ test$ | async }}
-</span>
-
-<button (click)="invalid()">Aman</button>
-<button (click)="noPerson()">Gautam</button>
+<div class="welcome" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
+    <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center" [@panelInOut] *ngIf="currentMessage && currentMessage.type =='message'">{{currentMessage.text}}</div>
+    
+    <!-- *ngIf="currentMessage && currentMessage.type =='announcement'" -->
+    <app-announcement *ngIf="currentMessage && currentMessage.type =='announcement'"></app-announcement>
+</div>

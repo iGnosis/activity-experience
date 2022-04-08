@@ -1,40 +1,108 @@
 import { Component, OnInit } from '@angular/core';
-import { filter, Observable, pipe } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { calibration } from 'src/app/store/actions/calibration.actions';
-import { testStringAction } from 'src/app/store/actions/test.action';
+import {  Store } from '@ngrx/store';
+import { animate, state, style, transition, trigger } from '@angular/animations';
+import { ActivatedRoute } from '@angular/router';
+import { session } from 'src/app/store/actions/session.actions';
 
 @Component({
   selector: 'app-welcome',
   templateUrl: './welcome.component.html',
-  styleUrls: ['./welcome.component.scss']
+  styleUrls: ['./welcome.component.scss'],
+  animations: [
+    trigger('panelInOut', [
+      transition('void => *', [
+          style({opacity: 0.1}),
+          animate(800)
+      ]),
+      transition('* => void', [
+          animate(400, style({opacity: 0}))
+      ])
+    ]),
+    trigger('faceInOut', [
+      transition('void => *', [
+          style({opacity: 0.1, fontSize: '5rem', width: '100vw', height: '100vw'}),
+          animate(800)
+      ]),
+      transition('* => void', [
+          animate(400, style({opacity: 0}))
+      ])
+    ]),
+    trigger('showHide', [
+      state('visible', style({
+        opacity: 1,
+      })),
+      state('hidden', style({
+        opacity: 0
+      })),
+      transition('visible => hidden', [
+        animate('1s')
+      ]),
+      transition('hidden => visible', [
+        animate('1s')
+      ]),
+      transition('void => *', [
+        animate('1s')
+      ]),
+    ])
+  ]
 })
 export class WelcomeComponent implements OnInit {
 
-  test$?: Observable<string>
-  // test$? = Observable<String>
+  
+  messages = [
+    {
+      type: 'message',
+      text: 'Welcome back',
+      timeout: 2000,
+      bg: '#000066'
+    }, {
+      type: 'message',
+      text: 'Great to see you',
+      timeout: 2000,
+      bg: '#000066'
+    }, 
+    {
+      type: 'announcement',
+      text: `Let's Go`,
+      timeout: 3000,
+      bg: '#FF00BB'
+    }
+  ]
 
-  constructor(private store: Store<{test: {name: string, age: number}}>) {
-    
-    this.test$ = store.select((state) => state.test.name)
-    this.test$.subscribe(name => {
-      console.log('new name', name);
+  currentMessage: {type: string, text: string, timeout: number, bg: string} | undefined
+
+  constructor(
+    private route: ActivatedRoute,
+    private store: Store<{session: any}>
+  ) {
+    // Save the session id in the store
+    // If there is no session id, then disable analytics
+    const sessionId = this.route.snapshot.queryParamMap.get('session') || ''
+    let enableAnalytics = sessionId? true : false
+    this.store.dispatch(session.updateConfig({sessionId, enableAnalytics}))
+  }
+
+  async ngOnInit() {
+    await this.initMessageSequence()
+  }
+
+  async initMessageSequence() {
+    for(let i = 0; i < this.messages.length; i++) {
+      this.currentMessage = this.messages[i]
+      this.currentMessage.bg = this.currentMessage.bg || '#000066'
+      console.log(this.currentMessage)
       
+      await this.sleep(this.currentMessage.timeout - 1000) // Keep 1s for the fadeout animation
+      this.currentMessage = undefined
+      await this.sleep(1000)
+    }
+  }
+
+  async sleep(timeout: number) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve({})
+      }, timeout)
     })
-    // this.test$.subscribe(value => {
-    //   console.log(value);
-    // })
-
-  }
-
-  ngOnInit(): void {
-  }
-
-  invalid() {
-    this.store.dispatch(testStringAction({name: 'Aman', age: 20}))
-  }
-
-  noPerson() {
-    this.store.dispatch(testStringAction({name: 'Gautam', age: 21}))
   }
 }

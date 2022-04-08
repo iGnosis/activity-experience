@@ -49,8 +49,8 @@ export class CareplanService {
               data: {
                 messages: [
                   {text: 'Hi', timeout: 1000},
-                  // {text: 'Welcome to Sound Health', timeout: 3000},
-                  // {text: 'We will start with your calibration', timeout: 3000},
+                  {text: 'Welcome to Sound Health', timeout: 300000},
+                  {text: 'We will start with your calibration', timeout: 3000},
                 ]
               }
             },
