@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {  Store } from '@ngrx/store';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
 
 @Component({
@@ -92,6 +92,7 @@ export class WelcomeComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private store: Store<{session: any}>
   ) {
     // Save the session id in the store
@@ -121,7 +122,7 @@ export class WelcomeComponent implements OnInit {
     if(this.currentStep == this.messages.length - 1) {
       // Last step is also done :D 
       // Let the user play the game
-
+      this.router.navigate(['session'])
     }
     this.currentMessage = this.messages[this.currentStep]
     this.currentMessage.bg = this.currentMessage.bg || '#000066'
