@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-announcement',
@@ -7,6 +7,8 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AnnouncementComponent implements OnInit {
 
+  @Input() text: string | undefined = `Let's Go`
+  
   constructor() { }
 
   background = '#88EBA9'

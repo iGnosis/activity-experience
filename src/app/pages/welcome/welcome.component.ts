@@ -50,27 +50,32 @@ export class WelcomeComponent implements OnInit {
 
   
   messages = [
-    // {
-    //   type: 'message',
-    //   text: 'Welcome back',
-    //   timeout: 2000,
-    //   bg: '#000066'
-    // }, {
-    //   type: 'message',
-    //   text: 'Great to see you',
-    //   timeout: 2000,
-    //   bg: '#000066'
-    // }, 
-    // {
-    //   type: 'announcement',
-    //   text: `Let's Go`,
-    //   timeout: 3000,
-    //   bg: '#FFFFFF'
-    // }, 
+    {
+      type: 'message',
+      text: 'Welcome back',
+      timeout: 2000,
+      bg: '#000066'
+    }, {
+      type: 'message',
+      text: 'Great to see you',
+      timeout: 2000,
+      bg: '#000066'
+    }, 
+    {
+      type: 'announcement',
+      text: `Let's Go`,
+      timeout: 3000,
+      bg: '#FFFFFF'
+    }, 
     {
       type: 'pre-session-survey',
       bg: '#FFB2B2'
-    }
+    }, {
+      type: 'announcement',
+      text: `Thanks`,
+      timeout: 3000,
+      bg: '#FFFFFF'
+    }, 
   ]
 
   currentStep = -1
@@ -101,7 +106,7 @@ export class WelcomeComponent implements OnInit {
       // Blank out the page
       setTimeout(() => {
         this.currentMessage = undefined
-      }, this.currentMessage.timeout - 1000)
+      }, this.currentMessage.timeout - 400)
 
       // Set the next message
       setTimeout(() => {

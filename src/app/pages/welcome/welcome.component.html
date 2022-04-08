@@ -4,8 +4,8 @@
         <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center"
         [@panelInOut] *ngIf="currentMessage.type =='message'">{{currentMessage.text}}</div>
         
-        <app-announcement *ngIf="currentMessage.type =='announcement'"></app-announcement>
+        <app-announcement *ngIf="currentMessage.type =='announcement'" [text]="currentMessage.text"></app-announcement>
 
-        <app-pre-session-survey *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
+        <app-pre-session-survey (selected)="showNextStep()" *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
     </div>
 </div>

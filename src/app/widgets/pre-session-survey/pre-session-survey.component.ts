@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'app-pre-session-survey',
@@ -6,6 +6,8 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./pre-session-survey.component.scss']
 })
 export class PreSessionSurveyComponent implements OnInit {
+
+  @Output() selected = new EventEmitter<string>();
 
   moods: Array<{title: string, icon: string, selected?: boolean}> = [
     {
@@ -34,6 +36,7 @@ export class PreSessionSurveyComponent implements OnInit {
 
   selectMood(mood: {title: string, selected?: boolean}) {
     mood.selected = true
+    this.selected.emit(mood.title)
   }
 
 }
