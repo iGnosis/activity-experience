@@ -36,7 +36,10 @@ export class PreSessionSurveyComponent implements OnInit {
 
   selectMood(mood: {title: string, selected?: boolean}) {
     mood.selected = true
-    this.selected.emit(mood.title)
+    setTimeout(() => {
+      this.selected.emit(mood.title)
+    }, 1000)
+    
   }
 
 }

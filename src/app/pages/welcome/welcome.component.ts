@@ -70,12 +70,21 @@ export class WelcomeComponent implements OnInit {
     {
       type: 'pre-session-survey',
       bg: '#FFB2B2'
-    }, {
+    }, 
+    {
       type: 'announcement',
       text: `Thanks`,
       timeout: 3000,
       bg: '#FFFFFF'
-    }, 
+    }, {
+      type: 'select-genre',
+      bg: '#FFB000'
+    }, {
+      type: 'announcement',
+      text: `PERFECT`,
+      timeout: 3000,
+      bg: '#FFFFFF'
+    }
   ]
 
   currentStep = -1
@@ -90,6 +99,15 @@ export class WelcomeComponent implements OnInit {
     const sessionId = this.route.snapshot.queryParamMap.get('session') || ''
     let enableAnalytics = sessionId? true : false
     this.store.dispatch(session.updateConfig({sessionId, enableAnalytics}))
+
+    if (!enableAnalytics) {
+      this.messages.push({
+        type: 'message',
+        text: 'This session is NOT being recorded',
+        timeout: 3000,
+        bg: '#000066'
+      })
+    }
   }
 
   async ngOnInit() {
@@ -100,6 +118,11 @@ export class WelcomeComponent implements OnInit {
   async showNextStep() {
     // await this.sleep(500)
     this.currentStep += 1
+    if(this.currentStep == this.messages.length - 1) {
+      // Last step is also done :D 
+      // Let the user play the game
+
+    }
     this.currentMessage = this.messages[this.currentStep]
     this.currentMessage.bg = this.currentMessage.bg || '#000066'
     if (this.currentMessage.timeout) {
