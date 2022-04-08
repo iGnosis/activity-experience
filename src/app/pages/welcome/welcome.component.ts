@@ -96,7 +96,7 @@ export class WelcomeComponent implements OnInit {
   ) {
     // Save the session id in the store
     // If there is no session id, then disable analytics
-    const sessionId = this.route.snapshot.queryParamMap.get('session') || ''
+    const sessionId = this.route.snapshot.queryParamMap.get('session') || this.route.snapshot.queryParamMap.get('sessionId') || ''
     let enableAnalytics = sessionId? true : false
     this.store.dispatch(session.updateConfig({sessionId, enableAnalytics}))
 
