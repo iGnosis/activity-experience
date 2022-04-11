@@ -29,6 +29,7 @@ export class CalibrationScene extends Phaser.Scene {
     private store: Store<{ calibration: any }>
     ) {
       super({ key: 'calibration' });
+      console.log('in calibration scene')
     }
     
     
@@ -143,7 +144,7 @@ export class CalibrationScene extends Phaser.Scene {
       })
     }
     
-    action_startActivity(data: any) {
+    action_startActivity(data?: any) {
       this.scene.start('sit2stand')
     }
     
