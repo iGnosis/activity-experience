@@ -653,3 +653,14 @@ export type Patient = {
 //   mood?: string,
 //   genre?: string
 // }
+export interface Environment {
+  production: boolean;
+  token: string;
+  endpoint: string;
+  analytics: {
+    calibration: boolean;
+  };
+  patient: string;
+  careplan: string;
+  music_experience: 'music_experience_1' | 'music_experience_2';
+}
