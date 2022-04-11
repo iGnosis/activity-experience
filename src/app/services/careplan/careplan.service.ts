@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 // import { CarePlan } from 'src/app/types/pointmotion';
 import { CarePlan } from '../../types/pointmotion.d';
-import { EventsService } from '../events/events.service';
 
 @Injectable({
   providedIn: 'root'
@@ -169,13 +168,12 @@ export class CareplanService {
     }
   }
   
-  constructor(private eventService: EventsService) { }
+  constructor() { }
   
   async downloadCarePlan(sessionId: string) {
     console.log('downloading careplan');
     
     localStorage.setItem('careplan', JSON.stringify(this.careplan))
-    this.eventService.setEventListeners(this.careplan)
     return this.careplan
   }
 

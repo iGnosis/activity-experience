@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { EventsService } from 'src/app/services/events/events.service';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +24,6 @@ export class CalibrationScene extends Phaser.Scene {
   } = {}
   
   constructor(
-    private eventsService: EventsService,
     private store: Store<{ calibration: any }>
     ) {
       super({ key: 'calibration' });
@@ -53,7 +51,6 @@ export class CalibrationScene extends Phaser.Scene {
           }
         }
       })
-      this.eventsService.addContext('calibration.scene', this)
     }
     
     override update(time: number, delta: number): void {
@@ -70,7 +67,7 @@ export class CalibrationScene extends Phaser.Scene {
       
       if(type == 'success') {
         setTimeout(() => {
-          this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
+          // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
         }, 2000)
       }
 

@@ -6,7 +6,6 @@ import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene'
 import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
-import { EventsService } from 'src/app/services/events/events.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
@@ -52,13 +51,11 @@ export class SessionComponent implements AfterViewInit {
     private mpHolisticService: HolisticService,
     private sit2standService: SitToStandService,
     private sessionService: SessionService,
-    private eventsService: EventsService,
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene
   ) {}
 
   async ngAfterViewInit() {
-    this.eventsService.addContext('session', this);
 
     // Use this for analytics
     const session = await this.sessionService.new();
@@ -72,9 +69,6 @@ export class SessionComponent implements AfterViewInit {
     this.careplan = this.careplanService.downloadCarePlan(
       session.insert_session_one.id
     );
-
-    // Register the session component to send and receive events
-    this.dispatcher = this.eventsService.addContext('session', this);
 
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,

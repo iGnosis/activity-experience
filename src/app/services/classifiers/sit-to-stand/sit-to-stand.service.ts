@@ -5,7 +5,6 @@ import { spotlight } from 'src/app/store/actions/spotlight.actions';
 import { Results } from 'src/app/types/pointmotion';
 import { AnalyticsService } from '../../analytics/analytics.service';
 import { CareplanService } from '../../careplan/careplan.service';
-import { EventsService } from '../../events/events.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
@@ -27,7 +26,6 @@ export class SitToStandService {
     className: 'stand',
     celebrated: false,
   };
-  private dispatcher;
 
   tasks = [
     {
@@ -89,13 +87,11 @@ export class SitToStandService {
   ];
 
   constructor(
-    private eventService: EventsService,
     private careplan: CareplanService,
     private store: Store<{ calibration: any; spotlight: any }>,
     private analyticsService: AnalyticsService,
     private soundService: SoundsService
   ) {
-    this.dispatcher = this.eventService.addContext('sit2stand.service', this);
 
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {

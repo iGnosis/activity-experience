@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { EventsService } from 'src/app/services/events/events.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import {
   SpotlightActionShowMessageDTO,
@@ -16,10 +15,9 @@ export class SpotlightComponent implements OnInit, AfterViewInit {
   hidden = false;
   messagesQueue: Array<SpotlightActionShowMessageDTO> = [];
 
-  constructor(private eventService: EventsService) {}
+  constructor() {}
 
   ngAfterViewInit(): void {
-    this.eventService.addContext('spotlight', this);
   }
 
   ngOnInit(): void {}

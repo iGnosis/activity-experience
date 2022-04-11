@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { calibration } from 'src/app/store/actions/calibration.actions';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CareplanService } from '../careplan/careplan.service';
-import { EventsService } from '../events/events.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
 import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
@@ -16,7 +15,7 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 })
 export class CalibrationService {
   pose$?: Observable<any>;
-  eventDispatcher: any;
+  // eventDispatcher: any;
   calibration$?: Observable<string>;
   isCalibrating = false;
   taskId = v4();
@@ -30,7 +29,6 @@ export class CalibrationService {
       calibration: any;
       guide: GuideActionShowMessagesDTO;
     }>,
-    private eventService: EventsService,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene
@@ -41,15 +39,10 @@ export class CalibrationService {
     });
 
     setTimeout(() => {
-      this.eventDispatcher = this.eventService.addContext(
-        'calibration.service',
-        this
-      );
       this.calibration$ = this.store.select(
         (state) => state.calibration.status
       );
       this.calibration$.subscribe((status) => {
-        this.eventDispatcher.dispatchEventName(status);
 
         if (!environment.analytics.calibration) {
           return;

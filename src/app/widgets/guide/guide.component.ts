@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { EventsService } from 'src/app/services/events/events.service';
 import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
 
 @Component({
@@ -20,12 +19,11 @@ export class GuideComponent implements AfterViewInit {
   requestQueue: Array<GuideActionShowMessagesDTO> = [] // Queue the incoming requests as well...
   clearTimeout: any
 
-  constructor(private eventService: EventsService, private store: Store<{guide: GuideActionShowMessageDTO}>) { 
+  constructor(private store: Store<{guide: GuideActionShowMessageDTO}>) { 
     
   }
 
   ngAfterViewInit(): void {
-    this.eventService.addContext('guide', this)
 
     // this.messages$ = this.store.select('guide')
     this.messages$ = this.store.select(state => state.guide.id)
