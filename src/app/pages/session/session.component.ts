@@ -109,7 +109,12 @@ export class SessionComponent implements AfterViewInit {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
-  async action_startCalibration(data: any) {}
+  async startCalibration() {
+    // console.log(this.session?.scene.start('calibration'));
+    console.log('start calibration');
+    
+    
+  }
 
   async startGame() {
     setTimeout(() => {
@@ -117,9 +122,14 @@ export class SessionComponent implements AfterViewInit {
       const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
       this.updateDimensions(canvas)
       // @ts-ignore.
-      window.pm.session = this
+      // window.pm.session = this
       // this.sessionElm.nativeElement.requestFullscreen()
     })
+  }
+
+  startSit2Stand() {
+    console.log('start sit 2 stand');
+    
   }
 
   action_startMediaPipe(data: any) {

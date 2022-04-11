@@ -35,6 +35,7 @@ export class CalibrationScene extends Phaser.Scene {
     }
     
     create() {
+      this.drawCalibrationBox(50, 90, 'error')
       this.calibration$ = this.store.select((state) => state.calibration)
       this.calibration$.subscribe((result)=> {
         if(result && result.status) {
