@@ -51,27 +51,27 @@ export class WelcomeComponent implements OnInit {
 
   
   messages = [
-    // {
-    //   type: 'message',
-    //   text: 'Welcome back',
-    //   timeout: 2000,
-    //   bg: '#000066'
-    // }, {
-    //   type: 'message',
-    //   text: 'Great to see you',
-    //   timeout: 2000,
-    //   bg: '#000066'
-    // }, 
-    // {
-    //   type: 'announcement',
-    //   text: `Let's Go`,
-    //   timeout: 3000,
-    //   bg: '#FFFFFF'
-    // }, 
-    // {
-    //   type: 'pre-session-survey',
-    //   bg: '#FFB2B2'
-    // }, 
+    {
+      type: 'message',
+      text: 'Welcome back',
+      timeout: 2000,
+      bg: '#000066'
+    }, {
+      type: 'message',
+      text: 'Great to see you',
+      timeout: 2000,
+      bg: '#000066'
+    }, 
+    {
+      type: 'announcement',
+      text: `Let's Go`,
+      timeout: 3000,
+      bg: '#FFFFFF'
+    }, 
+    {
+      type: 'pre-session-survey',
+      bg: '#FFB2B2'
+    }, 
     {
       type: 'announcement',
       text: `Thanks`,
@@ -105,8 +105,11 @@ export class WelcomeComponent implements OnInit {
 
   async ngOnInit() {
     // await this.initMessageSequence()
-    const sessionData = await this.sessionService.get(this.sessionId)
-    this.store.dispatch(session.updateConfig(sessionData.session_by_pk))
+    if(this.sessionId) {
+      const sessionData = await this.sessionService.get(this.sessionId)
+      this.store.dispatch(session.updateConfig(sessionData.session_by_pk))
+    }
+    
 
     // if (!enableAnalytics) {
     //   this.messages.push({

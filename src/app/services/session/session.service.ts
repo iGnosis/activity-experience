@@ -51,7 +51,8 @@ export class SessionService {
 
   async updatePreSessionMood(mood: string) {
     if (!this.sessionId) {
-      throw new Error('session id not defined. sessionService.get should be called first')
+      console.error('session id not defined. sessionService.get should be called first')
+      return
     }
     return this.client.req(gql`mutation UpdateSession($id: uuid!, $mood: String) {
       update_session_by_pk(pk_columns: {id: $id}, _set: {preSessionMood: $mood}) {
@@ -65,7 +66,8 @@ export class SessionService {
 
   async updatePostSessionMood(mood: string) {
     if (!this.sessionId) {
-      throw new Error('session id not defined. sessionService.get should be called first')
+      console.error('session id not defined. sessionService.get should be called first')
+      return
     }
     return this.client.req(gql`mutation UpdateSession($id: uuid!, $mood: String) {
       update_session_by_pk(pk_columns: {id: $id}, _set: {postSessionMood: $mood}) {
@@ -79,7 +81,8 @@ export class SessionService {
 
   async updateGenre(genre: string) {
     if (!this.sessionId) {
-      throw new Error('session id not defined. sessionService.get should be called first')
+      console.error('session id not defined. sessionService.get should be called first')
+      return
     }
     return this.client.req(gql`mutation UpdateSession($id: uuid!, $genre: String) {
       update_session_by_pk(pk_columns: {id: $id}, _set: {genre: $genre}) {
