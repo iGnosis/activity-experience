@@ -6,8 +6,8 @@
         
         <app-announcement *ngIf="currentMessage.type =='announcement'" [text]="currentMessage.text"></app-announcement>
 
-        <app-pre-session-survey (selected)="showNextStep()" *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
+        <app-pre-session-survey (selected)="preSessionMoodSelected($event)" *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
 
-        <app-select-genre (selected)="showNextStep()" *ngIf="currentMessage.type =='select-genre'"></app-select-genre>
+        <app-select-genre (selected)="genreSelected($event)" *ngIf="currentMessage.type =='select-genre'"></app-select-genre>
     </div>
 </div>

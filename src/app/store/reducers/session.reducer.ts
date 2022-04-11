@@ -21,18 +21,23 @@ const _sessionReducer = createReducer(initialState,
 
     on(session.updateConfig, (state, data) => {
         console.log(data)
-        
-        return {}
+        const newState = Object.assign({}, state)
+        newState.session = Object.assign({}, data)
+        console.log(newState)
+        return newState
+    }),
+    on(session.setPreSessionMood, (state, data) => {
+        const newState = Object.assign({}, state)
+        newState.session? newState.session.preSessionMood = data.mood: null
+        return newState
+    }),
+    on(session.setPostSessionMood, (state, data) => {
+        const newState = Object.assign({}, state)
+        newState.session? newState.session.postSessionMood = data.mood: null
+        return newState
     }),
     on(session.startSession, (state, data)=> {
         const newState = Object.assign({}, state)
-        newState.session = {
-            id: data.id,
-            careplan: data.careplan,
-            patient: data.patient,
-            createdAt: data.createdAt,
-        }
-        saveToLocalStorage(newState)
         return newState
     }),
     on(session.startActivity, (state, data) => {

@@ -3,6 +3,7 @@ import {  Store } from '@ngrx/store';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
+import { SessionService } from 'src/app/services/session/session.service';
 
 @Component({
   selector: 'app-welcome',
@@ -50,27 +51,27 @@ export class WelcomeComponent implements OnInit {
 
   
   messages = [
-    {
-      type: 'message',
-      text: 'Welcome back',
-      timeout: 2000,
-      bg: '#000066'
-    }, {
-      type: 'message',
-      text: 'Great to see you',
-      timeout: 2000,
-      bg: '#000066'
-    }, 
-    {
-      type: 'announcement',
-      text: `Let's Go`,
-      timeout: 3000,
-      bg: '#FFFFFF'
-    }, 
-    {
-      type: 'pre-session-survey',
-      bg: '#FFB2B2'
-    }, 
+    // {
+    //   type: 'message',
+    //   text: 'Welcome back',
+    //   timeout: 2000,
+    //   bg: '#000066'
+    // }, {
+    //   type: 'message',
+    //   text: 'Great to see you',
+    //   timeout: 2000,
+    //   bg: '#000066'
+    // }, 
+    // {
+    //   type: 'announcement',
+    //   text: `Let's Go`,
+    //   timeout: 3000,
+    //   bg: '#FFFFFF'
+    // }, 
+    // {
+    //   type: 'pre-session-survey',
+    //   bg: '#FFB2B2'
+    // }, 
     {
       type: 'announcement',
       text: `Thanks`,
@@ -86,6 +87,7 @@ export class WelcomeComponent implements OnInit {
       bg: '#FFFFFF'
     }
   ]
+  sessionId: string
 
   currentStep = -1
   currentMessage: {type: string, text?: string, timeout?: number, bg: string} | undefined
@@ -93,26 +95,27 @@ export class WelcomeComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private sessionService: SessionService,
     private store: Store<{session: any}>
   ) {
     // Save the session id in the store
     // If there is no session id, then disable analytics
-    const sessionId = this.route.snapshot.queryParamMap.get('session') || this.route.snapshot.queryParamMap.get('sessionId') || ''
-    let enableAnalytics = sessionId? true : false
-    this.store.dispatch(session.updateConfig({sessionId, enableAnalytics}))
-
-    if (!enableAnalytics) {
-      this.messages.push({
-        type: 'message',
-        text: 'This session is NOT being recorded',
-        timeout: 3000,
-        bg: '#000066'
-      })
-    }
+    this.sessionId = this.route.snapshot.queryParamMap.get('session') || this.route.snapshot.queryParamMap.get('sessionId') || ''
   }
 
   async ngOnInit() {
     // await this.initMessageSequence()
+    const sessionData = await this.sessionService.get(this.sessionId)
+    this.store.dispatch(session.updateConfig(sessionData.session_by_pk))
+
+    // if (!enableAnalytics) {
+    //   this.messages.push({
+    //     type: 'message',
+    //     text: 'This session is NOT being recorded',
+    //     timeout: 3000,
+    //     bg: '#000066'
+    //   })
+    // }
     await this.showNextStep()
   }
 
@@ -157,5 +160,15 @@ export class WelcomeComponent implements OnInit {
         resolve({})
       }, timeout)
     })
+  }
+
+  async preSessionMoodSelected(mood: string)  {
+    await this.sessionService.updatePreSessionMood(mood)
+    this.showNextStep()
+  }
+
+  async genreSelected(genre: string) {
+    await this.sessionService.updateGenre(genre)
+    this.showNextStep()
   }
 }

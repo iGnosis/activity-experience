@@ -626,13 +626,30 @@ export type SessionRow = {
   updatedAt?: Date,
   endedAt?: Date,
   patient: string,
-  careplan: string
+  careplan: string,
+  preSessionMood?: string,
+  postSessionMood?: string,
+  genre?: string,
+  patientByPatient?: Patient,
+  careplanByCareplan?: CarePlan
 }
 
 
-export type SessionConfig = {
-  sessionId?: string,
-  enableAnalytics: boolean,
-  mood?: string,
-  genre?: string
+export type Patient = {
+  id: string,
+  createdAt: Date,
+  updatedAt: Date,
+  provider: string,
+  identifier: string,
+  medicalConditions: any,
+  preferredGenres?: any,
+  primaryTherapist: string,
+  onboardedBy: string
 }
+
+// export type SessionConfig = {
+//   sessionId?: string,
+//   enableAnalytics: boolean,
+//   mood?: string,
+//   genre?: string
+// }
