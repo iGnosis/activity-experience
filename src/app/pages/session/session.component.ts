@@ -38,7 +38,6 @@ export class SessionComponent implements AfterViewInit {
     },
   };
   careplan: any;
-  dispatcher?: { dispatchEventName: Function; dispatchEventId: Function };
 
   //temporary
   showCelebration = false;
@@ -58,17 +57,17 @@ export class SessionComponent implements AfterViewInit {
   async ngAfterViewInit() {
 
     // Use this for analytics
-    const session = await this.sessionService.new();
+    // const session = await this.sessionService.new();
 
     // Set the session id in the global store
-    await this.store.dispatch(
-      sessionAction.startSession(session.insert_session_one)
-    );
+    // await this.store.dispatch(
+    //   sessionAction.startSession(session.insert_session_one)
+    // );
 
     // Download the careplan. do it in the welcome page later
-    this.careplan = this.careplanService.downloadCarePlan(
-      session.insert_session_one.id
-    );
+    // this.careplan = this.careplanService.downloadCarePlan(
+    //   session.insert_session_one.id
+    // );
 
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -79,9 +78,6 @@ export class SessionComponent implements AfterViewInit {
     const box = this.uiHelperService.setBoundingBox(stream);
     this.updateDimensions(this.video.nativeElement);
 
-    this.dispatcher?.dispatchEventName('ready');
-    // this.dispatcher?.dispatchEventId('start_game')
-
     this.store
       .select((state) => state.spotlight)
       .subscribe((val) => {
@@ -91,6 +87,7 @@ export class SessionComponent implements AfterViewInit {
         }, 2000);
       });
 
+    this.startGame()
     // updating scenes in the Phaser game config
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
@@ -114,15 +111,15 @@ export class SessionComponent implements AfterViewInit {
 
   async action_startCalibration(data: any) {}
 
-  async action_startGame(data: any) {
-    // setTimeout(() => {
-    //   // Set the canvas to take up the same space as the video. Simplifying all the calculations
-    //   const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
-    //   this.updateDimensions(canvas)
-    //   // @ts-ignore.
-    //   window.pm.session = this
-    //   // this.sessionElm.nativeElement.requestFullscreen()
-    // })
+  async startGame() {
+    setTimeout(() => {
+      // Set the canvas to take up the same space as the video. Simplifying all the calculations
+      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
+      this.updateDimensions(canvas)
+      // @ts-ignore.
+      window.pm.session = this
+      // this.sessionElm.nativeElement.requestFullscreen()
+    })
   }
 
   action_startMediaPipe(data: any) {
