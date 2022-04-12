@@ -43,7 +43,6 @@ export class CalibrationService {
         (state) => state.calibration.status
       );
       this.calibration$.subscribe((status) => {
-
         if (!environment.analytics.calibration) {
           return;
         }
@@ -157,29 +156,31 @@ export class CalibrationService {
     }
   }
 
+
+
   calibrateFullBody(results: { pose: Results }) {
     // console.log('calibrateFullBody', results);
 
     const sendError = () => {
       // if  not calibrated
-      if (!this.calibrationScene.scene.isActive('calibration')) {
-        console.log('starting calibration scene in middle of the activity');
-        this.calibrationScene.action_startActivity();
-      }
+      //   if (!this.calibrationScene.scene.isActive('calibration')) {
+      //     console.log('starting calibration scene in middle of the activity');
+      //     this.calibrationScene.action_startActivity();
+      //   }
 
-      //   this.store.dispatch(
-      //     calibration.error({
-      //       pose: results.pose,
-      //       reason: 'Cannot see required points',
-      //     })
-      //   );
-      //   this.store.dispatch(
-      //     guide.sendMessages({
-      //       title: 'Calibration',
-      //       text: 'Move into the frame, please',
-      //       timeout: 20000,
-      //     })
-      //   );
+      this.store.dispatch(
+        calibration.error({
+          pose: results.pose,
+          reason: 'Cannot see required points',
+        })
+      );
+      this.store.dispatch(
+        guide.sendMessages({
+          title: 'Calibration',
+          text: 'Move into the frame, please',
+          timeout: 20000,
+        })
+      );
     };
 
     const sendSuccess = () => {

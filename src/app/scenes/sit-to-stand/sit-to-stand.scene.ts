@@ -22,7 +22,7 @@ export class SitToStandScene extends Phaser.Scene {
 
   create() {
       // this.add.circle(300, 300, 500, 0xFFFF00, 0.5)
-      this.add.text(300, 300, 'Sit to stand activity')
+    this.add.text(300, 300, 'Sit to stand activity', { fontSize: '30px' });
   }
 
   override update(time: number, delta: number): void {

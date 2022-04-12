@@ -7,8 +7,8 @@ import { Howl } from 'howler';
 export class SoundsService {
   constructor() {}
 
-  constant_drum_id?: number;
-  current_chord: number = 1;
+  constantDrumId?: number;
+  currentChord: number = 1;
 
   chords = new Howl({
     src: 'assets/sounds/soundsprites/chordsSprite.mp3',
@@ -28,41 +28,41 @@ export class SoundsService {
   drums = new Howl({
     src: ['assets/sounds/soundsprites/drumsSprite.mp3'],
     sprite: {
-      constant_drum: [0, 65567.34693877552, true],
-      ending_drum: [67000, 4257.9591836734635],
-      inactive_drum: [73000, 8071.836734693875],
-      success_drum: [83000, 574.6938775510273],
+      constantDrum: [0, 65567.34693877552, true],
+      endingDrum: [67000, 4257.9591836734635],
+      inactiveDrum: [73000, 8071.836734693875],
+      successDrum: [83000, 574.6938775510273],
     },
   });
 
   startContantDrum() {
-    this.constant_drum_id = this.drums.play('constant_drum');
+    this.constantDrumId = this.drums.play('constantDrum');
   }
 
   pauseContantDrum() {
-    this.drums.pause(this.constant_drum_id);
+    this.drums.pause(this.constantDrumId);
   }
 
   endConstantDrum() {
-    // this.drums.fade(1.0, 0, 2, this.constant_drum_id);
-    this.drums.stop(this.constant_drum_id);
-    this.drums.play('ending_drum');
+    // this.drums.fade(1.0, 0, 2, this.constantDrumId);
+    this.drums.stop(this.constantDrumId);
+    this.drums.play('endingDrum');
   }
 
   isConstantDrumPlaying() {
-    return this.drums.playing(this.constant_drum_id);
+    return this.drums.playing(this.constantDrumId);
   }
 
   playNextChord() {
-    if (this.current_chord >= 9) {
-      this.current_chord = 1;
+    if (this.currentChord >= 9) {
+      this.currentChord = 1;
     }
-    console.log(`playing CHORD ${this.current_chord}`);
-    this.chords.play(`Chord ${this.current_chord}`);
-    this.current_chord += 1;
+    console.log(`playing CHORD ${this.currentChord}`);
+    this.chords.play(`Chord ${this.currentChord}`);
+    this.currentChord += 1;
   }
 
   fade(from: number, to: number, duration: number, id?: number | undefined) {
-    this.drums.fade(from, to, duration, this.constant_drum_id);
+    this.drums.fade(from, to, duration, this.constantDrumId);
   }
 }

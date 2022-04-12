@@ -35,6 +35,7 @@ export class CalibrationScene extends Phaser.Scene {
     }
     
     create() {
+      this.add.text(300, 300, 'calibration', { fontSize: '30px' });
       this.drawCalibrationBox(50, 90, 'error')
       this.calibration$ = this.store.select((state) => state.calibration)
       this.calibration$.subscribe((result)=> {

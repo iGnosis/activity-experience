@@ -8,7 +8,6 @@ import { CareplanService } from '../../careplan/careplan.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -92,7 +91,6 @@ export class SitToStandService {
     private analyticsService: AnalyticsService,
     private soundService: SoundsService
   ) {
-
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {
       this.distanceThreshold =
@@ -117,9 +115,21 @@ export class SitToStandService {
         if (status == 'success') {
           this.reStartActivity();
         } else if (status == 'error' && this.activityExplained) {
-          this.pauseActivity();
+          // if the calibration is error
+          // debouncing the pauseActivity() for 3 seconds
+          this.debounce(this.pauseActivity(), 3000);
         }
       });
+  }
+
+  debounce(func: any, timeout = 300) {
+    let timer: any;
+    return (...args: any[]) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        func.apply(this, args);
+      }, timeout);
+    };
   }
 
   classify(pose: Results) {
@@ -191,7 +201,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.hide())
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
-            environment.music_experience === 'music_experience_2' &&
+            environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
         }
@@ -208,7 +218,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
 
-            environment.music_experience === 'music_experience_2' &&
+            environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
         }
@@ -223,8 +233,7 @@ export class SitToStandService {
     }
   }
 
-    celebrate() {
-      
+  celebrate() {
     /* this.soundService.fade(1.0, 0.5, 5);
     setTimeout(() => {
       this.soundService.fade(0.5, 1.0, 5);
@@ -364,7 +373,7 @@ export class SitToStandService {
       if (this.currentClass == this.task.className && !this.task.celebrated) {
         this.celebrate();
 
-        environment.music_experience === 'music_experience_2' &&
+        environment.musicExperience === 'music_experience_2' &&
           this.soundService.playNextChord();
       }
 

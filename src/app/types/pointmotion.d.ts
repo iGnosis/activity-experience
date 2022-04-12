@@ -662,5 +662,5 @@ export interface Environment {
   };
   patient: string;
   careplan: string;
-  music_experience: 'music_experience_1' | 'music_experience_2';
+  musicExperience: 'music_experience_1' | 'music_experience_2';
 }

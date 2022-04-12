@@ -55,7 +55,6 @@ export class SessionComponent implements AfterViewInit {
   ) {}
 
   async ngAfterViewInit() {
-
     // Use this for analytics
     // const session = await this.sessionService.new();
 
@@ -87,7 +86,7 @@ export class SessionComponent implements AfterViewInit {
         }, 2000);
       });
 
-    this.startGame()
+    this.startGame();
     // updating scenes in the Phaser game config
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
@@ -110,26 +109,38 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startCalibration() {
-    // console.log(this.session?.scene.start('calibration'));
-    console.log('start calibration');
-    
-    
+    if (this.session?.scene.isActive('sit2stand')) {
+      this.session.scene.stop('sit2stand');
+      console.log('sit2stand is active. turning off');
+      this.session?.scene.start('calibration');
+      console.log('start calibration');
+    } else {
+      console.log('calibration is already active');
+    }
   }
-
   async startGame() {
     setTimeout(() => {
       // Set the canvas to take up the same space as the video. Simplifying all the calculations
-      const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
-      this.updateDimensions(canvas)
+      const canvas = document.querySelector(
+        '#phaser-canvas canvas'
+      ) as HTMLCanvasElement;
+      this.updateDimensions(canvas);
       // @ts-ignore.
       // window.pm.session = this
       // this.sessionElm.nativeElement.requestFullscreen()
-    })
+    });
   }
 
   startSit2Stand() {
-    console.log('start sit 2 stand');
-    
+    if (this.session?.scene.isActive('calibration')) {
+      this.session.scene.stop('calibration');
+      console.log('calibration is active. turning off');
+      this.session?.scene.start('sit2stand');
+      console.log('start sit 2 stand');
+    } else {
+      this.session?.scene.start('sit2stand');
+      console.log('sit2stand is already active');
+    }
   }
 
   action_startMediaPipe(data: any) {
