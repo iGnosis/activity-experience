@@ -1,4 +1,51 @@
+@import '/src/app/variables';
+
 .guide {
-    padding: 16px;
-    background-color: #FFFFFF;
+    width: 100vw;
+    height: 100vh;
+    
+    .guide-container-center {
+        width: 600px;
+        border: 6px white solid;
+        border-radius: 12px;
+        position: relative;
+        left: 60px;
+        
+        &::before {
+            content: '';
+            background: url('/assets/images/guide.jpg');
+            background-size: cover;
+            background-color: $primary;
+            border-radius: 100%;
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 0;
+            bottom: 0;
+            left: -750px;
+            right: 0;
+            margin: auto;
+            border: 6px white solid;
+            transition: width 3s, height 3s, top 3s;
+        }
+
+        .avatar-container {
+            position: relative;
+            .guide-avatar {
+                width: 200px;
+                height: 200px;
+                border-radius: 100px;
+                border: 6px white solid;
+                left: -75px;
+                position: absolute;
+                display: inline-block;
+            }
+        }
+        
+        .content {
+            display: inline-block;
+        }
+        
+    }
 }
+

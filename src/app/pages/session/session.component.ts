@@ -132,9 +132,9 @@ export class SessionComponent implements AfterViewInit {
         '#phaser-canvas canvas'
       ) as HTMLCanvasElement;
       this.updateDimensions(canvas);
-      // @ts-ignore.
-      // window.pm.session = this
-      // this.sessionElm.nativeElement.requestFullscreen()
+
+      // Start mediapipe
+      this.mpHolisticService.start(this.video.nativeElement, 30)
     });
   }
 

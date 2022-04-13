@@ -18,9 +18,12 @@ export class GuideComponent implements AfterViewInit {
   handlingQueue = false
   requestQueue: Array<GuideActionShowMessagesDTO> = [] // Queue the incoming requests as well...
   clearTimeout: any
+  faded = false
 
   constructor(private store: Store<{guide: GuideActionShowMessageDTO}>) { 
-    
+    setTimeout(() => {
+      this.faded = true
+    }, 3000);
   }
 
   ngAfterViewInit(): void {
