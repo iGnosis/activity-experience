@@ -72,7 +72,13 @@ export class SessionComponent implements AfterViewInit {
       video: true,
       audio: false,
     });
-    this.video.nativeElement.srcObject = stream;
+      this.video.nativeElement.srcObject = stream;
+      
+      
+
+    // Register the session component to send and receive events
+    // this.dispatcher = this.eventsService.addContext('session', this);
+    //   this.dispatcher?.dispatchEventName('ready');
 
     const box = this.uiHelperService.setBoundingBox(stream);
     this.updateDimensions(this.video.nativeElement);
@@ -113,7 +119,8 @@ export class SessionComponent implements AfterViewInit {
       this.session.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
       this.session?.scene.start('calibration');
-      console.log('start calibration');
+        console.log('start calibration');
+        // this.action_startMediaPipe()
     } else {
       console.log('calibration is already active');
     }
@@ -138,15 +145,14 @@ export class SessionComponent implements AfterViewInit {
       this.session?.scene.start('sit2stand');
       console.log('start sit 2 stand');
     } else {
-      this.session?.scene.start('sit2stand');
       console.log('sit2stand is already active');
     }
   }
 
-  action_startMediaPipe(data: any) {
+  action_startMediaPipe(data?: any) {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
-    console.log(this.session?.scene.scenes);
+    // console.log(this.session?.scene.scenes);
 
     this.mpHolisticService.start(this.video.nativeElement, 20);
   }

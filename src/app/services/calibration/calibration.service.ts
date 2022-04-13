@@ -161,13 +161,7 @@ export class CalibrationService {
   calibrateFullBody(results: { pose: Results }) {
     // console.log('calibrateFullBody', results);
 
-    const sendError = () => {
-      // if  not calibrated
-      //   if (!this.calibrationScene.scene.isActive('calibration')) {
-      //     console.log('starting calibration scene in middle of the activity');
-      //     this.calibrationScene.action_startActivity();
-      //   }
-
+      const sendError = () => {
       this.store.dispatch(
         calibration.error({
           pose: results.pose,
@@ -198,6 +192,8 @@ export class CalibrationService {
       let leftKnee = poseLandmarkArray[25];
       let rightHip = poseLandmarkArray[24];
       let rightKnee = poseLandmarkArray[26];
+      console.log(leftHip, rightHip)
+      console.log(rightKnee, rightKnee)
       if (
         (leftHip.visibility && leftHip.visibility < 0.6) ||
         (leftKnee.visibility && leftKnee.visibility < 0.6) ||
@@ -206,12 +202,11 @@ export class CalibrationService {
       ) {
         sendError();
       } else {
+        
         sendSuccess();
       }
     }
 
-    // console.log(leftHip, rightHip)
-    // console.log(rightKnee, rightKnee)
 
     // make sure that body parts are visible
   }
