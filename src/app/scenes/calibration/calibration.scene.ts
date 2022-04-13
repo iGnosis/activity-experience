@@ -13,7 +13,15 @@ export class CalibrationScene extends Phaser.Scene {
   texture?: string;
   showCalibration = true
   
-  calibrationStatus = 'success'
+    calibrationStatus = 'success'
+    
+    //calibration box dimensions
+    calibrationBox : {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } = { x: 0,y:0,width:0,height:0}
   
   // @ts-ignore
   calibrationRectangle: {
@@ -40,24 +48,24 @@ export class CalibrationScene extends Phaser.Scene {
     create() {
 
     //   this.add.text(300, 300, 'calibration', { fontSize: '30px' });
-      this.drawCalibrationBox(40, 90, 'error')
+    //   this.drawCalibrationBox(40, 90, 'error')
       console.log('draw box')
-    //     this.calibration$ = this.store.select((state) => state.calibration)
-    //   this.calibration$.subscribe((result)=> {
-    //     if(result && result.status) {
-    //       switch(result.status) {
-    //         case 'error':
-    //         this.drawCalibrationBox(50, 90, 'error')
-    //         break;
-    //         case 'warning':
-    //         this.drawCalibrationBox(50, 90, 'warning')
-    //         break;
-    //         case 'success': 
-    //         this.drawCalibrationBox(50, 90, 'success')
-    //         break;
-    //       }
-    //     }
-    //   })
+        this.calibration$ = this.store.select((state) => state.calibration)
+      this.calibration$.subscribe((result)=> {
+        if(result && result.status) {
+          switch(result.status) {
+            case 'error':
+            this.drawCalibrationBox(40, 90, 'error')
+            break;
+            case 'warning':
+            this.drawCalibrationBox(40, 90, 'warning')
+            break;
+            case 'success': 
+            this.drawCalibrationBox(40, 90, 'success')
+            break;
+          }
+        }
+      })
     }
     
     override update(time: number, delta: number): void {
@@ -78,48 +86,49 @@ export class CalibrationScene extends Phaser.Scene {
         }, 2000)
       }
 
-      let { width, height } = this.sys.game.canvas;
-        let calibrationBoxWidth = width * percentWidth / 100 
-        console.log('calibrationBoxWidth: ', calibrationBoxWidth);
-        const calibrationBoxHeight = height * percentHeight / 100
-        console.log('calibrationBoxHeight: ',calibrationBoxHeight);
+			let { width, height } = this.sys.game.canvas;
+			// console.log(`Width ${width}, Height ${height}`)
+        this.calibrationBox.width = (width * percentWidth) / 100
+        this.calibrationBox.height = (height * percentHeight) / 100;
         
         this.calibrationRectangle.left = this.add.rectangle(
-          (width - calibrationBoxWidth) / 4,
+          (width - this.calibrationBox.width) / 4,
           height / 2,
-          (width - calibrationBoxWidth) / 2,
+          (width - this.calibrationBox.width) / 2,
           height
         );
         this.calibrationRectangle.right = this.add.rectangle(
-          width - (width - calibrationBoxWidth) / 4,
+          width - (width - this.calibrationBox.width) / 4,
           height / 2,
-          (width - calibrationBoxWidth) / 2,
+          (width - this.calibrationBox.width) / 2,
           height
         );
        
         this.calibrationRectangle.top = this.add.rectangle(
           width / 2,
-          (height - calibrationBoxHeight) / 4,
-          calibrationBoxWidth,
-          (height - calibrationBoxHeight) / 2
+          (height - this.calibrationBox.height) / 4,
+          this.calibrationBox.width,
+          (height - this.calibrationBox.height) / 2
         );
  
         this.calibrationRectangle.bottom = this.add.rectangle(
-            width / 2,
-            height - (height - calibrationBoxHeight) / 4,
-            calibrationBoxWidth,
-            (height - calibrationBoxHeight) / 2
-            );
+          width / 2,
+          height - (height - this.calibrationBox.height) / 4,
+          this.calibrationBox.width,
+          (height - this.calibrationBox.height) / 2
+        );
         
+        this.calibrationBox.x = (width - this.calibrationBox.width) / 2;
+        this.calibrationBox.y = (height - this.calibrationBox.width) / 2;
+
         this.calibrationRectangle.center = this.add
           .rectangle(
-            (width - calibrationBoxWidth) / 2,
-            (height - calibrationBoxHeight) / 2,
-              calibrationBoxWidth,
-            calibrationBoxHeight
+            (width - this.calibrationBox.width) / 2,
+            (height - this.calibrationBox.height) / 2,
+            this.calibrationBox.width,
+            this.calibrationBox.height
           )
-            .setOrigin(0, 0);
-        
+          .setOrigin(0, 0);
 
         // !this.calibrationRectangle.left ? this.calibrationRectangle.left = this.add.rectangle((width - calibrationBoxWidth) / 4, height / 2, (width - calibrationBoxWidth) / 2, height) : null
         // !this.calibrationRectangle.right? this.calibrationRectangle.right = this.add.rectangle(width - (width-calibrationBoxWidth)/4, height/2, (width-calibrationBoxWidth)/2, height): null
@@ -149,6 +158,8 @@ export class CalibrationScene extends Phaser.Scene {
       })
       
         if (type == 'success') {
+             this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
+             this.add.image(width / 2, height / 2, 'check').setScale(0.4);
         this.tweens.add({
           targets: [this.calibrationRectangle.top, this.calibrationRectangle.right, this.calibrationRectangle.bottom, this.calibrationRectangle.left, this.calibrationRectangle.center],
           alpha: 0.9,
@@ -158,12 +169,11 @@ export class CalibrationScene extends Phaser.Scene {
                 //@ts-ignore
             // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
             // Move to whatever activity was going on...
-            // this.scene.start('sit2stand')
+            this.scene.start('sit2stand')
           }
         });
             
-        this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
-        this.add.image(width / 2, height / 2, 'check').setScale(0.40)
+       
 
         } else {
             

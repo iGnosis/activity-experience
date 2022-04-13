@@ -23,6 +23,7 @@ export class CalibrationService {
   previousAttemptId = this.attemptId;
   status = 'error';
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
+
   constructor(
     private store: Store<{
       pose: Results;
@@ -156,12 +157,36 @@ export class CalibrationService {
     }
   }
 
-
+  calibrationBoxContains(x: number, y: number, point?: number): boolean {
+    // console.log(`point ${point}`);
+    // console.log(
+    //   this.calibrationScene.calibrationBox.x,
+    //   x,
+    //   this.calibrationScene.calibrationBox.x +
+    //     this.calibrationScene.calibrationBox.width
+    // );
+    // console.log(
+    //   this.calibrationScene.calibrationBox.y,
+    //   y,
+    //   this.calibrationScene.calibrationBox.y +
+    //     this.calibrationScene.calibrationBox.height
+    // );
+    return (
+      this.calibrationScene.calibrationBox.x < x &&
+      x <
+        this.calibrationScene.calibrationBox.x +
+          this.calibrationScene.calibrationBox.width &&
+      this.calibrationScene.calibrationBox.y < y &&
+      y <
+        this.calibrationScene.calibrationBox.y +
+          this.calibrationScene.calibrationBox.height
+    );
+  }
 
   calibrateFullBody(results: { pose: Results }) {
-    // console.log('calibrateFullBody', results);
+    console.log('calibrateFullBody', results);
 
-      const sendError = () => {
+    const sendError = () => {
       this.store.dispatch(
         calibration.error({
           pose: results.pose,
@@ -185,28 +210,44 @@ export class CalibrationService {
 
     let poseLandmarkArray = results.pose.poseLandmarks;
 
+    console.log(
+      `width ${this.calibrationScene.sys.game.canvas.width} Height ${this.calibrationScene.sys.game.canvas.height}`
+    );
+
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
     } else {
-      let leftHip = poseLandmarkArray[23];
-      let leftKnee = poseLandmarkArray[25];
-      let rightHip = poseLandmarkArray[24];
-      let rightKnee = poseLandmarkArray[26];
-      console.log(leftHip, rightHip)
-      console.log(rightKnee, rightKnee)
-      if (
-        (leftHip.visibility && leftHip.visibility < 0.6) ||
-        (leftKnee.visibility && leftKnee.visibility < 0.6) ||
-        (rightHip.visibility && rightHip.visibility < 0.6) ||
-        (rightKnee.visibility && rightKnee.visibility < 0.6)
-      ) {
-        sendError();
-      } else {
-        
-        sendSuccess();
+      // TODO debug 0,5,2 points
+      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22];
+
+      let success: boolean = true;
+      for (const i of points) {
+        // console.log(i)
+        // console.log(poseLandmarkArray[i].visibility as number);
+        // console.log(poseLandmarkArray[i].x);
+        // console.log(poseLandmarkArray[i].y);
+        if (
+          !((poseLandmarkArray[i].visibility as number) > 0.7 &&
+          this.calibrationBoxContains(
+            poseLandmarkArray[i].x *
+              this.calibrationScene.sys.game.canvas.width,
+            poseLandmarkArray[i].y *
+              this.calibrationScene.sys.game.canvas.height,
+            i as number
+          ))
+        ) {
+       
+          success = false;
+          console.log(`point ${i} is out of calibration box`);
+          sendError();
+          break;
+        }
+        if (success) {
+          console.log('calibration success');
+          sendSuccess();
+        }
       }
     }
-
 
     // make sure that body parts are visible
   }
