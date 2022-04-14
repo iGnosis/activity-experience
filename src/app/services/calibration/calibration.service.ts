@@ -22,6 +22,7 @@ export class CalibrationService {
   attemptId = v4();
   previousAttemptId = this.attemptId;
   status = 'error';
+  activityId: string;
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
 
   constructor(
@@ -39,67 +40,29 @@ export class CalibrationService {
       this.handlePose(results);
     });
 
-    setTimeout(() => {
-      this.calibration$ = this.store.select(
-        (state) => state.calibration.status
-      );
-      this.calibration$.subscribe((status) => {
-        if (!environment.analytics.calibration) {
-          return;
-        }
+    this.activityId = this.analyticsService.getActivityId('Calibration');
 
-        // calibration score
-        let score = 0; // 0 means error
-        switch (status) {
-          case 'warning':
-            score = 0.5;
-            break;
-          case 'success':
-            score = 1;
-            break;
-          default:
-            score = 0;
-        }
-
-        const activity = analyticsService.getActivityId('Calibration');
-
-        // renew attemptId
-        this.attemptId = v4();
-        this.taskId = v4();
-
-        // start a task since it'd a retry
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskStarted',
-          task_id: this.taskId,
-          score: 0,
-          task_name: 'calibration',
-        });
-
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskReacted',
-          task_id: this.taskId,
-          score: 0,
-          task_name: 'calibration',
-        });
-
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskEnded',
-          task_id: this.taskId,
-          score,
-          task_name: 'calibration',
-        });
-      });
-    }, 500);
+    // activityStarted 'calibration'
+    this.analyticsService.sendActivityEvent({
+      activity: this.activityId,
+      event_type: 'activityStarted',
+    });
   }
 
   handlePose(results: { pose: Results }) {
     if (!results) return;
+
+    // renew attemptId
+    this.attemptId = v4();
+    this.taskId = v4();
+
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskStarted',
+      task_id: this.taskId,
+      task_name: 'calibration',
+    });
 
     // Can have multiple configurations.
     switch (this.careplanService.getCarePlan().calibration.type) {
@@ -186,7 +149,24 @@ export class CalibrationService {
   calibrateFullBody(results: { pose: Results }) {
     console.log('calibrateFullBody', results);
 
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskReacted',
+      task_id: this.taskId,
+      task_name: 'calibration',
+    });
+
     const sendError = () => {
+      this.analyticsService.sendTaskEvent({
+        activity: this.activityId,
+        attempt_id: this.attemptId,
+        event_type: 'taskEnded',
+        task_id: this.taskId,
+        score: 0,
+        task_name: 'calibration',
+      });
+
       this.store.dispatch(
         calibration.error({
           pose: results.pose,
@@ -203,6 +183,21 @@ export class CalibrationService {
     };
 
     const sendSuccess = () => {
+      this.analyticsService.sendTaskEvent({
+        activity: this.activityId,
+        attempt_id: this.attemptId,
+        event_type: 'taskEnded',
+        task_id: this.taskId,
+        score: 1,
+        task_name: 'calibration',
+      });
+
+      // activityEnded 'calibration'
+      this.analyticsService.sendActivityEvent({
+        activity: this.activityId,
+        event_type: 'activityEnded',
+      });
+
       this.store.dispatch(
         calibration.success({ pose: results.pose, reason: 'All well' })
       );
@@ -217,35 +212,30 @@ export class CalibrationService {
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
     } else {
-      // TODO debug 0,5,2 points
-      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22];
-
-      let success: boolean = true;
-      for (const i of points) {
-        // console.log(i)
-        // console.log(poseLandmarkArray[i].visibility as number);
-        // console.log(poseLandmarkArray[i].x);
-        // console.log(poseLandmarkArray[i].y);
+      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
+      const isCalibrationSuccess = points.every((point) => {
         if (
-          !((poseLandmarkArray[i].visibility as number) > 0.7 &&
-          this.calibrationBoxContains(
-            poseLandmarkArray[i].x *
+          (poseLandmarkArray[point].visibility as number) < 0.7 ||
+          !this.calibrationBoxContains(
+            poseLandmarkArray[point].x *
               this.calibrationScene.sys.game.canvas.width,
-            poseLandmarkArray[i].y *
+            poseLandmarkArray[point].y *
               this.calibrationScene.sys.game.canvas.height,
-            i as number
-          ))
+            point as number
+          )
         ) {
-       
-          success = false;
-          console.log(`point ${i} is out of calibration box`);
-          sendError();
-          break;
+          console.log(`point ${point} is out of calibration box`);
+          return false;
         }
-        if (success) {
-          console.log('calibration success');
-          sendSuccess();
-        }
+        return true;
+      });
+
+      if (isCalibrationSuccess) {
+        console.log(`Calibration Successful`);
+        sendSuccess();
+      } else {
+        console.log(`Calibration Unsuccessful`);
+        sendError();
       }
     }
 

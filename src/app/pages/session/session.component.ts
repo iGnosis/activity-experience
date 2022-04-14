@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
+import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
@@ -39,12 +40,15 @@ export class SessionComponent implements AfterViewInit {
   };
   careplan: any;
 
+  sessionEnded: boolean = true;
+
   //temporary
   showCelebration = false;
 
   // DI the needed scenes
   constructor(
     private store: Store<{ spotlight: any }>,
+    private analyticsService: AnalyticsService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
     private mpHolisticService: HolisticService,
@@ -56,7 +60,7 @@ export class SessionComponent implements AfterViewInit {
 
   async ngAfterViewInit() {
     // Use this for analytics
-    // const session = await this.sessionService.new();
+    const session = await this.sessionService.new();
 
     // Set the session id in the global store
     // await this.store.dispatch(
@@ -72,9 +76,7 @@ export class SessionComponent implements AfterViewInit {
       video: true,
       audio: false,
     });
-      this.video.nativeElement.srcObject = stream;
-      
-      
+    this.video.nativeElement.srcObject = stream;
 
     // Register the session component to send and receive events
     // this.dispatcher = this.eventsService.addContext('session', this);
@@ -119,8 +121,8 @@ export class SessionComponent implements AfterViewInit {
       this.session.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
       this.session?.scene.start('calibration');
-        console.log('start calibration');
-        // this.action_startMediaPipe()
+      console.log('start calibration');
+      // this.action_startMediaPipe()
     } else {
       console.log('calibration is already active');
     }
@@ -133,8 +135,12 @@ export class SessionComponent implements AfterViewInit {
       ) as HTMLCanvasElement;
       this.updateDimensions(canvas);
 
+      this.analyticsService.sendSessionEvent({
+        event_type: 'sessionStarted',
+      });
+
       // Start mediapipe
-      this.mpHolisticService.start(this.video.nativeElement, 30)
+      // this.mpHolisticService.start(this.video.nativeElement, 30);
     });
   }
 
@@ -158,4 +164,11 @@ export class SessionComponent implements AfterViewInit {
   }
 
   action_restartGame(data: any) {}
+
+  sendSessionEndedEvent() {
+    console.log('sending end session event');
+    this.analyticsService.sendSessionEvent({
+      event_type: 'sessionEnded',
+    });
+  }
 }

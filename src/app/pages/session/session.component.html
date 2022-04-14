@@ -9,5 +9,7 @@
         <button class="btn btn-light mb-5 mt-5" (click)="startCalibration()">Start Calibration Scene</button>
         <br>
         <button class="btn btn-light mt-5" (click)="startSit2Stand()">Start Sit2Stand Scene</button>
+        <br>
+        <button class="btn btn-light mt-5" [disabled]="!sessionEnded" (click)="sendSessionEndedEvent()">End End Session</button>
     </div>
 </div>
