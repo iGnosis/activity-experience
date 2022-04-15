@@ -172,7 +172,7 @@ export class CalibrationScene extends Phaser.Scene {
     if (type == 'success') {
       // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
-      this.add.image(width / 2, height / 2, 'check').setScale(0.4);
+      this.add.image(width / 2, height / 2, 'check').setScale(0.2);
       this.tweens.add({
         targets: [
           this.calibrationRectangle.top,
@@ -201,7 +201,7 @@ export class CalibrationScene extends Phaser.Scene {
 
       // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
-      this.add.image(width / 2, height / 2, 'wrong').setScale(0.4);
+      this.add.image(width / 2, height / 2, 'wrong').setScale(0.2);
     }
   }
 
