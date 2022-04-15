@@ -44,10 +44,10 @@ export class CalibrationService {
 
     // activityStarted 'calibration'
 
-    this.analyticsService.sendActivityEvent({
-      activity: this.activityId,
-      event_type: 'activityStarted',
-    });
+    // this.analyticsService.sendActivityEvent({
+    //   activity: this.activityId,
+    //   event_type: 'activityStarted',
+    // });
   }
 
   handlePose(results: { pose: Results }) {
@@ -57,13 +57,13 @@ export class CalibrationService {
     this.attemptId = v4();
     this.taskId = v4();
 
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskStarted',
-      task_id: this.taskId,
-      task_name: 'calibration',
-    });
+    // this.analyticsService.sendTaskEvent({
+    //   activity: this.activityId,
+    //   attempt_id: this.attemptId,
+    //   event_type: 'taskStarted',
+    //   task_id: this.taskId,
+    //   task_name: 'calibration',
+    // });
 
     // Can have multiple configurations.
     switch (this.careplanService.getCarePlan().calibration.type) {
@@ -150,23 +150,23 @@ export class CalibrationService {
   calibrateFullBody(results: { pose: Results }) {
     // console.log('calibrateFullBody', results);
 
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskReacted',
-      task_id: this.taskId,
-      task_name: 'calibration',
-    });
+    // this.analyticsService.sendTaskEvent({
+    //   activity: this.activityId,
+    //   attempt_id: this.attemptId,
+    //   event_type: 'taskReacted',
+    //   task_id: this.taskId,
+    //   task_name: 'calibration',
+    // });
 
     const sendError = () => {
-      this.analyticsService.sendTaskEvent({
-        activity: this.activityId,
-        attempt_id: this.attemptId,
-        event_type: 'taskEnded',
-        task_id: this.taskId,
-        score: 0,
-        task_name: 'calibration',
-      });
+      //   this.analyticsService.sendTaskEvent({
+      //     activity: this.activityId,
+      //     attempt_id: this.attemptId,
+      //     event_type: 'taskEnded',
+      //     task_id: this.taskId,
+      //     score: 0,
+      //     task_name: 'calibration',
+      //   });
 
       this.store.dispatch(
         calibration.error({
@@ -184,20 +184,20 @@ export class CalibrationService {
     };
 
     const sendSuccess = () => {
-      this.analyticsService.sendTaskEvent({
-        activity: this.activityId,
-        attempt_id: this.attemptId,
-        event_type: 'taskEnded',
-        task_id: this.taskId,
-        score: 1,
-        task_name: 'calibration',
-      });
+      //   this.analyticsService.sendTaskEvent({
+      //     activity: this.activityId,
+      //     attempt_id: this.attemptId,
+      //     event_type: 'taskEnded',
+      //     task_id: this.taskId,
+      //     score: 1,
+      //     task_name: 'calibration',
+      //   });
 
       // activityEnded 'calibration'
-      this.analyticsService.sendActivityEvent({
-        activity: this.activityId,
-        event_type: 'activityEnded',
-      });
+      //   this.analyticsService.sendActivityEvent({
+      //     activity: this.activityId,
+      //     event_type: 'activityEnded',
+      //   });
 
       this.store.dispatch(
         calibration.success({ pose: results.pose, reason: 'All well' })
