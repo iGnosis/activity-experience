@@ -140,7 +140,8 @@ export class SessionComponent implements AfterViewInit {
       });
 
       // Start mediapipe
-      // this.mpHolisticService.start(this.video.nativeElement, 30);
+      
+      this.action_startMediaPipe()
     });
   }
 
@@ -158,9 +159,9 @@ export class SessionComponent implements AfterViewInit {
   action_startMediaPipe(data?: any) {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
-    // console.log(this.session?.scene.scenes);
-
-    this.mpHolisticService.start(this.video.nativeElement, 20);
+    setTimeout(() => {
+      this.mpHolisticService.start(this.video.nativeElement, 20);  
+    }, 2000); // gives time for things to settle down
   }
 
   action_restartGame(data: any) {}

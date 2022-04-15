@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import {
   ActivityEvent,
   ActivityEventRow,
@@ -6,6 +7,7 @@ import {
   AnalyticsRow,
   AnalyticsSessionEvent,
   AnalyticsSessionEventRow,
+  SessionState,
   TaskEvent,
   TaskEventRow,
 } from 'src/app/types/pointmotion';
@@ -16,41 +18,47 @@ import { GqlClientService } from '../gql-client/gql-client.service';
   providedIn: 'root',
 })
 export class AnalyticsService {
-  sessionId = '6cb8b601-4428-417c-b93f-2a67e98de1e6';
-  constructor(private gql: GqlClientService) {}
+  sessionId = '';
+  constructor(private gql: GqlClientService, private store: Store<{session: SessionState}>) {
+    this.store.select(state => state.session.session?.id).subscribe(sid => {
+      this.sessionId = sid || ''
+    })
+  }
 
   // TODO: batch events, save them in localStorage and let a webworker process the queue
   async sendEvent(event: AnalyticsEvent) {
-    const analyticsRow: AnalyticsRow = {
-      patient: environment.patient, // TODO remove hardcoded
-      session: this.sessionId, // TODO remove hardcoded
-      activity: event.activity,
-      task_id: event.task_id,
-      task_name: event.task_name,
-      attempt_id: event.attempt_id,
-      event_type: event.event_type,
-      created_at: new Date().getTime(),
-      score: event.score,
-    };
-    return this.gql.req(
-      `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint!, $score: float8 ) {
-      insert_events_one(object:
-        {
-          patient: $patient,
-          session: $session,
-          activity: $activity,
-          task_id: $task_id,
-          attempt_id: $attempt_id,
-          task_name: $task_name,
-          event_type: $event_type,
-          created_at: $created_at,
-          score: $score
-        }) {
-          id
-      }
-    }`,
-      analyticsRow
-    );
+    if (this.sessionId) {
+      const analyticsRow: AnalyticsRow = {
+        patient: environment.patient, // TODO remove hardcoded
+        session: this.sessionId, // TODO remove hardcoded
+        activity: event.activity,
+        task_id: event.task_id,
+        task_name: event.task_name,
+        attempt_id: event.attempt_id,
+        event_type: event.event_type,
+        created_at: new Date().getTime(),
+        score: event.score,
+      };
+      return this.gql.req(
+        `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint!, $score: float8 ) {
+        insert_events_one(object:
+          {
+            patient: $patient,
+            session: $session,
+            activity: $activity,
+            task_id: $task_id,
+            attempt_id: $attempt_id,
+            task_name: $task_name,
+            event_type: $event_type,
+            created_at: $created_at,
+            score: $score
+          }) {
+            id
+        }
+      }`,
+        analyticsRow
+      );
+    }
   }
 
   async sendSessionEvent(event: AnalyticsSessionEvent) {
