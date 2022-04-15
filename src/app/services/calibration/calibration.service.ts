@@ -178,7 +178,7 @@ export class CalibrationService {
         guide.sendMessages({
           // title: 'Calibration',
           text: 'Move into the frame, please',
-          timeout: 60000
+          timeout: 60000,
         })
       );
     };
@@ -213,7 +213,10 @@ export class CalibrationService {
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
     } else {
-      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
+        
+      // adding these points to make the calibration lenient
+      const points = [12, 11, 24, 23, 26, 25];
+      //   const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
       const isCalibrationSuccess = points.every((point) => {
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
