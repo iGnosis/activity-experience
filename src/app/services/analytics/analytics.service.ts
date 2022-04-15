@@ -144,8 +144,8 @@ export class AnalyticsService {
 						session: $session,
 						activity: $activity,
 						task_id: $task_id, 
-						attempt_id: $task_id, 
-						task_name: $task_id,
+						attempt_id: $attempt_id, 
+						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at
 					}) {
@@ -164,10 +164,10 @@ export class AnalyticsService {
 						session: $session,
 						activity: $activity,
 						task_id: $task_id, 
-						attempt_id: $task_id, 
-						task_name: $task_id,
+						attempt_id: $attempt_id, 
+						task_name: $task_name,
 						event_type: $event_type,
-						created_at: $created_at,
+						created_at: $created_at
 						score: $score
 					}) {
 						id
