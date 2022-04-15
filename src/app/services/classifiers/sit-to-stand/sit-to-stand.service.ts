@@ -8,6 +8,7 @@ import { CareplanService } from '../../careplan/careplan.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
+import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 @Injectable({
   providedIn: 'root',
 })
@@ -93,7 +94,8 @@ export class SitToStandService {
     private careplan: CareplanService,
     private store: Store<{ calibration: any; spotlight: any }>,
     private analyticsService: AnalyticsService,
-    private soundService: SoundsService
+    private soundService: SoundsService,
+    private calibrationScene: CalibrationScene
   ) {
     this.activityId = this.analyticsService.getActivityId('Sit to Stand');
 
@@ -124,12 +126,19 @@ export class SitToStandService {
       .select((state) => state.calibration.status)
       .subscribe((status: string) => {
         if (status == 'success') {
-          this.action_enable()
+          this.action_enable();
           this.reStartActivity();
+          if (!this.soundService.isConstantDrumPlaying()) {
+            this.soundService.startContantDrum();
+          }
         } else if (status == 'error' && this.activityExplained) {
+          this.calibrationScene.scene.start('calibration');
+          if (this.soundService.isConstantDrumPlaying()) {
+            this.soundService.pauseContantDrum();
+          }
           // if the calibration is error
           // debouncing the pauseActivity() for 3 seconds
-          this.debounce(this.pauseActivity(), 3000);
+            this.debounce(this.pauseActivity(), 3000);
         }
       });
   }
@@ -144,15 +153,14 @@ export class SitToStandService {
     };
   }
 
-	classify(pose: Results) {
-    
-		// this.analyticsService.sendTaskEvent({
+  classify(pose: Results) {
+    // this.analyticsService.sendTaskEvent({
     //   activity: this.activityId,
     //   attempt_id: this.attemptId,
     //   event_type: 'taskReacted',
     //   task_id: this.taskId,
     //   task_name: 'sit2stand',
-		// });
+    // });
     if (this.isEnabled) {
       const postLandmarkArray = pose.poseLandmarks;
       const leftShoulder = postLandmarkArray[11];
@@ -210,7 +218,7 @@ export class SitToStandService {
       const isSittingR =
         distanceBetweenRightShoulderAndHip >
         1.5 * distanceBetweenRightHipAndKnee;
-      
+
       if (isSittingL && isSittingR) {
         console.log('sitting down');
         // this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
@@ -220,8 +228,8 @@ export class SitToStandService {
           if (this.task.className == 'sit') {
             // this.store.dispatch(guide.hide())
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
-						this.celebrate();
-						this.sendTaskEndedEvent(1)
+            this.celebrate();
+            this.sendTaskEndedEvent(1);
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -238,7 +246,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.hide())
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
-						this.sendTaskEndedEvent(1)
+            this.sendTaskEndedEvent(1);
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -247,8 +255,8 @@ export class SitToStandService {
           result: 'stand',
         };
       }
-		} else {
-			this.sendTaskEndedEvent(0)
+    } else {
+      this.sendTaskEndedEvent(0);
       return {
         result: 'disabled',
       };
@@ -283,7 +291,7 @@ export class SitToStandService {
   }
 
   async pauseActivity() {
-    this.action_disable()
+    this.action_disable();
     this.store.dispatch(
       guide.sendMessages({
         text: 'Activity pause',
@@ -302,29 +310,29 @@ export class SitToStandService {
         guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
       );
 
-			this.soundService.endConstantDrum();
-			
+      this.soundService.endConstantDrum();
+
       const failedTasks = this.totalTasks - this.repsCompleted;
       // store failed events
-  
+
       this.analyticsService.sendActivityEvent({
         activity: this.activityId,
         event_type: 'activityEnded',
       });
 
-			this.isEnabled = false;
-			// setting sessionEnded to true
+      this.isEnabled = false;
+      // setting sessionEnded to true
       return;
     }
 
-		 this.analyticsService.sendTaskEvent({
-       activity: this.activityId,
-       attempt_id: this.attemptId,
-       event_type: 'taskStarted',
-       task_id: this.taskId,
-       task_name: 'sit2stand',
-		 });
-		
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskStarted',
+      task_id: this.taskId,
+      task_name: 'sit2stand',
+    });
+
     // set the task in a class variable and watch the class from the store.
     this.store.dispatch(
       guide.sendMessages({
@@ -332,13 +340,13 @@ export class SitToStandService {
         title: this.task.title,
         timeout: this.task.timeout,
       })
-		);
-		
+    );
+
     setTimeout(() => {
       // Check if the person held the right pose, but we did not celebrate...
       if (this.currentClass == this.task.className && !this.task.celebrated) {
         this.celebrate();
-				this.sendTaskEndedEvent(1)
+        this.sendTaskEndedEvent(1);
         environment.musicExperience === 'music_experience_2' &&
           this.soundService.playNextChord();
       }
@@ -348,9 +356,9 @@ export class SitToStandService {
     }, this.task.timeout);
   }
 
-	getNewTask() {
-		this.attemptId = v4()
-		this.taskId = v4()
+  getNewTask() {
+    this.attemptId = v4();
+    this.taskId = v4();
     this.task = this.tasks[this.totalTasks % (this.tasks.length - 1)];
     this.totalTasks += 1;
   }
@@ -361,11 +369,10 @@ export class SitToStandService {
 
   action_disable() {
     this.isEnabled = false;
-	}
-	
+  }
 
-	sendTaskEndedEvent(score: number) {
-		this.analyticsService.sendTaskEvent({
+  sendTaskEndedEvent(score: number) {
+    this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskEnded',
@@ -373,7 +380,7 @@ export class SitToStandService {
       score,
       task_name: 'sit2stand',
     });
-	}
+  }
 
   _calcDist(x1: number, y1: number, x2: number, y2: number): any {
     // distance = √[(x2 – x1)^2 + (y2 – y1)^2]

@@ -62,7 +62,19 @@ export class SoundsService {
     this.currentChord += 1;
   }
 
-  fade(from: number, to: number, duration: number, id?: number | undefined) {
-    this.drums.fade(from, to, duration, this.constantDrumId);
+  /**
+   *
+   * @param from From volume
+   * @param to To Volume
+   * @param duration Duration of fading from 'From Volume' to 'To Volume'
+   * @param id (Optional) ID of the music to fade, by default it take constantDrumId
+   */
+  fade(
+    from: number,
+    to: number,
+    duration: number,
+    id: number = this.constantDrumId as number
+  ) {
+    this.drums.fade(from, to, duration, id);
   }
 }
