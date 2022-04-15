@@ -12,6 +12,7 @@ import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
 import { session as sessionAction } from 'src/app/store/actions/session.actions';
+import { SessionState } from 'src/app/types/pointmotion';
 @Component({
   selector: 'app-session',
   templateUrl: './session.component.html',
@@ -21,7 +22,7 @@ export class SessionComponent implements AfterViewInit {
   @ViewChild('videoElm') video!: ElementRef;
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('sessionElm') sessionElm!: ElementRef;
-  session?: Phaser.Game;
+  game?: Phaser.Game;
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -47,7 +48,7 @@ export class SessionComponent implements AfterViewInit {
 
   // DI the needed scenes
   constructor(
-    private store: Store<{ spotlight: any }>,
+    private store: Store<{ spotlight: any, session: SessionState}>,
     private analyticsService: AnalyticsService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
@@ -55,8 +56,12 @@ export class SessionComponent implements AfterViewInit {
     private sit2standService: SitToStandService,
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
-    private sit2standScene: SitToStandScene
-  ) {}
+    private sit2standScene: SitToStandScene,
+  ) {
+    this.store.select(state => state.session.session).subscribe(session => {
+      console.log('session id', session);
+    })
+  }
 
   async ngAfterViewInit() {
     // Use this for analytics
@@ -98,7 +103,7 @@ export class SessionComponent implements AfterViewInit {
     // updating scenes in the Phaser game config
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
-    this.session = new Phaser.Game(this.config);
+    this.game = new Phaser.Game(this.config);
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
@@ -117,10 +122,10 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startCalibration() {
-    if (this.session?.scene.isActive('sit2stand')) {
-      this.session.scene.stop('sit2stand');
+    if (this.game?.scene.isActive('sit2stand')) {
+      this.game.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
-      this.session?.scene.start('calibration');
+      this.game?.scene.start('calibration');
       console.log('start calibration');
       // this.action_startMediaPipe()
     } else {
@@ -146,10 +151,10 @@ export class SessionComponent implements AfterViewInit {
   }
 
   startSit2Stand() {
-    if (this.session?.scene.isActive('calibration')) {
-      this.session.scene.stop('calibration');
+    if (this.game?.scene.isActive('calibration')) {
+      this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
-      this.session?.scene.start('sit2stand');
+      this.game?.scene.start('sit2stand');
       console.log('start sit 2 stand');
     } else {
       console.log('sit2stand is already active');
@@ -160,7 +165,7 @@ export class SessionComponent implements AfterViewInit {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
     setTimeout(() => {
-      this.mpHolisticService.start(this.video.nativeElement, 20);  
+      // this.mpHolisticService.start(this.video.nativeElement, 20);  
     }, 2000); // gives time for things to settle down
   }
 
