@@ -2,7 +2,20 @@ import { createReducer, on } from "@ngrx/store";
 import { GuideActionShowMessageDTO } from "src/app/types/pointmotion";
 import { guide } from "../actions/guide.actions";
 
+
+/**
+ * {
+ *      avatar: '',
+ *      visibility: maximized, minimized, hidden,
+ *      title: '',
+ *      text: '', //support html?
+ *      prompt: '',
+ *      entryAnimation: '',
+ *      exitAnimation: ''
+ * }
+ */
 const initialState = {}
+
 
 
 const _guideReducer = createReducer(initialState, 
@@ -12,7 +25,7 @@ const _guideReducer = createReducer(initialState,
             text: data.text,
             icon: data.icon,
             timeout: data.timeout,
-            id: data.title + data.text // if either the title or text changes...make the change happen
+            id: (data.title || '') + data.text // if either the title or text changes...make the change happen
         }
     }),
     on(guide.hide, (state, data) => {

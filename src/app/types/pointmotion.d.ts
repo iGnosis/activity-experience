@@ -137,10 +137,13 @@ export type GuideActionShowMessagesDTO = {
 };
 
 export type GuideActionShowMessageDTO = {
-  title: string;
-  text: string;
+  title?: string;
+  text?: string;
   icon?: string;
-  timeout: number;
+  prompt?: string;
+  timeout?: number;
+  entryAnimation?: string;
+  exitAnimation?: string;
   id?: string; // merged text to watch
 };
 

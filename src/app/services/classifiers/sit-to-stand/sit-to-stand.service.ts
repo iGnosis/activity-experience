@@ -124,6 +124,7 @@ export class SitToStandService {
       .select((state) => state.calibration.status)
       .subscribe((status: string) => {
         if (status == 'success') {
+          this.action_enable()
           this.reStartActivity();
         } else if (status == 'error' && this.activityExplained) {
           // if the calibration is error
@@ -144,15 +145,14 @@ export class SitToStandService {
   }
 
 	classify(pose: Results) {
-		
-		this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskReacted',
-      task_id: this.taskId,
-      task_name: 'sit2stand',
-		});
-		
+    
+		// this.analyticsService.sendTaskEvent({
+    //   activity: this.activityId,
+    //   attempt_id: this.attemptId,
+    //   event_type: 'taskReacted',
+    //   task_id: this.taskId,
+    //   task_name: 'sit2stand',
+		// });
     if (this.isEnabled) {
       const postLandmarkArray = pose.poseLandmarks;
       const leftShoulder = postLandmarkArray[11];
@@ -210,7 +210,7 @@ export class SitToStandService {
       const isSittingR =
         distanceBetweenRightShoulderAndHip >
         1.5 * distanceBetweenRightHipAndKnee;
-
+      
       if (isSittingL && isSittingR) {
         console.log('sitting down');
         // this.store.dispatch(guide.sendMessages({title: 'Sitting down', text: 'Sitting', timeout: 2000}))
@@ -283,6 +283,7 @@ export class SitToStandService {
   }
 
   async pauseActivity() {
+    this.action_disable()
     this.store.dispatch(
       guide.sendMessages({
         text: 'Activity pause',

@@ -3,6 +3,14 @@
 .guide {
     width: 100vw;
     height: 100vh;
+
+    &.guide-bottom {
+        width: 600px;
+        border-radius: 12px;
+        position: relative;
+        left: calc(40vw - 300px);
+    }
+    
     
     .guide-container-center {
         width: 600px;
@@ -94,4 +102,5 @@
         
     }
 }
+
 

@@ -148,7 +148,7 @@ export class CalibrationService {
   }
 
   calibrateFullBody(results: { pose: Results }) {
-    console.log('calibrateFullBody', results);
+    // console.log('calibrateFullBody', results);
 
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
@@ -176,9 +176,9 @@ export class CalibrationService {
       );
       this.store.dispatch(
         guide.sendMessages({
-          title: 'Calibration',
+          // title: 'Calibration',
           text: 'Move into the frame, please',
-          timeout: 20000,
+          timeout: 60000
         })
       );
     };
@@ -206,9 +206,9 @@ export class CalibrationService {
 
     let poseLandmarkArray = results.pose.poseLandmarks;
 
-    console.log(
-      `width ${this.calibrationScene.sys.game.canvas.width} Height ${this.calibrationScene.sys.game.canvas.height}`
-    );
+    // console.log(
+    //   `width ${this.calibrationScene.sys.game.canvas.width} Height ${this.calibrationScene.sys.game.canvas.height}`
+    // );
 
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
@@ -232,10 +232,10 @@ export class CalibrationService {
       });
 
       if (isCalibrationSuccess) {
-        console.log(`Calibration Successful`);
+        // console.log(`Calibration Successful`);
         sendSuccess();
       } else {
-        console.log(`Calibration Unsuccessful`);
+        // console.log(`Calibration Unsuccessful`);
         sendError();
       }
     }

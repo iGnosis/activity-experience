@@ -70,16 +70,6 @@ export class SessionComponent implements AfterViewInit {
     // Use this for analytics
     const session = await this.sessionService.new();
 
-    // Set the session id in the global store
-    // await this.store.dispatch(
-    //   sessionAction.startSession(session.insert_session_one)
-    // );
-
-    // Download the careplan. do it in the welcome page later
-    // this.careplan = this.careplanService.downloadCarePlan(
-    //   session.insert_session_one.id
-    // );
-
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
@@ -125,6 +115,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startCalibration() {
+    this.sit2standService.action_disable()
     if (this.game?.scene.isActive('sit2stand')) {
       this.game.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
@@ -153,6 +144,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   startSit2Stand() {
+    this.sit2standService.action_enable()
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
