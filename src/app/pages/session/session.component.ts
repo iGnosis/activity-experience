@@ -140,7 +140,7 @@ export class SessionComponent implements AfterViewInit {
       });
 
       // Start mediapipe
-      // this.mpHolisticService.start(this.video.nativeElement, 30);
+      this.mpHolisticService.start(this.video.nativeElement, 30);
     });
   }
 

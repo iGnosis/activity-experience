@@ -43,134 +43,111 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   create() {
-    //   this.add.text(300, 300, 'calibration', { fontSize: '30px' });
-    //   this.drawCalibrationBox(40, 90, 'error')
     console.log('draw box');
+    this.createCalibrationBox(40, 90);
     this.calibration$ = this.store.select((state) => state.calibration);
     this.calibration$.subscribe((result) => {
       if (result && result.status) {
         switch (result.status) {
           case 'error':
-            this.drawCalibrationBox(40, 90, 'error');
+            // this.createCalibrationBox(40, 90);
+            this.drawCalibrationBox('error');
             break;
           case 'warning':
-            this.drawCalibrationBox(40, 90, 'warning');
+            // this.createCalibrationBox(40, 90);
+            this.drawCalibrationBox('warning');
             break;
           case 'success':
-            this.drawCalibrationBox(40, 90, 'success');
+            // this.createCalibrationBox(40, 90);
+            this.drawCalibrationBox('success');
             break;
         }
       }
     });
   }
-
-  override update(time: number, delta: number): void {}
-
+    
   /**
    *
    * @param percentWidth percentage of the bounding-box width
    * @param percentHeight percentage of the bounding-box height
    */
-  drawCalibrationBox(
-    percentWidth: number,
-    percentHeight: number,
-    type: string
-  ) {
-    if (!this.sys.game) return;
-    if (!this.showCalibration) return;
-
-    if (type == 'success') {
-      setTimeout(() => {
-        // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
-      }, 2000);
-    }
-
+  createCalibrationBox(percentageWidth: number, percentageHeight: number) {
     let { width, height } = this.sys.game.canvas;
     // console.log(`Width ${width}, Height ${height}`)
-    this.calibrationBox.width = (width * percentWidth) / 100;
-    this.calibrationBox.height = (height * percentHeight) / 100;
+    this.calibrationBox.width = (width * percentageWidth) / 100;
+    this.calibrationBox.height = (height * percentageHeight) / 100;
 
-    // this.calibrationRectangle.left = this.add.rectangle(
-    //   (width - this.calibrationBox.width) / 4,
-    //   height / 2,
-    //   (width - this.calibrationBox.width) / 2,
-    //   height
-    // );
-    // this.calibrationRectangle.right = this.add.rectangle(
-    //   width - (width - this.calibrationBox.width) / 4,
-    //   height / 2,
-    //   (width - this.calibrationBox.width) / 2,
-    //   height
-    // );
+    this.calibrationRectangle.left = new Phaser.GameObjects.Rectangle(
+      this,
+      (width - this.calibrationBox.width) / 4,
+      height / 2,
+      (width - this.calibrationBox.width) / 2,
+      height
+    );
 
-    // this.calibrationRectangle.top = this.add.rectangle(
-    //   width / 2,
-    //   (height - this.calibrationBox.height) / 4,
-    //   this.calibrationBox.width,
-    //   (height - this.calibrationBox.height) / 2
-    // );
+    this.calibrationRectangle.right = this.add.rectangle(
+      width - (width - this.calibrationBox.width) / 4,
+      height / 2,
+      (width - this.calibrationBox.width) / 2,
+      height
+    );
 
-    // this.calibrationRectangle.bottom = this.add.rectangle(
-    //   width / 2,
-    //   height - (height - this.calibrationBox.height) / 4,
-    //   this.calibrationBox.width,
-    //   (height - this.calibrationBox.height) / 2
-    // );
+    this.calibrationRectangle.top = new Phaser.GameObjects.Rectangle(
+      this,
+      width / 2,
+      (height - this.calibrationBox.height) / 4,
+      this.calibrationBox.width,
+      (height - this.calibrationBox.height) / 2
+    );
+
+    this.calibrationRectangle.bottom = new Phaser.GameObjects.Rectangle(
+      this,
+      width / 2,
+      height - (height - this.calibrationBox.height) / 4,
+      this.calibrationBox.width,
+      (height - this.calibrationBox.height) / 2
+    );
 
     this.calibrationBox.x = (width - this.calibrationBox.width) / 2;
     this.calibrationBox.y = (height - this.calibrationBox.height) / 2;
 
-    // this.calibrationRectangle.center = this.add
-    //   .rectangle(
-    //     (width - this.calibrationBox.width) / 2,
-    //     (height - this.calibrationBox.height) / 2,
-    //     this.calibrationBox.width,
-    //     this.calibrationBox.height
-    //   )
-    //   .setOrigin(0, 0);
+    this.calibrationRectangle.center = new Phaser.GameObjects.Rectangle(
+      this,
+      (width - this.calibrationBox.width) / 2,
+      (height - this.calibrationBox.height) / 2,
+      this.calibrationBox.width,
+      this.calibrationBox.height
+    ).setOrigin(0, 0);
+  }
 
-    !this.calibrationRectangle.left
-      ? (this.calibrationRectangle.left = this.add.rectangle(
-          (width - this.calibrationBox.width) / 4,
-          height / 2,
-          (width - this.calibrationBox.width) / 2,
-          height
-        ))
-      : null;
-    !this.calibrationRectangle.right
-      ? (this.calibrationRectangle.right = this.add.rectangle(
-          width - (width - this.calibrationBox.width) / 4,
-          height / 2,
-          (width - this.calibrationBox.width) / 2,
-          height
-        ))
-      : null;
-    !this.calibrationRectangle.top
-      ? (this.calibrationRectangle.top = this.add.rectangle(
-          width / 2,
-          (height - this.calibrationBox.height) / 4,
-          this.calibrationBox.width,
-          (height - this.calibrationBox.height) / 2
-        ))
-      : null;
-    !this.calibrationRectangle.bottom
-      ? (this.calibrationRectangle.bottom = this.add.rectangle(
-          width / 2,
-          height - (height - this.calibrationBox.height) / 4,
-          this.calibrationBox.width,
-          (height - this.calibrationBox.height) / 2
-        ))
-      : null;
-    !this.calibrationRectangle.center
-      ? (this.calibrationRectangle.center = this.add
-          .rectangle(
-            (width - this.calibrationBox.width) / 2,
-            (height - this.calibrationBox.height) / 2,
-            this.calibrationBox.width,
-            this.calibrationBox.height
-          )
-          .setOrigin(0, 0))
-      : null;
+  override update(time: number, delta: number): void {}
+
+  drawCalibrationBox(type: string) {
+    if (!this.sys.game) return;
+    if (!this.showCalibration) return;
+    if (type == 'success') {
+      setTimeout(() => {
+        // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
+      }, 2000);
+		}
+		
+    let { width, height } = this.sys.game.canvas;
+  
+		this.add.existing(
+      this.calibrationRectangle.left as Phaser.GameObjects.Rectangle
+    );
+    this.add.existing(
+      this.calibrationRectangle.right as Phaser.GameObjects.Rectangle
+    );
+    this.add.existing(
+      this.calibrationRectangle.top as Phaser.GameObjects.Rectangle
+    );
+    this.add.existing(
+      this.calibrationRectangle.bottom as Phaser.GameObjects.Rectangle
+    );
+    this.add.existing(
+      this.calibrationRectangle.center as Phaser.GameObjects.Rectangle
+    );
 
     let fillColor = 0x000066;
 
@@ -189,10 +166,11 @@ export class CalibrationScene extends Phaser.Scene {
       // @ts-ignore
       this.calibrationRectangle[rect].setAlpha(1);
       // @ts-ignore
-      this.calibrationRectangle[rect].setFillStyle(fillColor, 0.5);
+      this.calibrationRectangle[rect].setFillStyle(fillColor, 0.3);
     });
 
     if (type == 'success') {
+      // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
       this.add.image(width / 2, height / 2, 'check').setScale(0.4);
       this.tweens.add({
@@ -221,18 +199,20 @@ export class CalibrationScene extends Phaser.Scene {
         this.calibrationRectangle[key].setAlpha(1);
       });
 
+      // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
       this.add.image(width / 2, height / 2, 'wrong').setScale(0.4);
     }
   }
 
   action_hideCalibrationBox(data: any) {
-    this.showCalibration = false[
-      // @ts-ignore
+    this.showCalibration = false;
+    [
       (this.calibrationRectangle.top,
       this.calibrationRectangle.right,
       this.calibrationRectangle.bottom,
-      this.calibrationRectangle.left)
+      this.calibrationRectangle.left),
+      // @ts-ignore
     ].forEach((rect: Phaser.GameObjects.Rectangle) => {
       if (rect) rect.setAlpha(0);
     });
