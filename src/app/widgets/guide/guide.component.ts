@@ -10,8 +10,8 @@ import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO } from 'src/app/t
 })
 export class GuideComponent implements AfterViewInit {
 
-  messageTitle: string | undefined = '' 
-  messageBody: string | undefined = ''
+  messageTitle: string | undefined = 'title' 
+  messageBody: string | undefined = 'body'
   hidden = false
   messagesQueue: Array<GuideActionShowMessageDTO> = []
   messages$?: Observable<string | undefined>
