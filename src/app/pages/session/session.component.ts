@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
@@ -40,6 +41,7 @@ export class SessionComponent implements AfterViewInit {
     },
   };
   careplan: any;
+  isEndSessionVisible = false;
 
   sessionEnded: boolean = true;
 
@@ -57,6 +59,7 @@ export class SessionComponent implements AfterViewInit {
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
+    private router: Router
   ) {
     this.store.select(state => state.session.session).subscribe(session => {
       console.log('session id', session);
@@ -145,7 +148,6 @@ export class SessionComponent implements AfterViewInit {
       });
 
       // Start mediapipe
-      
       this.action_startMediaPipe()
     });
   }
@@ -165,16 +167,32 @@ export class SessionComponent implements AfterViewInit {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
     setTimeout(() => {
-      // this.mpHolisticService.start(this.video.nativeElement, 20);  
+      this.mpHolisticService.start(this.video.nativeElement, 20);
     }, 2000); // gives time for things to settle down
   }
 
   action_restartGame(data: any) {}
 
-  sendSessionEndedEvent() {
+  async sendSessionEndedEvent() {
     console.log('sending end session event');
-    this.analyticsService.sendSessionEvent({
-      event_type: 'sessionEnded',
-    });
+    try {
+      await this.analyticsService.sendSessionEvent({
+        event_type: 'sessionEnded',
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    this.router.navigate(['/finished']);
+  }
+
+  timeoutId?: any;
+  showEndSession() {
+    this.isEndSessionVisible = true;
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      this.isEndSessionVisible = false;
+    }, 2000);
   }
 }
