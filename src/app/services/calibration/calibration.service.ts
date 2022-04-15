@@ -43,6 +43,7 @@ export class CalibrationService {
     this.activityId = this.analyticsService.getActivityId('Calibration');
 
     // activityStarted 'calibration'
+
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityStarted',

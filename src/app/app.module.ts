@@ -21,6 +21,7 @@ import { spotlightReducer } from './store/reducers/spotlight.reducer';
 import { AnnouncementComponent } from './widgets/announcement/announcement.component';
 import { PreSessionSurveyComponent } from './widgets/pre-session-survey/pre-session-survey.component';
 import { SelectGenreComponent } from './widgets/select-genre/select-genre.component';
+import { FinishedComponent } from './pages/finished/finished.component';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { SelectGenreComponent } from './widgets/select-genre/select-genre.compon
     CalibrationComponent,
     AnnouncementComponent,
     PreSessionSurveyComponent,
-    SelectGenreComponent
+    SelectGenreComponent,
+    FinishedComponent
   ],
   imports: [
     BrowserModule,

@@ -19,10 +19,15 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 })
 export class AnalyticsService {
   sessionId = '';
-  constructor(private gql: GqlClientService, private store: Store<{session: SessionState}>) {
-    this.store.select(state => state.session.session?.id).subscribe(sid => {
-      this.sessionId = sid || ''
-    })
+  constructor(
+    private gql: GqlClientService,
+    private store: Store<{ session: SessionState }>
+  ) {
+    this.store
+      .select((state) => state.session.session?.id)
+      .subscribe((sid) => {
+        this.sessionId = sid || '';
+      });
   }
 
   // TODO: batch events, save them in localStorage and let a webworker process the queue
@@ -62,19 +67,19 @@ export class AnalyticsService {
   }
 
   async sendSessionEvent(event: AnalyticsSessionEvent) {
-    const sessionEventRow: AnalyticsSessionEventRow = {
-      patient: environment.patient, // TODO remove hardcoded
-      session: this.sessionId, // TODO remove hardcoded
-      event_type: event.event_type,
-      created_at: new Date().getTime(),
-		};
-		
-		if (event.event_type === 'sessionEnded') {
-			console.log(this.sendSessionEndedAt())
-      
-    }
-    return this.gql.req(
-      `mutation InsertEvent($patient: uuid, $session: uuid, $event_type: String, $created_at: bigint! ) {
+    if (this.sessionId) {
+      const sessionEventRow: AnalyticsSessionEventRow = {
+        patient: environment.patient, // TODO remove hardcoded
+        session: this.sessionId, // TODO remove hardcoded
+        event_type: event.event_type,
+        created_at: new Date().getTime(),
+      };
+
+      if (event.event_type === 'sessionEnded') {
+        console.log(this.sendSessionEndedAt());
+      }
+      return this.gql.req(
+        `mutation InsertEvent($patient: uuid, $session: uuid, $event_type: String, $created_at: bigint! ) {
       insert_events_one(object:
         {
           patient: $patient,
@@ -85,20 +90,22 @@ export class AnalyticsService {
           id
       }
     }`,
-      sessionEventRow
-    );
+        sessionEventRow
+      );
+    }
   }
 
   async sendActivityEvent(event: ActivityEvent) {
-    const activityEventRow: ActivityEventRow = {
-      patient: environment.patient, // TODO remove hardcoded
-      session: this.sessionId, // TODO remove hardcoded
-      activity: event.activity,
-      event_type: event.event_type,
-      created_at: new Date().getTime(),
-    };
-    return this.gql.req(
-      `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $event_type: String, $created_at: bigint! ) {
+    if (this.sessionId) {
+      const activityEventRow: ActivityEventRow = {
+        patient: environment.patient, // TODO remove hardcoded
+        session: this.sessionId, // TODO remove hardcoded
+        activity: event.activity,
+        event_type: event.event_type,
+        created_at: new Date().getTime(),
+      };
+      return this.gql.req(
+        `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $event_type: String, $created_at: bigint! ) {
       insert_events_one(object:
         {
           patient: $patient,
@@ -110,25 +117,27 @@ export class AnalyticsService {
           id
       }
     }`,
-      activityEventRow
-    );
+        activityEventRow
+      );
+    }
   }
 
   async sendTaskEvent(event: TaskEvent) {
-    let taskEventRow: TaskEventRow = {
-      patient: environment.patient, // TODO remove hardcoded
-      session: this.sessionId, // TODO remove hardcoded
-      activity: event.activity,
-      task_id: event.task_id,
-      attempt_id: event.attempt_id,
-      task_name: event.task_name,
-      event_type: event.event_type,
-      created_at: new Date().getTime(),
-    };
+    if (this.sessionId) {
+      let taskEventRow: TaskEventRow = {
+        patient: environment.patient, // TODO remove hardcoded
+        session: this.sessionId, // TODO remove hardcoded
+        activity: event.activity,
+        task_id: event.task_id,
+        attempt_id: event.attempt_id,
+        task_name: event.task_name,
+        event_type: event.event_type,
+        created_at: new Date().getTime(),
+      };
 
-    if (!(event.score && event.event_type === 'taskEnded')) {
-      return this.gql.req(
-        `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid,$task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint! ) {
+      if (!(event.score && event.event_type === 'taskEnded')) {
+        return this.gql.req(
+          `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid,$task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint! ) {
 				insert_events_one(object:
 					{
 						patient: $patient,
@@ -143,12 +152,12 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-        taskEventRow
-      );
-    } else {
-      taskEventRow['score'] = event.score;
-      return this.gql.req(
-        `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint!, $score: float8 ) {
+          taskEventRow
+        );
+      } else {
+        taskEventRow['score'] = event.score;
+        return this.gql.req(
+          `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint!, $score: float8 ) {
 				insert_events_one(object:
 					{
 						patient: $patient,
@@ -164,24 +173,27 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-        taskEventRow
-      );
+          taskEventRow
+        );
+      }
     }
   }
 
   async sendSessionEndedAt() {
-    const sessionEndedAtRow: { endedAt: Date; sessionId: string } = {
-      endedAt: new Date(),
-      sessionId: this.sessionId, // TODO remove hardcoded
-    };
-    return this.gql.req(
-      `mutation SetSessionEnded($endedAt: timestamptz = "", $sessionId: uuid = "") {
+    if (this.sessionId) {
+      const sessionEndedAtRow: { endedAt: Date; sessionId: string } = {
+        endedAt: new Date(),
+        sessionId: this.sessionId, // TODO remove hardcoded
+      };
+      return this.gql.req(
+        `mutation SetSessionEnded($endedAt: timestamptz = "", $sessionId: uuid = "") {
   		update_session(_set: {endedAt: $endedAt}, where: {id: {_eq: $sessionId}}) {
     		affected_rows
   		}
 		}`,
-      sessionEndedAtRow
-    );
+        sessionEndedAtRow
+      );
+    }
   }
 
   getActivityId(name: string) {
