@@ -5,16 +5,25 @@ import { CalibrationState } from 'src/app/types/pointmotion';
 
 export const initialState: CalibrationState = {
   status: 'error',
-  reason: ''
+  reason: '',
+  poseHash: 0
 };
+
+function sit2standPoseHashGenerator(state: CalibrationState, data: {pose: any, reason: string}) {
+  // @ts-ignore
+  return state.pose?.poseLandmarks[12].x - data.pose?.poseLandmarks[12].x
+  // ^ build a better logic with some threshold or something...
+}
 
 const _calibrationReducer = createReducer(
   initialState,
-  on(calibration.success, (state, data) => { 
+  on(calibration.success, (state, data) => {
+    console.log(sit2standPoseHashGenerator(state, data))
     return {
       status: 'success', 
       reason: data.reason,
-      pose: data.pose
+      pose: data.pose,
+      poseHash: sit2standPoseHashGenerator(state, data)
     }
   }),
   // TODO

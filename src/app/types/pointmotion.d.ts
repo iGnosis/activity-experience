@@ -565,9 +565,10 @@ export declare class Holistic implements HolisticInterface {
 }
 
 export interface CalibrationState {
-  //  pose: Results,
+  pose?: Results,
   status: string;
   reason: string;
+  poseHash?: number;
 }
 
 export type TaskName = 'calibration' | 'sit2stand';
