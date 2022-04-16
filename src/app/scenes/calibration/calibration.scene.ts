@@ -205,34 +205,4 @@ export class CalibrationScene extends Phaser.Scene {
     }
   }
 
-  action_hideCalibrationBox(data: any) {
-    this.showCalibration = false;
-    [
-      (this.calibrationRectangle.top,
-      this.calibrationRectangle.right,
-      this.calibrationRectangle.bottom,
-      this.calibrationRectangle.left),
-      // @ts-ignore
-    ].forEach((rect: Phaser.GameObjects.Rectangle) => {
-      if (rect) rect.setAlpha(0);
-    });
-  }
-
-  action_showCalibrationBox(data: any) {
-    this.showCalibration = true;
-    Object.keys(this.calibrationRectangle).forEach(
-      //@ts-ignore
-      (rect: Phaser.GameObjects.Rectangle) => {
-        if (rect) rect.setAlpha(1);
-      }
-    );
-  }
-
-  action_startActivity(data?: any) {
-    this.scene.start('sit2stand');
-  }
-
-  action_startCalibration(data: any) {
-    this.scene.start('calibration');
-  }
 }
