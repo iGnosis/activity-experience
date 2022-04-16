@@ -64,7 +64,7 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
 
   const result = Math.abs(oldDistAvg - newDistAvg)
   if (result > 0.1) {
-    console.log('reaction was detected')
+    console.log('a reaction was detected')
     return 1
   }
   return 0
@@ -103,7 +103,8 @@ const _calibrationReducer = createReducer(
   on(calibration.warning, (state, data) => {
     return {
       status: 'warning',
-      reason: data.reason
+      reason: data.reason,
+      poseHash: sit2standPoseHashGenerator(state, data)
     }
   }),
   on(calibration.error, (state, data) => {

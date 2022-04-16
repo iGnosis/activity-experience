@@ -13,6 +13,7 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
   providedIn: 'root',
 })
 export class SitToStandService {
+  private isWaitingForReaction = false;
   private isEnabled = false;
   private distanceThreshold = 0.25;
   private currentClass = 'unknown';
@@ -146,6 +147,18 @@ export class SitToStandService {
           this.debounce(this.pauseActivity(), 3000);
         }
       });
+
+    this.store
+      .select((state) => state.calibration.poseHash)
+      .subscribe((poseHash: number) => {
+        if (this.isWaitingForReaction) {
+          if (poseHash == 1) {
+            // send reaction event for current running task
+            this.sendTaskReactedEvent()
+          }
+          this.isWaitingForReaction = false
+        }
+      })
   }
 
   debounce(func: any, timeout = 300) {
@@ -234,6 +247,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
+            this.isWaitingForReaction = false;
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -251,6 +265,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
+            this.isWaitingForReaction = false;
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -261,6 +276,7 @@ export class SitToStandService {
       }
     } else {
       this.sendTaskEndedEvent(0);
+      this.isWaitingForReaction = false;
       return {
         result: 'disabled',
       };
@@ -334,8 +350,10 @@ export class SitToStandService {
       attempt_id: this.attemptId,
       event_type: 'taskStarted',
       task_id: this.taskId,
-      task_name: 'sit2stand',
+      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
     });
+
+    this.isWaitingForReaction = true
 
     // set the task in a class variable and watch the class from the store.
     this.store.dispatch(
@@ -351,6 +369,7 @@ export class SitToStandService {
       if (this.currentClass == this.task.className && !this.task.celebrated) {
         this.celebrate();
         this.sendTaskEndedEvent(1);
+        this.isWaitingForReaction = false;
         environment.musicExperience === 'music_experience_2' &&
           this.soundService.playNextChord();
       }
@@ -375,6 +394,16 @@ export class SitToStandService {
     this.isEnabled = false;
   }
 
+  sendTaskReactedEvent() {
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskReacted',
+      task_id: this.taskId,
+      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
+    });
+  }
+
   sendTaskEndedEvent(score: number) {
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
@@ -382,7 +411,7 @@ export class SitToStandService {
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: 'sit2stand',
+      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
     });
   }
 }
