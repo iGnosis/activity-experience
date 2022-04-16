@@ -44,7 +44,7 @@ export class CalibrationScene extends Phaser.Scene {
 
   create() {
     console.log('draw box');
-    this.createCalibrationBox(40, 98);
+    this.createCalibrationBox(50, 98);
     this.calibration$ = this.store.select((state) => state.calibration);
     this.calibration$.subscribe((result) => {
       if (result && result.status) {

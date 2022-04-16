@@ -50,7 +50,7 @@ export class SessionComponent implements AfterViewInit {
 
   // DI the needed scenes
   constructor(
-    private store: Store<{ spotlight: any, session: SessionState}>,
+    private store: Store<{ spotlight: any; session: SessionState }>,
     private analyticsService: AnalyticsService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
@@ -61,9 +61,11 @@ export class SessionComponent implements AfterViewInit {
     private sit2standScene: SitToStandScene,
     private router: Router
   ) {
-    this.store.select(state => state.session.session).subscribe(session => {
-      console.log('session id', session);
-    })
+    this.store
+      .select((state) => state.session.session)
+      .subscribe((session) => {
+        console.log('session id', session);
+      });
   }
 
   async ngAfterViewInit() {
@@ -115,7 +117,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startCalibration() {
-    this.sit2standService.action_disable()
+    this.sit2standService.action_disable();
     if (this.game?.scene.isActive('sit2stand')) {
       this.game.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
@@ -139,12 +141,12 @@ export class SessionComponent implements AfterViewInit {
       });
 
       // Start mediapipe
-      this.action_startMediaPipe()
+      this.action_startMediaPipe();
     });
   }
 
   startSit2Stand() {
-    this.sit2standService.action_enable()
+    this.sit2standService.action_enable();
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
