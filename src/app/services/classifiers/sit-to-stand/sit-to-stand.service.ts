@@ -151,9 +151,12 @@ export class SitToStandService {
     this.store
       .select((state) => state.calibration.poseHash)
       .subscribe((poseHash: number) => {
+        console.log('poseHash:', poseHash)
+        console.log('isWaitingForReaction:', this.isWaitingForReaction)
         if (this.isWaitingForReaction) {
           if (poseHash == 1) {
             // send reaction event for current running task
+            console.log('sending reaction event.')
             this.sendTaskReactedEvent()
           }
           this.isWaitingForReaction = false
@@ -265,7 +268,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
-            this.isWaitingForReaction = false;
+            // this.isWaitingForReaction = false;
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -276,7 +279,7 @@ export class SitToStandService {
       }
     } else {
       this.sendTaskEndedEvent(0);
-      this.isWaitingForReaction = false;
+      // this.isWaitingForReaction = false;
       return {
         result: 'disabled',
       };
@@ -369,7 +372,7 @@ export class SitToStandService {
       if (this.currentClass == this.task.className && !this.task.celebrated) {
         this.celebrate();
         this.sendTaskEndedEvent(1);
-        this.isWaitingForReaction = false;
+        // this.isWaitingForReaction = false;
         environment.musicExperience === 'music_experience_2' &&
           this.soundService.playNextChord();
       }
