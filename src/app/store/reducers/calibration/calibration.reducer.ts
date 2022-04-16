@@ -60,23 +60,29 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
   // figuring out a relationship between those two...
   console.log('oldDistAvg:', oldDistAvg)
   console.log('newDistAvg:', newDistAvg)
-  console.log('oldDistance / newDistance =', oldDistAvg / newDistAvg)
+  console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
 
-  const result = oldDistAvg / newDistAvg
-  // When task is to 'Stand' from initial position 'Sit' - threshold approaches < 1
-  // Need to check for the task type in this 'if' condition
-  if (result < 0.8) {
-    console.log('send reactionTime event for Stand task')
-  }
-  // When task is to 'Sit' from initial position 'Stand' - threshold approaches > 1
-  // Need to check for the task type in this 'if' condition
-  else if (result > 1.2) {
-    console.log('send reactionTime event for Sit task')
-  }
-  // When initial position and desired position stays the same. Threshold stays about 1.
-  // Need to check for the task type in this 'if' condition
-  else if (result > 0.9 && result < 1.1) {
-    console.log('send reactionTime event for (Sit | Stand) task')
+  // console.log('oldDistance / newDistance =', oldDistAvg / newDistAvg)
+  // const result = oldDistAvg / newDistAvg
+  // // When task is to 'Stand' from initial position 'Sit' - threshold approaches < 1
+  // // Need to check for the task type in this 'if' condition
+  // if (result < 0.8) {
+  //   console.log('send reactionTime event for Stand task')
+  // }
+  // // When task is to 'Sit' from initial position 'Stand' - threshold approaches > 1
+  // // Need to check for the task type in this 'if' condition
+  // else if (result > 1.2) {
+  //   console.log('send reactionTime event for Sit task')
+  // }
+  // // When initial position and desired position stays the same. Threshold stays about 1.
+  // // Need to check for the task type in this 'if' condition
+  // else if (result > 0.9 && result < 1.1) {
+  //   console.log('send reactionTime event for (Sit | Stand) task')
+  // }
+
+  const result = Math.abs(oldDistAvg - newDistAvg)
+  if (result > 0.1) {
+    console.log('reaction was detected')
   }
   return 1
 }
