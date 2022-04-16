@@ -90,6 +90,12 @@ export class SitToStandService {
     },
   ];
 
+  public static calcDist(x1: number, y1: number, x2: number, y2: number): any {
+    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    return distance;
+  }
+
   constructor(
     private careplan: CareplanService,
     private store: Store<{ calibration: any; spotlight: any }>,
@@ -106,8 +112,7 @@ export class SitToStandService {
 
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {
-      this.distanceThreshold =
-        this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
+      this.distanceThreshold = this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
     } catch (err) {
       console.error(err);
       this.distanceThreshold = 0.25;
@@ -138,7 +143,7 @@ export class SitToStandService {
           }
           // if the calibration is error
           // debouncing the pauseActivity() for 3 seconds
-            this.debounce(this.pauseActivity(), 3000);
+          this.debounce(this.pauseActivity(), 3000);
         }
       });
   }
@@ -185,25 +190,25 @@ export class SitToStandService {
         };
       }
 
-      const distanceBetweenLeftShoulderAndHip = this._calcDist(
+      const distanceBetweenLeftShoulderAndHip = SitToStandService.calcDist(
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
         leftHip.y
       );
-      const distanceBetweenRightShoulderAndHip = this._calcDist(
+      const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
         rightHip.y
       );
-      const distanceBetweenLeftHipAndKnee = this._calcDist(
+      const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
         leftKnee.y
       );
-      const distanceBetweenRightHipAndKnee = this._calcDist(
+      const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,
@@ -216,8 +221,7 @@ export class SitToStandService {
       const isSittingL =
         distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
       const isSittingR =
-        distanceBetweenRightShoulderAndHip >
-        1.5 * distanceBetweenRightHipAndKnee;
+        distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');
@@ -380,11 +384,5 @@ export class SitToStandService {
       score,
       task_name: 'sit2stand',
     });
-  }
-
-  _calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
   }
 }
