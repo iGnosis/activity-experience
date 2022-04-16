@@ -62,6 +62,13 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
   console.log('newDistAvg:', newDistAvg)
   console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
 
+  const result = Math.abs(oldDistAvg - newDistAvg)
+  if (result > 0.1) {
+    console.log('reaction was detected')
+    return 1
+  }
+  return 0
+
   // console.log('oldDistance / newDistance =', oldDistAvg / newDistAvg)
   // const result = oldDistAvg / newDistAvg
   // // When task is to 'Stand' from initial position 'Sit' - threshold approaches < 1
@@ -79,12 +86,6 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
   // else if (result > 0.9 && result < 1.1) {
   //   console.log('send reactionTime event for (Sit | Stand) task')
   // }
-
-  const result = Math.abs(oldDistAvg - newDistAvg)
-  if (result > 0.1) {
-    console.log('reaction was detected')
-  }
-  return 1
 }
 
 const _calibrationReducer = createReducer(
