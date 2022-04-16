@@ -132,13 +132,14 @@ export class SitToStandService {
             this.soundService.startContantDrum();
           }
         } else if (status == 'error' && this.activityExplained) {
-          this.calibrationScene.scene.start('calibration');
+          this.action_disable();
           if (this.soundService.isConstantDrumPlaying()) {
             this.soundService.pauseContantDrum();
           }
+          this.calibrationScene.scene.start('calibration');
           // if the calibration is error
           // debouncing the pauseActivity() for 3 seconds
-            this.debounce(this.pauseActivity(), 3000);
+          //   this.debounce(this.pauseActivity(), 3000);
         }
       });
   }
@@ -163,10 +164,10 @@ export class SitToStandService {
     // });
     if (this.isEnabled) {
       const postLandmarkArray = pose.poseLandmarks;
+
       const leftShoulder = postLandmarkArray[11];
       const leftHip = postLandmarkArray[23];
       const leftKnee = postLandmarkArray[25];
-
       const rightShoulder = postLandmarkArray[12];
       const rightHip = postLandmarkArray[24];
       const rightKnee = postLandmarkArray[26];
@@ -230,8 +231,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
-            environment.musicExperience === 'music_experience_2' &&
-              this.soundService.playNextChord();
+            this.playSuccessTune();
           }
         }
         return {
@@ -247,8 +247,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
-            environment.musicExperience === 'music_experience_2' &&
-              this.soundService.playNextChord();
+            this.playSuccessTune();
           }
         }
         return {
@@ -256,11 +255,16 @@ export class SitToStandService {
         };
       }
     } else {
-      this.sendTaskEndedEvent(0);
+      //   this.sendTaskEndedEvent(0);
       return {
         result: 'disabled',
       };
     }
+  }
+
+  playSuccessTune() {
+    environment.musicExperience === 'music_experience_2' &&
+      this.soundService.playNextChord();
   }
 
   celebrate() {
@@ -271,16 +275,20 @@ export class SitToStandService {
 
   async reStartActivity() {
     if (!this.activityExplained) {
+      // Music starts playing here
       !this.soundService.isConstantDrumPlaying() &&
         this.soundService.startContantDrum();
+
       this.store.dispatch(
         guide.sendMessages({
-          text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+          text: 'Please SIT when you see an EVEN number and STAND when you see ODD number',
           title: 'Ready?',
           timeout: 1000,
         })
       );
+
       this.activityExplained = true;
+
       setTimeout(() => {
         this.runActivity();
       }, 1000);
@@ -305,55 +313,56 @@ export class SitToStandService {
     /*     !this.soundService.isConstantDrumPlaying() &&
       this.soundService.startContantDrum(); */
 
+    // end of activity
     if (this.repsCompleted >= 10) {
-      this.store.dispatch(
-        guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
-      );
-
-      this.soundService.endConstantDrum();
-
-      const failedTasks = this.totalTasks - this.repsCompleted;
-      // store failed events
-
       this.analyticsService.sendActivityEvent({
         activity: this.activityId,
         event_type: 'activityEnded',
       });
+
+      this.store.dispatch(
+        guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
+      );
+      this.soundService.endConstantDrum();
+
+      const failedTasks = this.totalTasks - this.repsCompleted;
+      // store failed events
 
       this.isEnabled = false;
       // setting sessionEnded to true
       return;
     }
 
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskStarted',
-      task_id: this.taskId,
-      task_name: 'sit2stand',
-    });
+    // this.analyticsService.sendTaskEvent({
+    //   activity: this.activityId,
+    //   attempt_id: this.attemptId,
+    //   event_type: 'taskStarted',
+    //   task_id: this.taskId,
+    //   task_name: 'sit2stand',
+    // });
 
     // set the task in a class variable and watch the class from the store.
-    this.store.dispatch(
-      guide.sendMessages({
-        text: this.task.text,
-        title: this.task.title,
-        timeout: this.task.timeout,
-      })
-    );
+    this.isEnabled &&
+      this.store.dispatch(
+        guide.sendMessages({
+          text: this.task.text,
+          title: this.task.title,
+          timeout: this.task.timeout,
+        })
+      );
 
-    setTimeout(() => {
-      // Check if the person held the right pose, but we did not celebrate...
-      if (this.currentClass == this.task.className && !this.task.celebrated) {
-        this.celebrate();
-        this.sendTaskEndedEvent(1);
-        environment.musicExperience === 'music_experience_2' &&
-          this.soundService.playNextChord();
-      }
+    this.isEnabled &&
+      setTimeout(() => {
+        // Check if the person held the right pose, but we did not celebrate...
+        if (this.currentClass == this.task.className && !this.task.celebrated) {
+          this.celebrate();
+          this.sendTaskEndedEvent(1);
+          this.playSuccessTune();
+        }
 
-      this.getNewTask();
-      this.runActivity();
-    }, this.task.timeout);
+        this.getNewTask();
+        this.runActivity();
+      }, this.task.timeout);
   }
 
   getNewTask() {

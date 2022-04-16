@@ -54,8 +54,8 @@ export class CalibrationService {
     if (!results) return;
 
     // renew attemptId
-    this.attemptId = v4();
-    this.taskId = v4();
+    // this.attemptId = v4();
+    // this.taskId = v4();
 
     // this.analyticsService.sendTaskEvent({
     //   activity: this.activityId,
@@ -122,19 +122,6 @@ export class CalibrationService {
   }
 
   calibrationBoxContains(x: number, y: number, point?: number): boolean {
-    // console.log(`point ${point}`);
-    // console.log(
-    //   this.calibrationScene.calibrationBox.x,
-    //   x,
-    //   this.calibrationScene.calibrationBox.x +
-    //     this.calibrationScene.calibrationBox.width
-    // );
-    // console.log(
-    //   this.calibrationScene.calibrationBox.y,
-    //   y,
-    //   this.calibrationScene.calibrationBox.y +
-    //     this.calibrationScene.calibrationBox.height
-    // );
     return (
       this.calibrationScene.calibrationBox.x < x &&
       x <
@@ -176,7 +163,7 @@ export class CalibrationService {
       );
       this.store.dispatch(
         guide.sendMessages({
-          // title: 'Calibration',
+        //   title: 'Calibration',
           text: 'Move into the frame, please',
           timeout: 60000,
         })
