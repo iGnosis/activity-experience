@@ -23,6 +23,7 @@ export class CalibrationService {
   previousAttemptId = this.attemptId;
   status = 'error';
   activityId: string;
+  isEnabled = false
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
 
   constructor(
@@ -48,6 +49,14 @@ export class CalibrationService {
     //   activity: this.activityId,
     //   event_type: 'activityStarted',
     // });
+  }
+
+  enable() {
+    this.isEnabled = true
+  }
+
+  disable() {
+    this.isEnabled = false
   }
 
   handlePose(results: { pose: Results }) {
@@ -157,6 +166,8 @@ export class CalibrationService {
     //   task_name: 'calibration',
     // });
 
+    if (!this.isEnabled) return
+
     const sendError = () => {
       //   this.analyticsService.sendTaskEvent({
       //     activity: this.activityId,
@@ -173,6 +184,7 @@ export class CalibrationService {
           reason: 'Cannot see required points',
         })
       );
+      
       console.error({
         // title: 'Calibration',
         text: 'Move into the frame, please',
