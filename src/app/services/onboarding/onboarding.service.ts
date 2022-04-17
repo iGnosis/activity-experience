@@ -12,19 +12,37 @@ import { HolisticService } from '../holistic/holistic.service';
 export class OnboardingService {
 
   private component: SessionComponent | undefined
-  private prod = false
+  private prod = true
   constructor(
     private store: Store<{guide: GuideState}>,
     private injector: Injector
   ) { }
 
   index = -1
-  sequence = [
+  sequence: any = [
     {
       type: 'method',
       name: this.invokeComponentFunction,
       data: {
         args: ['Ready?'],
+        name: 'announce'
+      },
+      sync: true
+    },
+    {
+      type: 'method',
+      name: this.invokeComponentFunction,
+      data: {
+        args: [],
+        name: 'askPreferredGenre'
+      },
+      next: 'manual'
+    },
+    {
+      type: 'method',
+      name: this.invokeComponentFunction,
+      data: {
+        args: ['Thanks'],
         name: 'announce'
       },
       sync: true
@@ -178,16 +196,27 @@ export class OnboardingService {
           // @ts-ignore
           service[action.method]()
       }
-    }
 
-    this.start(component, onComplete)
+      // @ts-ignore
+      if(action.next != 'manual') {
+        // if the next action can be executed automatically
+        this.start(component, onComplete)
+      }
+      
+    }
   }
 
   async invokeComponentFunction(methodName: string, params: Array<any>){
     // @ts-ignore
     if(this.component && typeof(this.component[methodName]) == 'function') {
-      // @ts-ignore
-      await this.component[methodName](...params)
+      if(params) {
+        // @ts-ignore
+        await this.component[methodName](...params)
+      } else {
+        // @ts-ignore
+        await this.component[methodName]()
+      }
+      
     }
     
   }

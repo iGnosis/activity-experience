@@ -45,7 +45,7 @@ export class SessionComponent implements AfterViewInit {
   careplan: any;
   isEndSessionVisible = false;
   announcement = ''
-  
+  selectGenre = false
 
   sessionEnded: boolean = true;
 
@@ -190,5 +190,14 @@ export class SessionComponent implements AfterViewInit {
         resolve({})
       }, 3000);
     })
+  }
+
+  askPreferredGenre() {
+    this.selectGenre = true
+  }
+
+  genreSelected(genre: string) {
+    this.selectGenre = false
+    this.onboardingService.start(this, ()=> {})
   }
 }
