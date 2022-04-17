@@ -22,6 +22,8 @@ import { AnnouncementComponent } from './widgets/announcement/announcement.compo
 import { PreSessionSurveyComponent } from './widgets/pre-session-survey/pre-session-survey.component';
 import { SelectGenreComponent } from './widgets/select-genre/select-genre.component';
 import { FinishedComponent } from './pages/finished/finished.component';
+import { TestComponent } from './pages/test/test.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   declarations: [
@@ -35,7 +37,8 @@ import { FinishedComponent } from './pages/finished/finished.component';
     AnnouncementComponent,
     PreSessionSurveyComponent,
     SelectGenreComponent,
-    FinishedComponent
+    FinishedComponent,
+    TestComponent
   ],
   imports: [
     BrowserModule,
@@ -49,7 +52,8 @@ import { FinishedComponent } from './pages/finished/finished.component';
       guide: guideReducer, // Updating the guide
       session: sessionReducer, // Top level session
       spotlight: spotlightReducer, // spotlight component
-    })
+    }),
+    FontAwesomeModule
   ],
   providers: [],
   bootstrap: [AppComponent],

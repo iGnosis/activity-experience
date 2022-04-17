@@ -1,7 +1,18 @@
 import { createAction, props } from "@ngrx/store";
-import { GuideActionShowMessageDTO } from "src/app/types/pointmotion";
+import { GuideAvatarDTO, GuideMessageDTO, GuidePromptDTO, GuideSpotlightDTO } from "src/app/types/pointmotion";
 
 export const guide = {
-    sendMessages: createAction('[Guide] Send Messages', props<GuideActionShowMessageDTO>()),
-    hide: createAction('[Guide] hide')
+    hide: createAction('[Guide] hide'),
+
+
+    updateAvatar: createAction('[Guide] Update Avatar', props<GuideAvatarDTO>()),
+    sendMessage: createAction('[Guide] Send Message', props<GuideMessageDTO>()),
+    sendSpotlight: createAction('[Guide] Send Spotlight', props<GuideSpotlightDTO>()),
+    sendPrompt: createAction('[Guide] Send Prompt', props<GuidePromptDTO>()),
+
+    hideAvatar: createAction('[Guide] Hide Avatar'),
+    hideMessage: createAction('[Guide] Hide Message'),
+    hideSpotlight: createAction('[Guide] Hide Avatar'),
+    hidePrompt: createAction('[Guide] Hide Avatar'),
+
 }

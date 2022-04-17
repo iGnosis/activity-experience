@@ -86,13 +86,19 @@ export class CalibrationService {
         this.store.dispatch(
           calibration.error({ pose: results.pose, reason: 'Cannot see hands' })
         );
-        this.store.dispatch(
-          guide.sendMessages({
-            title: 'Calibration',
-            text: 'Show your hands!',
-            timeout: 20000,
-          })
-        );
+        // this.store.dispatch(
+        //   guide.sendMessages({
+        //     title: 'Calibration',
+        //     text: 'Show your hands!',
+        //     timeout: 20000,
+        //   })
+        // );
+        console.error({
+          title: 'Calibration',
+          text: 'Show your hands!',
+          timeout: 20000,
+        })
+        
         // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
         break;
       case 1:
@@ -102,13 +108,19 @@ export class CalibrationService {
             reason: 'Can only see one hand',
           })
         );
-        this.store.dispatch(
-          guide.sendMessages({
-            title: 'Calibration',
-            text: 'Both hands....',
-            timeout: 20000,
-          })
-        );
+        console.error({
+          title: 'Calibration',
+          text: 'Both hands....',
+          timeout: 20000,
+        });
+        
+        // this.store.dispatch(
+        //   guide.sendMessages({
+        //     title: 'Calibration',
+        //     text: 'Both hands....',
+        //     timeout: 20000,
+        //   })
+        // );
         // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
         break;
       case 2:
@@ -174,11 +186,25 @@ export class CalibrationService {
           reason: 'Cannot see required points',
         })
       );
+      console.error({
+        // title: 'Calibration',
+        text: 'Move into the frame, please',
+        timeout: 60000,
+      });
+      
+      // this.store.dispatch(
+      //   guide.sendMessages({
+      //     // title: 'Calibration',
+      //     text: 'Move into the frame, please',
+      //     timeout: 60000,
+      //   })
+      // );
+    };
+    const sendWarning = () => {
       this.store.dispatch(
-        guide.sendMessages({
-          // title: 'Calibration',
-          text: 'Move into the frame, please',
-          timeout: 60000,
+        calibration.warning({
+          pose: results.pose,
+          reason: 'points not within the bound',
         })
       );
     };
@@ -238,8 +264,22 @@ export class CalibrationService {
         // console.log(`Calibration Successful`);
         sendSuccess();
       } else {
-        // console.log(`Calibration Unsuccessful`);
-        sendError();
+        // See if there is any point we can't see
+        const invisiblePoint = poseLandmarkArray.find(x => {
+          if(!x.visibility || x.visibility < 0.7) {
+            return true
+          } else {
+            return false
+          }
+        })
+
+        if(invisiblePoint) {
+          sendError();
+        } else {
+          console.log('partially uncalibrated');
+          
+          sendWarning()
+        }
       }
     }
 

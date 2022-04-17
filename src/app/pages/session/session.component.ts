@@ -69,19 +69,14 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async ngAfterViewInit() {
-    // Use this for analytics
-    const session = await this.sessionService.new();
-
+    // start the video
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
     });
     this.video.nativeElement.srcObject = stream;
 
-    // Register the session component to send and receive events
-    // this.dispatcher = this.eventsService.addContext('session', this);
-    //   this.dispatcher?.dispatchEventName('ready');
-
+    // aspect ratio of the screen and webcam may be different. make calculations easier
     const box = this.uiHelperService.setBoundingBox(stream);
     this.updateDimensions(this.video.nativeElement);
 

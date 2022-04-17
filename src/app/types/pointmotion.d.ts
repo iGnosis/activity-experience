@@ -711,3 +711,47 @@ export interface Environment {
   careplan: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
 }
+
+
+export type EntryAnimation = 'fadeIn' | 'slideIn'
+export type ExitAnimation = 'fadeOut' | 'slideOut'
+export type GuideAvatarDTO = {
+  name: 'kevin' | 'mila',
+  expression?: 'neutral' | 'happy' | 'sad',
+  position?: 'center' | 'bottom'
+  className?: string,
+  entryAnimation?: EntryAnimation,
+  exitAnimation?: ExitAnimation
+}
+
+export type GuideMessageDTO = {
+  text?: string,
+  className?: string,
+  position: 'center' | 'bottom'
+  entryAnimation?: EntryAnimation,
+  exitAnimation?: ExitAnimation
+}
+
+export type GuideSpotlightDTO = {
+  text: string,
+  className: string,
+  entryAnimation: EntryAnimation,
+  exitAnimation?: ExitAnimation
+}
+
+export type GuidePromptDTO = {
+  text?: string,
+  icon?: string, // font-awesome icon only
+  className: string,
+  position: 'left' | 'right' | 'top' | 'bottom' | 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
+  entryAnimation: EntryAnimation,
+  exitAnimation?: ExitAnimation
+}
+
+export type GuideState = {
+  avatar?: GuideAvatarDTO,
+  message?: GuideMessageDTO,
+  spotlight?: GuideSpotlightDTO,
+  prompt?: GuidePromptDTO
+}
+

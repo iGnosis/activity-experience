@@ -273,13 +273,19 @@ export class SitToStandService {
     if (!this.activityExplained) {
       !this.soundService.isConstantDrumPlaying() &&
         this.soundService.startContantDrum();
-      this.store.dispatch(
-        guide.sendMessages({
+        console.error({
           text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
           title: 'Ready?',
           timeout: 1000,
-        })
-      );
+        });
+        
+      // this.store.dispatch(
+      //   guide.sendMessages({
+      //     text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+      //     title: 'Ready?',
+      //     timeout: 1000,
+      //   })
+      // );
       this.activityExplained = true;
       setTimeout(() => {
         this.runActivity();
@@ -292,13 +298,19 @@ export class SitToStandService {
 
   async pauseActivity() {
     this.action_disable();
-    this.store.dispatch(
-      guide.sendMessages({
-        text: 'Activity pause',
-        title: 'pause',
-        timeout: 3000,
-      })
-    );
+    // this.store.dispatch(
+    //   guide.sendMessages({
+    //     text: 'Activity pause',
+    //     title: 'pause',
+    //     timeout: 3000,
+    //   })
+    // );
+    console.error({
+      text: 'Activity pause',
+      title: 'pause',
+      timeout: 3000,
+    })
+    
   }
 
   async runActivity() {
@@ -306,9 +318,11 @@ export class SitToStandService {
       this.soundService.startContantDrum(); */
 
     if (this.repsCompleted >= 10) {
-      this.store.dispatch(
-        guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
-      );
+      // this.store.dispatch(
+      //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
+      // );
+      console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
+      
 
       this.soundService.endConstantDrum();
 
@@ -334,13 +348,19 @@ export class SitToStandService {
     });
 
     // set the task in a class variable and watch the class from the store.
-    this.store.dispatch(
-      guide.sendMessages({
-        text: this.task.text,
-        title: this.task.title,
-        timeout: this.task.timeout,
-      })
-    );
+    // this.store.dispatch(
+    //   guide.sendMessage({
+    //     text: this.task.text,
+    //     title: this.task.title,
+    //     timeout: this.task.timeout,
+    //   })
+    // );
+    console.error({
+      text: this.task.text,
+      title: this.task.title,
+      timeout: this.task.timeout,
+    })
+    
 
     setTimeout(() => {
       // Check if the person held the right pose, but we did not celebrate...

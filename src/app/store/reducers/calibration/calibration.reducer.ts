@@ -11,14 +11,14 @@ export const initialState: CalibrationState = {
 
 function sit2standPoseHashGenerator(state: CalibrationState, data: {pose: any, reason: string}) {
   // @ts-ignore
-  return state.pose?.poseLandmarks[12].x - data.pose?.poseLandmarks[12].x
+  // return state.pose?.poseLandmarks[12].x - data.pose?.poseLandmarks[12].x
   // ^ build a better logic with some threshold or something...
+  return 0
 }
 
 const _calibrationReducer = createReducer(
   initialState,
   on(calibration.success, (state, data) => {
-    console.log(sit2standPoseHashGenerator(state, data))
     return {
       status: 'success', 
       reason: data.reason,
