@@ -78,6 +78,8 @@ export class GuideComponent implements AfterViewInit {
   }
 
   handleAvatarImagePosition() {
+    if (!this.avatar || !this.avatar.nativeElement) return 
+    
     let result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement, 
                               this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
     setTimeout(() => {

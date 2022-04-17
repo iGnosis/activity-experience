@@ -45,7 +45,7 @@
         border: 6px #fff solid;
         border-radius: 50%;
         position: fixed;
-        transition: top 1s, left 1s;
+        transition: top 0.5s ease-out, left 0.5s ease-out;
         &.center {
             top: calc(51vh - 150px);
             left: calc(50vw - 25vw - 180px + 20px); // 50% minus width of the message-center box minus width of image plus padding/2
