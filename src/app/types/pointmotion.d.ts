@@ -349,7 +349,7 @@ export type NormalizedLandmarkListList = NormalizedLandmarkList[];
 /**
  * Represents a single landmark (not normalized).
  */
-export interface Landmark extends NormalizedLandmark {}
+export interface Landmark extends NormalizedLandmark { }
 
 /**
  * Detected points are returned as a collection of landmarks.
@@ -571,7 +571,7 @@ export interface CalibrationState {
   poseHash?: number;
 }
 
-export type TaskName = 'calibration' | 'sit2stand';
+export type TaskName = 'calibration' | 'sit' | 'stand';
 export type AnalyticsEventType =
   | 'sessionStarted'
   | 'activityStarted'
@@ -650,7 +650,7 @@ export type TaskEvent = {
   activity: string;
   task_id: string;
   attempt_id: string;
-  task_name: TaskName;
+  task_name: any; // TODO: Fix this later.
   event_type: TaskEventType;
   score?: number;
 };

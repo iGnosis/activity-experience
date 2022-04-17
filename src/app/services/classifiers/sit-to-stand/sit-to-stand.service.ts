@@ -20,13 +20,19 @@ export class SitToStandService {
   private repsCompleted = 0;
   private totalTasks = 0;
   private activityExplained = false;
-  private task = {
-    text: 'ONE',
-    title: '1',
-    timeout: 5000,
-    className: 'stand',
-    celebrated: false,
-  };
+  private task: {
+    text: string;
+    title: string;
+    timeout: number;
+    className: string;
+    celebrated: boolean;
+  } = {
+      text: 'ONE',
+      title: '1',
+      timeout: 5000,
+      className: 'stand',
+      celebrated: false,
+    };
 
   activityId: string;
   taskId = v4();
@@ -360,7 +366,7 @@ export class SitToStandService {
       attempt_id: this.attemptId,
       event_type: 'taskStarted',
       task_id: this.taskId,
-      task_name: 'sit2stand', // TODO: Replace all 'sit2stand' with their task names ('sit' or 'stand')
+      task_name: this.task.className
     });
 
     // set the task in a class variable and watch the class from the store.
@@ -408,7 +414,7 @@ export class SitToStandService {
       attempt_id: this.attemptId,
       event_type: 'taskReacted',
       task_id: this.taskId,
-      task_name: 'sit2stand', // this.task.className. TODO: task_name can either be 'sit' or 'stand'.
+      task_name: this.task.className
     });
   }
 
@@ -420,7 +426,7 @@ export class SitToStandService {
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: 'sit2stand', // this.task.className. TODO: task_name can either be 'sit' or 'stand'.
+      task_name: this.task.className
     });
   }
 }
