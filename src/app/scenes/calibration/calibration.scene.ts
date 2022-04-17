@@ -44,7 +44,7 @@ export class CalibrationScene extends Phaser.Scene {
 
   create() {
     console.log('draw box');
-    this.createCalibrationBox(50, 98);
+    this.createCalibrationBox(40, 98);
     this.calibration$ = this.store.select((state) => state.calibration);
     this.calibration$.subscribe((result) => {
       if (result && result.status) {
@@ -125,11 +125,6 @@ export class CalibrationScene extends Phaser.Scene {
   drawCalibrationBox(type: string) {
     if (!this.sys.game) return;
     if (!this.showCalibration) return;
-    if (type == 'success') {
-      setTimeout(() => {
-        // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
-      }, 2000);
-    }
 
     let { width, height } = this.sys.game.canvas;
 
@@ -182,7 +177,7 @@ export class CalibrationScene extends Phaser.Scene {
           this.calibrationRectangle.center,
         ],
         alpha: 0.9,
-        duration: 2000,
+        duration: 1000,
         onComplete: () => {
           //@ts-ignore
           // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
