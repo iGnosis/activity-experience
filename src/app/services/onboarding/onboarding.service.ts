@@ -12,7 +12,7 @@ import { HolisticService } from '../holistic/holistic.service';
 export class OnboardingService {
 
   private component: SessionComponent | undefined
-  private prod = true
+  private prod = false
   constructor(
     private store: Store<{guide: GuideState}>,
     private injector: Injector

@@ -81,8 +81,6 @@ export class SessionComponent implements AfterViewInit {
     this.updateDimensions(this.video.nativeElement);
 
     this.startGame();
-    // updating scenes in the Phaser game config
-    
 
     this.onboardingService.start(this, () => {})
     // this.startMediaPipe()
@@ -103,18 +101,6 @@ export class SessionComponent implements AfterViewInit {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
-  async startCalibration() {
-    this.sit2standService.action_disable();
-    if (this.game?.scene.isActive('sit2stand')) {
-      this.game.scene.stop('sit2stand');
-      console.log('sit2stand is active. turning off');
-      this.game?.scene.start('calibration');
-      console.log('start calibration');
-      // this.action_startMediaPipe()
-    } else {
-      console.log('calibration is already active');
-    }
-  }
   async startGame() {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
@@ -132,6 +118,19 @@ export class SessionComponent implements AfterViewInit {
       this.startMediaPipe();
       
     }, 1500);
+  }
+
+  async startCalibration() {
+    this.sit2standService.action_disable();
+    if (this.game?.scene.isActive('sit2stand')) {
+      this.game.scene.stop('sit2stand');
+      console.log('sit2stand is active. turning off');
+      this.game?.scene.start('calibration');
+      console.log('start calibration');
+      // this.action_startMediaPipe()
+    } else {
+      console.log('calibration is already active');
+    }
   }
 
   startSit2Stand() {

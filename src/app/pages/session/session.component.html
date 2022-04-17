@@ -1,23 +1,11 @@
 <div #sessionElm (mousemove)="showEndSession()">
     <video id="webcam" muted="true" autoplay="true" width="100" height="100" #videoElm></video>
     <div id="phaser-canvas" #canvasElm></div>
-    <!-- <app-widget-calibration></app-widget-calibration> -->
-    <!-- <app-spotlight></app-spotlight> -->
-    <app-guide></app-guide> 
-    <!-- <h2 [hidden]="!showCelebration" style="color: #FFF; background-color: rgb(4, 4, 153);  padding: 16px; position: absolute; bottom: 60; text-align: center; width: 100%;">Perfect!</h2> -->
+    <!-- <app-guide></app-guide>  -->
     <img *ngIf="isEndSessionVisible" 
         src="assets/images/xmark-solid-red.svg" 
         id="close-session"
         width="70px"
         (click)="sendSessionEndedEvent()"
     >
-
-    <!-- <div style="position: fixed; right: 0; top: 100px; bottom: 0; margin-top: auto; margin-bottom: auto; text-align: right;">
-        <br>
-        <button class="btn btn-light mb-5 mt-5" (click)="startCalibration()">Start Calibration Scene</button>
-        <br>
-        <button class="btn btn-light mt-5" (click)="startSit2Stand()">Start Sit2Stand Scene</button>
-        <br>
-        <button class="btn btn-light mt-5" [disabled]="!sessionEnded" (click)="sendSessionEndedEvent()">End End Session</button>
-    </div> -->
 </div>
