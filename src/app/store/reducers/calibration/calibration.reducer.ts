@@ -28,6 +28,8 @@ const _calibrationReducer = createReducer(
   }),
   // TODO
   on(calibration.warning, (state, data) => {
+    console.log('calibration warning');
+    
     return {
       status: 'warning', 
       reason: data.reason

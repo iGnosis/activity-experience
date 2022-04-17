@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
+import { GuideService } from 'src/app/services/guide/guide.service';
 
 @Component({
   selector: 'app-guide',
@@ -18,7 +19,9 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('messageBottom') messageBottom!: ElementRef;
   avatarPosition = ''
 
-  constructor(private store: Store<{guide: GuideState}>) { 
+  constructor(
+    private store: Store<{guide: GuideState}>,
+    private guideService: GuideService) { 
     
   }
 
@@ -60,64 +63,27 @@ export class GuideComponent implements AfterViewInit {
     } else {
       this.state.message = newMessage
     }
+
+    setTimeout(() => {
+      // once the new message box is in position
+      this.handleAvatarImagePosition()
+    })
+    
   }
 
   // avatar image, expression or location can change
   handleAvatarUpdate(newAvatar: GuideAvatarDTO | undefined) {
-    console.log(newAvatar)
-    this.avatarPosition = ''
-    // It's a change event...
-    if(this.state.avatar && newAvatar) {
-      // Detect the change which happened
-      if ( this.state.avatar.name != newAvatar.name ) {
-        // just change the image
-        this.state.avatar = Object.assign({}, this.state.avatar)
-        this.state.avatar.name = newAvatar.name
-      } 
-      
-      if ( this.state.avatar.position != newAvatar.position ) {
-        if (this.state.message?.text && this.state.message.position) {
-          // position the avatar according to the message box
-          let msgRect
-          let avatarRect = this.avatar.nativeElement.getBoundingClientRect()
-          // debugger
-          switch(this.state.message.position) {
+    this.state.avatar = Object.assign({}, newAvatar)
+    this.handleAvatarImagePosition()
+  }
 
-            case 'bottom':
-              msgRect = this.messageBottom.nativeElement.getBoundingClientRect()
-              console.log(msgRect);
-              
-              // the vertical centers of both the message box and avatar should be same
-              // this.avatar.nativeElement.style.top = 
-              const top = (msgRect.y + (msgRect.height/2) - (avatarRect.height/2)) + 'px'
-              console.log(top);
-              
-              this.avatar.nativeElement.style.top = top
-              this.avatar.nativeElement.style.left = 0
-              
-              break;
-            case 'center':
-            default:
-              // console.log(this.messageCenter.nativeElement.offsetTop);
-              // console.log(this.messageCenter.nativeElement.offsetLeft);
-              msgRect = this.messageCenter.nativeElement.getBoundingClientRect()
-              console.log(msgRect);
-              this.avatar.nativeElement.style.top = (msgRect.y + (msgRect.height/2) - (avatarRect.height/2)) + 'px'
-              this.avatar.nativeElement.style.left = (msgRect.x - avatarRect.width + 6)+ 'px'
-              break
-          }
-        } else {
-
-        }
-      }
-      if (!this.state.message?.text && this.state.avatar.position) {
-        // just let the position class do it's thing
-        this.avatarPosition = this.state.avatar.position
-      }
-      // remove the old avatar
-    } else if (newAvatar){ // It's the avatar getting updated for the first time
-      this.state.avatar = newAvatar
-    } 
+  handleAvatarImagePosition() {
+    let result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement, 
+                              this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
+    setTimeout(() => {
+      this.avatar.nativeElement.style.top = result.top
+      this.avatar.nativeElement.style.left = result.left
+    })
   }
 
   handleHideAvatar() {
