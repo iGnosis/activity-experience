@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuideState } from 'src/app/types/pointmotion';
+import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuideSpotlightDTO, GuideState } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
 
@@ -43,7 +43,14 @@ export class GuideComponent implements AfterViewInit {
       }
     })
 
-    // handle spotlight
+    this.store.select(state => state.guide.spotlight).subscribe((spotlight: GuideSpotlightDTO | undefined) => {
+      if (spotlight) {
+        this.handleSpotlight(spotlight)
+      } else {
+        this.handleHideSpotlight()
+      }
+    })
+
     // handle prompt
   }
 
@@ -79,13 +86,17 @@ export class GuideComponent implements AfterViewInit {
 
   handleAvatarImagePosition() {
     if (!this.avatar || !this.avatar.nativeElement) return 
-    
+
     let result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement, 
                               this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
     setTimeout(() => {
       this.avatar.nativeElement.style.top = result.top
       this.avatar.nativeElement.style.left = result.left
     })
+  }
+
+  handleSpotlight(spotlight: GuideSpotlightDTO) {
+    this.state.spotlight = Object.assign({}, spotlight)
   }
 
   handleHideAvatar() {
@@ -98,4 +109,7 @@ export class GuideComponent implements AfterViewInit {
     this.state.message = undefined
   }
 
+  handleHideSpotlight() {
+    this.state.spotlight = undefined
+  }
 }

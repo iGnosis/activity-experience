@@ -734,8 +734,8 @@ export type GuideMessageDTO = {
 
 export type GuideSpotlightDTO = {
   text: string,
-  className: string,
-  entryAnimation: EntryAnimation,
+  className?: string,
+  entryAnimation?: EntryAnimation,
   exitAnimation?: ExitAnimation
 }
 

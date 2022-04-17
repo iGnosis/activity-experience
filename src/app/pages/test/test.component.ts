@@ -46,4 +46,12 @@ export class TestComponent implements OnInit {
   hideMessage() {
     this.store.dispatch(guide.hideMessage())
   }
+
+  sendSpotlight() {
+    this.store.dispatch(guide.sendSpotlight({text: 'some text ' + Math.random()}))
+  }
+
+  hideSpotlight() {
+    this.store.dispatch(guide.hideSpotlight())
+  }
 }
