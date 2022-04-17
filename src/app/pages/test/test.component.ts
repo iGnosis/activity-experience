@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-test',
@@ -54,4 +55,18 @@ export class TestComponent implements OnInit {
   hideSpotlight() {
     this.store.dispatch(guide.hideSpotlight())
   }
+
+  sendPromptWithIcon() {
+    this.store.dispatch(guide.sendPrompt({icon: faArrowLeft, position: 'right', text: 'Move Left'}))
+  }
+
+  sendPromptWithNumber() {
+    // Change position each time
+    this.store.dispatch(guide.sendPrompt({position: 'center', text: '2', className: 'round'}))
+  }
+
+  hidePrompt() {
+    this.store.dispatch(guide.hidePrompt())
+  }
 }
+

@@ -1,3 +1,5 @@
+import { IconDefinition } from '@fortawesome/fontawesome-common-types';
+
 export type ActionHook = {
   beforeAction?: Array<Action>;
   afterAction?: Array<Action>;
@@ -741,10 +743,10 @@ export type GuideSpotlightDTO = {
 
 export type GuidePromptDTO = {
   text?: string,
-  icon?: string, // font-awesome icon only
-  className: string,
+  icon?: IconDefinition, // font-awesome icon only
+  className?: string,
   position: 'left' | 'right' | 'top' | 'bottom' | 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
-  entryAnimation: EntryAnimation,
+  entryAnimation?: EntryAnimation,
   exitAnimation?: ExitAnimation
 }
 

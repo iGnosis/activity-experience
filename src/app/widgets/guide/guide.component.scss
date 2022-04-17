@@ -83,8 +83,25 @@
     height: 100vh;
     position: fixed;
     z-index: 12;
+    padding: 5vw;
     top: 0;
     
+    &.round {
+        .card {
+            background: $success;
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+
+            h2 {
+                font-size: 128px;
+                position: relative;
+                top: -40px;
+                color: #FFF;
+                font-weight: bold;
+            }
+        }
+    }
     .card {
         max-width: 25vw;
     }

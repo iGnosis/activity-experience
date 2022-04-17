@@ -19,16 +19,16 @@
  </div>
 
 
-<!-- <div class="guide-prompt d-flex justify-content-center align-items-center">
+<div class="guide-prompt d-flex {{ state.prompt.className }}" *ngIf="state.prompt">
     <div class="card">
-        <div class="card-header text-center">
-            <fa-icon [icon]="icon" size="6x"></fa-icon>
+        <div class="card-header text-center" *ngIf="state.prompt.icon">
+            <fa-icon [icon]="state.prompt.icon" size="6x"></fa-icon>
         </div>
-        <div class="card-body text-center">
-            <h2>Move Right/Move Right</h2>
+        <div class="card-body text-center" *ngIf="state.prompt.text">
+            <h2>{{ state.prompt.text }}</h2>
         </div>
     </div>
-</div> -->
+</div>
 
 
 

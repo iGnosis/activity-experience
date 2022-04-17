@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuideSpotlightDTO, GuideState } from 'src/app/types/pointmotion';
+import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuidePromptDTO, GuideSpotlightDTO, GuideState } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
 
@@ -51,7 +51,13 @@ export class GuideComponent implements AfterViewInit {
       }
     })
 
-    // handle prompt
+    this.store.select(state => state.guide.prompt).subscribe((prompt: GuidePromptDTO | undefined) => {
+      if (prompt) {
+        this.handlePrompt(prompt)
+      } else {
+        this.handleHidePrompt()
+      }
+    })
   }
 
   handleSendMessage(newMessage: GuideMessageDTO | undefined) {
@@ -99,6 +105,11 @@ export class GuideComponent implements AfterViewInit {
     this.state.spotlight = Object.assign({}, spotlight)
   }
 
+  handlePrompt(prompt: GuidePromptDTO) {
+    this.state.prompt = Object.assign({}, prompt)
+    this.state.prompt.className += ' ' + this.guideService.getPromptClassNames(this.state.prompt.position)
+  }
+
   handleHideAvatar() {
     console.log('hide avatar');
     
@@ -111,5 +122,9 @@ export class GuideComponent implements AfterViewInit {
 
   handleHideSpotlight() {
     this.state.spotlight = undefined
+  }
+
+  handleHidePrompt() {
+    this.state.prompt = undefined
   }
 }
