@@ -44,6 +44,8 @@ export class SessionComponent implements AfterViewInit {
   };
   careplan: any;
   isEndSessionVisible = false;
+  announcement = ''
+  
 
   sessionEnded: boolean = true;
 
@@ -178,5 +180,15 @@ export class SessionComponent implements AfterViewInit {
 
   callAlert() {
     console.log('hi');
+  }
+
+  announce(msg: string) {
+    return new Promise((resolve) => {
+      this.announcement = msg
+      setTimeout(() => {
+        this.announcement = ''
+        resolve({})
+      }, 3000);
+    })
   }
 }

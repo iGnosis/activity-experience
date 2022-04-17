@@ -21,6 +21,15 @@ export class OnboardingService {
   index = -1
   sequence = [
     {
+      type: 'method',
+      name: this.invokeComponentFunction,
+      data: {
+        args: ['Ready?'],
+        name: 'announce'
+      },
+      sync: true
+    },
+    {
       type: 'action',
       action: guide.updateAvatar,
       data: {
@@ -47,14 +56,7 @@ export class OnboardingService {
         position: 'center'
       }
     },
-    {
-      type: 'method',
-      name: this.invokeComponentFunction,
-      data: {
-        args: [],
-        name: 'callAlert'
-      }
-    },
+    
     {
       type: 'timeout',
       data: this.prod? 5000: 300
@@ -157,23 +159,13 @@ export class OnboardingService {
             // @ts-ignore
             if (action.sync) {
               // @ts-ignore
-              this.invokeComponentFunction(action.data.name) // TODO: support sending arguments
+              await this.invokeComponentFunction(action.data.name, action.data.args) // TODO: support sending arguments
             } else {
               // @ts-ignore
-              await this.invokeComponentFunction(action.data.name)
+              this.invokeComponentFunction(action.data.name)
             }
             
-          } else if (action.name) { // Should be a service method name
-            // @ts-ignore
-            if (action.sync) {
-              // @ts-ignore
-              this.invokeComponentFunction(action.data.name) // TODO: support sending arguments
-            } else {
-              // @ts-ignore
-              await this.invokeComponentFunction(action.data.name)
-            }
-          }
-          if (action.name) {
+          } else if (action.name) {
             // @ts-ignore
             if(action.sync) await action.name()
             // @ts-ignore
@@ -191,11 +183,11 @@ export class OnboardingService {
     this.start(component, onComplete)
   }
 
-  invokeComponentFunction(methodName: string, params: any){
+  async invokeComponentFunction(methodName: string, params: Array<any>){
     // @ts-ignore
     if(this.component && typeof(this.component[methodName]) == 'function') {
       // @ts-ignore
-      this.component[methodName](params)
+      await this.component[methodName](...params)
     }
     
   }
