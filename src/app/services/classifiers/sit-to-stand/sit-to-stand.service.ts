@@ -106,6 +106,7 @@ export class SitToStandService {
   ) {
     this.activityId = this.analyticsService.getActivityId('Sit to Stand');
 
+    console.log('starting activity')
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityStarted',
@@ -153,12 +154,10 @@ export class SitToStandService {
       .subscribe((poseHash: number) => {
         console.log('poseHash:', poseHash)
         console.log('isWaitingForReaction:', this.isWaitingForReaction)
-        if (this.isWaitingForReaction) {
-          if (poseHash == 1) {
-            // send reaction event for current running task
-            console.log('sending reaction event.')
-            this.sendTaskReactedEvent()
-          }
+        if (this.isWaitingForReaction && poseHash == 1) {
+          // send reaction event for current running task
+          console.log('sending reaction event.')
+          this.sendTaskReactedEvent()
           this.isWaitingForReaction = false
         }
       })
@@ -268,7 +267,7 @@ export class SitToStandService {
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
             this.celebrate();
             this.sendTaskEndedEvent(1);
-            // this.isWaitingForReaction = false;
+            this.isWaitingForReaction = false;
             environment.musicExperience === 'music_experience_2' &&
               this.soundService.playNextChord();
           }
@@ -279,7 +278,7 @@ export class SitToStandService {
       }
     } else {
       this.sendTaskEndedEvent(0);
-      // this.isWaitingForReaction = false;
+      this.isWaitingForReaction = false;
       return {
         result: 'disabled',
       };
@@ -338,22 +337,25 @@ export class SitToStandService {
       const failedTasks = this.totalTasks - this.repsCompleted;
       // store failed events
 
+      console.log('ending activity')
       this.analyticsService.sendActivityEvent({
         activity: this.activityId,
         event_type: 'activityEnded',
       });
 
       this.isEnabled = false;
+      this.isWaitingForReaction = false;
       // setting sessionEnded to true
       return;
     }
 
+    console.log('starting a task')
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskStarted',
       task_id: this.taskId,
-      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
+      task_name: 'sit2stand', // this.task.className. TODO: task_name can either be 'sit' or 'stand'.
     });
 
     this.isWaitingForReaction = true
@@ -372,7 +374,7 @@ export class SitToStandService {
       if (this.currentClass == this.task.className && !this.task.celebrated) {
         this.celebrate();
         this.sendTaskEndedEvent(1);
-        // this.isWaitingForReaction = false;
+        this.isWaitingForReaction = false;
         environment.musicExperience === 'music_experience_2' &&
           this.soundService.playNextChord();
       }
@@ -403,18 +405,19 @@ export class SitToStandService {
       attempt_id: this.attemptId,
       event_type: 'taskReacted',
       task_id: this.taskId,
-      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
+      task_name: 'sit2stand', // this.task.className. TODO: task_name can either be 'sit' or 'stand'.
     });
   }
 
   sendTaskEndedEvent(score: number) {
+    console.log('ending a task')
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: 'sit2stand', // TODO: task_name can either be 'sit' or 'stand'
+      task_name: 'sit2stand', // this.task.className. TODO: task_name can either be 'sit' or 'stand'.
     });
   }
 }
