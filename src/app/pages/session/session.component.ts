@@ -84,7 +84,7 @@ export class SessionComponent implements AfterViewInit {
 
     this.startGame();
 
-    this.onboardingService.start(this, () => {})
+    this.onboardingService.setup(this, () => {})
     // this.startMediaPipe()
   }
 
@@ -123,7 +123,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startCalibration() {
-    this.sit2standService.action_disable();
+    this.sit2standService.disable();
     if (this.game?.scene.isActive('sit2stand')) {
       this.game.scene.stop('sit2stand');
       console.log('sit2stand is active. turning off');
@@ -136,7 +136,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   startSit2Stand() {
-    this.sit2standService.action_enable();
+    this.sit2standService.enable();
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
@@ -198,6 +198,6 @@ export class SessionComponent implements AfterViewInit {
 
   genreSelected(genre: string) {
     this.selectGenre = false
-    this.onboardingService.start(this, ()=> {})
+    this.onboardingService.next()
   }
 }

@@ -10,6 +10,7 @@ import { environment } from 'src/environments/environment';
 import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { OnboardingService } from '../onboarding/onboarding.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -34,7 +35,8 @@ export class CalibrationService {
     }>,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
-    private calibrationScene: CalibrationScene
+    private calibrationScene: CalibrationScene,
+    private onboardingService: OnboardingService
   ) {
     this.pose$ = store.select('pose');
     this.pose$.subscribe((results) => {
@@ -156,27 +158,9 @@ export class CalibrationService {
   }
 
   calibrateFullBody(results: { pose: Results }) {
-    // console.log('calibrateFullBody', results);
-
-    // this.analyticsService.sendTaskEvent({
-    //   activity: this.activityId,
-    //   attempt_id: this.attemptId,
-    //   event_type: 'taskReacted',
-    //   task_id: this.taskId,
-    //   task_name: 'calibration',
-    // });
-
     if (!this.isEnabled) return
 
     const sendError = () => {
-      //   this.analyticsService.sendTaskEvent({
-      //     activity: this.activityId,
-      //     attempt_id: this.attemptId,
-      //     event_type: 'taskEnded',
-      //     task_id: this.taskId,
-      //     score: 0,
-      //     task_name: 'calibration',
-      //   });
 
       this.store.dispatch(
         calibration.error({
@@ -189,20 +173,6 @@ export class CalibrationService {
         text: 'Please move into the Red Box',
         position: 'top-right'
       }))
-      
-      // console.error({
-      //   // title: 'Calibration',
-      //   text: 'Move into the frame, please',
-      //   timeout: 60000,
-      // });
-      
-      // this.store.dispatch(
-      //   guide.sendMessages({
-      //     // title: 'Calibration',
-      //     text: 'Move into the frame, please',
-      //     timeout: 60000,
-      //   })
-      // );
     };
     const sendWarning = () => {
       this.store.dispatch(
@@ -214,40 +184,22 @@ export class CalibrationService {
     };
 
     const sendSuccess = () => {
-      //   this.analyticsService.sendTaskEvent({
-      //     activity: this.activityId,
-      //     attempt_id: this.attemptId,
-      //     event_type: 'taskEnded',
-      //     task_id: this.taskId,
-      //     score: 1,
-      //     task_name: 'calibration',
-      //   });
-
-      // activityEnded 'calibration'
-      //   this.analyticsService.sendActivityEvent({
-      //     activity: this.activityId,
-      //     event_type: 'activityEnded',
-      //   });
-
       this.store.dispatch(
         calibration.success({ pose: results.pose, reason: 'All well' })
       );
       this.store.dispatch(guide.hidePrompt())
+      this.onboardingService.next()
     };
 
     let poseLandmarkArray = results.pose.poseLandmarks;
-
-    // console.log(
-    //   `width ${this.calibrationScene.sys.game.canvas.width} Height ${this.calibrationScene.sys.game.canvas.height}`
-    // );
 
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
     } else {
         
       // adding these points to make the calibration lenient
-      const points = [12, 11, 24, 23, 26, 25];
-      //   const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
+      // const points = [12, 11, 24, 23, 26, 25];
+      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
       const isCalibrationSuccess = points.every((point) => {
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||

@@ -9,6 +9,7 @@ export class SoundsService {
 
   constantDrumId?: number;
   currentChord: number = 1;
+  isEnabled = false
 
   chords = new Howl({
     src: 'assets/sounds/soundsprites/chordsSprite.mp3',
@@ -35,11 +36,13 @@ export class SoundsService {
     },
   });
 
-  startContantDrum() {
-    this.constantDrumId = this.drums.play('constantDrum');
+  startConstantDrum() {
+    if (!this.isConstantDrumPlaying()) {
+      this.constantDrumId = this.drums.play('constantDrum');  
+    }
   }
 
-  pauseContantDrum() {
+  pauseConstantDrum() {
     this.drums.pause(this.constantDrumId);
   }
 

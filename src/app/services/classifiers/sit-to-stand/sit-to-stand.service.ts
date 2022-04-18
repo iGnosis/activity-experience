@@ -56,15 +56,15 @@ export class SitToStandService {
       .select((state) => state.calibration.status)
       .subscribe((status: string) => {
         if (status == 'success') {
-          this.action_enable();
+          this.enable();
           this.reStartActivity();
           if (!this.soundService.isConstantDrumPlaying()) {
-            this.soundService.startContantDrum();
+            this.soundService.startConstantDrum();
           }
         } else if (status == 'error' && this.activityExplained) {
-          this.action_disable();
+          this.disable();
           if (this.soundService.isConstantDrumPlaying()) {
-            this.soundService.pauseContantDrum();
+            this.soundService.pauseConstantDrum();
           }
           this.calibrationScene.scene.start('calibration');
           // if the calibration is error
@@ -85,13 +85,6 @@ export class SitToStandService {
   }
 
   classify(pose: Results) {
-    // this.analyticsService.sendTaskEvent({
-    //   activity: this.activityId,
-    //   attempt_id: this.attemptId,
-    //   event_type: 'taskReacted',
-    //   task_id: this.taskId,
-    //   task_name: 'sit2stand',
-    // });
     if (this.isEnabled) {
       const postLandmarkArray = pose.poseLandmarks;
 
@@ -207,7 +200,7 @@ export class SitToStandService {
     if (!this.activityExplained) {
       // Music starts playing here
       !this.soundService.isConstantDrumPlaying() &&
-        this.soundService.startContantDrum();
+        this.soundService.startConstantDrum();
 
       console.error({
         text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
@@ -234,7 +227,7 @@ export class SitToStandService {
   }
 
   async pauseActivity() {
-    this.action_disable();
+    this.disable();
     // this.store.dispatch(
     //   guide.sendMessages({
     //     text: 'Activity pause',
@@ -340,11 +333,11 @@ export class SitToStandService {
     this.totalTasks++;
   }
 
-  action_enable() {
+  enable() {
     this.isEnabled = true;
   }
 
-  action_disable() {
+  disable() {
     this.isEnabled = false;
   }
 
