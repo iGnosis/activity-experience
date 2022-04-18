@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { spotlight } from 'src/app/store/actions/spotlight.actions';
-import { Results } from 'src/app/types/pointmotion';
+import { Results, GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { AnalyticsService } from '../../analytics/analytics.service';
 import { CareplanService } from '../../careplan/careplan.service';
 import { SoundsService } from '../../sounds/sounds.service';
@@ -31,7 +31,7 @@ export class SitToStandService {
 
   constructor(
     private careplan: CareplanService,
-    private store: Store<{ calibration: any; spotlight: any }>,
+    private store: Store<{ calibration: any; spotlight: any, guide: GuideState }>,
     private analyticsService: AnalyticsService,
     private soundService: SoundsService,
     private calibrationScene: CalibrationScene
@@ -276,6 +276,8 @@ export class SitToStandService {
       return;
     }
 
+    this.getNewTask();
+
     // this.analyticsService.sendTaskEvent({
     //   activity: this.activityId,
     //   attempt_id: this.attemptId,
@@ -285,6 +287,11 @@ export class SitToStandService {
     // });
 
     // set the task in a class variable and watch the class from the store.
+    if (this.isEnabled) {
+      this.store.dispatch(
+        guide.sendPrompt({ position: 'center', text: this.task.text, className: 'round' })
+      )
+    }
 
     // this.isEnabled &&
     //   this.store.dispatch(
@@ -308,8 +315,6 @@ export class SitToStandService {
           this.sendTaskEndedEvent(1);
           this.playSuccessTune();
         }
-
-        this.getNewTask();
         this.runActivity();
       }, this.task.timeout);
   }
