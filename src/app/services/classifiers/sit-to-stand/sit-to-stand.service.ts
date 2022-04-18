@@ -278,12 +278,13 @@ export class SitToStandService {
       // Music starts playing here
       !this.soundService.isConstantDrumPlaying() &&
         this.soundService.startContantDrum();
-        console.error({
-          text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
-          title: 'Ready?',
-          timeout: 1000,
-        });
-        
+
+      console.error({
+        text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+        title: 'Ready?',
+        timeout: 1000,
+      });
+
       // this.store.dispatch(
       //   guide.sendMessages({
       //     text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
@@ -316,7 +317,7 @@ export class SitToStandService {
       title: 'pause',
       timeout: 3000,
     })
-    
+
   }
 
   async runActivity() {
@@ -334,7 +335,7 @@ export class SitToStandService {
       //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
       // );
       console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 });
-      
+
       this.soundService.endConstantDrum();
 
       const failedTasks = this.totalTasks - this.repsCompleted;
@@ -364,11 +365,11 @@ export class SitToStandService {
     //     })
     //   );
 
-      console.error({
-        text: this.task.text,
-        title: this.task.title,
-        timeout: this.task.timeout,
-      })
+    console.error({
+      text: this.task.text,
+      title: this.task.title,
+      timeout: this.task.timeout,
+    })
 
     this.isEnabled &&
       setTimeout(() => {
@@ -388,6 +389,23 @@ export class SitToStandService {
     this.attemptId = v4();
     this.taskId = v4();
     this.task = this.tasks[this.totalTasks % (this.tasks.length - 1)];
+
+    // {
+    //   text: 'TWENTY',
+    //   title: '20',
+    //   className: 'sit',
+    //   timeout: 5000,
+    //   celebrated: false,
+    // }
+
+    // 0 - 99
+    const randomNum = Math.floor(Math.random() * 100)
+    let className = 'stand'
+
+    // sit on even numbers
+    if (randomNum % 2 === 0) {
+      className = 'sit'
+    }
     this.totalTasks += 1;
   }
 
