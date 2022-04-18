@@ -131,6 +131,13 @@ export class SitToStandService {
           if (!this.soundService.isConstantDrumPlaying()) {
             this.soundService.startContantDrum();
           }
+        } else if (status == 'warning') {
+          // warning will not stop the activity
+          this.action_enable();
+          this.reStartActivity();
+          if (!this.soundService.isConstantDrumPlaying()) {
+            this.soundService.startContantDrum();
+          }
         } else if (status == 'error' && this.activityExplained) {
           this.action_disable();
           if (this.soundService.isConstantDrumPlaying()) {
@@ -278,12 +285,12 @@ export class SitToStandService {
       // Music starts playing here
       !this.soundService.isConstantDrumPlaying() &&
         this.soundService.startContantDrum();
-        console.error({
-          text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
-          title: 'Ready?',
-          timeout: 1000,
-        });
-        
+      console.error({
+        text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+        title: 'Ready?',
+        timeout: 1000,
+      });
+
       // this.store.dispatch(
       //   guide.sendMessages({
       //     text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
@@ -315,8 +322,7 @@ export class SitToStandService {
       text: 'Activity pause',
       title: 'pause',
       timeout: 3000,
-    })
-    
+    });
   }
 
   async runActivity() {
@@ -334,7 +340,7 @@ export class SitToStandService {
       //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
       // );
       console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 });
-      
+
       this.soundService.endConstantDrum();
 
       const failedTasks = this.totalTasks - this.repsCompleted;
@@ -364,11 +370,11 @@ export class SitToStandService {
     //     })
     //   );
 
-      console.error({
-        text: this.task.text,
-        title: this.task.title,
-        timeout: this.task.timeout,
-      })
+    console.error({
+      text: this.task.text,
+      title: this.task.title,
+      timeout: this.task.timeout,
+    });
 
     this.isEnabled &&
       setTimeout(() => {
