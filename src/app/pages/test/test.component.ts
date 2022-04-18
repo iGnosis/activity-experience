@@ -15,18 +15,18 @@ export class TestComponent implements OnInit {
   showMsginCenter = true
 
   constructor(
-    private store: Store<{guide: GuideState}>
+    private store: Store<{ guide: GuideState }>
   ) { }
-  
+
 
   ngOnInit(): void {
   }
 
   changeAvatar() {
-    if(this.showKevin) {
-      this.store.dispatch(guide.updateAvatar({name: 'kevin', position: 'bottom'}))
+    if (this.showKevin) {
+      this.store.dispatch(guide.updateAvatar({ name: 'kevin', position: 'bottom' }))
     } else {
-      this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
+      this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }))
     }
     this.showKevin = !this.showKevin
   }
@@ -37,10 +37,10 @@ export class TestComponent implements OnInit {
 
   sendMessage() {
     this.showMsginCenter = !this.showMsginCenter
-    if(this.showMsginCenter) {
-      this.store.dispatch(guide.sendMessage({position: 'center', text: 'Hello ' + Math.random()}))
+    if (this.showMsginCenter) {
+      this.store.dispatch(guide.sendMessage({ position: 'center', text: 'Hello ' + Math.random() }))
     } else {
-      this.store.dispatch(guide.sendMessage({position: 'bottom', text: 'Hello ' + Math.random()}))
+      this.store.dispatch(guide.sendMessage({ position: 'bottom', text: 'Hello ' + Math.random() }))
     }
   }
 
@@ -49,7 +49,7 @@ export class TestComponent implements OnInit {
   }
 
   sendSpotlight() {
-    this.store.dispatch(guide.sendSpotlight({text: 'some text ' + Math.random()}))
+    this.store.dispatch(guide.sendSpotlight({ text: 'some text ' + Math.random() }))
   }
 
   hideSpotlight() {
@@ -57,16 +57,15 @@ export class TestComponent implements OnInit {
   }
 
   sendPromptWithIcon() {
-    this.store.dispatch(guide.sendPrompt({icon: faArrowLeft, position: 'right', text: 'Move Left'}))
+    this.store.dispatch(guide.sendPrompt({ icon: faArrowLeft, position: 'right', text: 'Move Left' }))
   }
 
   sendPromptWithNumber() {
     // Change position each time
-    this.store.dispatch(guide.sendPrompt({position: 'center', text: '2', className: 'round'}))
+    this.store.dispatch(guide.sendPrompt({ position: 'center', text: '2', className: 'round' }))
   }
 
   hidePrompt() {
     this.store.dispatch(guide.hidePrompt())
   }
 }
-

@@ -14,14 +14,12 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 })
 export class SitToStandService {
   private isEnabled = false;
-  private distanceThreshold = 0.25;
   private currentClass = 'unknown';
   private repsCompleted = 0;
   private totalTasks = 0;
   private activityExplained = false;
   private task = {
-    text: 'ONE',
-    title: '1',
+    text: '1',
     timeout: 5000,
     className: 'stand',
     celebrated: false,
@@ -30,65 +28,6 @@ export class SitToStandService {
   activityId: string;
   taskId = v4();
   attemptId = v4();
-
-  tasks = [
-    {
-      text: 'TWENTY',
-      title: '20',
-      className: 'sit',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'ELEVEN',
-      title: '11',
-      className: 'stand',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'EIGHT',
-      title: '8',
-      className: 'sit',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'FOURTEEN',
-      title: '14',
-      className: 'sit',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'EIGHT',
-      title: '8',
-      className: 'sit',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'THREE',
-      title: '3',
-      className: 'stand',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'TWENTY',
-      title: '20',
-      className: 'sit',
-      timeout: 5000,
-      celebrated: false,
-    },
-    {
-      text: 'FIFTY ONE',
-      title: '51',
-      className: 'stand',
-      timeout: 5000,
-      celebrated: false,
-    },
-  ];
 
   constructor(
     private careplan: CareplanService,
@@ -103,15 +42,6 @@ export class SitToStandService {
       activity: this.activityId,
       event_type: 'activityStarted',
     });
-
-    // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
-    try {
-      this.distanceThreshold =
-        this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
-    } catch (err) {
-      console.error(err);
-      this.distanceThreshold = 0.25;
-    }
 
     // Listen to the poses... From calibration service
     this.store
@@ -367,7 +297,6 @@ export class SitToStandService {
 
     console.error({
       text: this.task.text,
-      title: this.task.title,
       timeout: this.task.timeout,
     })
 
@@ -388,15 +317,6 @@ export class SitToStandService {
   getNewTask() {
     this.attemptId = v4();
     this.taskId = v4();
-    this.task = this.tasks[this.totalTasks % (this.tasks.length - 1)];
-
-    // {
-    //   text: 'TWENTY',
-    //   title: '20',
-    //   className: 'sit',
-    //   timeout: 5000,
-    //   celebrated: false,
-    // }
 
     // 0 - 99
     const randomNum = Math.floor(Math.random() * 100)
@@ -406,7 +326,13 @@ export class SitToStandService {
     if (randomNum % 2 === 0) {
       className = 'sit'
     }
-    this.totalTasks += 1;
+
+    // init new task
+    this.task.text = `${randomNum}`
+    this.task.className = className
+    this.task.timeout = 5000
+    this.task.celebrated = false
+    this.totalTasks++;
   }
 
   action_enable() {
