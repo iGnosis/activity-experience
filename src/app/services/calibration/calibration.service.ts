@@ -44,13 +44,6 @@ export class CalibrationService {
     });
 
     this.activityId = this.analyticsService.getActivityId('Calibration');
-
-    // activityStarted 'calibration'
-
-    // this.analyticsService.sendActivityEvent({
-    //   activity: this.activityId,
-    //   event_type: 'activityStarted',
-    // });
   }
 
   enable() {
@@ -63,18 +56,6 @@ export class CalibrationService {
 
   handlePose(results: { pose: Results }) {
     if (!results) return;
-
-    // renew attemptId
-    // this.attemptId = v4();
-    // this.taskId = v4();
-
-    // this.analyticsService.sendTaskEvent({
-    //   activity: this.activityId,
-    //   attempt_id: this.attemptId,
-    //   event_type: 'taskStarted',
-    //   task_id: this.taskId,
-    //   task_name: 'calibration',
-    // });
 
     // Can have multiple configurations.
     switch (this.careplanService.getCarePlan().calibration.type) {
@@ -108,8 +89,8 @@ export class CalibrationService {
           title: 'Calibration',
           text: 'Show your hands!',
           timeout: 20000,
-        })
-        
+        });
+
         // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
         break;
       case 1:
@@ -124,7 +105,7 @@ export class CalibrationService {
           text: 'Both hands....',
           timeout: 20000,
         });
-        
+
         // this.store.dispatch(
         //   guide.sendMessages({
         //     title: 'Calibration',
@@ -161,7 +142,6 @@ export class CalibrationService {
     if (!this.isEnabled) return
 
     const sendError = () => {
-
       this.store.dispatch(
         calibration.error({
           pose: results.pose,
@@ -196,7 +176,6 @@ export class CalibrationService {
     if (!Array.isArray(poseLandmarkArray)) {
       return sendError();
     } else {
-        
       // adding these points to make the calibration lenient
       // const points = [12, 11, 24, 23, 26, 25];
       const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
@@ -207,8 +186,7 @@ export class CalibrationService {
             poseLandmarkArray[point].x *
               this.calibrationScene.sys.game.canvas.width,
             poseLandmarkArray[point].y *
-              this.calibrationScene.sys.game.canvas.height,
-            point as number
+              this.calibrationScene.sys.game.canvas.height
           )
         ) {
           console.log(`point ${point} is out of calibration box`);
@@ -222,20 +200,20 @@ export class CalibrationService {
         sendSuccess();
       } else {
         // See if there is any point we can't see
-        const invisiblePoint = poseLandmarkArray.find(x => {
-          if(!x.visibility || x.visibility < 0.7) {
-            return true
+        const invisiblePoint = poseLandmarkArray.find((x) => {
+          if (!x.visibility || x.visibility < 0.7) {
+            return true;
           } else {
-            return false
+            return false;
           }
-        })
+        });
 
-        if(invisiblePoint) {
+        if (invisiblePoint) {
           sendError();
         } else {
           console.log('partially uncalibrated');
-          
-          sendWarning()
+
+          sendWarning();
         }
       }
     }

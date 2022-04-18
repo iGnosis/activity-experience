@@ -25,7 +25,7 @@ export class SessionComponent implements AfterViewInit {
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('sessionElm') sessionElm!: ElementRef;
   game?: Phaser.Game;
-  session: SessionRow | undefined
+  session: SessionRow | undefined;
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -44,8 +44,8 @@ export class SessionComponent implements AfterViewInit {
   };
   careplan: any;
   isEndSessionVisible = false;
-  announcement = ''
-  selectGenre = false
+  announcement = '';
+  selectGenre = false;
 
   sessionEnded: boolean = true;
 
@@ -66,7 +66,7 @@ export class SessionComponent implements AfterViewInit {
     this.store
       .select((state) => state.session.session)
       .subscribe((session) => {
-        this.session = session
+        this.session = session;
       });
   }
 
@@ -89,6 +89,9 @@ export class SessionComponent implements AfterViewInit {
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
+    console.log(elm.style.marginLeft);
+    console.log(elm.width);
+    console.log(elm.height);
     const box = this.uiHelperService.getBoundingBox();
     if (box.topLeft.x) {
       // the video needs padding on the left
@@ -101,16 +104,20 @@ export class SessionComponent implements AfterViewInit {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
+    console.log(elm.style.marginLeft);
+    console.log(elm.width);
+    console.log(elm.height);
   }
 
   async startGame() {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
+    this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       // Set the canvas to take up the same space as the video. Simplifying all the calculations
-      // this.updateDimensions(this.canvas.nativeElement);
-      this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
+
+      //   this.updateDimensions(this.canvas.nativeElement);
 
       this.analyticsService.sendSessionEvent({
         event_type: 'sessionStarted',
@@ -118,8 +125,7 @@ export class SessionComponent implements AfterViewInit {
 
       // Start mediapipe
       this.startMediaPipe();
-      
-    }, 1500);
+    });
   }
 
   async startCalibration() {
@@ -184,16 +190,16 @@ export class SessionComponent implements AfterViewInit {
 
   announce(msg: string) {
     return new Promise((resolve) => {
-      this.announcement = msg
+      this.announcement = msg;
       setTimeout(() => {
-        this.announcement = ''
-        resolve({})
+        this.announcement = '';
+        resolve({});
       }, 3000);
-    })
+    });
   }
 
   askPreferredGenre() {
-    this.selectGenre = true
+    this.selectGenre = true;
   }
 
   genreSelected(genre: string) {

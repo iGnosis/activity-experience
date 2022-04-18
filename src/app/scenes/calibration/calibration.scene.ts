@@ -12,6 +12,8 @@ export class CalibrationScene extends Phaser.Scene {
   calibration$?: Observable<any>;
   texture?: string;
   showCalibration = true;
+  checkImage?: Phaser.GameObjects.Image;
+  wrongImage?: Phaser.GameObjects.Image;
 
   calibrationStatus = 'success';
 
@@ -44,6 +46,21 @@ export class CalibrationScene extends Phaser.Scene {
 
   create() {
     console.log('draw box');
+    let { width, height } = this.game.canvas;
+    console.log(`Width ${width}, Height ${height}`);
+    this.checkImage = new Phaser.GameObjects.Image(
+      this,
+      width / 2,
+      height / 2,
+      'check'
+    ).setScale(0.2);
+    this.wrongImage = new Phaser.GameObjects.Image(
+      this,
+      width / 2,
+      height / 2,
+      'wrong'
+    ).setScale(0.2);
+
     this.createCalibrationBox(40, 98);
     this.calibration$ = this.store.select((state) => state.calibration);
     this.calibration$.subscribe((result) => {
@@ -72,8 +89,8 @@ export class CalibrationScene extends Phaser.Scene {
    * @param percentHeight percentage of the bounding-box height
    */
   createCalibrationBox(percentageWidth: number, percentageHeight: number) {
-    let { width, height } = this.sys.game.canvas;
-    // console.log(`Width ${width}, Height ${height}`)
+    let { width, height } = this.game.canvas;
+    console.log(`Width ${width}, Height ${height}`);
     this.calibrationBox.width = (width * percentageWidth) / 100;
     this.calibrationBox.height = (height * percentageHeight) / 100;
 
@@ -127,6 +144,7 @@ export class CalibrationScene extends Phaser.Scene {
     if (!this.showCalibration) return;
 
     let { width, height } = this.sys.game.canvas;
+    console.log(`${width} X ${height}`);
 
     this.add.existing(
       this.calibrationRectangle.left as Phaser.GameObjects.Rectangle
@@ -167,7 +185,8 @@ export class CalibrationScene extends Phaser.Scene {
     if (type == 'success') {
       // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
-      this.add.image(width / 2, height / 2, 'check').setScale(0.2);
+      // @ts-ignore
+      this.add.existing(this.checkImage);
       this.tweens.add({
         targets: [
           this.calibrationRectangle.top,
@@ -196,8 +215,8 @@ export class CalibrationScene extends Phaser.Scene {
 
       // @ts-ignore
       this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
-      this.add.image(width / 2, height / 2, 'wrong').setScale(0.2);
+      // @ts-ignore
+      this.add.existing(this.wrongImage);
     }
   }
-
 }

@@ -61,6 +61,13 @@ export class SitToStandService {
           if (!this.soundService.isConstantDrumPlaying()) {
             this.soundService.startConstantDrum();
           }
+        } else if (status == 'warning') {
+          // warning will not stop the activity
+          this.enable();
+          this.reStartActivity();
+          if (!this.soundService.isConstantDrumPlaying()) {
+            this.soundService.startConstantDrum();
+          }
         } else if (status == 'error' && this.activityExplained) {
           this.disable();
           if (this.soundService.isConstantDrumPlaying()) {
@@ -239,8 +246,7 @@ export class SitToStandService {
       text: 'Activity pause',
       title: 'pause',
       timeout: 3000,
-    })
-
+    });
   }
 
   async runActivity() {
@@ -297,8 +303,9 @@ export class SitToStandService {
 
     console.error({
       text: this.task.text,
+      // title: this.task.title,
       timeout: this.task.timeout,
-    })
+    });
 
     this.isEnabled &&
       setTimeout(() => {
