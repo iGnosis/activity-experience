@@ -28,7 +28,7 @@ const _guideReducer = createReducer(initialState,
     on(guide.updateAvatar, (state, data) => {
         const newState = Object.assign({}, state)
         newState.avatar = data
-        return state
+        return newState
     }),
 
     on(guide.sendMessage, (state, data) => {
