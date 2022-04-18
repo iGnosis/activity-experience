@@ -19,6 +19,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 })
 export class AnalyticsService {
   sessionId = '';
+  patientId = '';
   constructor(
     private gql: GqlClientService,
     private store: Store<{ session: SessionState }>
@@ -28,13 +29,19 @@ export class AnalyticsService {
       .subscribe((sid) => {
         this.sessionId = sid || '';
       });
+
+    this.store
+      .select((state) => state.session.session?.patient)
+      .subscribe((pid) => {
+        this.patientId = pid || '';
+      });
   }
 
   // TODO: batch events, save them in localStorage and let a webworker process the queue
   async sendEvent(event: AnalyticsEvent) {
     if (this.sessionId) {
       const analyticsRow: AnalyticsRow = {
-        patient: environment.patient, // TODO remove hardcoded
+        patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         activity: event.activity,
         task_id: event.task_id,
@@ -69,7 +76,7 @@ export class AnalyticsService {
   async sendSessionEvent(event: AnalyticsSessionEvent) {
     if (this.sessionId) {
       const sessionEventRow: AnalyticsSessionEventRow = {
-        patient: environment.patient, // TODO remove hardcoded
+        patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         event_type: event.event_type,
         created_at: new Date().getTime(),
@@ -98,7 +105,7 @@ export class AnalyticsService {
   async sendActivityEvent(event: ActivityEvent) {
     if (this.sessionId) {
       const activityEventRow: ActivityEventRow = {
-        patient: environment.patient, // TODO remove hardcoded
+        patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         activity: event.activity,
         event_type: event.event_type,
@@ -125,7 +132,7 @@ export class AnalyticsService {
   async sendTaskEvent(event: TaskEvent) {
     if (this.sessionId) {
       let taskEventRow: TaskEventRow = {
-        patient: environment.patient, // TODO remove hardcoded
+        patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         activity: event.activity,
         task_id: event.task_id,
