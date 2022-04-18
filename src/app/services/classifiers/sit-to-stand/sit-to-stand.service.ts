@@ -309,7 +309,7 @@ export class SitToStandService {
     // set the task in a class variable and watch the class from the store.
     if (this.isEnabled) {
       this.store.dispatch(
-        guide.sendPrompt({ position: 'center', text: this.task.text, className: 'round' })
+        guide.sendPrompt({ position: 'bottom-right', text: this.task.text, className: 'round' })
       )
     }
 
