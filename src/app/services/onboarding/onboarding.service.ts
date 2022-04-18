@@ -20,33 +20,33 @@ export class OnboardingService {
 
   index = -1
   sequence: any = [
-    {
-      type: 'method',
-      name: this.invokeComponentFunction,
-      data: {
-        args: ['Ready?'],
-        name: 'announce'
-      },
-      sync: true
-    },
-    {
-      type: 'method',
-      name: this.invokeComponentFunction,
-      data: {
-        args: [],
-        name: 'askPreferredGenre'
-      },
-      next: 'manual'
-    },
-    {
-      type: 'method',
-      name: this.invokeComponentFunction,
-      data: {
-        args: ['Thanks'],
-        name: 'announce'
-      },
-      sync: true
-    },
+    // {
+    //   type: 'method',
+    //   name: this.invokeComponentFunction,
+    //   data: {
+    //     args: ['Ready?'],
+    //     name: 'announce'
+    //   },
+    //   sync: true
+    // },
+    // {
+    //   type: 'method',
+    //   name: this.invokeComponentFunction,
+    //   data: {
+    //     args: [],
+    //     name: 'askPreferredGenre'
+    //   },
+    //   next: 'manual'
+    // },
+    // {
+    //   type: 'method',
+    //   name: this.invokeComponentFunction,
+    //   data: {
+    //     args: ['Thanks'],
+    //     name: 'announce'
+    //   },
+    //   sync: true
+    // },
     {
       type: 'action',
       action: guide.updateAvatar,
@@ -123,7 +123,7 @@ export class OnboardingService {
       type: 'action',
       action: guide.sendMessage,
       data: {
-        text: 'Please move around such that you can see yourself in the box',
+        text: 'Please move around such that you can see yourself in the red box',
         position: 'bottom'
       }
     },

@@ -184,12 +184,17 @@ export class CalibrationService {
           reason: 'Cannot see required points',
         })
       );
+
+      this.store.dispatch(guide.sendPrompt({
+        text: 'Please move into the Red Box',
+        position: 'top-right'
+      }))
       
-      console.error({
-        // title: 'Calibration',
-        text: 'Move into the frame, please',
-        timeout: 60000,
-      });
+      // console.error({
+      //   // title: 'Calibration',
+      //   text: 'Move into the frame, please',
+      //   timeout: 60000,
+      // });
       
       // this.store.dispatch(
       //   guide.sendMessages({
@@ -227,6 +232,7 @@ export class CalibrationService {
       this.store.dispatch(
         calibration.success({ pose: results.pose, reason: 'All well' })
       );
+      this.store.dispatch(guide.hidePrompt())
     };
 
     let poseLandmarkArray = results.pose.poseLandmarks;
