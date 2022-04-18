@@ -13,6 +13,7 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
   providedIn: 'root',
 })
 export class SitToStandService {
+  private isWaitingForReaction = false;
   private isEnabled = false;
   private currentClass = 'unknown';
   private repsCompleted = 0;
@@ -29,6 +30,12 @@ export class SitToStandService {
   taskId = v4();
   attemptId = v4();
 
+  public static calcDist(x1: number, y1: number, x2: number, y2: number): any {
+    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    return distance;
+  }
+
   constructor(
     private careplan: CareplanService,
     private store: Store<{ calibration: any; spotlight: any, guide: GuideState }>,
@@ -38,6 +45,7 @@ export class SitToStandService {
   ) {
     this.activityId = this.analyticsService.getActivityId('Sit to Stand');
 
+    console.log('starting activity')
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityStarted',
@@ -79,6 +87,19 @@ export class SitToStandService {
           //   this.debounce(this.pauseActivity(), 3000);
         }
       });
+
+    this.store
+      .select((state) => state.calibration.poseHash)
+      .subscribe((poseHash: number) => {
+        console.log('poseHash:', poseHash)
+        console.log('isWaitingForReaction:', this.isWaitingForReaction)
+        if (this.isWaitingForReaction && poseHash == 1) {
+          // send reaction event for current running task
+          console.log('sending reaction event.')
+          this.sendTaskReactedEvent()
+          this.isWaitingForReaction = false
+        }
+      })
   }
 
   debounce(func: any, timeout = 300) {
@@ -116,25 +137,25 @@ export class SitToStandService {
         };
       }
 
-      const distanceBetweenLeftShoulderAndHip = this._calcDist(
+      const distanceBetweenLeftShoulderAndHip = SitToStandService.calcDist(
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
         leftHip.y
       );
-      const distanceBetweenRightShoulderAndHip = this._calcDist(
+      const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
         rightHip.y
       );
-      const distanceBetweenLeftHipAndKnee = this._calcDist(
+      const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
         leftKnee.y
       );
-      const distanceBetweenRightHipAndKnee = this._calcDist(
+      const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,
@@ -147,8 +168,7 @@ export class SitToStandService {
       const isSittingL =
         distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
       const isSittingR =
-        distanceBetweenRightShoulderAndHip >
-        1.5 * distanceBetweenRightHipAndKnee;
+        distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');
@@ -275,15 +295,16 @@ export class SitToStandService {
       return;
     }
 
+    console.log('starting a task')
     this.getNewTask();
-
-    // this.analyticsService.sendTaskEvent({
-    //   activity: this.activityId,
-    //   attempt_id: this.attemptId,
-    //   event_type: 'taskStarted',
-    //   task_id: this.taskId,
-    //   task_name: 'sit2stand',
-    // });
+    this.isWaitingForReaction = true
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskStarted',
+      task_id: this.taskId,
+      task_name: this.task.className
+    });
 
     // set the task in a class variable and watch the class from the store.
     if (this.isEnabled) {
@@ -348,20 +369,25 @@ export class SitToStandService {
     this.isEnabled = false;
   }
 
+  sendTaskReactedEvent() {
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskReacted',
+      task_id: this.taskId,
+      task_name: this.task.className
+    });
+  }
+
   sendTaskEndedEvent(score: number) {
+    console.log('ending a task')
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: 'sit2stand',
+      task_name: this.task.className
     });
-  }
-
-  _calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
   }
 }
