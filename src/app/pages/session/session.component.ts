@@ -8,8 +8,8 @@ import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
+import { CoordinationService } from 'src/app/services/coordination/coordination.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
-import { OnboardingService } from 'src/app/services/onboarding/onboarding.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
@@ -60,7 +60,7 @@ export class SessionComponent implements AfterViewInit {
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
-    private onboardingService: OnboardingService,
+    private coordinationService: CoordinationService,
     private router: Router
   ) {
     this.store
@@ -84,7 +84,7 @@ export class SessionComponent implements AfterViewInit {
 
     this.startGame();
 
-    this.onboardingService.setup(this, () => {})
+    this.coordinationService.setup(this, () => {})
     // this.startMediaPipe()
   }
 
@@ -204,6 +204,6 @@ export class SessionComponent implements AfterViewInit {
 
   genreSelected(genre: string) {
     this.selectGenre = false
-    this.onboardingService.next()
+    this.coordinationService.next()
   }
 }

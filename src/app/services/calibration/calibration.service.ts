@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
 import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { OnboardingService } from '../onboarding/onboarding.service';
+import { CoordinationService } from '../coordination/coordination.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -29,20 +29,14 @@ export class CalibrationService {
 
   constructor(
     private store: Store<{
-      pose: Results;
       calibration: any;
-      guide: GuideActionShowMessagesDTO;
     }>,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene,
-    private onboardingService: OnboardingService
+    private coordinationService: CoordinationService
   ) {
-    this.pose$ = store.select('pose');
-    this.pose$.subscribe((results) => {
-      this.handlePose(results);
-    });
-
+    
     this.activityId = this.analyticsService.getActivityId('Calibration');
   }
 
@@ -168,7 +162,7 @@ export class CalibrationService {
         calibration.success({ pose: results.pose, reason: 'All well' })
       );
       this.store.dispatch(guide.hidePrompt())
-      this.onboardingService.next()
+      this.coordinationService.next()
     };
 
     let poseLandmarkArray = results.pose.poseLandmarks;

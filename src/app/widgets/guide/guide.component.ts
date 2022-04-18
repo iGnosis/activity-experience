@@ -112,7 +112,6 @@ export class GuideComponent implements AfterViewInit {
 
   handleHideAvatar() {
     console.log('hide avatar');
-    
     this.state.avatar = undefined
   }
 
@@ -125,6 +124,9 @@ export class GuideComponent implements AfterViewInit {
   }
 
   handleHidePrompt() {
+    console.log(this.state);
+    
     this.state.prompt = undefined
+    console.log(this.state);
   }
 }

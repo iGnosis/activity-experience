@@ -28,7 +28,7 @@ const _guideReducer = createReducer(initialState,
     on(guide.updateAvatar, (state, data) => {
         const newState = Object.assign({}, state)
         newState.avatar = data
-        return newState
+        return state
     }),
 
     on(guide.sendMessage, (state, data) => {
@@ -62,8 +62,11 @@ const _guideReducer = createReducer(initialState,
     }),
 
     on(guide.hidePrompt, (state, data) => {
+        console.log(state);
         const newState = Object.assign({}, state)
-        delete(newState.prompt)
+        console.log(newState);
+        
+        // delete(newState.prompt)
         return newState
     }),
     

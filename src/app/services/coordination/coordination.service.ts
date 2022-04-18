@@ -1,25 +1,30 @@
 import { Injectable, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
 import { SessionComponent } from 'src/app/pages/session/session.component';
 import { guide } from 'src/app/store/actions/guide.actions';
-import { GuideState } from 'src/app/types/pointmotion';
+import { GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
-import { HolisticService } from '../holistic/holistic.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class OnboardingService {
+export class CoordinationService {
   
   private component: SessionComponent | undefined
   private prod = false
   private onComplete: Function | undefined
   constructor(
-    private store: Store<{guide: GuideState}>,
+    private store: Store<{guide: GuideState, calibration: any, pose: any}>,
     private injector: Injector
     ) { }
     
+    calibrationSuccessCount = 0
+    calibrationStatus = 'error'
+
     index = -1
+    observables$: any 
+
     welcome: any = [
       // {
       //   type: 'method',
@@ -144,6 +149,16 @@ export class OnboardingService {
         sync: true
       },
       {
+        type: 'action',
+        action: guide.hideMessage,
+        data: {}
+      },
+      {
+        type: 'action',
+        action: guide.hideAvatar,
+        data: {}
+      },
+      {
         type: 'startNewSequence',
         name: 'sit2standTutorial'
       }
@@ -166,7 +181,22 @@ export class OnboardingService {
       // guide.sendMessage({text: 'Hi, I ', position: 'center'})
     ]
     sit2standTutorial = [
-
+      
+      {
+        type: 'action',
+        action: guide.sendMessage,
+        data: {
+          text: 'That was amazing',
+          position: 'center'
+        }
+      },
+      {
+        type: 'action',
+        action: guide.updateAvatar,
+        data: {
+          name: 'mila'
+        }
+      },
     ]
     sequence = this.welcome
 
@@ -174,6 +204,25 @@ export class OnboardingService {
       this.component = component
       this.onComplete = onComplete
       this.next()
+    }
+
+    subscribeToState() {
+      this.observables$ = {}
+      this.observables$.pose = this.store.select(state => state.pose);
+      this.observables$.pose.subscribe((results: { pose: Results }) => {
+        this.handlePose(results);
+      });
+
+      this.observables$.calibrationStatus = this.store.select(state => state.calibration.status)
+      this.observables$.calibrationStatus.subscribe((newStatus: string) => {
+        this.calibrationStatus = newStatus
+        console.log(newStatus)
+      })
+    }
+
+    handlePose(results: { pose: Results }) {
+      console.log(results);
+      
     }
     
     async next() {
