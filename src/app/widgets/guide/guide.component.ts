@@ -20,9 +20,8 @@ export class GuideComponent implements AfterViewInit {
   avatarPosition = ''
 
   constructor(
-    private store: Store<{guide: GuideState}>,
-    private guideService: GuideService) { 
-    
+    private store: Store<{ guide: GuideState }>,
+    private guideService: GuideService) {
   }
 
   ngAfterViewInit(): void {
@@ -53,7 +52,18 @@ export class GuideComponent implements AfterViewInit {
 
     this.store.select(state => state.guide.prompt).subscribe((prompt: GuidePromptDTO | undefined) => {
       if (prompt) {
+
         this.handlePrompt(prompt)
+        const interval = setInterval(() => {
+          // console.log('executing Guide Prompt interval')
+          this.handlePrompt(prompt)
+        }, 100)
+
+        setTimeout(() => {
+          // console.log('clearing Guide Prompt interval')
+          clearInterval(interval)
+        }, prompt.timeout)
+
       } else {
         this.handleHidePrompt()
       }
@@ -68,7 +78,7 @@ export class GuideComponent implements AfterViewInit {
       // Handle change
       if (this.state.message.position != newMessage?.position) {
         // do some animation thingy
-      } 
+      }
 
       if (this.state.message.text !== newMessage?.text) {
         this.state.message.text = newMessage?.text
@@ -81,7 +91,7 @@ export class GuideComponent implements AfterViewInit {
       // once the new message box is in position
       this.handleAvatarImagePosition()
     })
-    
+
   }
 
   // avatar image, expression or location can change
@@ -91,10 +101,10 @@ export class GuideComponent implements AfterViewInit {
   }
 
   handleAvatarImagePosition() {
-    if (!this.avatar || !this.avatar.nativeElement) return 
+    if (!this.avatar || !this.avatar.nativeElement) return
 
-    let result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement, 
-                              this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
+    let result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement,
+      this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
     setTimeout(() => {
       this.avatar.nativeElement.style.top = result.top
       this.avatar.nativeElement.style.left = result.left
@@ -112,7 +122,7 @@ export class GuideComponent implements AfterViewInit {
 
   handleHideAvatar() {
     console.log('hide avatar');
-    
+
     this.state.avatar = undefined
   }
 

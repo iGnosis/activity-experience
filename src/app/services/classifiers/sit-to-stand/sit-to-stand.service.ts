@@ -284,6 +284,7 @@ export class SitToStandService {
       //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
       // );
       console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 });
+      this.store.dispatch(guide.hidePrompt())
 
       this.soundService.endConstantDrum();
 
@@ -309,7 +310,7 @@ export class SitToStandService {
     // set the task in a class variable and watch the class from the store.
     if (this.isEnabled) {
       this.store.dispatch(
-        guide.sendPrompt({ position: 'bottom-right', text: this.task.text, className: 'round' })
+        guide.sendPrompt({ position: 'bottom-right', text: this.task.text, className: 'round', timeout: this.task.timeout })
       )
     }
 

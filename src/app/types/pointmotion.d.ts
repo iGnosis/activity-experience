@@ -745,6 +745,7 @@ export type GuidePromptDTO = {
   text?: string,
   icon?: IconDefinition, // font-awesome icon only
   className?: string,
+  timeout?: number,
   position: 'left' | 'right' | 'top' | 'bottom' | 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
   entryAnimation?: EntryAnimation,
   exitAnimation?: ExitAnimation
@@ -756,4 +757,3 @@ export type GuideState = {
   spotlight?: GuideSpotlightDTO,
   prompt?: GuidePromptDTO
 }
-
