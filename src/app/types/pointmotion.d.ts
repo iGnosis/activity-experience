@@ -479,6 +479,7 @@ export interface Results {
   leftHandLandmarks: NormalizedLandmarkList;
   segmentationMask: GpuBuffer;
   image: GpuBuffer;
+  createdAt: Date;
 }
 
 /**

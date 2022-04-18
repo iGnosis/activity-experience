@@ -1,10 +1,12 @@
 import { Injectable, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
 import { SessionComponent } from 'src/app/pages/session/session.component';
+import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { calibration } from 'src/app/store/actions/calibration.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
+import { SoundsService } from '../sounds/sounds.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,11 +14,14 @@ import { CalibrationService } from '../calibration/calibration.service';
 export class CoordinationService {
   
   private component: SessionComponent | undefined
-  private prod = false
+  private prod = true
   private onComplete: Function | undefined
   constructor(
     private store: Store<{guide: GuideState, calibration: any, pose: any}>,
-    private injector: Injector
+    private injector: Injector,
+    private calibrationService: CalibrationService,
+    private calibrationScene: CalibrationScene,
+    private soundService: SoundsService
     ) { }
     
     calibrationSuccessCount = 0
@@ -132,6 +137,14 @@ export class CoordinationService {
       },
       {
         type: 'service',
+        name: CalibrationScene,
+        method: 'drawCalibrationBox',
+        data: {
+          args: ['error']
+        }
+      },
+      {
+        type: 'service',
         name: CalibrationService,
         method: 'enable',
         data: {
@@ -191,12 +204,22 @@ export class CoordinationService {
         }
       },
       {
+        type: 'timeout',
+        data: 1000
+      },
+      {
         type: 'action',
-        action: guide.updateAvatar,
+        action: guide.hideMessage,
         data: {
           name: 'mila'
         }
       },
+      {
+        // Show the video 
+      },
+      {
+        // 
+      }
     ]
     sequence = this.welcome
 
@@ -204,15 +227,19 @@ export class CoordinationService {
       this.component = component
       this.onComplete = onComplete
       this.next()
+      this.subscribeToState()
     }
 
     subscribeToState() {
       this.observables$ = {}
+
+      // Subscribe to the pose
       this.observables$.pose = this.store.select(state => state.pose);
       this.observables$.pose.subscribe((results: { pose: Results }) => {
         this.handlePose(results);
       });
 
+      // Subscribe for calibration status
       this.observables$.calibrationStatus = this.store.select(state => state.calibration.status)
       this.observables$.calibrationStatus.subscribe((newStatus: string) => {
         this.calibrationStatus = newStatus
@@ -221,8 +248,49 @@ export class CoordinationService {
     }
 
     handlePose(results: { pose: Results }) {
-      console.log(results);
+      const calibrationResult = this.calibrationService.handlePose(results)
       
+      if(calibrationResult && this.calibrationStatus !== calibrationResult.status) {
+        this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)
+        this.calibrationStatus = calibrationResult.status
+      }
+    }
+
+    handleCalibrationResult(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox(newStatus)
+      switch(newStatus) {
+        case 'warning':
+          this.handleCalibrationWarning(oldStatus, newStatus)
+          break
+        case 'success':
+          this.handleCalibrationSuccess(oldStatus, newStatus)
+          break
+        case 'error':
+        default:
+          this.handleCalibrationError(oldStatus, newStatus)
+          break
+      }
+    }
+
+    handleCalibrationSuccess(oldStatus: string, newStatus: string) {
+      this.calibrationSuccessCount += 1
+      console.log('successful calibration ', this.calibrationSuccessCount);
+      
+      this.soundService.startConstantDrum()
+      if (this.calibrationSuccessCount == 1) {
+        // First time success... Explain Sit2Stand
+        this.next()
+      } else {
+        // Second time success... Start from where we left off
+      }
+    }
+
+    handleCalibrationWarning(oldStatus: string, newStatus: string) {
+      // TODO: If the earlier status was 
+    }
+
+    handleCalibrationError(oldStatus: string, newStatus: string) {
+      this.soundService.pauseConstantDrum()
     }
     
     async next() {
@@ -258,6 +326,10 @@ export class CoordinationService {
         }
         
       }
+    }
+
+    async runActivity() {
+      
     }
 
     async handleAction(action: any) {
