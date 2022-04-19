@@ -6,6 +6,7 @@ import { calibration } from 'src/app/store/actions/calibration.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
+import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../sounds/sounds.service';
 
 @Injectable({
@@ -13,15 +14,16 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private component: SessionComponent | undefined
   private prod = true
+  private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
     private store: Store<{guide: GuideState, calibration: any, pose: any}>,
     private injector: Injector,
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
-    private soundService: SoundsService
+    private soundService: SoundsService,
+    private sit2standService: SitToStandService,
     ) { }
     
     calibrationSuccessCount = 0
@@ -240,8 +242,8 @@ export class CoordinationService {
       this.calibrationService.enable() 
     }
 
-    start(component: SessionComponent, onComplete: Function) {
-      this.component = component
+    start(game: Phaser.Game, onComplete: Function) {
+      this.game = game
       this.onComplete = onComplete
       this.subscribeToState()
       this.welcomeUser()
@@ -274,6 +276,31 @@ export class CoordinationService {
       if(calibrationResult && this.calibrationStatus !== calibrationResult.status) {
         this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)
         this.calibrationStatus = calibrationResult.status
+      }
+    }
+
+    async startCalibration() {
+      this.sit2standService.disable();
+      if (this.game?.scene.isActive('sit2stand')) {
+        this.game.scene.stop('sit2stand');
+        console.log('sit2stand is active. turning off');
+        this.game?.scene.start('calibration');
+        console.log('start calibration');
+        // this.action_startMediaPipe()
+      } else {
+        console.log('calibration is already active');
+      }
+    }
+
+    startSit2Stand() {
+      this.sit2standService.enable();
+      if (this.game?.scene.isActive('calibration')) {
+        this.game.scene.stop('calibration');
+        console.log('calibration is active. turning off');
+        this.game?.scene.start('sit2stand');
+        console.log('start sit 2 stand');
+      } else {
+        console.log('sit2stand is already active');
       }
     }
 
@@ -313,7 +340,7 @@ export class CoordinationService {
     }
 
     handleCalibrationError(oldStatus: string, newStatus: string) {
-      this.calibrationScene.drawCalibrationBox('error')
+      this.startCalibration()
       this.soundService.pauseConstantDrum()
     }
     

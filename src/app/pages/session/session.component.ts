@@ -83,15 +83,9 @@ export class SessionComponent implements AfterViewInit {
     this.updateDimensions(this.video.nativeElement);
 
     this.startGame();
-
-    this.coordinationService.start(this, () => {})
-    // this.startMediaPipe()
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
-    console.log(elm.style.marginLeft);
-    console.log(elm.width);
-    console.log(elm.height);
     const box = this.uiHelperService.getBoundingBox();
     if (box.topLeft.x) {
       // the video needs padding on the left
@@ -104,9 +98,6 @@ export class SessionComponent implements AfterViewInit {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
-    console.log(elm.style.marginLeft);
-    console.log(elm.width);
-    console.log(elm.height);
   }
 
   async startGame() {
@@ -125,33 +116,10 @@ export class SessionComponent implements AfterViewInit {
 
       // Start mediapipe
       this.startMediaPipe();
+      this.coordinationService.start(this.game as Phaser.Game, () => {})
     });
   }
-
-  async startCalibration() {
-    this.sit2standService.disable();
-    if (this.game?.scene.isActive('sit2stand')) {
-      this.game.scene.stop('sit2stand');
-      console.log('sit2stand is active. turning off');
-      this.game?.scene.start('calibration');
-      console.log('start calibration');
-      // this.action_startMediaPipe()
-    } else {
-      console.log('calibration is already active');
-    }
-  }
-
-  startSit2Stand() {
-    this.sit2standService.enable();
-    if (this.game?.scene.isActive('calibration')) {
-      this.game.scene.stop('calibration');
-      console.log('calibration is active. turning off');
-      this.game?.scene.start('sit2stand');
-      console.log('start sit 2 stand');
-    } else {
-      console.log('sit2stand is already active');
-    }
-  }
+  
 
   startMediaPipe(data?: any) {
     // Start MediaPipe Holistic
