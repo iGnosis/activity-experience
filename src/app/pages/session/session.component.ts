@@ -84,7 +84,7 @@ export class SessionComponent implements AfterViewInit {
 
     this.startGame();
 
-    this.coordinationService.setup(this, () => {})
+    this.coordinationService.start(this, () => {})
     // this.startMediaPipe()
   }
 
@@ -182,28 +182,5 @@ export class SessionComponent implements AfterViewInit {
     this.timeoutId = setTimeout(() => {
       this.isEndSessionVisible = false;
     }, 2000);
-  }
-
-  callAlert() {
-    console.log('hi');
-  }
-
-  announce(msg: string) {
-    return new Promise((resolve) => {
-      this.announcement = msg;
-      setTimeout(() => {
-        this.announcement = '';
-        resolve({});
-      }, 3000);
-    });
-  }
-
-  askPreferredGenre() {
-    this.selectGenre = true;
-  }
-
-  genreSelected(genre: string) {
-    this.selectGenre = false
-    this.coordinationService.next()
   }
 }

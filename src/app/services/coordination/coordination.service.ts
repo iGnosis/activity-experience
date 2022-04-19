@@ -31,85 +31,59 @@ export class CoordinationService {
     observables$: any 
 
     welcome: any = [
-      // {
-      //   type: 'method',
-      //   name: this.invokeComponentFunction,
-      //   data: {
-      //     args: ['Ready?'],
-      //     name: 'announce'
-      //   },
-      //   sync: true
-      // },
-      // {
-      //   type: 'method',
-      //   name: this.invokeComponentFunction,
-      //   data: {
-      //     args: [],
-      //     name: 'askPreferredGenre'
-      //   },
-      //   next: 'manual'
-      // },
-      // {
-      //   type: 'method',
-      //   name: this.invokeComponentFunction,
-      //   data: {
-      //     args: ['Thanks'],
-      //     name: 'announce'
-      //   },
-      //   sync: true
-      // },
-      {
-        type: 'action',
-        action: guide.updateAvatar,
-        data: {
-          name: 'mila'
-        }
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'Hi!',
-          position: 'center'
-        }
-      },
-      {
-        type: 'timeout',
-        data: this.prod? 1000: 300
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'My name is Mila. I am thrilled to be working with you today.',
-          position: 'center'
-        }
-      },
       
-      {
-        type: 'timeout',
-        data: this.prod? 5000: 300
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'I am here to guide you through today\'s session',
-          position: 'center'
-        }
-      },
-      {
-        type: 'timeout',
-        data: this.prod? 5000: 300
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'Before we start, we need to ensure a few things',
-          position: 'bottom'
-        }
-      },
+      // {
+      //   type: 'action',
+      //   action: guide.updateAvatar,
+      //   data: {
+      //     name: 'mila'
+      //   }
+      // },
+      // {
+      //   type: 'action',
+      //   action: guide.sendMessage,
+      //   data: {
+      //     text: 'Hi!',
+      //     position: 'center'
+      //   }
+      // },
+      // {
+      //   type: 'timeout',
+      //   data: this.prod? 1000: 300
+      // },
+      // {
+      //   type: 'action',
+      //   action: guide.sendMessage,
+      //   data: {
+      //     text: 'My name is Mila. I am thrilled to be working with you today.',
+      //     position: 'center'
+      //   }
+      // },
+      
+      // {
+      //   type: 'timeout',
+      //   data: this.prod? 5000: 300
+      // },
+      // {
+      //   type: 'action',
+      //   action: guide.sendMessage,
+      //   data: {
+      //     text: 'I am here to guide you through today\'s session',
+      //     position: 'center'
+      //   }
+      // },
+      // {
+      //   type: 'timeout',
+      //   data: this.prod? 5000: 300
+      // },
+      // {
+      //   type: 'action',
+      //   action: guide.sendMessage,
+      //   data: {
+      //     text: 'Before we start, we need to ensure a few things',
+      //     position: 'bottom'
+      //   }
+      // },
       
       {
         type: 'timeout',
@@ -223,10 +197,52 @@ export class CoordinationService {
     ]
     sequence = this.welcome
 
-    setup(component: SessionComponent, onComplete: Function) {
+
+    async welcomeUser() {
+      
+      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      this.store.dispatch(guide.sendMessage({
+        text: 'Hi!',
+        position: 'center'
+      }))
+      await this.sleep(this.prod? 1000: 300)
+      this.store.dispatch(guide.sendMessage({
+        text: 'My name is Mila. I am thrilled to be working with you today.',
+        position: 'center'
+      }))
+      await this.sleep(this.prod? 5000: 300)
+      this.store.dispatch(guide.sendMessage({
+        text: 'I am here to guide you through today\'s session',
+        position: 'center'
+      }))
+      await this.sleep(this.prod? 5000: 300)
+
+      this.store.dispatch(guide.sendMessage({
+        text: 'Before we start, we need to ensure a few things',
+        position: 'bottom'
+      }))
+
+      await this.sleep(this.prod? 3000: 300)
+
+      this.store.dispatch(guide.sendMessage({
+        text: 'Firstly, we need to see you on the screen',
+        position: 'bottom'
+      }))
+
+      await this.sleep(this.prod? 3000: 300)
+
+      this.store.dispatch(guide.sendMessage({
+        text: 'Please move around such that you can see yourself in the red box',
+        position: 'bottom'
+      }))
+    
+      this.calibrationScene.drawCalibrationBox('error')
+      this.calibrationService.enable() 
+    }
+
+    start(component: SessionComponent, onComplete: Function) {
       this.component = component
       this.onComplete = onComplete
-      this.next()
       this.subscribeToState()
     }
 
@@ -247,6 +263,10 @@ export class CoordinationService {
       })
     }
 
+    unsubscribe() {
+      // TODO: unsubscribe from all the events
+    }
+
     handlePose(results: { pose: Results }) {
       const calibrationResult = this.calibrationService.handlePose(results)
       
@@ -257,7 +277,6 @@ export class CoordinationService {
     }
 
     handleCalibrationResult(oldStatus: string, newStatus: string) {
-      this.calibrationScene.drawCalibrationBox(newStatus)
       switch(newStatus) {
         case 'warning':
           this.handleCalibrationWarning(oldStatus, newStatus)
@@ -273,27 +292,30 @@ export class CoordinationService {
     }
 
     handleCalibrationSuccess(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox('success')
       this.calibrationSuccessCount += 1
       console.log('successful calibration ', this.calibrationSuccessCount);
       
       this.soundService.startConstantDrum()
       if (this.calibrationSuccessCount == 1) {
         // First time success... Explain Sit2Stand
-        this.next()
+        
       } else {
         // Second time success... Start from where we left off
       }
     }
 
     handleCalibrationWarning(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox('warning')
       // TODO: If the earlier status was 
     }
 
     handleCalibrationError(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox('error')
       this.soundService.pauseConstantDrum()
     }
     
-    async next() {
+    async nextStep() {
       this.index += 1
       if(this.sequence.length > this.index) {
         const action = this.sequence[this.index]
@@ -322,7 +344,7 @@ export class CoordinationService {
         // @ts-ignore
         if(action.next != 'manual') {
           // if the next action can be executed automatically
-          this.next()
+          this.nextStep()
         }
         
       }
