@@ -15,7 +15,7 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -31,6 +31,8 @@ export class CoordinationService {
     calibrationStatus = 'error'
     
     observables$: any 
+
+    currentPose: any
 
     index = -1
     sequence: any = []
@@ -118,13 +120,25 @@ export class CoordinationService {
       this.store.dispatch(guide.sendPrompt({className:'round', text: '👍', position: 'center'}))
       
       // Ask the person to sit down on a chair 
-
       // Make it as close to the design as you comfortably can...
+        this.store.dispatch(guide.sendMessage({ text: 'Please sit down on a chair', position: 'bottom' , exitAnimation:'fadeOut'}));
+        await this.sleep(this.prod ? 3000 : 300);
 
-      this.sit2StandExplained = true
-      this.runSit2Stand()
+       // checking if the user is sitting or not and starting activity only if he sit.
+        if (this.sit2standService.classify(this.currentPose).result === 'sit') {
+                console.log('run again')
+                this.sit2StandExplained = true;
+                this.runSit2Stand();
+            }
+       
+        
+
 
     }
+
+     
+
+    
 
     async runSit2Stand() {
       if (!this.sit2StandExplained) {
@@ -132,6 +146,8 @@ export class CoordinationService {
         return
       } else {
         // Run the sit2stand logic
+
+          console.log('running sit2stand')
       }
     }
 
@@ -147,8 +163,9 @@ export class CoordinationService {
 
       // Subscribe to the pose
       this.observables$.pose = this.store.select(state => state.pose);
-      this.observables$.pose.subscribe((results: { pose: Results }) => {
-        this.handlePose(results);
+        this.observables$.pose.subscribe((results: { pose: Results }) => {
+          this.currentPose = results.pose
+          this.handlePose(results);
       });
 
       // Subscribe for calibration status
