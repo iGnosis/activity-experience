@@ -2,7 +2,7 @@
     <video id="webcam" muted="true" autoplay="true" width="100" height="100" #videoElm></video>
     <div id="phaser-canvas" #canvasElm></div>
     <app-guide></app-guide> 
-    <app-announcement *ngIf="announcement" [text]="announcement"></app-announcement>
+    <app-announcement></app-announcement>
     <img *ngIf="isEndSessionVisible" 
         src="assets/images/xmark-solid-red.svg" 
         id="close-session"

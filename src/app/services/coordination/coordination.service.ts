@@ -2,9 +2,10 @@ import { Injectable, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { SessionComponent } from 'src/app/pages/session/session.component';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { announcement } from 'src/app/store/actions/announcement.actions';
 import { calibration } from 'src/app/store/actions/calibration.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
-import { GuideState, Results } from 'src/app/types/pointmotion';
+import { AnnouncementState, GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../sounds/sounds.service';
@@ -14,11 +15,11 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
-    private store: Store<{guide: GuideState, calibration: any, pose: any}>,
+    private store: Store<{guide: GuideState, calibration: any, pose: any, announcement: AnnouncementState}>,
     private injector: Injector,
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
@@ -28,195 +29,38 @@ export class CoordinationService {
     
     calibrationSuccessCount = 0
     calibrationStatus = 'error'
-
-    index = -1
+    
     observables$: any 
 
-    welcome: any = [
-      
-      // {
-      //   type: 'action',
-      //   action: guide.updateAvatar,
-      //   data: {
-      //     name: 'mila'
-      //   }
-      // },
-      // {
-      //   type: 'action',
-      //   action: guide.sendMessage,
-      //   data: {
-      //     text: 'Hi!',
-      //     position: 'center'
-      //   }
-      // },
-      // {
-      //   type: 'timeout',
-      //   data: this.prod? 1000: 300
-      // },
-      // {
-      //   type: 'action',
-      //   action: guide.sendMessage,
-      //   data: {
-      //     text: 'My name is Mila. I am thrilled to be working with you today.',
-      //     position: 'center'
-      //   }
-      // },
-      
-      // {
-      //   type: 'timeout',
-      //   data: this.prod? 5000: 300
-      // },
-      // {
-      //   type: 'action',
-      //   action: guide.sendMessage,
-      //   data: {
-      //     text: 'I am here to guide you through today\'s session',
-      //     position: 'center'
-      //   }
-      // },
-      // {
-      //   type: 'timeout',
-      //   data: this.prod? 5000: 300
-      // },
-      // {
-      //   type: 'action',
-      //   action: guide.sendMessage,
-      //   data: {
-      //     text: 'Before we start, we need to ensure a few things',
-      //     position: 'bottom'
-      //   }
-      // },
-      
-      {
-        type: 'timeout',
-        data: this.prod? 3000: 300
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'Firstly, we need to see you on the screen',
-          position: 'bottom'
-        }
-      },
-      {
-        type: 'timeout',
-        data: this.prod? 4000: 300
-      },
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'Please move around such that you can see yourself in the red box',
-          position: 'bottom'
-        }
-      },
-      {
-        type: 'service',
-        name: CalibrationScene,
-        method: 'drawCalibrationBox',
-        data: {
-          args: ['error']
-        }
-      },
-      {
-        type: 'service',
-        name: CalibrationService,
-        method: 'enable',
-        data: {
-          args: []
-        },
-        next: 'manual'
-      },
-      {
-        type: 'method',
-        name: this.invokeComponentFunction,
-        data: {
-          args: ['Perfect'],
-          name: 'announce'
-        },
-        sync: true
-      },
-      {
-        type: 'action',
-        action: guide.hideMessage,
-        data: {}
-      },
-      {
-        type: 'action',
-        action: guide.hideAvatar,
-        data: {}
-      },
-      {
-        type: 'startNewSequence',
-        name: 'sit2standTutorial'
-      }
-      // {
-      //   type: 'method',
-      //   name: this.holisticService.start,
-      //   data: {
-      //     args: []
-      //   },
-      //   sync: true
-      // }
-      // {
-      //   type: 'action',
-      //   action: guide.hideMessage
-      // },
-      // {
-      //   type: 'action',
-      //   action: guide.hideAvatar
-      // }
-      // guide.sendMessage({text: 'Hi, I ', position: 'center'})
-    ]
-    sit2standTutorial = [
-      
-      {
-        type: 'action',
-        action: guide.sendMessage,
-        data: {
-          text: 'That was amazing',
-          position: 'center'
-        }
-      },
-      {
-        type: 'timeout',
-        data: 1000
-      },
-      {
-        type: 'action',
-        action: guide.hideMessage,
-        data: {
-          name: 'mila'
-        }
-      },
-      {
-        // Show the video 
-      },
-      {
-        // 
-      }
-    ]
-    sequence = this.welcome
+    index = -1
+    sequence: any = []
+    sit2StandExplained = false
 
 
     async welcomeUser() {
-      
+
+      this.store.dispatch(announcement.announce({message: 'Hello', timeout: 3000, background: '#FF0000'}))
+      await this.sleep(3500)
       this.store.dispatch(guide.updateAvatar({name: 'mila'}))
       this.store.dispatch(guide.sendMessage({
         text: 'Hi!',
         position: 'center'
       }))
+
       await this.sleep(this.prod? 1000: 300)
+
       this.store.dispatch(guide.sendMessage({
         text: 'My name is Mila. I am thrilled to be working with you today.',
         position: 'center'
       }))
+
       await this.sleep(this.prod? 5000: 300)
+
       this.store.dispatch(guide.sendMessage({
         text: 'I am here to guide you through today\'s session',
         position: 'center'
       }))
+
       await this.sleep(this.prod? 5000: 300)
 
       this.store.dispatch(guide.sendMessage({
@@ -238,8 +82,23 @@ export class CoordinationService {
         position: 'bottom'
       }))
     
+      // Start with the red box and enable the calibration service
       this.calibrationScene.drawCalibrationBox('error')
-      this.calibrationService.enable() 
+      this.calibrationService.enable()
+      // Result of calibration to be captured in the subscribeToState method
+    }
+
+    async explainSit2Stand() {
+      // 
+    }
+
+    async runSit2Stand() {
+      if (!this.sit2StandExplained) {
+        this.explainSit2Stand()
+        return
+      } else {
+        // Run the sit2stand logic
+      }
     }
 
     start(game: Phaser.Game, onComplete: Function) {
@@ -257,13 +116,6 @@ export class CoordinationService {
       this.observables$.pose.subscribe((results: { pose: Results }) => {
         this.handlePose(results);
       });
-
-      // Subscribe for calibration status
-      this.observables$.calibrationStatus = this.store.select(state => state.calibration.status)
-      this.observables$.calibrationStatus.subscribe((newStatus: string) => {
-        this.calibrationStatus = newStatus
-        console.log(newStatus)
-      })
     }
 
     unsubscribe() {
@@ -279,7 +131,7 @@ export class CoordinationService {
       }
     }
 
-    async startCalibration() {
+    async startCalibrationScene() {
       this.sit2standService.disable();
       if (this.game?.scene.isActive('sit2stand')) {
         this.game.scene.stop('sit2stand');
@@ -292,7 +144,7 @@ export class CoordinationService {
       }
     }
 
-    startSit2Stand() {
+    startSit2StandScene() {
       this.sit2standService.enable();
       if (this.game?.scene.isActive('calibration')) {
         this.game.scene.stop('calibration');
@@ -325,9 +177,9 @@ export class CoordinationService {
       console.log('successful calibration ', this.calibrationSuccessCount);
       
       this.soundService.startConstantDrum()
+
       if (this.calibrationSuccessCount == 1) {
         // First time success... Explain Sit2Stand
-
         
       } else {
         // Second time success... Start from where we left off
@@ -340,7 +192,7 @@ export class CoordinationService {
     }
 
     handleCalibrationError(oldStatus: string, newStatus: string) {
-      this.startCalibration()
+      this.startCalibrationScene()
       this.soundService.pauseConstantDrum()
     }
     

@@ -758,3 +758,9 @@ export type GuideState = {
   prompt?: GuidePromptDTO
 }
 
+
+export type AnnouncementState = {
+  message: string,
+  timeout?: number,
+  background?: string
+}
