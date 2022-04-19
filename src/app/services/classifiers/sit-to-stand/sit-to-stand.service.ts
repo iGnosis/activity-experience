@@ -14,7 +14,7 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 })
 export class SitToStandService {
   private isWaitingForReaction = false;
-  private isEnabled = false;
+  private enabled = false;
   private currentClass = 'unknown';
   private repsCompleted = 0;
   private totalTasks = 0;
@@ -180,8 +180,8 @@ export class SitToStandService {
     };
   }
 
-  classify(pose: Results) {
-    if (this.isEnabled) {
+  classify(pose: Results): { result: 'unknown' | 'disabled' | 'sit' | 'stand' } {
+    if (this.enabled) {
       const postLandmarkArray = pose.poseLandmarks;
 
       const leftShoulder = postLandmarkArray[11];
@@ -429,11 +429,15 @@ export class SitToStandService {
   }
 
   enable() {
-    this.isEnabled = true;
+    this.enabled = true;
   }
 
   disable() {
-    this.isEnabled = false;
+    this.enabled = false;
+  }
+
+  isEnabled() {
+    return this.enabled
   }
 
   sendTaskReactedEvent() {

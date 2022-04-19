@@ -15,7 +15,7 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = false
+  private prod = true
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -32,7 +32,7 @@ export class CoordinationService {
     
     observables$: any 
 
-    currentPose: any
+    currentClass:  'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown'
 
     index = -1
     sequence: any = []
@@ -81,7 +81,7 @@ export class CoordinationService {
       await this.sleep(this.prod? 3000: 300)
 
       this.store.dispatch(guide.sendMessage({
-        text: 'Please move around such that you can see yourself in the red box',
+        text: 'Please move around such that you can see your whole body inside the red box',
         position: 'bottom'
       }))
     
@@ -109,8 +109,17 @@ export class CoordinationService {
       this.store.dispatch(guide.startVideo({url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1'}))
       await this.sleep(this.prod? 10000: 5000)
       this.store.dispatch(guide.hideVideo())
+      // Enable sit2stand service
+      this.sit2standService.enable()
       await this.sleep(this.prod? 2000: 300)
-      this.store.dispatch(guide.sendMessage({text: 'Now lets make this exercise more interesting', position: 'center'}))
+      this.store.dispatch(guide.sendMessage({text: 'Before we start the exercise, please sit down on a chair', position: 'center'}))
+      await this.sleep(this.prod? 2000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Grab a chair if you don\'t have one and please sit down.', position: 'bottom'}))
+      await this.waitForClass('sit')
+      this.store.dispatch(announcement.announce({message: 'Perfect', timeout: 3000}))
+      await this.sleep(3500)
+
+      this.store.dispatch(guide.sendMessage({text: 'Now lets make this exercise interesting', position: 'center'}))
       await this.sleep(this.prod? 2000: 300)
       this.store.dispatch(guide.sendMessage({text: 'When you see 👍 you STAND', position: 'center'}))
       await this.sleep(this.prod? 2000: 300)
@@ -118,27 +127,52 @@ export class CoordinationService {
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'bottom'}))
       this.store.dispatch(guide.sendPrompt({className:'round', text: '👍', position: 'center'}))
-      
+      await this.sleep(this.prod? 3000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Stand when you see 👍', position: 'bottom'}))
+      await this.waitForClass('stand')
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.hideMessage())
+      await this.sleep(100)
+      this.store.dispatch(announcement.announce({message: 'Awesome!', timeout: 3000}))
+      await this.sleep(5000)
+      this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
+      this.store.dispatch(guide.sendMessage({text: 'That was great!', position: 'center'}))
+      await this.sleep(this.prod? 3000: 300)
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.hideMessage())
+      await this.sleep(this.prod? 3000: 300)
+
+      this.store.dispatch(guide.sendMessage({text: 'Now when you see a 👎 you SIT', position: 'center'}))
+      await this.sleep(this.prod? 3000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'center'}))
+      await this.sleep(this.prod? 1000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'bottom'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '👎', position: 'center'}))
+      await this.sleep(this.prod? 3000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'SIT when you see 👎', position: 'bottom'}))
+      await this.waitForClass('sit')
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.hideMessage())
+      await this.sleep(100)
+      this.store.dispatch(announcement.announce({message: 'Amazing!', timeout: 3000}))
+      this.sit2StandExplained = true
+      this.runSit2Stand()
       // Ask the person to sit down on a chair 
       // Make it as close to the design as you comfortably can...
-        this.store.dispatch(guide.sendMessage({ text: 'Please sit down on a chair', position: 'bottom' , exitAnimation:'fadeOut'}));
-        await this.sleep(this.prod ? 3000 : 300);
+        // this.store.dispatch(guide.sendMessage({ text: 'Please sit down on a chair', position: 'bottom' , exitAnimation:'fadeOut'}));
+        // await this.sleep(this.prod ? 3000 : 300);
 
        // checking if the user is sitting or not and starting activity only if he sit.
-        if (this.sit2standService.classify(this.currentPose).result === 'sit') {
-                console.log('run again')
-                this.sit2StandExplained = true;
-                this.runSit2Stand();
-            }
-       
-        
-
-
+        // if (this.sit2standService.classify(this.currentPose).result === 'sit') {
+        //     console.log('run again')
+        //     this.sit2StandExplained = true;
+        //     this.runSit2Stand();
+        // }
     }
 
-     
-
-    
 
     async runSit2Stand() {
       if (!this.sit2StandExplained) {
@@ -164,8 +198,9 @@ export class CoordinationService {
       // Subscribe to the pose
       this.observables$.pose = this.store.select(state => state.pose);
         this.observables$.pose.subscribe((results: { pose: Results }) => {
-          this.currentPose = results.pose
-          this.handlePose(results);
+          if(results) {
+            this.handlePose(results);
+          }
       });
 
       // Subscribe for calibration status
@@ -182,10 +217,35 @@ export class CoordinationService {
 
     handlePose(results: { pose: Results }) {
         const calibrationResult = this.calibrationService.handlePose(results)
+
+        // Call appropriate hook when status changes
         if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
-        this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)        
-        this.calibrationStatus = calibrationResult.status
-      }
+          this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)        
+          this.calibrationStatus = calibrationResult.status
+        }
+
+        if(this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
+          const newClass = this.sit2standService.classify(results.pose).result
+          this.handleClassChange(this.currentClass, newClass)
+          this.currentClass = newClass
+        }
+    }
+
+    async waitForClass(className: 'sit' | 'stand') {
+      return new Promise((resolve) => {
+        if(this.currentClass == className) resolve({})
+        // set interval
+        const interval = setInterval(() => {
+          if (this.currentClass == className) {
+            resolve({})
+            clearInterval(interval)
+          }
+        }, 300) 
+      })
+    }
+
+    handleClassChange(oldClass: string, newClass: string) {
+      // Do something?
     }
 
     async startCalibrationScene() {
