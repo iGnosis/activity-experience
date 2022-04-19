@@ -15,7 +15,7 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = false
+  private prod = true
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -39,12 +39,14 @@ export class CoordinationService {
 
     async welcomeUser() {
 
-      await this.sleep(3500)
-      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      // await this.sleep(3500)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'Hi!',
         position: 'center'
       }))
+      this.sleep(50)
+      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
 
       await this.sleep(this.prod? 1000: 300)
 
@@ -105,6 +107,23 @@ export class CoordinationService {
       this.store.dispatch(guide.startVideo({url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1'}))
       await this.sleep(this.prod? 10000: 5000)
       this.store.dispatch(guide.hideVideo())
+      await this.sleep(this.prod? 2000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Now lets make this exercise more interesting', position: 'center'}))
+      await this.sleep(this.prod? 2000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'When you see 👍 you STAND', position: 'center'}))
+      await this.sleep(this.prod? 2000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'center'}))
+      await this.sleep(this.prod? 3000: 300)
+      this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'bottom'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '👍', position: 'center'}))
+      
+      // Ask the person to sit down on a chair 
+
+      // Make it as close to the design as you comfortably can...
+
+      this.sit2StandExplained = true
+      this.runSit2Stand()
+
     }
 
     async runSit2Stand() {
@@ -146,8 +165,6 @@ export class CoordinationService {
 
     handlePose(results: { pose: Results }) {
         const calibrationResult = this.calibrationService.handlePose(results)
-        console.log(calibrationResult?.status)
-      
         if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
         this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)        
         this.calibrationStatus = calibrationResult.status
