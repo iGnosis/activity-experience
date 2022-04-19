@@ -24,7 +24,8 @@ import { SelectGenreComponent } from './widgets/select-genre/select-genre.compon
 import { FinishedComponent } from './pages/finished/finished.component';
 import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
+import { announcementReducer } from './store/reducers/annoucement.reducer';
+import { SafePipeModule } from 'safe-pipe'
 @NgModule({
   declarations: [
     AppComponent,
@@ -52,8 +53,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
       guide: guideReducer, // Updating the guide
       session: sessionReducer, // Top level session
       spotlight: spotlightReducer, // spotlight component
+      announcement: announcementReducer,
     }),
-    FontAwesomeModule
+    FontAwesomeModule,
+    SafePipeModule
   ],
   providers: [],
   bootstrap: [AppComponent],

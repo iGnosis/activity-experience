@@ -62,25 +62,25 @@ export class CalibrationScene extends Phaser.Scene {
     ).setScale(0.2);
 
     this.createCalibrationBox(40, 98);
-    this.calibration$ = this.store.select((state) => state.calibration);
-    this.calibration$.subscribe((result) => {
-      if (result && result.status) {
-        switch (result.status) {
-          case 'error':
-            // this.createCalibrationBox(40, 90);
-            this.drawCalibrationBox('error');
-            break;
-          case 'warning':
-            // this.createCalibrationBox(40, 90);
-            this.drawCalibrationBox('warning');
-            break;
-          case 'success':
-            // this.createCalibrationBox(40, 90);
-            this.drawCalibrationBox('success');
-            break;
-        }
-      }
-    });
+    // this.calibration$ = this.store.select((state) => state.calibration);
+    // this.calibration$.subscribe((result) => {
+    //   if (result && result.status) {
+    //     switch (result.status) {
+    //       case 'error':
+    //         // this.createCalibrationBox(40, 90);
+    //         this.drawCalibrationBox('error');
+    //         break;
+    //       case 'warning':
+    //         // this.createCalibrationBox(40, 90);
+    //         this.drawCalibrationBox('warning');
+    //         break;
+    //       case 'success':
+    //         // this.createCalibrationBox(40, 90);
+    //         this.drawCalibrationBox('success');
+    //         break;
+    //     }
+    //   }
+    // });
   }
 
   /**
@@ -140,8 +140,7 @@ export class CalibrationScene extends Phaser.Scene {
   override update(time: number, delta: number): void {}
 
   drawCalibrationBox(type: string) {
-    if (!this.sys.game) return;
-    if (!this.showCalibration) return;
+    if (!this.sys.game || !this.showCalibration) return;
 
     let { width, height } = this.sys.game.canvas;
     console.log(`${width} X ${height}`);

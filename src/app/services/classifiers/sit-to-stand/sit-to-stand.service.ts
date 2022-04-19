@@ -18,13 +18,21 @@ export class SitToStandService {
   private currentClass = 'unknown';
   private repsCompleted = 0;
   private totalTasks = 0;
+  distanceThreshold: any
   private activityExplained = false;
-  private task = {
-    text: '1',
-    timeout: 5000,
-    className: 'stand',
-    celebrated: false,
-  };
+  private task: {
+    text: string;
+    title: string;
+    timeout: number;
+    className: string;
+    celebrated: boolean;
+  } = {
+      text: 'ONE',
+      title: '1',
+      timeout: 5000,
+      className: 'stand',
+      celebrated: false,
+    };
 
   activityId: string;
   taskId = v4();
@@ -60,33 +68,26 @@ export class SitToStandService {
         }
       });
 
-    this.store
-      .select((state) => state.calibration.status)
-      .subscribe((status: string) => {
-        if (status == 'success') {
-          this.enable();
-          this.reStartActivity();
-          if (!this.soundService.isConstantDrumPlaying()) {
-            this.soundService.startConstantDrum();
-          }
-        } else if (status == 'warning') {
-          // warning will not stop the activity
-          this.enable();
-          this.reStartActivity();
-          if (!this.soundService.isConstantDrumPlaying()) {
-            this.soundService.startConstantDrum();
-          }
-        } else if (status == 'error' && this.activityExplained) {
-          this.disable();
-          if (this.soundService.isConstantDrumPlaying()) {
-            this.soundService.pauseConstantDrum();
-          }
-          this.calibrationScene.scene.start('calibration');
-          // if the calibration is error
-          // debouncing the pauseActivity() for 3 seconds
-          //   this.debounce(this.pauseActivity(), 3000);
-        }
-      });
+    // this.store
+    //   .select((state) => state.calibration.status)
+    //   .subscribe((status: string) => {
+    //     if (status == 'success') {
+    //       this.action_enable();
+    //       this.reStartActivity();
+    //       if (!this.soundService.isConstantDrumPlaying()) {
+    //         this.soundService.startContantDrum();
+    //       }
+    //     } else if (status == 'error' && this.activityExplained) {
+    //       this.action_disable();
+    //       if (this.soundService.isConstantDrumPlaying()) {
+    //         this.soundService.pauseContantDrum();
+    //       }
+    //       this.calibrationScene.scene.start('calibration');
+    //       // if the calibration is error
+    //       // debouncing the pauseActivity() for 3 seconds
+    //       //   this.debounce(this.pauseActivity(), 3000);
+    //     }
+    //   });
 
     this.store
       .select((state) => state.calibration.poseHash)
@@ -179,9 +180,9 @@ export class SitToStandService {
           if (this.task.className == 'sit') {
             // this.store.dispatch(guide.hide())
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
-            this.celebrate();
-            this.sendTaskEndedEvent(1);
-            this.playSuccessTune();
+            // this.celebrate();
+            // this.sendTaskEndedEvent(1);
+            // this.playSuccessTune();
           }
         }
         return {
@@ -195,9 +196,9 @@ export class SitToStandService {
           if (this.task.className == 'stand') {
             // this.store.dispatch(guide.hide())
             // this.store.dispatch(guide.sendMessages({text: 'Perfect', title: 'Correct', timeout: 2000}))
-            this.celebrate();
-            this.sendTaskEndedEvent(1);
-            this.playSuccessTune();
+            // this.celebrate();
+            // this.sendTaskEndedEvent(1);
+            // this.playSuccessTune();
           }
         }
         return {
@@ -212,46 +213,46 @@ export class SitToStandService {
     }
   }
 
-  playSuccessTune() {
-    environment.musicExperience === 'music_experience_2' &&
-      this.soundService.playNextChord();
-  }
+  // playSuccessTune() {
+  //   environment.musicExperience === 'music_experience_2' &&
+  //     this.soundService.playNextChord();
+  // }
 
-  celebrate() {
-    this.repsCompleted += 1;
-    this.task.celebrated = true;
-    this.store.dispatch(spotlight.celebrate());
-  }
+  // celebrate() {
+  //   this.repsCompleted += 1;
+  //   this.task.celebrated = true;
+  //   this.store.dispatch(spotlight.celebrate());
+  // }
 
-  async reStartActivity() {
-    if (!this.activityExplained) {
-      // Music starts playing here
-      !this.soundService.isConstantDrumPlaying() &&
-        this.soundService.startConstantDrum();
+  // async reStartActivity() {
+  //   if (!this.activityExplained) {
+  //     // Music starts playing here
+  //     !this.soundService.isConstantDrumPlaying() &&
+  //       this.soundService.startConstantDrum();
 
-      console.error({
-        text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
-        title: 'Ready?',
-        timeout: 1000,
-      });
+  //     console.error({
+  //       text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+  //       title: 'Ready?',
+  //       timeout: 1000,
+  //     });
 
-      // this.store.dispatch(
-      //   guide.sendMessages({
-      //     text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
-      //     title: 'Ready?',
-      //     timeout: 1000,
-      //   })
-      // );
-      this.activityExplained = true;
+  //     // this.store.dispatch(
+  //     //   guide.sendMessages({
+  //     //     text: 'Please SIT when you see and EVEN number and STAND when you see ODD number',
+  //     //     title: 'Ready?',
+  //     //     timeout: 1000,
+  //     //   })
+  //     // );
+  //     this.activityExplained = true;
 
-      setTimeout(() => {
-        this.runActivity();
-      }, 1000);
-    } else {
-      // activity is already explained... run the activity
-      this.runActivity();
-    }
-  }
+  //     setTimeout(() => {
+  //       this.runActivity();
+  //     }, 1000);
+  //   } else {
+  //     // activity is already explained... run the activity
+  //     this.runActivity();
+  //   }
+  // }
 
   async pauseActivity() {
     this.disable();
@@ -269,77 +270,75 @@ export class SitToStandService {
     });
   }
 
-  async runActivity() {
-    /*     !this.soundService.isConstantDrumPlaying() &&
-      this.soundService.startContantDrum(); */
+  // async runActivity() {
+  //   /*     !this.soundService.isConstantDrumPlaying() &&
+  //     this.soundService.startContantDrum(); */
 
-    // end of activity
-    if (this.repsCompleted >= 10) {
-      this.analyticsService.sendActivityEvent({
-        activity: this.activityId,
-        event_type: 'activityEnded',
-      });
+  //   // end of activity
+  //   if (this.repsCompleted >= 10) {
+  //     this.analyticsService.sendActivityEvent({
+  //       activity: this.activityId,
+  //       event_type: 'activityEnded',
+  //     });
 
-      // this.store.dispatch(
-      //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
-      // );
-      console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 });
-      this.store.dispatch(guide.hidePrompt())
+  //     // this.store.dispatch(
+  //     //   guide.sendMessages({ text: 'DONE', title: 'Thank you!', timeout: 5000 })
+  //     // );
+  //     console.error({ text: 'DONE', title: 'Thank you!', timeout: 5000 });
 
-      this.soundService.endConstantDrum();
+  //     this.soundService.endConstantDrum();
 
-      const failedTasks = this.totalTasks - this.repsCompleted;
-      // store failed events
+  //     const failedTasks = this.totalTasks - this.repsCompleted;
+  //     // store failed events
 
-      this.isEnabled = false;
-      // setting sessionEnded to true
-      return;
-    }
+  //     this.isEnabled = false;
+  //     // setting sessionEnded to true
+  //     return;
+  //   }
 
-    console.log('starting a task')
-    this.getNewTask();
-    this.isWaitingForReaction = true
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskStarted',
-      task_id: this.taskId,
-      task_name: this.task.className
-    });
+  //   this.getNewTask();
 
-    // set the task in a class variable and watch the class from the store.
-    if (this.isEnabled) {
-      this.store.dispatch(
-        guide.sendPrompt({ position: 'bottom-right', text: this.task.text, className: 'round', timeout: this.task.timeout })
-      )
-    }
+  //   // this.analyticsService.sendTaskEvent({
+  //   //   activity: this.activityId,
+  //   //   attempt_id: this.attemptId,
+  //   //   event_type: 'taskStarted',
+  //   //   task_id: this.taskId,
+  //   //   task_name: 'sit2stand',
+  //   // });
 
-    // this.isEnabled &&
-    //   this.store.dispatch(
-    //     guide.sendMessages({
-    //       text: this.task.text,
-    //       title: this.task.title,
-    //       timeout: this.task.timeout,
-    //     })
-    //   );
+  //   // set the task in a class variable and watch the class from the store.
+  //   if (this.isEnabled) {
+  //     this.store.dispatch(
+  //       guide.sendPrompt({ position: 'center', text: this.task.text, className: 'round' })
+  //     )
+  //   }
 
-    console.error({
-      text: this.task.text,
-      // title: this.task.title,
-      timeout: this.task.timeout,
-    });
+  //   // this.isEnabled &&
+  //   //   this.store.dispatch(
+  //   //     guide.sendMessages({
+  //   //       text: this.task.text,
+  //   //       title: this.task.title,
+  //   //       timeout: this.task.timeout,
+  //   //     })
+  //   //   );
 
-    this.isEnabled &&
-      setTimeout(() => {
-        // Check if the person held the right pose, but we did not celebrate...
-        if (this.currentClass == this.task.className && !this.task.celebrated) {
-          this.celebrate();
-          this.sendTaskEndedEvent(1);
-          this.playSuccessTune();
-        }
-        this.runActivity();
-      }, this.task.timeout);
-  }
+  //   console.error({
+  //     text: this.task.text,
+  //     // title: this.task.title,
+  //     timeout: this.task.timeout,
+  //   });
+
+  //   this.isEnabled &&
+  //     setTimeout(() => {
+  //       // Check if the person held the right pose, but we did not celebrate...
+  //       if (this.currentClass == this.task.className && !this.task.celebrated) {
+  //         this.celebrate();
+  //         this.sendTaskEndedEvent(1);
+  //         this.playSuccessTune();
+  //       }
+  //       this.runActivity();
+  //     }, this.task.timeout);
+  // }
 
   getNewTask() {
     this.attemptId = v4();

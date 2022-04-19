@@ -1,4 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AnnouncementState } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-announcement',
@@ -7,11 +9,26 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class AnnouncementComponent implements OnInit {
 
-  @Input() text: string | undefined = `Let's Go`
+  @Input() text: string | undefined
+  state$
+  background = ''
   
-  constructor() { }
+  constructor(
+    private store: Store<{announcement: AnnouncementState}>
+  ) {
+    this.state$ = this.store.select(state => state.announcement)
+    this.state$.subscribe(announcement => {
+      this.background = announcement.background || '#88EBA9'
+      this.text = announcement.message
 
-  background = '#88EBA9'
+      if(announcement.timeout) {
+        setTimeout(() => {
+          // Hide the component
+          this.text = ''
+        }, announcement.timeout)
+      }
+    })
+  }
 
   ngOnInit(): void {
   }

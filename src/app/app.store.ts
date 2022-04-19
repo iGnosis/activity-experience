@@ -1,6 +1,6 @@
 // import { CalibrationStatus } from "./types/calibration-status";
 
-import { GuideActionShowMessagesDTO, SessionState } from "./types/pointmotion";
+import { AnnouncementState, GuideActionShowMessagesDTO, SessionState } from "./types/pointmotion";
 
 export interface AppState {
     calibration: any,
@@ -9,5 +9,6 @@ export interface AppState {
     test: {name: string, age: number},
     guide: GuideActionShowMessagesDTO,
     session: SessionState,
-    spotlight: any
+    spotlight: any,
+    announcement: AnnouncementState
 }

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Holistic, Options, Results } from '@mediapipe/holistic';
+import { Holistic, Options } from '@mediapipe/holistic';
 import { Store } from '@ngrx/store';
 import { pose } from 'src/app/store/actions/pose.actions';
+import { Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 
 @Injectable({
@@ -37,6 +38,8 @@ export class HolisticService {
 
     this.holistic.setOptions(this.options)
     this.holistic.onResults((results) => {
+      // // @ts-ignore
+      // results.createdAt = new Date()
       this.handleResults(results)
     })
     this.videoElm = videoElm

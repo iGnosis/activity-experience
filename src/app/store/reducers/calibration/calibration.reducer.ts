@@ -90,7 +90,10 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
 const _calibrationReducer = createReducer(
   initialState,
   on(calibration.success, (state, data) => {
+<<<<<<< HEAD
     // console.log(sit2standPoseHashGenerator(state, data))
+=======
+>>>>>>> 5ac0e08afd26324b09d53a169e1181c27aecbb03
     return {
       status: 'success',
       reason: data.reason,

@@ -6,11 +6,7 @@ import { calibration } from 'src/app/store/actions/calibration.actions';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CareplanService } from '../careplan/careplan.service';
 import { v4 } from 'uuid';
-import { environment } from 'src/environments/environment';
-import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
-import { guide } from 'src/app/store/actions/guide.actions';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { OnboardingService } from '../onboarding/onboarding.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -29,20 +25,13 @@ export class CalibrationService {
 
   constructor(
     private store: Store<{
-      pose: Results;
       calibration: any;
-      guide: GuideActionShowMessagesDTO;
     }>,
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene,
-    private onboardingService: OnboardingService
   ) {
-    this.pose$ = store.select('pose');
-    this.pose$.subscribe((results) => {
-      this.handlePose(results);
-    });
-
+    
     this.activityId = this.analyticsService.getActivityId('Calibration');
   }
 
@@ -54,18 +43,18 @@ export class CalibrationService {
     this.isEnabled = false
   }
 
-  handlePose(results: { pose: Results }) {
+  handlePose(results: { pose: Results }): {status: string} | undefined{
     if (!results) return;
 
-    // Can have multiple configurations.
-    switch (this.careplanService.getCarePlan().calibration.type) {
-      case 'full_body':
-        this.calibrateFullBody(results);
-        break;
-      case 'hands':
-        this.calibrateHands(results);
-        break;
-    }
+    return this.calibrateFullBody(results);
+    // // Can have multiple configurations.
+    // switch (this.careplanService.getCarePlan().calibration.type) {
+    //   case 'full_body':
+        
+    //   case 'hands':
+    //     // return this.calibrateHands(results);
+    //     break
+    // }
   }
 
   calibrateHands(results: any) {
@@ -141,44 +130,16 @@ export class CalibrationService {
   calibrateFullBody(results: { pose: Results }) {
     if (!this.isEnabled) return
 
-    const sendError = () => {
-      this.store.dispatch(
-        calibration.error({
-          pose: results.pose,
-          reason: 'Cannot see required points',
-        })
-      );
-
-      this.store.dispatch(guide.sendPrompt({
-        text: 'Please move into the Red Box',
-        position: 'top-right'
-      }))
-    };
-    const sendWarning = () => {
-      this.store.dispatch(
-        calibration.warning({
-          pose: results.pose,
-          reason: 'points not within the bound',
-        })
-      );
-    };
-
-    const sendSuccess = () => {
-      this.store.dispatch(
-        calibration.success({ pose: results.pose, reason: 'All well' })
-      );
-      this.store.dispatch(guide.hidePrompt())
-      this.onboardingService.next()
-    };
-
     let poseLandmarkArray = results.pose.poseLandmarks;
 
     if (!Array.isArray(poseLandmarkArray)) {
-      return sendError();
+      return {
+        status: 'error'
+      }
     } else {
       // adding these points to make the calibration lenient
-      // const points = [12, 11, 24, 23, 26, 25];
-      const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
+      const points = [12, 11, 24, 23, 26, 25];
+      // const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
       const isCalibrationSuccess = points.every((point) => {
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
@@ -197,7 +158,9 @@ export class CalibrationService {
 
       if (isCalibrationSuccess) {
         // console.log(`Calibration Successful`);
-        sendSuccess();
+        return {
+          status: 'success'
+        };
       } else {
         // See if there is any point we can't see
         const invisiblePoint = poseLandmarkArray.find((x) => {
@@ -209,16 +172,16 @@ export class CalibrationService {
         });
 
         if (invisiblePoint) {
-          sendError();
+          return {
+            status: 'error'
+          }
         } else {
-          console.log('partially uncalibrated');
-
-          sendWarning();
+          return {
+            status: 'warning'
+          }
         }
       }
     }
-
-    // make sure that body parts are visible
   }
 
   dispatchCalibration() {}

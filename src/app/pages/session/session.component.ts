@@ -8,8 +8,8 @@ import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
+import { CoordinationService } from 'src/app/services/coordination/coordination.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
-import { OnboardingService } from 'src/app/services/onboarding/onboarding.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { VideoService } from 'src/app/services/video/video.service';
@@ -60,7 +60,7 @@ export class SessionComponent implements AfterViewInit {
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
-    private onboardingService: OnboardingService,
+    private coordinationService: CoordinationService,
     private router: Router
   ) {
     this.store
@@ -83,15 +83,9 @@ export class SessionComponent implements AfterViewInit {
     this.updateDimensions(this.video.nativeElement);
 
     this.startGame();
-
-    this.onboardingService.setup(this, () => {})
-    // this.startMediaPipe()
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
-    console.log(elm.style.marginLeft);
-    console.log(elm.width);
-    console.log(elm.height);
     const box = this.uiHelperService.getBoundingBox();
     if (box.topLeft.x) {
       // the video needs padding on the left
@@ -104,15 +98,13 @@ export class SessionComponent implements AfterViewInit {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
-    console.log(elm.style.marginLeft);
-    console.log(elm.width);
-    console.log(elm.height);
   }
 
   async startGame() {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
+    this.coordinationService.start(this.game as Phaser.Game, () => {})
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       // Set the canvas to take up the same space as the video. Simplifying all the calculations
@@ -125,33 +117,10 @@ export class SessionComponent implements AfterViewInit {
 
       // Start mediapipe
       this.startMediaPipe();
+      
     });
   }
-
-  async startCalibration() {
-    this.sit2standService.disable();
-    if (this.game?.scene.isActive('sit2stand')) {
-      this.game.scene.stop('sit2stand');
-      console.log('sit2stand is active. turning off');
-      this.game?.scene.start('calibration');
-      console.log('start calibration');
-      // this.action_startMediaPipe()
-    } else {
-      console.log('calibration is already active');
-    }
-  }
-
-  startSit2Stand() {
-    this.sit2standService.enable();
-    if (this.game?.scene.isActive('calibration')) {
-      this.game.scene.stop('calibration');
-      console.log('calibration is active. turning off');
-      this.game?.scene.start('sit2stand');
-      console.log('start sit 2 stand');
-    } else {
-      console.log('sit2stand is already active');
-    }
-  }
+  
 
   startMediaPipe(data?: any) {
     // Start MediaPipe Holistic
@@ -182,28 +151,5 @@ export class SessionComponent implements AfterViewInit {
     this.timeoutId = setTimeout(() => {
       this.isEndSessionVisible = false;
     }, 2000);
-  }
-
-  callAlert() {
-    console.log('hi');
-  }
-
-  announce(msg: string) {
-    return new Promise((resolve) => {
-      this.announcement = msg;
-      setTimeout(() => {
-        this.announcement = '';
-        resolve({});
-      }, 3000);
-    });
-  }
-
-  askPreferredGenre() {
-    this.selectGenre = true;
-  }
-
-  genreSelected(genre: string) {
-    this.selectGenre = false
-    this.onboardingService.next()
   }
 }
