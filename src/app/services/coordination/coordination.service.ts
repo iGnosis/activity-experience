@@ -244,6 +244,7 @@ export class CoordinationService {
       this.component = component
       this.onComplete = onComplete
       this.subscribeToState()
+      this.welcomeUser()
     }
 
     subscribeToState() {
@@ -299,6 +300,7 @@ export class CoordinationService {
       this.soundService.startConstantDrum()
       if (this.calibrationSuccessCount == 1) {
         // First time success... Explain Sit2Stand
+
         
       } else {
         // Second time success... Start from where we left off
