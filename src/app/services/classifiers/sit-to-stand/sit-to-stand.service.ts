@@ -13,21 +13,95 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
   providedIn: 'root',
 })
 export class SitToStandService {
+  private isWaitingForReaction = false;
   private isEnabled = false;
   private currentClass = 'unknown';
   private repsCompleted = 0;
   private totalTasks = 0;
+  distanceThreshold: any
   private activityExplained = false;
-  private task = {
-    text: '1',
-    timeout: 5000,
-    className: 'stand',
-    celebrated: false,
-  };
+  private task: {
+    text: string;
+    title: string;
+    timeout: number;
+    className: string;
+    celebrated: boolean;
+  } = {
+      text: 'ONE',
+      title: '1',
+      timeout: 5000,
+      className: 'stand',
+      celebrated: false,
+    };
 
   activityId: string;
   taskId = v4();
   attemptId = v4();
+
+  tasks = [
+    {
+      text: 'TWENTY',
+      title: '20',
+      className: 'sit',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'ELEVEN',
+      title: '11',
+      className: 'stand',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'EIGHT',
+      title: '8',
+      className: 'sit',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'FOURTEEN',
+      title: '14',
+      className: 'sit',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'EIGHT',
+      title: '8',
+      className: 'sit',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'THREE',
+      title: '3',
+      className: 'stand',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'TWENTY',
+      title: '20',
+      className: 'sit',
+      timeout: 5000,
+      celebrated: false,
+    },
+    {
+      text: 'FIFTY ONE',
+      title: '51',
+      className: 'stand',
+      timeout: 5000,
+      celebrated: false,
+    },
+  ];
+
+  public static calcDist(x1: number, y1: number, x2: number, y2: number): any {
+    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    return distance;
+  }
 
   constructor(
     private careplan: CareplanService,
@@ -38,40 +112,42 @@ export class SitToStandService {
   ) {
     this.activityId = this.analyticsService.getActivityId('Sit to Stand');
 
-    // this.analyticsService.sendActivityEvent({
-    //   activity: this.activityId,
-    //   event_type: 'activityStarted',
-    // });
+    console.log('starting activity')
+    this.analyticsService.sendActivityEvent({
+      activity: this.activityId,
+      event_type: 'activityStarted',
+    });
+
+    // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
+    try {
+      this.distanceThreshold = this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
+    } catch (err) {
+      console.error(err);
+      this.distanceThreshold = 0.25;
+    }
 
     // Listen to the poses... From calibration service
-    // this.store
-    //   .select((state) => state.calibration)
-    //   .subscribe((data: any) => {
-    //     if (data && data.pose) {
-    //       this.classify(data.pose);
-    //     }
-    //   });
+    this.store
+      .select((state) => state.calibration)
+      .subscribe((data: any) => {
+        if (data && data.pose) {
+          this.classify(data.pose);
+        }
+      });
 
     // this.store
     //   .select((state) => state.calibration.status)
     //   .subscribe((status: string) => {
     //     if (status == 'success') {
-    //       this.enable();
+    //       this.action_enable();
     //       this.reStartActivity();
     //       if (!this.soundService.isConstantDrumPlaying()) {
-    //         this.soundService.startConstantDrum();
-    //       }
-    //     } else if (status == 'warning') {
-    //       // warning will not stop the activity
-    //       this.enable();
-    //       this.reStartActivity();
-    //       if (!this.soundService.isConstantDrumPlaying()) {
-    //         this.soundService.startConstantDrum();
+    //         this.soundService.startContantDrum();
     //       }
     //     } else if (status == 'error' && this.activityExplained) {
-    //       this.disable();
+    //       this.action_disable();
     //       if (this.soundService.isConstantDrumPlaying()) {
-    //         this.soundService.pauseConstantDrum();
+    //         this.soundService.pauseContantDrum();
     //       }
     //       this.calibrationScene.scene.start('calibration');
     //       // if the calibration is error
@@ -79,6 +155,19 @@ export class SitToStandService {
     //       //   this.debounce(this.pauseActivity(), 3000);
     //     }
     //   });
+
+    this.store
+      .select((state) => state.calibration.poseHash)
+      .subscribe((poseHash: number) => {
+        console.log('poseHash:', poseHash)
+        console.log('isWaitingForReaction:', this.isWaitingForReaction)
+        if (this.isWaitingForReaction && poseHash == 1) {
+          // send reaction event for current running task
+          console.log('sending reaction event.')
+          this.sendTaskReactedEvent()
+          this.isWaitingForReaction = false
+        }
+      })
   }
 
   debounce(func: any, timeout = 300) {
@@ -116,25 +205,25 @@ export class SitToStandService {
         };
       }
 
-      const distanceBetweenLeftShoulderAndHip = this._calcDist(
+      const distanceBetweenLeftShoulderAndHip = SitToStandService.calcDist(
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
         leftHip.y
       );
-      const distanceBetweenRightShoulderAndHip = this._calcDist(
+      const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
         rightHip.y
       );
-      const distanceBetweenLeftHipAndKnee = this._calcDist(
+      const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
         leftKnee.y
       );
-      const distanceBetweenRightHipAndKnee = this._calcDist(
+      const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,
@@ -147,8 +236,7 @@ export class SitToStandService {
       const isSittingL =
         distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
       const isSittingR =
-        distanceBetweenRightShoulderAndHip >
-        1.5 * distanceBetweenRightHipAndKnee;
+        distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');
@@ -348,20 +436,25 @@ export class SitToStandService {
     this.isEnabled = false;
   }
 
+  sendTaskReactedEvent() {
+    this.analyticsService.sendTaskEvent({
+      activity: this.activityId,
+      attempt_id: this.attemptId,
+      event_type: 'taskReacted',
+      task_id: this.taskId,
+      task_name: this.task.className
+    });
+  }
+
   sendTaskEndedEvent(score: number) {
+    console.log('ending a task')
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: 'sit2stand',
+      task_name: this.task.className
     });
-  }
-
-  _calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
   }
 }
