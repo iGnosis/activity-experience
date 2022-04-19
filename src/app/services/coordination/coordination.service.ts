@@ -131,6 +131,13 @@ export class CoordinationService {
       this.observables$.pose.subscribe((results: { pose: Results }) => {
         this.handlePose(results);
       });
+
+      // Subscribe for calibration status
+      this.observables$.calibrationStatus = this.store.select(state => state.calibration.status)
+      this.observables$.calibrationStatus.subscribe((newStatus: string) => {
+        this.calibrationStatus = newStatus
+        console.log('new Status' ,newStatus)
+      })
     }
 
     unsubscribe() {
@@ -138,10 +145,11 @@ export class CoordinationService {
     }
 
     handlePose(results: { pose: Results }) {
-      const calibrationResult = this.calibrationService.handlePose(results)
+        const calibrationResult = this.calibrationService.handlePose(results)
+        console.log(calibrationResult?.status)
       
-      if(calibrationResult && this.calibrationStatus !== calibrationResult.status) {
-        this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)
+        if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
+        this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)        
         this.calibrationStatus = calibrationResult.status
       }
     }
@@ -209,7 +217,8 @@ export class CoordinationService {
     }
 
     handleCalibrationError(oldStatus: string, newStatus: string) {
-      this.startCalibrationScene()
+        this.startCalibrationScene()
+        this.calibrationScene.drawCalibrationBox('error')
       this.soundService.pauseConstantDrum()
     }
     
