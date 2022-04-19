@@ -25,7 +25,7 @@ import { FinishedComponent } from './pages/finished/finished.component';
 import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { announcementReducer } from './store/reducers/annoucement.reducer';
-
+import { SafePipeModule } from 'safe-pipe'
 @NgModule({
   declarations: [
     AppComponent,
@@ -55,7 +55,8 @@ import { announcementReducer } from './store/reducers/annoucement.reducer';
       spotlight: spotlightReducer, // spotlight component
       announcement: announcementReducer,
     }),
-    FontAwesomeModule
+    FontAwesomeModule,
+    SafePipeModule
   ],
   providers: [],
   bootstrap: [AppComponent],

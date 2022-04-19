@@ -751,11 +751,16 @@ export type GuidePromptDTO = {
   exitAnimation?: ExitAnimation
 }
 
+export type GuideVideoDTO = {
+  url: string
+}
+
 export type GuideState = {
   avatar?: GuideAvatarDTO,
   message?: GuideMessageDTO,
   spotlight?: GuideSpotlightDTO,
-  prompt?: GuidePromptDTO
+  prompt?: GuidePromptDTO,
+  video?: GuideVideoDTO
 }
 
 

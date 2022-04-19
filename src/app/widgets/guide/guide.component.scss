@@ -106,6 +106,17 @@
         max-width: 25vw;
     }
 }
+
+.video {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    z-index: 13;
+}
+
+
 // .guide {
 //     width: 100vw;
 //     height: 100vh;

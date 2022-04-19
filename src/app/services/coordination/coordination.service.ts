@@ -39,7 +39,6 @@ export class CoordinationService {
 
     async welcomeUser() {
 
-      this.store.dispatch(announcement.announce({message: 'Hello', timeout: 3000, background: '#FF0000'}))
       await this.sleep(3500)
       this.store.dispatch(guide.updateAvatar({name: 'mila'}))
       this.store.dispatch(guide.sendMessage({
@@ -89,7 +88,23 @@ export class CoordinationService {
     }
 
     async explainSit2Stand() {
-      // 
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hideMessage())
+      this.store.dispatch(announcement.announce({message: 'Excellent', timeout: 3000}))
+      await this.sleep(this.prod? 3500: 300)
+      // this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      this.store.dispatch(guide.sendSpotlight({text: 'Starting Next Activity'}))
+      await this.sleep(this.prod? 3500: 300)
+      this.store.dispatch(guide.sendSpotlight({text: 'SIT TO STAND'}))
+      await this.sleep(this.prod? 3500: 300)
+      this.store.dispatch(guide.hideSpotlight())
+      await this.sleep(this.prod? 200: 100)
+      this.store.dispatch(guide.updateAvatar({name:'mila'}))
+      this.store.dispatch(guide.sendMessage({text: 'Let\'s watch how the exercise is done first', position: 'bottom'}))
+      await this.sleep(this.prod? 2000: 300)
+      this.store.dispatch(guide.startVideo({url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1'}))
+      await this.sleep(this.prod? 10000: 5000)
+      this.store.dispatch(guide.hideVideo())
     }
 
     async runSit2Stand() {
@@ -154,6 +169,7 @@ export class CoordinationService {
       } else {
         console.log('sit2stand is already active');
       }
+      this.runSit2Stand()
     }
 
     handleCalibrationResult(oldStatus: string, newStatus: string) {
@@ -176,14 +192,15 @@ export class CoordinationService {
       this.calibrationSuccessCount += 1
       console.log('successful calibration ', this.calibrationSuccessCount);
       
-      this.soundService.startConstantDrum()
+      // this.soundService.startConstantDrum()
+      this.startSit2StandScene()
 
-      if (this.calibrationSuccessCount == 1) {
-        // First time success... Explain Sit2Stand
+      // if (this.calibrationSuccessCount == 1) {
+      //   // First time success... Explain Sit2Stand
         
-      } else {
-        // Second time success... Start from where we left off
-      }
+      // } else {
+      //   // Second time success... Start from where we left off
+      // }
     }
 
     handleCalibrationWarning(oldStatus: string, newStatus: string) {

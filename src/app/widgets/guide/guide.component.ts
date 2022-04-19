@@ -58,6 +58,16 @@ export class GuideComponent implements AfterViewInit {
         this.handleHidePrompt()
       }
     })
+
+    this.store.select(state => state.guide.video).subscribe(video => {
+      console.log('video', video);
+      
+      if (video) {
+        this.state.video = video
+      } else {
+        this.state.video = undefined
+      }
+    })
   }
 
   handleSendMessage(newMessage: GuideMessageDTO | undefined) {

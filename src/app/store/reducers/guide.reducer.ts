@@ -49,6 +49,12 @@ const _guideReducer = createReducer(initialState,
         return newState
     }),
 
+    on(guide.startVideo, (state, data) => {
+        const newState = Object.assign({}, state)
+        newState.video = data
+        return newState
+    }),
+
     on(guide.hideAvatar, (state, data) => {
         const newState = Object.assign({}, state)
         delete(newState.avatar)
@@ -75,6 +81,12 @@ const _guideReducer = createReducer(initialState,
         delete(newState.spotlight)
         return newState
     }),
+
+    on(guide.hideVideo, (state, video) => {
+        const newState = Object.assign({}, state)
+        delete(newState.video)
+        return newState
+    })
 )
 
 

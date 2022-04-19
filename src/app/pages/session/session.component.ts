@@ -104,6 +104,7 @@ export class SessionComponent implements AfterViewInit {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
+    this.coordinationService.start(this.game as Phaser.Game, () => {})
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       // Set the canvas to take up the same space as the video. Simplifying all the calculations
@@ -116,7 +117,7 @@ export class SessionComponent implements AfterViewInit {
 
       // Start mediapipe
       this.startMediaPipe();
-      this.coordinationService.start(this.game as Phaser.Game, () => {})
+      
     });
   }
   
