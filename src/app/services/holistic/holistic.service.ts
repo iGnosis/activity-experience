@@ -38,8 +38,8 @@ export class HolisticService {
 
     this.holistic.setOptions(this.options)
     this.holistic.onResults((results) => {
-      // @ts-ignore
-      results.createdAt = new Date()
+      // // @ts-ignore
+      // results.createdAt = new Date()
       this.handleResults(results)
     })
     this.videoElm = videoElm
