@@ -34,8 +34,8 @@ export class HolisticService {
     this.holistic = new Holistic({
       locateFile: (file) => {
         console.log('HolisticService:start:locateFile:url string:', file);
-        // return `assets/mediapipe/${file}`;
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+        return `assets/mediapipe/${file}`;
+        // return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4/${file}`;
       }
     });
 
@@ -50,8 +50,10 @@ export class HolisticService {
     this.interval = setInterval(() => {
       // @ts-ignore
       this.holistic?.send({ image: this.videoElm }).catch((error) => {
-        window.alert('Mediapipe failed to load - Please refresh the page')
         console.error('error sending image to the model:', error)
+        if (!error.toString().includes('Module.arguments has been replaced with plain arguments_')) {
+          window.alert('Mediapipe failed to load - Please refresh the page')
+        }
       })
     }, 500)
   }
