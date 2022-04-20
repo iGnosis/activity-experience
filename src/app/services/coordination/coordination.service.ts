@@ -174,27 +174,33 @@ export class CoordinationService {
       this.runSit2Stand()
     }
 
-    async playSit2Stand() {
+   async playSit2Stand() {
       // For the messaging before the real game...
       await this.prePlaySit2Stand()
       
       // Do 5 reps: TODO get number of reps from the careplan
-      for( let i = 0; i < 5; i ++ ) {
-        const num = Math.floor(Math.random() * 100)
-        let desiredClass: 'sit' | 'stand' = 'sit'
-        if (num % 2) {
-          desiredClass = 'sit'
-        } else {
-          desiredClass = 'stand'
-        }
+        let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+        let previousDesiredClass: 'sit' |'stand' | 'unknown' = 'unknown';
+       for (let i = 0; i < 5; i++) {
+            
+            previousDesiredClass = desiredClass;
+            const num = Math.floor(Math.random() * 100)
 
-        this.store.dispatch(guide.sendPrompt({text: num.toString(), className: 'round', position: 'right'}))
-        // this.waitForClassOrTimeOut(desiredClass, timeout) ['sit', 3000]
-        this.waitForClass(desiredClass)
-      }
+            if (num % 2 === 0) {
+                desiredClass = 'sit';
+            } else {
+                desiredClass = 'stand';
+            }
 
+           this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
+           
+           // resolve has status property that can be used to send taskEnded events.
+            await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass)
+       }
+       
       await this.postPlaySit2Stand()
     }
+
 
     async prePlaySit2Stand() {
       this.store.dispatch(guide.sendMessage({text: 'STAND up when you are ready to start...', position: 'center'}))
@@ -284,6 +290,45 @@ export class CoordinationService {
           }
         }, 300) 
       })
+    }
+
+
+    async waitForClassOrTimeOut(desiredClass: string,previousDesiredClass: string, timeout: number = 3000): Promise<{status : 'success' | 'failure'}> {
+        return new Promise((resolve) => {
+            if (previousDesiredClass === desiredClass) {
+                setTimeout(() => {
+                    if (this.currentClass == desiredClass) {
+                        resolve({
+                          status :'success'
+                      });
+                    }
+                    resolve({
+                        status: 'failure'
+                    })
+                }, timeout)
+            } else {   
+                const startTime = new Date().getTime();
+                const interval = setInterval(() => {
+                    
+                    // checking if given timeout is completed
+                    if (new Date().getTime() - startTime > timeout) {
+                      // user didn't do the correct thing but timeout (can send taskEnded(score = 0) here)
+                        resolve({
+                          status: 'failure'
+                      })
+                      clearInterval(interval);
+                    }        
+
+                    if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
+                            console.log(`${this.currentClass}  ${desiredClass}`);
+                        resolve({
+                                status: 'success'
+                            });
+                            clearInterval(interval);
+                        }
+                }, 300);
+            }
+        });
     }
 
     handleClassChange(oldClass: string, newClass: string) {
