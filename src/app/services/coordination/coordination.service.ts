@@ -106,9 +106,13 @@ export class CoordinationService {
       this.store.dispatch(guide.updateAvatar({name:'mila'}))
       this.store.dispatch(guide.sendMessage({text: 'Let\'s watch how the exercise is done first', position: 'bottom'}))
       await this.sleep(this.prod? 2000: 300)
+      
+      this.soundService.pauseConstantDrum()
       this.store.dispatch(guide.startVideo({url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1'}))
       await this.sleep(this.prod? 10000: 5000)
       this.store.dispatch(guide.hideVideo())
+      this.soundService.startConstantDrum()
+
       // Enable sit2stand service
       this.sit2standService.enable()
       await this.sleep(this.prod? 2000: 300)
@@ -121,67 +125,105 @@ export class CoordinationService {
 
       this.store.dispatch(guide.sendMessage({text: 'Now lets make this exercise interesting', position: 'center'}))
       await this.sleep(this.prod? 2000: 300)
-      this.store.dispatch(guide.sendMessage({text: 'When you see 👍 you STAND', position: 'center'}))
+      this.store.dispatch(guide.sendMessage({text: 'When you see an ODD number you STAND', position: 'center'}))
       await this.sleep(this.prod? 2000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'bottom'}))
-      this.store.dispatch(guide.sendPrompt({className:'round', text: '👍', position: 'center'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '2', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
-      this.store.dispatch(guide.sendMessage({text: 'Stand when you see 👍', position: 'bottom'}))
+      this.store.dispatch(guide.sendMessage({text: 'Stand when you see an ODD number', position: 'bottom'}))
       await this.waitForClass('stand')
+      this.soundService.playNextChord()
+
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hidePrompt())
       this.store.dispatch(guide.hideMessage())
       await this.sleep(100)
       this.store.dispatch(announcement.announce({message: 'Awesome!', timeout: 3000}))
-      await this.sleep(5000)
-      this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
+      await this.sleep(3500)
+
+      
       this.store.dispatch(guide.sendMessage({text: 'That was great!', position: 'center'}))
-      await this.sleep(this.prod? 3000: 300)
-      this.store.dispatch(guide.hideAvatar())
-      this.store.dispatch(guide.hidePrompt())
-      this.store.dispatch(guide.hideMessage())
+      this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
 
-      this.store.dispatch(guide.sendMessage({text: 'Now when you see a 👎 you SIT', position: 'center'}))
+      this.store.dispatch(guide.sendMessage({text: 'Now when you see an EVEN number you SIT', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'center'}))
       await this.sleep(this.prod? 1000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'bottom'}))
-      this.store.dispatch(guide.sendPrompt({className:'round', text: '👎', position: 'center'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '11', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
-      this.store.dispatch(guide.sendMessage({text: 'SIT when you see 👎', position: 'bottom'}))
+      this.store.dispatch(guide.sendMessage({text: 'SIT when you see an EVEN number', position: 'bottom'}))
       await this.waitForClass('sit')
+      this.soundService.playNextChord()
+
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hidePrompt())
       this.store.dispatch(guide.hideMessage())
       await this.sleep(100)
       this.store.dispatch(announcement.announce({message: 'Amazing!', timeout: 3000}))
+      await this.sleep(3500)
+
+
+      this.store.dispatch(guide.sendMessage({text: 'Now we are all set...', position: 'center'}))
+      this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
+      await this.sleep(3000)
       this.sit2StandExplained = true
       this.runSit2Stand()
-      // Ask the person to sit down on a chair 
-      // Make it as close to the design as you comfortably can...
-        // this.store.dispatch(guide.sendMessage({ text: 'Please sit down on a chair', position: 'bottom' , exitAnimation:'fadeOut'}));
-        // await this.sleep(this.prod ? 3000 : 300);
+    }
 
-       // checking if the user is sitting or not and starting activity only if he sit.
-        // if (this.sit2standService.classify(this.currentPose).result === 'sit') {
-        //     console.log('run again')
-        //     this.sit2StandExplained = true;
-        //     this.runSit2Stand();
-        // }
+    async playSit2Stand() {
+      // For the messaging before the real game...
+      await this.prePlaySit2Stand()
+      
+      // Do 5 reps: TODO get number of reps from the careplan
+      for( let i = 0; i < 5; i ++ ) {
+        const num = Math.floor(Math.random() * 100)
+        let desiredClass: 'sit' | 'stand' = 'sit'
+        if (num % 2) {
+          desiredClass = 'sit'
+        } else {
+          desiredClass = 'stand'
+        }
+
+        this.store.dispatch(guide.sendPrompt({text: num.toString(), className: 'round', position: 'right'}))
+        // this.waitForClassOrTimeOut(desiredClass, timeout) ['sit', 3000]
+        this.waitForClass(desiredClass)
+      }
+
+      await this.postPlaySit2Stand()
+    }
+
+    async prePlaySit2Stand() {
+      this.store.dispatch(guide.sendMessage({text: 'STAND up when you are ready to start...', position: 'center'}))
+      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      await this.waitForClass('stand')
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.hideMessage())
+      this.store.dispatch(guide.sendSpotlight({text: 'READY'}))
+      await this.sleep(1000)
+      this.store.dispatch(guide.sendSpotlight({text: 'GET-SET'}))
+      await this.sleep(1000)
+      this.store.dispatch(guide.sendSpotlight({text: 'GO'}))
+    }
+
+    async postPlaySit2Stand() {
+
     }
 
 
     async runSit2Stand() {
+      this.sit2StandExplained = true
       if (!this.sit2StandExplained) {
         this.explainSit2Stand()
         return
       } else {
         // Run the sit2stand logic
-
-          console.log('running sit2stand')
+        this.playSit2Stand()
+        console.log('running sit2stand')
       }
     }
 
@@ -263,6 +305,7 @@ export class CoordinationService {
 
     startSit2StandScene() {
       this.sit2standService.enable();
+      this.soundService.startConstantDrum()
       if (this.game?.scene.isActive('calibration')) {
         this.game.scene.stop('calibration');
         console.log('calibration is active. turning off');
