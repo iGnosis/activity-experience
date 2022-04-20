@@ -34,8 +34,8 @@ export class HolisticService {
     this.holistic = new Holistic({
       locateFile: (file) => {
         console.log('HolisticService:start:locateFile:url string:', file);
-        return `assets/mediapipe/${file}`;
-        // return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4/${file}`;
+        // return `assets/mediapipe/${file}`;
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.4/${file}`;
       }
     });
 
