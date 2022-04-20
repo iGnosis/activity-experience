@@ -70,7 +70,7 @@ export class SoundsService {
    * @param from From volume
    * @param to To Volume
    * @param duration Duration of fading from 'From Volume' to 'To Volume'
-   * @param id (Optional) ID of the music to fade, by default it take constantDrumId
+   * @param id (Optional) ID of the music to fade, by default it will take constantDrumId
    */
   fade(
     from: number,

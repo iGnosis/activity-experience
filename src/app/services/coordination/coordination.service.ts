@@ -15,7 +15,7 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -173,16 +173,18 @@ export class CoordinationService {
       this.sit2StandExplained = true
       this.runSit2Stand()
     }
-
+    
+    startTimeTest?: number;
    async playSit2Stand() {
       // For the messaging before the real game...
-      await this.prePlaySit2Stand()
+    //   await this.prePlaySit2Stand()
       
       // Do 5 reps: TODO get number of reps from the careplan
-        let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-        let previousDesiredClass: 'sit' |'stand' | 'unknown' = 'unknown';
+       let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+       let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+       
        for (let i = 0; i < 5; i++) {
-            
+            console.log(`rep count ${i+1}`)
             previousDesiredClass = desiredClass;
             const num = Math.floor(Math.random() * 100)
 
@@ -195,8 +197,15 @@ export class CoordinationService {
            this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
            
            // resolve has status property that can be used to send taskEnded events.
-            await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass)
+           const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000)
+
+           // playing chord
+           if ( res.result === 'success') {
+               this.soundService.playNextChord();
+            }
        }
+
+       console.log('reps completed')
        
       await this.postPlaySit2Stand()
     }
@@ -217,7 +226,7 @@ export class CoordinationService {
     }
 
     async postPlaySit2Stand() {
-
+        console.log('start postplay sit2stand')
     }
 
 
@@ -293,17 +302,17 @@ export class CoordinationService {
     }
 
 
-    async waitForClassOrTimeOut(desiredClass: string,previousDesiredClass: string, timeout: number = 3000): Promise<{status : 'success' | 'failure'}> {
+    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
         return new Promise((resolve) => {
             if (previousDesiredClass === desiredClass) {
                 setTimeout(() => {
                     if (this.currentClass == desiredClass) {
                         resolve({
-                          status :'success'
+                          result :'success'
                       });
                     }
                     resolve({
-                        status: 'failure'
+                        result: 'failure'
                     })
                 }, timeout)
             } else {   
@@ -312,20 +321,19 @@ export class CoordinationService {
                     
                     // checking if given timeout is completed
                     if (new Date().getTime() - startTime > timeout) {
-                      // user didn't do the correct thing but timeout (can send taskEnded(score = 0) here)
+                      // user didn't do correct thing but the time is out
                         resolve({
-                          status: 'failure'
-                      })
-                      clearInterval(interval);
+                          result: 'failure'
+                        })
+                        clearInterval(interval);
                     }        
 
                     if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
-                            console.log(`${this.currentClass}  ${desiredClass}`);
-                        resolve({
-                                status: 'success'
+                            resolve({
+                                result: 'success'
                             });
                             clearInterval(interval);
-                        }
+                    }
                 }, 300);
             }
         });
