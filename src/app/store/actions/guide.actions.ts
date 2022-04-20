@@ -13,8 +13,8 @@ export const guide = {
 
     hideAvatar: createAction('[Guide] Hide Avatar'),
     hideMessage: createAction('[Guide] Hide Message'),
-    hideSpotlight: createAction('[Guide] Hide Avatar'),
-    hidePrompt: createAction('[Guide] Hide Avatar'),
+    hideSpotlight: createAction('[Guide] Hide Spotlight'),
+    hidePrompt: createAction('[Guide] Hide Prompt'),
     hideVideo: createAction('[Guide] Hide Video')
 
 }

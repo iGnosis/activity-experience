@@ -68,11 +68,8 @@ const _guideReducer = createReducer(initialState,
     }),
 
     on(guide.hidePrompt, (state, data) => {
-        console.log(state);
         const newState = Object.assign({}, state)
-        console.log(newState);
-        
-        // delete(newState.prompt)
+        delete(newState.prompt)
         return newState
     }),
     
