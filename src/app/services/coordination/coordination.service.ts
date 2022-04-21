@@ -15,7 +15,7 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
-  private prod = false
+  private prod = true
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -130,7 +130,7 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us try it out...', position: 'bottom'}))
-      this.store.dispatch(guide.sendPrompt({className:'round', text: '2', position: 'center'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '1', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Stand when you see an ODD number', position: 'bottom'}))
       await this.waitForClass('stand')
@@ -153,7 +153,7 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'center'}))
       await this.sleep(this.prod? 1000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'bottom'}))
-      this.store.dispatch(guide.sendPrompt({className:'round', text: '11', position: 'center'}))
+      this.store.dispatch(guide.sendPrompt({className:'round', text: '12', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'SIT when you see an EVEN number', position: 'bottom'}))
       await this.waitForClass('sit')
@@ -177,8 +177,9 @@ export class CoordinationService {
     startTimeTest?: number;
    async playSit2Stand() {
       // For the messaging before the real game...
-    //   await this.prePlaySit2Stand()
+      await this.prePlaySit2Stand()
       
+      await this.sleep(2000)
       // Do 5 reps: TODO get number of reps from the careplan
        let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
        let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
@@ -223,6 +224,8 @@ export class CoordinationService {
       this.store.dispatch(guide.sendSpotlight({text: 'GET-SET'}))
       await this.sleep(1000)
       this.store.dispatch(guide.sendSpotlight({text: 'GO'}))
+      await this.sleep(1000)
+      this.store.dispatch(guide.hideSpotlight())
     }
 
     async postPlaySit2Stand() {
@@ -231,7 +234,7 @@ export class CoordinationService {
 
 
     async runSit2Stand() {
-      this.sit2StandExplained = true
+      // this.sit2StandExplained = true
       if (!this.sit2StandExplained) {
         this.explainSit2Stand()
         return
