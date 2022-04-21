@@ -23,31 +23,31 @@ export class HolisticService {
   interval: any
   videoElm?: HTMLVideoElement
   constructor(
-    private store: Store<{pose: Results}>,
+    private store: Store<{ pose: Results }>,
     private calibrationService: CalibrationService,
   ) {
-    
+
   }
 
   start(videoElm: HTMLVideoElement, fps: number = 1) {
-    this.holistic = new Holistic({locateFile: (file) => {
-      console.log(file);
-      
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-    }});
+
+    this.holistic = new Holistic({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+      }
+    });
 
     this.holistic.setOptions(this.options)
     this.holistic.onResults((results) => {
       this.handleResults(results)
     })
+
     this.videoElm = videoElm
     this.interval = setInterval(() => {
-      try {
-        // @ts-ignore
-        this.holistic?.send({image: this.videoElm})
-      } catch(err) {
-        console.error('error sending image to the model')
-      }
+      // @ts-ignore
+      this.holistic?.send({ image: this.videoElm }).catch((error) => {
+        console.error('error sending image to the model:', error)
+      })
     }, 500)
   }
 
@@ -58,10 +58,8 @@ export class HolisticService {
 
   private handleResults(results: Results) {
     // console.log(results)
-    if(results) {
-      this.store.dispatch(pose.send({pose: results}))
+    if (results) {
+      this.store.dispatch(pose.send({ pose: results }))
     }
-    
   }
-
 }

@@ -107,17 +107,12 @@ export class SessionComponent implements AfterViewInit {
     this.coordinationService.start(this.game as Phaser.Game, () => {})
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
-      // Set the canvas to take up the same space as the video. Simplifying all the calculations
-
-      //   this.updateDimensions(this.canvas.nativeElement);
-
       this.analyticsService.sendSessionEvent({
         event_type: 'sessionStarted',
       });
 
       // Start mediapipe
       this.startMediaPipe();
-      
     });
   }
   

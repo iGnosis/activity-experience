@@ -15,11 +15,13 @@ import { SoundsService } from '../sounds/sounds.service';
 })
 export class CoordinationService {
   
+  // Workaround for medianet not working
+  private poseCount = 0
   private prod = true
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
-    private store: Store<{guide: GuideState, calibration: any, pose: any, announcement: AnnouncementState}>,
+    private store: Store<{ guide: GuideState, calibration: any, pose: any, announcement: AnnouncementState }>,
     private injector: Injector,
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
@@ -30,17 +32,17 @@ export class CoordinationService {
     calibrationSuccessCount = 0
     calibrationStatus = 'error'
     
-    observables$: any 
-
-    currentClass:  'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown'
-
+    observables$: any
+    
+    currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown'
+    
     index = -1
     sequence: any = []
     sit2StandExplained = false
-
-
+    startTimeTest?: number;
+    
     async welcomeUser() {
-
+      
       // await this.sleep(3500)
       
       this.store.dispatch(guide.sendMessage({
@@ -48,49 +50,55 @@ export class CoordinationService {
         position: 'center'
       }))
       this.sleep(50)
-      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
-
-      await this.sleep(this.prod? 1000: 300)
-
+      this.store.dispatch(guide.updateAvatar({ name: 'mila' }))
+      
+      await this.sleep(this.prod ? 1000 : 300)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'My name is Mila. I am thrilled to be working with you today.',
         position: 'center'
       }))
-
-      await this.sleep(this.prod? 5000: 300)
-
+      
+      await this.sleep(this.prod ? 5000 : 300)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'I am here to guide you through today\'s session',
         position: 'center'
       }))
-
-      await this.sleep(this.prod? 5000: 300)
-
+      
+      await this.sleep(this.prod ? 5000 : 300)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'Before we start, we need to ensure a few things',
         position: 'bottom'
       }))
-
-      await this.sleep(this.prod? 3000: 300)
-
+      
+      await this.sleep(this.prod ? 3000 : 300)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'Firstly, we need to see you on the screen',
         position: 'bottom'
       }))
-
-      await this.sleep(this.prod? 3000: 300)
-
+      
+      await this.sleep(this.prod ? 3000 : 300)
+      
       this.store.dispatch(guide.sendMessage({
         text: 'Please move around such that you can see your whole body inside the red box',
         position: 'bottom'
       }))
-    
+      
+      // if by this time, poseCount is less than 10, then it means mediapipe has failed.
+      // ask user to refresh the page
+      if (this.poseCount < 10) {
+        window.alert('Mediapipe failed to load - Please refresh the page')
+      }
+      
       // Start with the red box and enable the calibration service
       this.calibrationScene.drawCalibrationBox('error')
       this.calibrationService.enable()
       // Result of calibration to be captured in the subscribeToState method
     }
-
+    
     async explainSit2Stand() {
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hideMessage())
@@ -112,7 +120,7 @@ export class CoordinationService {
       await this.sleep(this.prod? 10000: 5000)
       this.store.dispatch(guide.hideVideo())
       this.soundService.startConstantDrum()
-
+      
       // Enable sit2stand service
       this.sit2standService.enable()
       await this.sleep(this.prod? 2000: 300)
@@ -122,7 +130,7 @@ export class CoordinationService {
       await this.waitForClass('sit')
       this.store.dispatch(announcement.announce({message: 'Perfect', timeout: 3000}))
       await this.sleep(3500)
-
+      
       this.store.dispatch(guide.sendMessage({text: 'Now lets make this exercise interesting', position: 'center'}))
       await this.sleep(this.prod? 2000: 300)
       this.store.dispatch(guide.sendMessage({text: 'When you see an ODD number you STAND', position: 'center'}))
@@ -135,19 +143,19 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({text: 'Stand when you see an ODD number', position: 'bottom'}))
       await this.waitForClass('stand')
       this.soundService.playNextChord()
-
+      
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hidePrompt())
       this.store.dispatch(guide.hideMessage())
       await this.sleep(100)
       this.store.dispatch(announcement.announce({message: 'Awesome!', timeout: 3000}))
       await this.sleep(3500)
-
+      
       
       this.store.dispatch(guide.sendMessage({text: 'That was great!', position: 'center'}))
       this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
-
+      
       this.store.dispatch(guide.sendMessage({text: 'Now when you see an EVEN number you SIT', position: 'center'}))
       await this.sleep(this.prod? 3000: 300)
       this.store.dispatch(guide.sendMessage({text: 'Let us give it a try?', position: 'center'}))
@@ -158,15 +166,15 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({text: 'SIT when you see an EVEN number', position: 'bottom'}))
       await this.waitForClass('sit')
       this.soundService.playNextChord()
-
+      
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hidePrompt())
       this.store.dispatch(guide.hideMessage())
       await this.sleep(100)
       this.store.dispatch(announcement.announce({message: 'Amazing!', timeout: 3000}))
       await this.sleep(3500)
-
-
+      
+      
       this.store.dispatch(guide.sendMessage({text: 'Now we are all set...', position: 'center'}))
       this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
       await this.sleep(3000)
@@ -174,44 +182,44 @@ export class CoordinationService {
       this.runSit2Stand()
     }
     
-    startTimeTest?: number;
-   async playSit2Stand() {
+    
+    async playSit2Stand() {
       // For the messaging before the real game...
       await this.prePlaySit2Stand()
       
       await this.sleep(2000)
       // Do 5 reps: TODO get number of reps from the careplan
-       let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-       let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-       
-       for (let i = 0; i < 5; i++) {
-            console.log(`rep count ${i+1}`)
-            previousDesiredClass = desiredClass;
-            const num = Math.floor(Math.random() * 100)
-
-            if (num % 2 === 0) {
-                desiredClass = 'sit';
-            } else {
-                desiredClass = 'stand';
-            }
-
-           this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
-           
-           // resolve has status property that can be used to send taskEnded events.
-           const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000)
-
-           // playing chord
-           if ( res.result === 'success') {
-               this.soundService.playNextChord();
-            }
-       }
-
-       console.log('reps completed')
-       
+      let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+      let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+      
+      for (let i = 0; i < 5; i++) {
+        console.log(`rep count ${i+1}`)
+        previousDesiredClass = desiredClass;
+        const num = Math.floor(Math.random() * 100)
+        
+        if (num % 2 === 0) {
+          desiredClass = 'sit';
+        } else {
+          desiredClass = 'stand';
+        }
+        
+        this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
+        
+        // resolve has status property that can be used to send taskEnded events.
+        const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000)
+        
+        // playing chord
+        if ( res.result === 'success') {
+          this.soundService.playNextChord();
+        }
+      }
+      
+      console.log('reps completed')
+      
       await this.postPlaySit2Stand()
     }
-
-
+    
+    
     async prePlaySit2Stand() {
       this.store.dispatch(guide.sendMessage({text: 'STAND up when you are ready to start...', position: 'center'}))
       this.store.dispatch(guide.updateAvatar({name: 'mila'}))
@@ -227,12 +235,18 @@ export class CoordinationService {
       await this.sleep(1000)
       this.store.dispatch(guide.hideSpotlight())
     }
-
+    
     async postPlaySit2Stand() {
-        console.log('start postplay sit2stand')
+      console.log('start postplay sit2stand')
     }
-
-
+    
+    start(game: Phaser.Game, onComplete: Function) {
+      this.game = game
+      this.onComplete = onComplete
+      this.subscribeToState()
+      this.welcomeUser()
+    }
+    
     async runSit2Stand() {
       // this.sit2StandExplained = true
       if (!this.sit2StandExplained) {
@@ -244,17 +258,9 @@ export class CoordinationService {
         console.log('running sit2stand')
       }
     }
-
-    start(game: Phaser.Game, onComplete: Function) {
-      this.game = game
-      this.onComplete = onComplete
-      this.subscribeToState()
-      this.welcomeUser()
-    }
-
-    subscribeToState() {
-      this.observables$ = {}
-
+    
+    subscribeToState(){
+      this.observables$ = this.observables$ || {}
       // Subscribe to the pose
       this.observables$.pose = this.store.select(state => state.pose);
         this.observables$.pose.subscribe((results: { pose: Results }) => {
@@ -262,90 +268,47 @@ export class CoordinationService {
             this.handlePose(results);
           }
       });
-
-      // Subscribe for calibration status
-      this.observables$.calibrationStatus = this.store.select(state => state.calibration.status)
-      this.observables$.calibrationStatus.subscribe((newStatus: string) => {
-        this.calibrationStatus = newStatus
-        console.log('new Status' ,newStatus)
-      })
     }
-
+    
     unsubscribe() {
       // TODO: unsubscribe from all the events
     }
-
+    
     handlePose(results: { pose: Results }) {
-        const calibrationResult = this.calibrationService.handlePose(results)
-
-        // Call appropriate hook when status changes
-        if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
-          this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)        
-          this.calibrationStatus = calibrationResult.status
-        }
-
-        if(this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
-          const newClass = this.sit2standService.classify(results.pose).result
-          this.handleClassChange(this.currentClass, newClass)
-          this.currentClass = newClass
-        }
+      console.log('handlePose:results:', results)
+      this.poseCount++
+      const calibrationResult = this.calibrationService.handlePose(results)
+      
+      // Call appropriate hook when status changes
+      if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
+        this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)
+        this.calibrationStatus = calibrationResult.status
+      }
+      
+      if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
+        const newClass = this.sit2standService.classify(results.pose).result
+        this.handleClassChange(this.currentClass, newClass)
+        this.currentClass = newClass
+      }
     }
 
+    handleClassChange(oldClass: string, newClass: string) {
+      // Do something?
+    }
+    
     async waitForClass(className: 'sit' | 'stand') {
       return new Promise((resolve) => {
-        if(this.currentClass == className) resolve({})
+        if (this.currentClass == className) resolve({})
         // set interval
         const interval = setInterval(() => {
           if (this.currentClass == className) {
             resolve({})
             clearInterval(interval)
           }
-        }, 300) 
+        }, 300)
       })
     }
-
-
-    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
-        return new Promise((resolve) => {
-            if (previousDesiredClass === desiredClass) {
-                setTimeout(() => {
-                    if (this.currentClass == desiredClass) {
-                        resolve({
-                          result :'success'
-                      });
-                    }
-                    resolve({
-                        result: 'failure'
-                    })
-                }, timeout)
-            } else {   
-                const startTime = new Date().getTime();
-                const interval = setInterval(() => {
-                    
-                    // checking if given timeout is completed
-                    if (new Date().getTime() - startTime > timeout) {
-                      // user didn't do correct thing but the time is out
-                        resolve({
-                          result: 'failure'
-                        })
-                        clearInterval(interval);
-                    }        
-
-                    if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
-                            resolve({
-                                result: 'success'
-                            });
-                            clearInterval(interval);
-                    }
-                }, 300);
-            }
-        });
-    }
-
-    handleClassChange(oldClass: string, newClass: string) {
-      // Do something?
-    }
-
+    
     async startCalibrationScene() {
       this.sit2standService.disable();
       if (this.game?.scene.isActive('sit2stand')) {
@@ -358,7 +321,61 @@ export class CoordinationService {
         console.log('calibration is already active');
       }
     }
-
+    
+    
+    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
+      return new Promise((resolve) => {
+        if (previousDesiredClass === desiredClass) {
+          setTimeout(() => {
+            if (this.currentClass == desiredClass) {
+              resolve({
+                result :'success'
+              });
+            }
+            resolve({
+              result: 'failure'
+            })
+          }, timeout)
+        } else {   
+          const startTime = new Date().getTime();
+          const interval = setInterval(() => {
+            
+            // checking if given timeout is completed
+            if (new Date().getTime() - startTime > timeout) {
+              // user didn't do correct thing but the time is out
+              resolve({
+                result: 'failure'
+              })
+              clearInterval(interval);
+            }        
+            
+            if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
+              resolve({
+                result: 'success'
+              });
+              clearInterval(interval);
+            }
+          }, 300);
+        }
+      });
+    }
+    
+    
+    handleCalibrationResult(oldStatus: string, newStatus: string) {
+      switch (newStatus) {
+        case 'warning':
+        this.handleCalibrationWarning(oldStatus, newStatus)
+        break
+        case 'success':
+        this.handleCalibrationSuccess(oldStatus, newStatus)
+        break
+        case 'error':
+        default:
+        this.handleCalibrationError(oldStatus, newStatus)
+        break
+      }
+    }
+    
     startSit2StandScene() {
       this.sit2standService.enable();
       this.soundService.startConstantDrum()
@@ -371,21 +388,6 @@ export class CoordinationService {
         console.log('sit2stand is already active');
       }
       this.runSit2Stand()
-    }
-
-    handleCalibrationResult(oldStatus: string, newStatus: string) {
-      switch(newStatus) {
-        case 'warning':
-          this.handleCalibrationWarning(oldStatus, newStatus)
-          break
-        case 'success':
-          this.handleCalibrationSuccess(oldStatus, newStatus)
-          break
-        case 'error':
-        default:
-          this.handleCalibrationError(oldStatus, newStatus)
-          break
-      }
     }
 
     handleCalibrationSuccess(oldStatus: string, newStatus: string) {
@@ -403,71 +405,72 @@ export class CoordinationService {
       //   // Second time success... Start from where we left off
       // }
     }
-
+    
+    
     handleCalibrationWarning(oldStatus: string, newStatus: string) {
       this.calibrationScene.drawCalibrationBox('warning')
-      // TODO: If the earlier status was 
+      // TODO: If the earlier status was
     }
-
+    
     handleCalibrationError(oldStatus: string, newStatus: string) {
-        this.startCalibrationScene()
-        this.calibrationScene.drawCalibrationBox('error')
+      this.startCalibrationScene()
+      this.calibrationScene.drawCalibrationBox('error')
       this.soundService.pauseConstantDrum()
     }
     
     async nextStep() {
       this.index += 1
-      if(this.sequence.length > this.index) {
+      if (this.sequence.length > this.index) {
         const action = this.sequence[this.index]
-        switch(action.type) {
+        switch (action.type) {
           case 'action':
-            await this.handleAction(action)
-            break;
+          await this.handleAction(action)
+          break;
           case 'timeout':
-            await this.handleTimeout(action)
-            break
+          await this.handleTimeout(action)
+          break
           case 'method':
-            this.handleMethod(action)
-            break;
+          this.handleMethod(action)
+          break;
           
           case 'service':
-            this.handleService(action)
-            break;
+          this.handleService(action)
+          break;
           
-            case 'startNewSequence':
-              // TODO: track where we left off in the older sequence?
-              // @ts-ignore
-              this.sequence = this[action.name]
-              this.index = -1
+          case 'startNewSequence':
+          // TODO: track where we left off in the older sequence?
+          // @ts-ignore
+          this.sequence = this[action.name]
+          this.index = -1
         }
         
         // @ts-ignore
-        if(action.next != 'manual') {
+        if (action.next != 'manual') {
           // if the next action can be executed automatically
           this.nextStep()
         }
         
       }
     }
-
+    
     async runActivity() {
       
     }
-
+    
     async handleAction(action: any) {
-      if(action.action) {
+      if (action.action) {
         // @ts-ignore
         this.store.dispatch(action.action.call(this, action.data))
       }
     }
-
+    
     async handleTimeout(action: any) {
       if (action.data) {
         // @ts-ignore
         await this.sleep(action.data)
       }
     }
-
+    
     async handleMethod(action: any) {
       if (action.name == this.invokeComponentFunction) {
         // @ts-ignore
@@ -481,22 +484,22 @@ export class CoordinationService {
         
       } else if (action.name) {
         // @ts-ignore
-        if(action.sync) await action.name()
+        if (action.sync) await action.name()
         // @ts-ignore
         else action.name()
       }
     }
-
+    
     async handleService(action: any) {
       const service = this.injector.get(action.name)
       // @ts-ignore
       service[action.method]()
     }
     
-    async invokeComponentFunction(methodName: string, params: Array<any>){
+    async invokeComponentFunction(methodName: string, params: Array<any>) {
       // @ts-ignore
-      if(this.component && typeof(this.component[methodName]) == 'function') {
-        if(params) {
+      if (this.component && typeof (this.component[methodName]) == 'function') {
+        if (params) {
           // @ts-ignore
           await this.component[methodName](...params)
         } else {
