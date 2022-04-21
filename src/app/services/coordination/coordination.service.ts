@@ -184,6 +184,7 @@ export class CoordinationService {
     
     
     async playSit2Stand() {
+      let successfulAttempts = 0
       // For the messaging before the real game...
       await this.prePlaySit2Stand()
       
@@ -192,8 +193,7 @@ export class CoordinationService {
       let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
       let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
       
-      for (let i = 0; i < 5; i++) {
-        console.log(`rep count ${i+1}`)
+      while (successfulAttempts < 10) {
         previousDesiredClass = desiredClass;
         const num = Math.floor(Math.random() * 100)
         
@@ -211,6 +211,7 @@ export class CoordinationService {
         // playing chord
         if ( res.result === 'success') {
           this.soundService.playNextChord();
+          successfulAttempts += 1
         }
       }
       
@@ -238,6 +239,10 @@ export class CoordinationService {
     
     async postPlaySit2Stand() {
       console.log('start postplay sit2stand')
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      this.store.dispatch(guide.sendMessage({text: 'YOU WERE AMAZING!!!', position: 'center'}))
+      this.sleep(2000)
     }
     
     start(game: Phaser.Game, onComplete: Function) {
