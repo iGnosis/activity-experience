@@ -90,7 +90,10 @@ export class CoordinationService {
       // if by this time, poseCount is less than 10, then it means mediapipe has failed.
       // ask user to refresh the page
       if (this.poseCount < 10) {
-        window.alert('Mediapipe failed to load - Please refresh the page')
+        this.store.dispatch(guide.sendMessage({
+          text: 'Ooops! Seems like our AI failed to load. Please reload the page and try again?',
+          position: 'center'
+        }))
       }
       
       // Start with the red box and enable the calibration service
