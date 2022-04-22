@@ -5,10 +5,12 @@ import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { announcement } from 'src/app/store/actions/announcement.actions';
 import { calibration } from 'src/app/store/actions/calibration.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
-import { AnnouncementState, GuideState, Results } from 'src/app/types/pointmotion';
+import { AnnouncementState, CalibrationState, GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../sounds/sounds.service';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { v4 } from 'uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +29,7 @@ export class CoordinationService {
     private calibrationScene: CalibrationScene,
     private soundService: SoundsService,
     private sit2standService: SitToStandService,
+    private analyticsService: AnalyticsService
     ) { }
     
     calibrationSuccessCount = 0
@@ -39,9 +42,18 @@ export class CoordinationService {
     index = -1
     sequence: any = []
     sit2StandExplained = false
-    startTimeTest?: number;
-    
+
+    activityId = v4()
+    attemptId = v4()
+    taskId = v4()
+
+    previousPose!: Results;
+    isWaitingForReaction = false
+
     async welcomeUser() {
+
+    
+      
       
       // await this.sleep(3500)
       
@@ -109,6 +121,12 @@ export class CoordinationService {
       await this.sleep(this.prod? 3500: 300)
       // this.store.dispatch(guide.updateAvatar({name: 'mila'}))
       this.store.dispatch(guide.sendSpotlight({text: 'Starting Next Activity'}))
+      // activity started
+        this.analyticsService.sendActivityEvent({
+          activity: this.activityId,
+          event_type: 'activityStarted',
+        });  
+        
       await this.sleep(this.prod? 3500: 300)
       this.store.dispatch(guide.sendSpotlight({text: 'SIT TO STAND'}))
       await this.sleep(this.prod? 3500: 300)
@@ -187,42 +205,88 @@ export class CoordinationService {
     
     
     async playSit2Stand() {
-      let successfulAttempts = 0
-      // For the messaging before the real game...
-      await this.prePlaySit2Stand()
+        let successfulAttempts = 0
+
+        // For the messaging before the real game...
+        await this.prePlaySit2Stand()
       
-      await this.sleep(2000)
-      // Do 5 reps: TODO get number of reps from the careplan
-      let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-      let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-      
-      while (successfulAttempts < 10) {
-        previousDesiredClass = desiredClass;
-        const num = Math.floor(Math.random() * 100)
+        await this.sleep(2000)
+        // Do 5 reps: TODO get number of reps from the ca   replan
+        let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+        let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
         
-        if (num % 2 === 0) {
-          desiredClass = 'sit';
-        } else {
-          desiredClass = 'stand';
+        while (successfulAttempts < 10) {
+
+            this.taskId = v4()
+            this.attemptId = v4()
+
+            // sending the taskStarted event 
+            await this.analyticsService.sendTaskEvent({
+               activity: this.activityId,
+               attempt_id: this.attemptId,
+                 event_type: 'taskStarted',
+                 task_id: this.taskId,
+                 task_name: 'sit2stand',
+               });
+
+            console.log('successful attempt no:', successfulAttempts);
+            previousDesiredClass = desiredClass;
+
+            let num: number
+            if (successfulAttempts === 0) {
+                this.currentClass === 'stand'
+                  ? (num = Math.floor((Math.random() * 100) / 2) * 2)
+                  : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
+            } else {
+                num = Math.floor(Math.random() * 100)
+            }
+        
+            if (num % 2 === 0) {
+                desiredClass = 'sit';
+            } else {
+                desiredClass = 'stand';
+            }
+        
+            this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
+        
+            this.isWaitingForReaction = true
+
+            // resolve has status property that can be used to send taskEnded events.
+            const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000)
+        
+            this.isWaitingForReaction = false;
+
+            // playing chord
+            if (res.result === 'success') {
+                this.soundService.playNextChord();
+                successfulAttempts += 1
+
+                await this.analyticsService.sendTaskEvent({
+                  activity: this.activityId,
+                  attempt_id: this.attemptId,
+                  event_type: 'taskEnded',
+                  task_id: this.taskId,
+                  score: 1,
+                  task_name: desiredClass,
+                });
+            } else {
+                // sending task ended with score 0 event.
+                await this.analyticsService.sendTaskEvent({
+                  activity: this.activityId,
+                  attempt_id: this.attemptId,
+                  event_type: 'taskEnded',
+                  task_id: this.taskId,
+                  score : 0,
+                  task_name: desiredClass,
+                });
+            }
         }
-        
-        this.store.dispatch(guide.sendPrompt({ text: num.toString(), className: 'round', position: 'right' }))
-        
-        // resolve has status property that can be used to send taskEnded events.
-        const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000)
-        
-        // playing chord
-        if ( res.result === 'success') {
-          this.soundService.playNextChord();
-          successfulAttempts += 1
-        }
-      }
       
-      console.log('reps completed')
-      
-      await this.postPlaySit2Stand()
+        console.log('reps completed')
+      await this.postPlaySit2Stand();
+
     }
-    
+      
     
     async prePlaySit2Stand() {
       this.store.dispatch(guide.sendMessage({text: 'STAND up when you are ready to start...', position: 'center'}))
@@ -244,11 +308,32 @@ export class CoordinationService {
       console.log('start postplay sit2stand')
       this.store.dispatch(guide.hidePrompt())
       this.store.dispatch(guide.updateAvatar({name: 'mila'}))
-      this.store.dispatch(guide.sendMessage({text: 'YOU WERE AMAZING!!!', position: 'center'}))
-      this.sleep(2000)
+        this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }))
+        // ending constantDrum here
+        this.soundService.endConstantDrum()
+        this.sleep(2000)
+
+        
+        // activity ended
+        this.analyticsService.sendActivityEvent({
+            activity: this.activityId,
+            event_type: 'activityEnded',
+        });
+        
+        // assuming that the session ended event has to be sent here
+        await this.analyticsService.sendSessionEvent({
+            event_type : 'sessionEnded'
+        })
+        
+        await this.analyticsService.sendSessionEndedAt()
     }
     
-    start(game: Phaser.Game, onComplete: Function) {
+    async start(game: Phaser.Game, onComplete: Function) {
+
+      await this.analyticsService.sendSessionEvent({
+        event_type :'sessionStarted'
+      })
+
       this.game = game
       this.onComplete = onComplete
       this.subscribeToState()
@@ -270,8 +355,9 @@ export class CoordinationService {
     subscribeToState(){
       this.observables$ = this.observables$ || {}
       // Subscribe to the pose
+        
       this.observables$.pose = this.store.select(state => state.pose);
-        this.observables$.pose.subscribe((results: { pose: Results }) => {
+      this.observables$.pose.subscribe((results: { pose: Results }) => {
           if(results) {
             this.handlePose(results);
           }
@@ -283,14 +369,30 @@ export class CoordinationService {
     }
     
     handlePose(results: { pose: Results }) {
-      console.log('handlePose:results:', results)
+    //   console.log('handlePose:results:', results)
       this.poseCount++
-      const calibrationResult = this.calibrationService.handlePose(results)
+        const calibrationResult = this.calibrationService.handlePose(results)
+        
+        this.previousPose = results.pose;
       
       // Call appropriate hook when status changes
       if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
         this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status)
-        this.calibrationStatus = calibrationResult.status
+          this.calibrationStatus = calibrationResult.status
+          
+          if (this.isWaitingForReaction) {
+              const poseHash = this.sit2standPoseHashGenerator(results.pose, calibrationResult.status)
+              console.log(poseHash)
+              if (poseHash === 1) {
+                   this.analyticsService.sendTaskEvent({
+                     activity: this.activityId,
+                     attempt_id: this.attemptId,
+                     event_type: 'taskReacted',
+                     task_id: this.taskId,
+                     task_name: this.currentClass,
+                   });
+              }
+          }
       }
       
       if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
@@ -300,6 +402,70 @@ export class CoordinationService {
       }
     }
 
+
+    sit2standPoseHashGenerator(pose : Results , status: string) {
+        // initial calibration state.
+        // do nothing.
+        if (status === 'error') return -1
+
+
+        // have to get previouspose for calculation
+        // work out old distances
+        const oldPoseLandmarkArray = pose?.poseLandmarks!;
+        const oldLeftHip = oldPoseLandmarkArray[23];
+        const oldLeftKnee = oldPoseLandmarkArray[25];
+        const oldRightHip = oldPoseLandmarkArray[24];
+        const oldRightKnee = oldPoseLandmarkArray[26];
+
+        const oldDistLeftHipKnee = SitToStandService.calcDist(
+            oldLeftHip.x,
+            oldLeftHip.y,
+            oldLeftKnee.x,
+            oldLeftKnee.y
+        )
+        const oldDistRightHipKnee = SitToStandService.calcDist(
+            oldRightHip.x,
+            oldRightHip.y,
+            oldRightKnee.x,
+            oldRightKnee.y
+        )
+        const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
+
+
+
+        const newPostLandmarkArray = pose?.poseLandmarks!;
+        const newLeftHip = newPostLandmarkArray[23];
+        const newLeftKnee = newPostLandmarkArray[25];
+        const newRightHip = newPostLandmarkArray[24];
+        const newRightKnee = newPostLandmarkArray[26];
+
+        const newDistLeftHipKnee = SitToStandService.calcDist(
+            newLeftHip.x,
+            newLeftHip.y,
+            newLeftKnee.x,
+            newLeftKnee.y
+        )
+        const newDistRightHipKnee = SitToStandService.calcDist(
+            newRightHip.x,
+            newRightHip.y,
+            newRightKnee.x,
+            newRightKnee.y
+        )
+        const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2
+
+        console.log('oldDistAvg:', oldDistAvg)
+        console.log('newDistAvg:', newDistAvg)
+        console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
+
+        const result = Math.abs(oldDistAvg - newDistAvg)
+        if (result > 0.1) {
+            console.log('a reaction was detected')
+            return 1
+        }
+        return 0
+    }
+
+    
     handleClassChange(oldClass: string, newClass: string) {
       // Do something?
     }
@@ -316,7 +482,49 @@ export class CoordinationService {
         }, 300)
       })
     }
-    
+
+
+    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
+        return new Promise((resolve) => {
+
+            if (previousDesiredClass === desiredClass || this.currentClass === desiredClass) {
+            setTimeout(() => {
+                    if (this.currentClass == desiredClass) {
+                        resolve({
+                          result :'success'
+                      });
+                    }
+                    resolve({
+                        result: 'failure'
+                    })
+                }, timeout)
+            } else {   
+                const startTime = new Date().getTime();
+                const interval = setInterval(() => {
+                    
+                    // checking if given timeout is completed
+                    if (new Date().getTime() - startTime > timeout) {
+                      // user didn't do correct thing but the time is out
+                        resolve({
+                          result: 'failure'
+                        })
+                        clearInterval(interval);
+                    }        
+                    if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
+                            resolve({
+                                result: 'success'
+                            });
+                            clearInterval(interval);
+                    }
+                }, 300);
+            }
+        });
+    }
+
+    // handleClassChange(oldClass: string, newClass: string) {
+    //   // Do something?
+    // }
+
     async startCalibrationScene() {
       this.sit2standService.disable();
       if (this.game?.scene.isActive('sit2stand')) {
@@ -331,48 +539,13 @@ export class CoordinationService {
     }
     
     
-    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
-      return new Promise((resolve) => {
-        if (previousDesiredClass === desiredClass) {
-          setTimeout(() => {
-            if (this.currentClass == desiredClass) {
-              resolve({
-                result :'success'
-              });
-            }
-            resolve({
-              result: 'failure'
-            })
-          }, timeout)
-        } else {   
-          const startTime = new Date().getTime();
-          const interval = setInterval(() => {
-            
-            // checking if given timeout is completed
-            if (new Date().getTime() - startTime > timeout) {
-              // user didn't do correct thing but the time is out
-              resolve({
-                result: 'failure'
-              })
-              clearInterval(interval);
-            }        
-            
-            if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
-              resolve({
-                result: 'success'
-              });
-              clearInterval(interval);
-            }
-          }, 300);
-        }
-      });
-    }
-    
+
     
     handleCalibrationResult(oldStatus: string, newStatus: string) {
       switch (newStatus) {
         case 'warning':
-        this.handleCalibrationWarning(oldStatus, newStatus)
+              this.handleCalibrationWarning(oldStatus, newStatus)
+              
         break
         case 'success':
         this.handleCalibrationSuccess(oldStatus, newStatus)
