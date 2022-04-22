@@ -25,17 +25,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Set env to staging
-        if: endsWith(github.ref, '/stage')
-        run: |
-          echo "ENVIRONMENT=stage" >> $GITHUB_ENV
-          echo "NODE_ENV=stage" >> $GITHUB_ENV
-
       - name: Set env to production
         if: endsWith(github.ref, '/main')
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
+
+      - name: Set env to staging
+        if: endsWith(github.ref, '/stage')
+        run: |
+          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "NODE_ENV=staging" >> $GITHUB_ENV
 
       - name: Set env to development
         if: endsWith(github.ref, '/dev')
