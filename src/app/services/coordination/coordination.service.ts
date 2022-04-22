@@ -19,7 +19,7 @@ export class CoordinationService {
   
   // Workaround for medianet not working
   private poseCount = 0
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   constructor(
@@ -43,7 +43,7 @@ export class CoordinationService {
     sequence: any = []
     sit2StandExplained = false
 
-    activityId = v4()
+    activityId = '0fa7d873-fd22-4784-8095-780028ceb08e'
     attemptId = v4()
     taskId = v4()
 
