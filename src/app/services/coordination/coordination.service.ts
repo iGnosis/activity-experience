@@ -43,11 +43,12 @@ export class CoordinationService {
     sequence: any = []
     sit2StandExplained = false
 
-    activityId = '0fa7d873-fd22-4784-8095-780028ceb08e'
+    activityId: string = '0fa7d873-fd22-4784-8095-780028ceb08e'
     attemptId = v4()
     taskId = v4()
 
     previousPose!: Results;
+    currentPose!: Results;
     isWaitingForReaction = false
 
     async welcomeUser() {
@@ -122,7 +123,8 @@ export class CoordinationService {
       // this.store.dispatch(guide.updateAvatar({name: 'mila'}))
       this.store.dispatch(guide.sendSpotlight({text: 'Starting Next Activity'}))
       // activity started
-        this.analyticsService.sendActivityEvent({
+       
+        await this.analyticsService.sendActivityEvent({
           activity: this.activityId,
           event_type: 'activityStarted',
         });  
@@ -355,11 +357,14 @@ export class CoordinationService {
     subscribeToState(){
       this.observables$ = this.observables$ || {}
       // Subscribe to the pose
-        
+        this.previousPose = this.currentPose
+        console.log('previous pose ', this.previousPose)
+      
       this.observables$.pose = this.store.select(state => state.pose);
       this.observables$.pose.subscribe((results: { pose: Results }) => {
           if(results) {
-            this.handlePose(results);
+              this.handlePose(results);
+              this.currentPose = results.pose
           }
       });
     }
@@ -368,12 +373,11 @@ export class CoordinationService {
       // TODO: unsubscribe from all the events
     }
     
-    handlePose(results: { pose: Results }) {
+    async handlePose(results: { pose: Results }) {
     //   console.log('handlePose:results:', results)
-      this.poseCount++
-        const calibrationResult = this.calibrationService.handlePose(results)
+        this.poseCount++
         
-        this.previousPose = results.pose;
+        const calibrationResult = this.calibrationService.handlePose(results)
       
       // Call appropriate hook when status changes
       if (calibrationResult && (this.calibrationStatus !== calibrationResult.status)) {
@@ -381,10 +385,10 @@ export class CoordinationService {
           this.calibrationStatus = calibrationResult.status
           
           if (this.isWaitingForReaction) {
-              const poseHash = this.sit2standPoseHashGenerator(results.pose, calibrationResult.status)
+              const poseHash = this.sit2standPoseHashGenerator(results.pose,this.previousPose, calibrationResult.status)
               console.log(poseHash)
               if (poseHash === 1) {
-                   this.analyticsService.sendTaskEvent({
+                  await this.analyticsService.sendTaskEvent({
                      activity: this.activityId,
                      attempt_id: this.attemptId,
                      event_type: 'taskReacted',
@@ -403,7 +407,7 @@ export class CoordinationService {
     }
 
 
-    sit2standPoseHashGenerator(pose : Results , status: string) {
+    sit2standPoseHashGenerator(pose : Results , previousPose : Results, status: string) {
         // initial calibration state.
         // do nothing.
         if (status === 'error') return -1
@@ -411,7 +415,7 @@ export class CoordinationService {
 
         // have to get previouspose for calculation
         // work out old distances
-        const oldPoseLandmarkArray = pose?.poseLandmarks!;
+        const oldPoseLandmarkArray = previousPose?.poseLandmarks!;
         const oldLeftHip = oldPoseLandmarkArray[23];
         const oldLeftKnee = oldPoseLandmarkArray[25];
         const oldRightHip = oldPoseLandmarkArray[24];

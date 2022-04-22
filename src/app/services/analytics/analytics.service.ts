@@ -25,15 +25,10 @@ export class AnalyticsService {
     private store: Store<{ session: SessionState }>
   ) {
     this.store
-      .select((state) => state.session.session?.id)
-      .subscribe((sid) => {
-        this.sessionId = sid || '';
-      });
-
-    this.store
-      .select((state) => state.session.session?.patient)
-      .subscribe((pid) => {
-        this.patientId = pid || '';
+      .select((state) => state.session.session)
+      .subscribe((session) => {
+          this.sessionId = session?.id || '';
+          this.patientId = session?.patient || '';
       });
   }
 
