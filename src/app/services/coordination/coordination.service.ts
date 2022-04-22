@@ -11,6 +11,7 @@ import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.serv
 import { SoundsService } from '../sounds/sounds.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { v4 } from 'uuid';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +30,8 @@ export class CoordinationService {
     private calibrationScene: CalibrationScene,
     private soundService: SoundsService,
     private sit2standService: SitToStandService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private router: Router
     ) { }
     
     calibrationSuccessCount = 0
@@ -48,6 +50,7 @@ export class CoordinationService {
     taskId = v4()
     
     previousPose!: Results;
+    currentPose !: Results;
     isWaitingForReaction = false
     
     async welcomeUser() {
@@ -329,10 +332,7 @@ export class CoordinationService {
       
       this.sleep(2000)
       
-      
-      
-      
-      
+      this.router.navigate(['/finished']);
     }
     
     async start(game: Phaser.Game, onComplete: Function) {
@@ -363,10 +363,13 @@ export class CoordinationService {
       this.observables$ = this.observables$ || {}
       // Subscribe to the pose
       
+      this.previousPose = this.currentPose
+        
       this.observables$.pose = this.store.select(state => state.pose);
       this.observables$.pose.subscribe((results: { pose: Results }) => {
         if(results) {
-          this.handlePose(results);
+            this.handlePose(results);
+            this.currentPose = results.pose
         }
       });
     }
@@ -388,7 +391,7 @@ export class CoordinationService {
         this.calibrationStatus = calibrationResult.status
         
         if (this.isWaitingForReaction) {
-          const poseHash = this.sit2standPoseHashGenerator(results.pose, calibrationResult.status)
+          const poseHash = this.sit2standPoseHashGenerator(results.pose, this.previousPose, calibrationResult.status)
           console.log(poseHash)
           if (poseHash === 1) {
             this.analyticsService.sendTaskEvent({
@@ -410,7 +413,7 @@ export class CoordinationService {
     }
     
     
-    sit2standPoseHashGenerator(pose : Results , status: string) {
+    sit2standPoseHashGenerator(pose : Results ,previuosPose: Results, status: string) {
       // initial calibration state.
       // do nothing.
       if (status === 'error') return -1
@@ -418,7 +421,7 @@ export class CoordinationService {
       
       // have to get previouspose for calculation
       // work out old distances
-      const oldPoseLandmarkArray = pose?.poseLandmarks!;
+      const oldPoseLandmarkArray = previuosPose?.poseLandmarks!;
       const oldLeftHip = oldPoseLandmarkArray[23];
       const oldLeftKnee = oldPoseLandmarkArray[25];
       const oldRightHip = oldPoseLandmarkArray[24];
