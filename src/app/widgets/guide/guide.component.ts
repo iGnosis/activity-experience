@@ -87,6 +87,10 @@ export class GuideComponent implements AfterViewInit {
       this.state.message = newMessage
     }
 
+    if(newMessage?.text) {
+      this.speakText(newMessage.text)
+    }
+
     setTimeout(() => {
       // once the new message box is in position
       this.handleAvatarImagePosition()
@@ -113,11 +117,18 @@ export class GuideComponent implements AfterViewInit {
 
   handleSpotlight(spotlight: GuideSpotlightDTO) {
     this.state.spotlight = Object.assign({}, spotlight)
+    if(spotlight.text) {
+      this.speakText(spotlight.text)
+    }
   }
 
   handlePrompt(prompt: GuidePromptDTO) {
     this.state.prompt = Object.assign({}, prompt)
     this.state.prompt.className += ' ' + this.guideService.getPromptClassNames(this.state.prompt.position)
+
+    if(prompt.text) {
+      this.speakText(prompt.text)
+    }
   }
 
   handleHideAvatar() {
@@ -138,5 +149,19 @@ export class GuideComponent implements AfterViewInit {
     
     this.state.prompt = undefined
     console.log(this.state);
+  }
+
+  speakText(text: string) {
+    if ('speechSynthesis' in window) {
+      const msg = new SpeechSynthesisUtterance();
+      const voices = window.speechSynthesis.getVoices();
+      console.log(voices)
+      msg.voice = voices[10]; 
+      msg.text = text;
+      window.speechSynthesis.speak(msg);  
+    }else{
+       // Speech Synthesis Not Supported 😣
+       console.error('Text to Speech not available')
+    }
   }
 }
