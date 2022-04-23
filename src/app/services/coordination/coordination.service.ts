@@ -20,9 +20,11 @@ export class CoordinationService {
   
   // Workaround for medianet not working
   private poseCount = 0
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
+  successfulAttempts = 0
+  activityStatus: 'welcome' | 'explain' | 'pre' | 'play' | 'post' = 'welcome'
   constructor(
     private store: Store<{ guide: GuideState, calibration: any, pose: any, announcement: AnnouncementState }>,
     private injector: Injector,
@@ -43,7 +45,6 @@ export class CoordinationService {
     
     index = -1
     sequence: any = []
-    sit2StandExplained = false
     
     activityId = '0fa7d873-fd22-4784-8095-780028ceb08e'
     attemptId = v4()
@@ -54,11 +55,7 @@ export class CoordinationService {
     isWaitingForReaction = false
     
     async welcomeUser() {
-      
-      
-      
-      
-      // await this.sleep(3500)
+      this.activityStatus = 'welcome'
       
       this.store.dispatch(guide.sendMessage({
         text: 'Hi!',
@@ -118,6 +115,7 @@ export class CoordinationService {
     }
     
     async explainSit2Stand() {
+      this.activityStatus = 'explain'
       this.store.dispatch(guide.hideAvatar())
       this.store.dispatch(guide.hideMessage())
       this.store.dispatch(announcement.announce({message: 'Excellent', timeout: 3000}))
@@ -202,13 +200,14 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({text: 'Now we are all set...', position: 'center'}))
       this.store.dispatch(guide.updateAvatar({name: 'mila', position: 'center'}))
       await this.sleep(3000)
-      this.sit2StandExplained = true
+      this.activityStatus = 'pre'
       this.runSit2Stand()
     }
     
     
     async playSit2Stand() {
-      let successfulAttempts = 0
+      this.successfulAttempts = 0
+      this.activityStatus = 'play'
       
       // For the messaging before the real game...
       await this.prePlaySit2Stand()
@@ -218,7 +217,7 @@ export class CoordinationService {
       let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
       let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
       
-      while (successfulAttempts < 10) {
+      while (this.successfulAttempts < 10 && this.calibrationStatus == 'success') {
         
         this.taskId = v4()
         this.attemptId = v4()
@@ -232,11 +231,11 @@ export class CoordinationService {
           task_name: 'sit2stand',
         });
         
-        console.log('successful attempt no:', successfulAttempts);
+        console.log('successful attempt no:', this.successfulAttempts);
         previousDesiredClass = desiredClass;
         
         let num: number
-        if (successfulAttempts === 0) {
+        if (this.successfulAttempts === 0) {
           this.currentClass === 'stand'
           ? (num = Math.floor((Math.random() * 100) / 2) * 2)
           : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
@@ -262,7 +261,7 @@ export class CoordinationService {
         // playing chord
         if (res.result === 'success') {
           this.soundService.playNextChord();
-          successfulAttempts += 1
+          this.successfulAttempts += 1
           
           this.analyticsService.sendTaskEvent({
             activity: this.activityId,
@@ -286,12 +285,14 @@ export class CoordinationService {
       }
       
       console.log('reps completed')
+      this.activityStatus = 'post'
       await this.postPlaySit2Stand();
       
     }
     
     
     async prePlaySit2Stand() {
+      this.activityStatus = 'pre'
       this.store.dispatch(guide.sendMessage({text: 'STAND up when you are ready to start...', position: 'center'}))
       this.store.dispatch(guide.updateAvatar({name: 'mila'}))
       await this.waitForClass('stand')
@@ -305,9 +306,11 @@ export class CoordinationService {
       this.store.dispatch(guide.sendSpotlight({text: 'GO'}))
       await this.sleep(1000)
       this.store.dispatch(guide.hideSpotlight())
+      this.activityStatus = 'play'
     }
     
     async postPlaySit2Stand() {
+      this.activityStatus = 'post'
       // activity ended
       this.analyticsService.sendActivityEvent({
         activity: this.activityId,
@@ -329,7 +332,7 @@ export class CoordinationService {
       await this.sleep(3000)
       this.store.dispatch(guide.sendMessage({ text: 'Thank you for playing!', position: 'center' }))
       await this.sleep(3000)
-            
+      
       this.router.navigate(['/finished']);
     }
     
@@ -346,14 +349,21 @@ export class CoordinationService {
     }
     
     async runSit2Stand() {
-      // this.sit2StandExplained = true
-      if (!this.sit2StandExplained) {
-        this.explainSit2Stand()
-        return
-      } else {
-        // Run the sit2stand logic
-        this.playSit2Stand()
-        console.log('running sit2stand')
+      switch(this.activityStatus) {
+        case 'pre':
+          this.prePlaySit2Stand()
+          break 
+        case 'play':      
+          this.playSit2Stand()
+          break
+        case 'post':
+          this.postPlaySit2Stand()
+          break
+        case 'welcome':
+        default:
+          // move to the next stage...
+          this.explainSit2Stand()
+          
       }
     }
     
@@ -362,12 +372,12 @@ export class CoordinationService {
       // Subscribe to the pose
       
       this.previousPose = this.currentPose
-        
+      
       this.observables$.pose = this.store.select(state => state.pose);
       this.observables$.pose.subscribe((results: { pose: Results }) => {
         if(results) {
-            this.handlePose(results);
-            this.currentPose = results.pose
+          this.handlePose(results);
+          this.currentPose = results.pose
         }
       });
     }
@@ -425,286 +435,283 @@ export class CoordinationService {
       const oldRightHip = oldPoseLandmarkArray[24];
       const oldRightKnee = oldPoseLandmarkArray[26];
       
-      const oldDistLeftHipKnee = SitToStandService.calcDist(
-        oldLeftHip.x,
-        oldLeftHip.y,
-        oldLeftKnee.x,
-        oldLeftKnee.y
-        )
-        const oldDistRightHipKnee = SitToStandService.calcDist(
-          oldRightHip.x,
-          oldRightHip.y,
-          oldRightKnee.x,
-          oldRightKnee.y
-          )
-          const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
-          
-          
-          
-          const newPostLandmarkArray = pose?.poseLandmarks!;
-          const newLeftHip = newPostLandmarkArray[23];
-          const newLeftKnee = newPostLandmarkArray[25];
-          const newRightHip = newPostLandmarkArray[24];
-          const newRightKnee = newPostLandmarkArray[26];
-          
-          const newDistLeftHipKnee = SitToStandService.calcDist(
-            newLeftHip.x,
-            newLeftHip.y,
-            newLeftKnee.x,
-            newLeftKnee.y
-            )
-            const newDistRightHipKnee = SitToStandService.calcDist(
-              newRightHip.x,
-              newRightHip.y,
-              newRightKnee.x,
-              newRightKnee.y
-              )
-              const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2
-              
-              console.log('oldDistAvg:', oldDistAvg)
-              console.log('newDistAvg:', newDistAvg)
-              console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
-              
-              const result = Math.abs(oldDistAvg - newDistAvg)
-              if (result > 0.1) {
-                console.log('a reaction was detected')
-                return 1
-              }
-              return 0
-            }
-            
-            
-            handleClassChange(oldClass: string, newClass: string) {
-              // Do something?
-            }
-            
-            async waitForClass(className: 'sit' | 'stand') {
-              return new Promise((resolve) => {
-                if (this.currentClass == className) resolve({})
-                // set interval
-                const interval = setInterval(() => {
-                  if (this.currentClass == className) {
-                    resolve({})
-                    clearInterval(interval)
-                  }
-                }, 300)
-              })
-            }
-            
-            
-            async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
-              return new Promise((resolve) => {
-                
-                if (previousDesiredClass === desiredClass || this.currentClass === desiredClass) {
-                  setTimeout(() => {
-                    if (this.currentClass == desiredClass) {
-                      resolve({
-                        result :'success'
-                      });
-                    }
-                    resolve({
-                      result: 'failure'
-                    })
-                  }, timeout)
-                } else {   
-                  const startTime = new Date().getTime();
-                  const interval = setInterval(() => {
-                    
-                    // checking if given timeout is completed
-                    if (new Date().getTime() - startTime > timeout) {
-                      // user didn't do correct thing but the time is out
-                      resolve({
-                        result: 'failure'
-                      })
-                      clearInterval(interval);
-                    }        
-                    if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
-                      resolve({
-                        result: 'success'
-                      });
-                      clearInterval(interval);
-                    }
-                  }, 300);
-                }
+      const oldDistLeftHipKnee = SitToStandService.calcDist(oldLeftHip.x, oldLeftHip.y, oldLeftKnee.x, oldLeftKnee.y)
+      const oldDistRightHipKnee = SitToStandService.calcDist(oldRightHip.x, oldRightHip.y, oldRightKnee.x, oldRightKnee.y)
+      const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
+      const newPostLandmarkArray = pose?.poseLandmarks!;
+      const newLeftHip = newPostLandmarkArray[23];
+      const newLeftKnee = newPostLandmarkArray[25];
+      const newRightHip = newPostLandmarkArray[24];
+      const newRightKnee = newPostLandmarkArray[26];
+      
+      const newDistLeftHipKnee = SitToStandService.calcDist(newLeftHip.x, newLeftHip.y, newLeftKnee.x, newLeftKnee.y)
+      const newDistRightHipKnee = SitToStandService.calcDist(newRightHip.x, newRightHip.y, newRightKnee.x, newRightKnee.y)
+      const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2
+      
+      console.log('oldDistAvg:', oldDistAvg)
+      console.log('newDistAvg:', newDistAvg)
+      console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
+      
+      const result = Math.abs(oldDistAvg - newDistAvg)
+      if (result > 0.1) {
+        console.log('a reaction was detected')
+        return 1
+      }
+      return 0
+    }
+    
+    
+    handleClassChange(oldClass: string, newClass: string) {
+      // Do something?
+    }
+    
+    async waitForClass(className: 'sit' | 'stand') {
+      return new Promise((resolve) => {
+        if (this.currentClass == className) resolve({})
+        // set interval
+        const interval = setInterval(() => {
+          if (this.currentClass == className) {
+            resolve({})
+            clearInterval(interval)
+          }
+        }, 300)
+      })
+    }
+    
+    
+    async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
+      return new Promise((resolve) => {
+        
+        if (previousDesiredClass === desiredClass || this.currentClass === desiredClass) {
+          setTimeout(() => {
+            if (this.currentClass == desiredClass) {
+              resolve({
+                result :'success'
               });
             }
+            resolve({
+              result: 'failure'
+            })
+          }, timeout)
+        } else {   
+          const startTime = new Date().getTime();
+          const interval = setInterval(() => {
             
-            // handleClassChange(oldClass: string, newClass: string) {
-            //   // Do something?
-            // }
-            
-            async startCalibrationScene() {
-              this.sit2standService.disable();
-              if (this.game?.scene.isActive('sit2stand')) {
-                this.game.scene.stop('sit2stand');
-                console.log('sit2stand is active. turning off');
-                this.game?.scene.start('calibration');
-                console.log('start calibration');
-                // this.action_startMediaPipe()
-              } else {
-                console.log('calibration is already active');
-              }
-            }
-            
-            
-            
-            
-            handleCalibrationResult(oldStatus: string, newStatus: string) {
-              switch (newStatus) {
-                case 'warning':
-                this.handleCalibrationWarning(oldStatus, newStatus)
-                
-                break
-                case 'success':
-                this.handleCalibrationSuccess(oldStatus, newStatus)
-                break
-                case 'error':
-                default:
-                this.handleCalibrationError(oldStatus, newStatus)
-                break
-              }
-            }
-            
-            startSit2StandScene() {
-              this.sit2standService.enable();
-              this.soundService.startConstantDrum()
-              if (this.game?.scene.isActive('calibration')) {
-                this.game.scene.stop('calibration');
-                console.log('calibration is active. turning off');
-                this.game?.scene.start('sit2stand');
-                console.log('start sit 2 stand');
-              } else {
-                console.log('sit2stand is already active');
-              }
-              this.runSit2Stand()
-            }
-            
-            handleCalibrationSuccess(oldStatus: string, newStatus: string) {
-              this.calibrationScene.drawCalibrationBox('success')
-              this.calibrationSuccessCount += 1
-              console.log('successful calibration ', this.calibrationSuccessCount);
-              
-              // this.soundService.startConstantDrum()
-              this.startSit2StandScene()
-              
-              // if (this.calibrationSuccessCount == 1) {
-              //   // First time success... Explain Sit2Stand
-              
-              // } else {
-              //   // Second time success... Start from where we left off
-              // }
-            }
-            
-            
-            handleCalibrationWarning(oldStatus: string, newStatus: string) {
-              this.calibrationScene.drawCalibrationBox('warning')
-              // TODO: If the earlier status was
-            }
-            
-            handleCalibrationError(oldStatus: string, newStatus: string) {
-              this.startCalibrationScene()
-              this.calibrationScene.drawCalibrationBox('error')
-              this.soundService.pauseConstantDrum()
-            }
-            
-            async nextStep() {
-              this.index += 1
-              if (this.sequence.length > this.index) {
-                const action = this.sequence[this.index]
-                switch (action.type) {
-                  case 'action':
-                  await this.handleAction(action)
-                  break;
-                  case 'timeout':
-                  await this.handleTimeout(action)
-                  break
-                  case 'method':
-                  this.handleMethod(action)
-                  break;
-                  
-                  case 'service':
-                  this.handleService(action)
-                  break;
-                  
-                  case 'startNewSequence':
-                  // TODO: track where we left off in the older sequence?
-                  // @ts-ignore
-                  this.sequence = this[action.name]
-                  this.index = -1
-                }
-                
-                // @ts-ignore
-                if (action.next != 'manual') {
-                  // if the next action can be executed automatically
-                  this.nextStep()
-                }
-                
-              }
-            }
-            
-            async runActivity() {
-              
-            }
-            
-            async handleAction(action: any) {
-              if (action.action) {
-                // @ts-ignore
-                this.store.dispatch(action.action.call(this, action.data))
-              }
-            }
-            
-            async handleTimeout(action: any) {
-              if (action.data) {
-                // @ts-ignore
-                await this.sleep(action.data)
-              }
-            }
-            
-            async handleMethod(action: any) {
-              if (action.name == this.invokeComponentFunction) {
-                // @ts-ignore
-                if (action.sync) {
-                  // @ts-ignore
-                  await this.invokeComponentFunction(action.data.name, action.data.args) // TODO: support sending arguments
-                } else {
-                  // @ts-ignore
-                  this.invokeComponentFunction(action.data.name)
-                }
-                
-              } else if (action.name) {
-                // @ts-ignore
-                if (action.sync) await action.name()
-                // @ts-ignore
-                else action.name()
-              }
-            }
-            
-            async handleService(action: any) {
-              const service = this.injector.get(action.name)
-              // @ts-ignore
-              service[action.method]()
-            }
-            
-            async invokeComponentFunction(methodName: string, params: Array<any>) {
-              // @ts-ignore
-              if (this.component && typeof (this.component[methodName]) == 'function') {
-                if (params) {
-                  // @ts-ignore
-                  await this.component[methodName](...params)
-                } else {
-                  // @ts-ignore
-                  await this.component[methodName]()
-                }
-                
-              }
-              
-            }
-            async sleep(timeout: number) {
-              return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                  resolve({})
-                }, timeout)
+            // checking if given timeout is completed
+            if (new Date().getTime() - startTime > timeout) {
+              // user didn't do correct thing but the time is out
+              resolve({
+                result: 'failure'
               })
+              clearInterval(interval);
+            }        
+            if ((previousDesiredClass !== desiredClass) && (this.currentClass == desiredClass)) {
+              resolve({
+                result: 'success'
+              });
+              clearInterval(interval);
             }
-          }
+          }, 300);
+        }
+      });
+    }
+    
+    // handleClassChange(oldClass: string, newClass: string) {
+    //   // Do something?
+    // }
+    
+    async startCalibrationScene() {
+      this.sit2standService.disable();
+      if (this.game?.scene.isActive('sit2stand')) {
+        this.game.scene.stop('sit2stand');
+        console.log('sit2stand is active. turning off');
+        this.game?.scene.start('calibration');
+        console.log('start calibration');
+        // this.action_startMediaPipe()
+      } else {
+        console.log('calibration is already active');
+      }
+    }
+    
+    
+    
+    
+    handleCalibrationResult(oldStatus: string, newStatus: string) {
+      switch (newStatus) {
+        case 'warning':
+        this.handleCalibrationWarning(oldStatus, newStatus)
+        
+        break
+        case 'success':
+        this.handleCalibrationSuccess(oldStatus, newStatus)
+        break
+        case 'error':
+        default:
+        this.handleCalibrationError(oldStatus, newStatus)
+        break
+      }
+    }
+
+    async restartCalibration() {
+      // Hide everything guide...and start all over again
+      this.store.dispatch(guide.hideAvatar())
+      this.store.dispatch(guide.hideMessage())
+      this.store.dispatch(guide.hidePrompt())
+      this.store.dispatch(guide.hideSpotlight())
+      await this.sleep(200)
+
+      this.store.dispatch(guide.updateAvatar({name: 'mila'}))
+      this.store.dispatch(guide.sendMessage({text: 'I can no longer see your full body. ☹️', position: 'bottom'}))
+
+      await this.sleep(2000)
+      this.store.dispatch(guide.sendMessage({text: 'Please move back into the red box so that I can see you again.', position: 'bottom'}))
+    }
+    
+    startSit2StandScene() {
+      this.sit2standService.enable();
+      this.soundService.startConstantDrum()
+      if (this.game?.scene.isActive('calibration')) {
+        this.game.scene.stop('calibration');
+        console.log('calibration is active. turning off');
+        this.game?.scene.start('sit2stand');
+        console.log('start sit 2 stand');
+      } else {
+        console.log('sit2stand is already active');
+      }
+      this.runSit2Stand()
+    }
+    
+    handleCalibrationSuccess(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox('success')
+      this.calibrationSuccessCount += 1
+      console.log('successful calibration ', this.calibrationSuccessCount);
+      
+      this.startSit2StandScene()
+      
+      // this.soundService.startConstantDrum()
+      
+      
+      // if (this.calibrationSuccessCount == 1) {
+      //   // First time success... Explain Sit2Stand
+      
+      // } else {
+      //   // Second time success... Start from where we left off
+      // }
+    }
+    
+    
+    handleCalibrationWarning(oldStatus: string, newStatus: string) {
+      this.calibrationScene.drawCalibrationBox('warning')
+      // TODO: If the earlier status was
+    }
+    
+    handleCalibrationError(oldStatus: string, newStatus: string) {
+      this.startCalibrationScene()
+      this.calibrationScene.drawCalibrationBox('error')
+      this.soundService.pauseConstantDrum()
+      if(oldStatus == 'warning' || oldStatus == 'success') {
+        this.restartCalibration()
+      }
+    }
+    
+    async nextStep() {
+      this.index += 1
+      if (this.sequence.length > this.index) {
+        const action = this.sequence[this.index]
+        switch (action.type) {
+          case 'action':
+          await this.handleAction(action)
+          break;
+          case 'timeout':
+          await this.handleTimeout(action)
+          break
+          case 'method':
+          this.handleMethod(action)
+          break;
           
+          case 'service':
+          this.handleService(action)
+          break;
+          
+          case 'startNewSequence':
+          // TODO: track where we left off in the older sequence?
+          // @ts-ignore
+          this.sequence = this[action.name]
+          this.index = -1
+        }
+        
+        // @ts-ignore
+        if (action.next != 'manual') {
+          // if the next action can be executed automatically
+          this.nextStep()
+        }
+        
+      }
+    }
+    
+    async runActivity() {
+      
+    }
+    
+    async handleAction(action: any) {
+      if (action.action) {
+        // @ts-ignore
+        this.store.dispatch(action.action.call(this, action.data))
+      }
+    }
+    
+    async handleTimeout(action: any) {
+      if (action.data) {
+        // @ts-ignore
+        await this.sleep(action.data)
+      }
+    }
+    
+    async handleMethod(action: any) {
+      if (action.name == this.invokeComponentFunction) {
+        // @ts-ignore
+        if (action.sync) {
+          // @ts-ignore
+          await this.invokeComponentFunction(action.data.name, action.data.args) // TODO: support sending arguments
+        } else {
+          // @ts-ignore
+          this.invokeComponentFunction(action.data.name)
+        }
+        
+      } else if (action.name) {
+        // @ts-ignore
+        if (action.sync) await action.name()
+        // @ts-ignore
+        else action.name()
+      }
+    }
+    
+    async handleService(action: any) {
+      const service = this.injector.get(action.name)
+      // @ts-ignore
+      service[action.method]()
+    }
+    
+    async invokeComponentFunction(methodName: string, params: Array<any>) {
+      // @ts-ignore
+      if (this.component && typeof (this.component[methodName]) == 'function') {
+        if (params) {
+          // @ts-ignore
+          await this.component[methodName](...params)
+        } else {
+          // @ts-ignore
+          await this.component[methodName]()
+        }
+        
+      }
+      
+    }
+    async sleep(timeout: number) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve({})
+        }, this.prod? timeout: 300)
+      })
+    }
+  }
+  
