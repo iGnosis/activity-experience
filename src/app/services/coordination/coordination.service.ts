@@ -326,10 +326,12 @@ export class CoordinationService {
       this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }))
       // ending constantDrum here
       this.soundService.endConstantDrum()
-      await this.sleep(3000)
+      this.sleep(3000)
       this.store.dispatch(guide.sendMessage({ text: 'Thank you for playing!', position: 'center' }))
-      await this.sleep(3000)
-            
+      this.sleep(3000)
+      
+      this.sleep(2000)
+      
       this.router.navigate(['/finished']);
     }
     
