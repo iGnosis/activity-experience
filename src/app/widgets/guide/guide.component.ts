@@ -18,6 +18,7 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('messageCenter') messageCenter!: ElementRef;
   @ViewChild('messageBottom') messageBottom!: ElementRef;
   avatarPosition = ''
+  lastText = ''
 
   constructor(
     private store: Store<{guide: GuideState}>,
@@ -152,6 +153,8 @@ export class GuideComponent implements AfterViewInit {
   }
 
   speakText(text: string) {
+    if(this.lastText === text) return
+
     if ('speechSynthesis' in window) {
       const msg = new SpeechSynthesisUtterance();
       const voices = window.speechSynthesis.getVoices();
@@ -159,6 +162,7 @@ export class GuideComponent implements AfterViewInit {
       msg.voice = voices[10]; 
       msg.text = text;
       window.speechSynthesis.speak(msg);  
+      this.lastText = text
     }else{
        // Speech Synthesis Not Supported 😣
        console.error('Text to Speech not available')
