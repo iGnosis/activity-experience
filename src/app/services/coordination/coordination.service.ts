@@ -20,7 +20,7 @@ export class CoordinationService {
   
   // Workaround for medianet not working
   private poseCount = 0
-  private prod = true
+  private prod = false
   private game?: Phaser.Game;
   private onComplete: Function | undefined
   successfulAttempts = 0
