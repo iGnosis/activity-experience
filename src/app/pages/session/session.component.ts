@@ -104,7 +104,7 @@ export class SessionComponent implements AfterViewInit {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
-    this.coordinationService.start(this.game as Phaser.Game, () => {})
+    this.coordinationService.start(this.game as Phaser.Game, () => { })
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       this.analyticsService.sendSessionEvent({
@@ -115,13 +115,12 @@ export class SessionComponent implements AfterViewInit {
       this.startMediaPipe();
     });
   }
-  
 
-  startMediaPipe(data?: any) {
+  startMediaPipe() {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
     setTimeout(() => {
-      this.mpHolisticService.start(this.video.nativeElement, 20);
+      this.mpHolisticService.start(this.video.nativeElement);
     }, 2000); // gives time for things to settle down
   }
 

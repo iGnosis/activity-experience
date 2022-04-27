@@ -3,7 +3,6 @@ import { Holistic, Options } from '@mediapipe/holistic';
 import { Store } from '@ngrx/store';
 import { pose } from 'src/app/store/actions/pose.actions';
 import { Results } from 'src/app/types/pointmotion';
-import { CalibrationService } from '../calibration/calibration.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,16 +23,15 @@ export class HolisticService {
   videoElm?: HTMLVideoElement
   constructor(
     private store: Store<{ pose: Results }>,
-    private calibrationService: CalibrationService,
   ) {
-
   }
 
-  start(videoElm: HTMLVideoElement, fps: number = 1) {
-
+  async start(videoElm: HTMLVideoElement, fps: number = 25) {
     this.holistic = new Holistic({
       locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+        console.log('loading holistic file:', file)
+        // stick to v0.5 as to avoid breaking changes.
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/${file}`;
       }
     });
 
@@ -41,13 +39,17 @@ export class HolisticService {
     this.holistic.onResults((results) => {
       this.handleResults(results)
     })
-
     this.videoElm = videoElm
+
+    // We need to wait until Holistic is done loading the files, only then we set the interval.
+    // @ts-ignore
+    await this.holistic?.send({ image: this.videoElm })
+
+    // This implementation may be faulty!
+    // Shoudn't we read frames every (displayFPSRate * 1000) milliseconds?
     this.interval = setInterval(() => {
       // @ts-ignore
-      this.holistic?.send({ image: this.videoElm }).catch((error) => {
-        console.error('error sending image to the model:', error)
-      })
+      this.holistic?.send({ image: this.videoElm })
     }, 500)
   }
 
