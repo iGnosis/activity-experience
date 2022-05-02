@@ -459,7 +459,7 @@ export class CoordinationService {
     })
   }
 
-  async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout: number = 3000): Promise<{ result: 'success' | 'failure' }> {
+  async waitForClassOrTimeOut(desiredClass: string, previousDesiredClass: string, timeout = 3000): Promise<{ result: 'success' | 'failure' }> {
     return new Promise((resolve) => {
 
       if (previousDesiredClass === desiredClass || this.currentClass === desiredClass) {

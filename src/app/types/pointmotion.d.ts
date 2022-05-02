@@ -351,7 +351,7 @@ export type NormalizedLandmarkListList = NormalizedLandmarkList[];
 /**
  * Represents a single landmark (not normalized).
  */
-export interface Landmark extends NormalizedLandmark { }
+export type Landmark = NormalizedLandmark
 
 /**
  * Detected points are returned as a collection of landmarks.

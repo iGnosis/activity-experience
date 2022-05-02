@@ -20,10 +20,10 @@ export class GuideService {
       }
     }
     
-    let avatarRect = avatarElm.getBoundingClientRect()
+    const avatarRect = avatarElm.getBoundingClientRect()
     
     if (messageBottom) {
-      let msgRect = messageBottom.getBoundingClientRect()
+      const msgRect = messageBottom.getBoundingClientRect()
       // the vertical centers of both the message box and avatar should be same
       // this.avatar.nativeElement.style.top = 
       const top = (msgRect.y + (msgRect.height/2) - (avatarRect.height/2)) + 'px'
@@ -31,7 +31,7 @@ export class GuideService {
         top, left: 0
       }
     } else if (messageCenter) {
-      let msgRect = messageCenter.getBoundingClientRect()
+      const msgRect = messageCenter.getBoundingClientRect()
       return {
         top :(msgRect.y + (msgRect.height/2) - (avatarRect.height/2)) + 'px',
         left: (msgRect.x - avatarRect.width + 6)+ 'px'
@@ -42,7 +42,7 @@ export class GuideService {
   }
   
   getCenteredAvatarPosition(avatarElm: HTMLElement) {
-    let avatarRect = avatarElm.getBoundingClientRect()
+    const avatarRect = avatarElm.getBoundingClientRect()
     return {
       top: 'calc( 50vh - ' + avatarRect.height/2 + 'px )', // spaced between vh and px and - are important
       left: 'calc( 50vw - ' + avatarRect.width/2 + 'px )'

@@ -1,7 +1,7 @@
 import { createReducer, on } from '@ngrx/store';
 import { frame } from '../../actions/frame.actions';
 
-export const initialState: string = '';
+export const initialState = '';
 
 const handleSend = (state: any, data:any) => {
   return data

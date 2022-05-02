@@ -47,7 +47,7 @@ export class SessionComponent implements AfterViewInit {
   announcement = '';
   selectGenre = false;
 
-  sessionEnded: boolean = true;
+  sessionEnded = true;
 
   // DI the needed scenes
   constructor(

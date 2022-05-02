@@ -8,7 +8,7 @@ export class SoundsService {
   constructor() {}
 
   constantDrumId?: number;
-  currentChord: number = 1;
+  currentChord = 1;
   isEnabled = false
 
   chords = new Howl({

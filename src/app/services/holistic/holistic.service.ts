@@ -26,7 +26,7 @@ export class HolisticService {
   ) {
   }
 
-  async start(videoElm: HTMLVideoElement, fps: number = 25) {
+  async start(videoElm: HTMLVideoElement, fps = 25) {
     this.holistic = new Holistic({
       locateFile: (file) => {
         console.log('loading holistic file:', file)
@@ -44,6 +44,9 @@ export class HolisticService {
     // We need to wait until Holistic is done loading the files, only then we set the interval.
     // @ts-ignore
     await this.holistic?.send({ image: this.videoElm })
+
+    // do something
+    console.log('holistic files must be loaded by now')
 
     // This implementation may be faulty!
     // Shoudn't we read frames every (displayFPSRate * 1000) milliseconds?

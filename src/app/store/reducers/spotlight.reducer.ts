@@ -1,7 +1,7 @@
 import { createReducer, on } from "@ngrx/store";
 import { spotlight } from "../actions/spotlight.actions";
 
-let initialState = 0
+const initialState = 0
 
 const _spotlightReducer = createReducer(initialState, 
     on(spotlight.celebrate, (state, data) => {

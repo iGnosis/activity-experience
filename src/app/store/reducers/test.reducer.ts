@@ -1,7 +1,7 @@
 import { createReducer, on } from "@ngrx/store";
 import { testStringAction } from "../actions/test.action";
 
-let initialState = {
+const initialState = {
     name: '',
     age: 0
 }

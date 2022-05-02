@@ -126,7 +126,7 @@ export class AnalyticsService {
 
   async sendTaskEvent(event: TaskEvent) {
     if (this.sessionId) {
-      let taskEventRow: TaskEventRow = {
+      const taskEventRow: TaskEventRow = {
         patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         activity: event.activity,

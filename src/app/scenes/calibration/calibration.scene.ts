@@ -46,7 +46,7 @@ export class CalibrationScene extends Phaser.Scene {
 
   create() {
     console.log('draw box');
-    let { width, height } = this.game.canvas;
+    const { width, height } = this.game.canvas;
     console.log(`Width ${width}, Height ${height}`);
     this.checkImage = new Phaser.GameObjects.Image(
       this,
@@ -89,7 +89,7 @@ export class CalibrationScene extends Phaser.Scene {
    * @param percentHeight percentage of the bounding-box height
    */
   createCalibrationBox(percentageWidth: number, percentageHeight: number) {
-    let { width, height } = this.game.canvas;
+    const { width, height } = this.game.canvas;
     console.log(`Width ${width}, Height ${height}`);
     this.calibrationBox.width = (width * percentageWidth) / 100;
     this.calibrationBox.height = (height * percentageHeight) / 100;
@@ -142,7 +142,7 @@ export class CalibrationScene extends Phaser.Scene {
   drawCalibrationBox(type: string) {
     if (!this.sys.game || !this.showCalibration) return;
 
-    let { width, height } = this.sys.game.canvas;
+    const { width, height } = this.sys.game.canvas;
     console.log(`${width} X ${height}`);
 
     this.add.existing(

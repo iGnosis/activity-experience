@@ -130,7 +130,7 @@ export class CalibrationService {
   calibrateFullBody(results: { pose: Results }) {
     if (!this.isEnabled) return
 
-    let poseLandmarkArray = results.pose.poseLandmarks;
+    const poseLandmarkArray = results.pose.poseLandmarks;
 
     if (!Array.isArray(poseLandmarkArray)) {
       return {

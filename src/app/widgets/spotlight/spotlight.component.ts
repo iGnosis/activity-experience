@@ -34,7 +34,7 @@ export class SpotlightComponent implements OnInit, AfterViewInit {
     return new Promise(async (resolve, reject) => {
       if (Array.isArray(this.messagesQueue) && this.messagesQueue.length > 0) {
         // TODO: Handle the producer consumer problem
-        for (let message of this.messagesQueue) {
+        for (const message of this.messagesQueue) {
           console.log('spotlight: updating message', message.text);
 
           this.message = message.text;
