@@ -20,10 +20,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
-  constructor(
-    private gql: GqlClientService,
-    private store: Store<{ session: SessionState }>,
-  ) {
+  constructor(private gql: GqlClientService, private store: Store<{ session: SessionState }>) {
     this.store
       .select((state) => state.session.session)
       .subscribe((session) => {

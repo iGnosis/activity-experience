@@ -3,11 +3,7 @@ import { Store } from '@ngrx/store';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { announcement } from 'src/app/store/actions/announcement.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
-import {
-  AnnouncementState,
-  GuideState,
-  Results,
-} from 'src/app/types/pointmotion';
+import { AnnouncementState, GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../sounds/sounds.service';
@@ -121,14 +117,10 @@ export class CoordinationService {
   async explainSit2Stand() {
     this.store.dispatch(guide.hideAvatar());
     this.store.dispatch(guide.hideMessage());
-    this.store.dispatch(
-      announcement.announce({ message: 'Excellent', timeout: 3000 }),
-    );
+    this.store.dispatch(announcement.announce({ message: 'Excellent', timeout: 3000 }));
     await this.sleep(this.prod ? 3500 : 300);
     // this.store.dispatch(guide.updateAvatar({name: 'mila'}))
-    this.store.dispatch(
-      guide.sendSpotlight({ text: 'Starting Next Activity' }),
-    );
+    this.store.dispatch(guide.sendSpotlight({ text: 'Starting Next Activity' }));
     // activity started
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
@@ -176,9 +168,7 @@ export class CoordinationService {
       }),
     );
     await this.waitForClass('sit');
-    this.store.dispatch(
-      announcement.announce({ message: 'Perfect', timeout: 3000 }),
-    );
+    this.store.dispatch(announcement.announce({ message: 'Perfect', timeout: 3000 }));
     await this.sleep(3500);
 
     this.store.dispatch(
@@ -195,16 +185,10 @@ export class CoordinationService {
       }),
     );
     await this.sleep(this.prod ? 2000 : 300);
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Let us try it out...', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Let us try it out...', position: 'center' }));
     await this.sleep(this.prod ? 3000 : 300);
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Let us try it out...', position: 'bottom' }),
-    );
-    this.store.dispatch(
-      guide.sendPrompt({ className: 'round', text: '1', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Let us try it out...', position: 'bottom' }));
+    this.store.dispatch(guide.sendPrompt({ className: 'round', text: '1', position: 'center' }));
     await this.sleep(this.prod ? 3000 : 300);
     this.store.dispatch(
       guide.sendMessage({
@@ -219,17 +203,11 @@ export class CoordinationService {
     this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(guide.hideMessage());
     await this.sleep(100);
-    this.store.dispatch(
-      announcement.announce({ message: 'Awesome!', timeout: 3000 }),
-    );
+    this.store.dispatch(announcement.announce({ message: 'Awesome!', timeout: 3000 }));
     await this.sleep(3500);
 
-    this.store.dispatch(
-      guide.sendMessage({ text: 'That was great!', position: 'center' }),
-    );
-    this.store.dispatch(
-      guide.updateAvatar({ name: 'mila', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'That was great!', position: 'center' }));
+    this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
     await this.sleep(this.prod ? 3000 : 300);
 
     this.store.dispatch(
@@ -239,16 +217,10 @@ export class CoordinationService {
       }),
     );
     await this.sleep(this.prod ? 3000 : 300);
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Let us give it a try?', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Let us give it a try?', position: 'center' }));
     await this.sleep(this.prod ? 1000 : 300);
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Let us give it a try?', position: 'bottom' }),
-    );
-    this.store.dispatch(
-      guide.sendPrompt({ className: 'round', text: '12', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Let us give it a try?', position: 'bottom' }));
+    this.store.dispatch(guide.sendPrompt({ className: 'round', text: '12', position: 'center' }));
     await this.sleep(this.prod ? 3000 : 300);
     this.store.dispatch(
       guide.sendMessage({
@@ -263,17 +235,11 @@ export class CoordinationService {
     this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(guide.hideMessage());
     await this.sleep(100);
-    this.store.dispatch(
-      announcement.announce({ message: 'Amazing!', timeout: 3000 }),
-    );
+    this.store.dispatch(announcement.announce({ message: 'Amazing!', timeout: 3000 }));
     await this.sleep(3500);
 
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Now we are all set...', position: 'center' }),
-    );
-    this.store.dispatch(
-      guide.updateAvatar({ name: 'mila', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Now we are all set...', position: 'center' }));
+    this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
     await this.sleep(3000);
     this.sit2StandExplained = true;
     this.runSit2Stand();
@@ -331,11 +297,7 @@ export class CoordinationService {
       this.isWaitingForReaction = true;
 
       // resolve has status property that can be used to send taskEnded events.
-      const res = await this.waitForClassOrTimeOut(
-        desiredClass,
-        previousDesiredClass,
-        6000,
-      );
+      const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000);
       this.isWaitingForReaction = false;
 
       // playing chord
@@ -405,15 +367,11 @@ export class CoordinationService {
     console.log('start postplay sit2stand');
     this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
-    this.store.dispatch(
-      guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }));
     // ending constantDrum here
     this.soundService.endConstantDrum();
     this.sleep(3000);
-    this.store.dispatch(
-      guide.sendMessage({ text: 'Thank you for playing!', position: 'center' }),
-    );
+    this.store.dispatch(guide.sendMessage({ text: 'Thank you for playing!', position: 'center' }));
     this.sleep(5000);
   }
 
@@ -463,21 +421,12 @@ export class CoordinationService {
     this.previousPose = results.pose;
 
     // Call appropriate hook when status changes
-    if (
-      calibrationResult &&
-      this.calibrationStatus !== calibrationResult.status
-    ) {
-      this.handleCalibrationResult(
-        this.calibrationStatus,
-        calibrationResult.status,
-      );
+    if (calibrationResult && this.calibrationStatus !== calibrationResult.status) {
+      this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status);
       this.calibrationStatus = calibrationResult.status;
 
       if (this.isWaitingForReaction) {
-        const poseHash = this.sit2standPoseHashGenerator(
-          results.pose,
-          calibrationResult.status,
-        );
+        const poseHash = this.sit2standPoseHashGenerator(results.pose, calibrationResult.status);
         console.log(poseHash);
         if (poseHash === 1) {
           this.analyticsService.sendTaskEvent({
@@ -491,10 +440,7 @@ export class CoordinationService {
       }
     }
 
-    if (
-      this.calibrationStatus == 'success' &&
-      this.sit2standService.isEnabled()
-    ) {
+    if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
       const newClass = this.sit2standService.classify(results.pose).result;
       this.handleClassChange(this.currentClass, newClass);
       this.currentClass = newClass;
@@ -583,10 +529,7 @@ export class CoordinationService {
     timeout = 3000,
   ): Promise<{ result: 'success' | 'failure' }> {
     return new Promise((resolve) => {
-      if (
-        previousDesiredClass === desiredClass ||
-        this.currentClass === desiredClass
-      ) {
+      if (previousDesiredClass === desiredClass || this.currentClass === desiredClass) {
         setTimeout(() => {
           if (this.currentClass == desiredClass) {
             resolve({
@@ -608,10 +551,7 @@ export class CoordinationService {
             });
             clearInterval(interval);
           }
-          if (
-            previousDesiredClass !== desiredClass &&
-            this.currentClass == desiredClass
-          ) {
+          if (previousDesiredClass !== desiredClass && this.currentClass == desiredClass) {
             resolve({
               result: 'success',
             });

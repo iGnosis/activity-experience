@@ -14,9 +14,7 @@ export class SessionService {
     return this.client.req(
       gql`
         mutation StartSession($careplan: uuid!, $patient: uuid!) {
-          insert_session_one(
-            object: { careplan: $careplan, patient: $patient }
-          ) {
+          insert_session_one(object: { careplan: $careplan, patient: $patient }) {
             id
             createdAt
             updatedAt
@@ -57,18 +55,13 @@ export class SessionService {
 
   async updatePreSessionMood(mood: string) {
     if (!this.sessionId) {
-      console.error(
-        'session id not defined. sessionService.get should be called first',
-      );
+      console.error('session id not defined. sessionService.get should be called first');
       return;
     }
     return this.client.req(
       gql`
         mutation UpdateSession($id: uuid!, $mood: String) {
-          update_session_by_pk(
-            pk_columns: { id: $id }
-            _set: { preSessionMood: $mood }
-          ) {
+          update_session_by_pk(pk_columns: { id: $id }, _set: { preSessionMood: $mood }) {
             updatedAt
           }
         }
@@ -82,18 +75,13 @@ export class SessionService {
 
   async updatePostSessionMood(mood: string) {
     if (!this.sessionId) {
-      console.error(
-        'session id not defined. sessionService.get should be called first',
-      );
+      console.error('session id not defined. sessionService.get should be called first');
       return;
     }
     return this.client.req(
       gql`
         mutation UpdateSession($id: uuid!, $mood: String) {
-          update_session_by_pk(
-            pk_columns: { id: $id }
-            _set: { postSessionMood: $mood }
-          ) {
+          update_session_by_pk(pk_columns: { id: $id }, _set: { postSessionMood: $mood }) {
             updatedAt
           }
         }
@@ -107,18 +95,13 @@ export class SessionService {
 
   async updateGenre(genre: string) {
     if (!this.sessionId) {
-      console.error(
-        'session id not defined. sessionService.get should be called first',
-      );
+      console.error('session id not defined. sessionService.get should be called first');
       return;
     }
     return this.client.req(
       gql`
         mutation UpdateSession($id: uuid!, $genre: String) {
-          update_session_by_pk(
-            pk_columns: { id: $id }
-            _set: { genre: $genre }
-          ) {
+          update_session_by_pk(pk_columns: { id: $id }, _set: { genre: $genre }) {
             updatedAt
           }
         }

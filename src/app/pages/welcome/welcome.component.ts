@@ -1,12 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import {
-  animate,
-  state,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
+import { animate, state, style, transition, trigger } from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
@@ -95,9 +89,7 @@ export class WelcomeComponent implements OnInit {
   sessionId: string;
 
   currentStep = -1;
-  currentMessage:
-    | { type: string; text?: string; timeout?: number; bg: string }
-    | undefined;
+  currentMessage: { type: string; text?: string; timeout?: number; bg: string } | undefined;
 
   constructor(
     private route: ActivatedRoute,

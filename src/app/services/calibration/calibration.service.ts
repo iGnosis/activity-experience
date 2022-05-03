@@ -63,9 +63,7 @@ export class CalibrationService {
 
     switch (numHandsVisible) {
       case 0:
-        this.store.dispatch(
-          calibration.error({ pose: results.pose, reason: 'Cannot see hands' }),
-        );
+        this.store.dispatch(calibration.error({ pose: results.pose, reason: 'Cannot see hands' }));
         // this.store.dispatch(
         //   guide.sendMessages({
         //     title: 'Calibration',
@@ -104,9 +102,7 @@ export class CalibrationService {
         // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
         break;
       case 2:
-        this.store.dispatch(
-          calibration.success({ pose: results.pose, reason: 'All well' }),
-        );
+        this.store.dispatch(calibration.success({ pose: results.pose, reason: 'All well' }));
         // this.store.dispatch(guide.hide())
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
         break;
@@ -116,13 +112,9 @@ export class CalibrationService {
   calibrationBoxContains(x: number, y: number, point?: number): boolean {
     return (
       this.calibrationScene.calibrationBox.x < x &&
-      x <
-        this.calibrationScene.calibrationBox.x +
-          this.calibrationScene.calibrationBox.width &&
+      x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
       this.calibrationScene.calibrationBox.y < y &&
-      y <
-        this.calibrationScene.calibrationBox.y +
-          this.calibrationScene.calibrationBox.height
+      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height
     );
   }
 
@@ -143,10 +135,8 @@ export class CalibrationService {
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
           !this.calibrationBoxContains(
-            poseLandmarkArray[point].x *
-              this.calibrationScene.sys.game.canvas.width,
-            poseLandmarkArray[point].y *
-              this.calibrationScene.sys.game.canvas.height,
+            poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width,
+            poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height,
           )
         ) {
           console.log(`point ${point} is out of calibration box`);

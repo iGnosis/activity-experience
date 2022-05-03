@@ -10,13 +10,9 @@ export const initialState: CalibrationState = {
   poseHash: 0,
 };
 
-function sit2standPoseHashGenerator(
-  state: CalibrationState,
-  data: { pose: any; reason: string },
-) {
+function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any; reason: string }) {
   // initial calibration state. do nothing
-  if (state.status === 'error' || !state.pose || !state.pose.poseLandmarks)
-    return -1;
+  if (state.status === 'error' || !state.pose || !state.pose.poseLandmarks) return -1;
   if (!data.pose || !data.pose.poseLandmarks) return -1;
 
   // work out old distances

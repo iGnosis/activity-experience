@@ -1,10 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
-import {
-  GuideActionShowMessageDTO,
-  GuideState,
-} from 'src/app/types/pointmotion';
+import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -22,13 +19,9 @@ export class TestComponent implements OnInit {
 
   changeAvatar() {
     if (this.showKevin) {
-      this.store.dispatch(
-        guide.updateAvatar({ name: 'kevin', position: 'bottom' }),
-      );
+      this.store.dispatch(guide.updateAvatar({ name: 'kevin', position: 'bottom' }));
     } else {
-      this.store.dispatch(
-        guide.updateAvatar({ name: 'mila', position: 'center' }),
-      );
+      this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
     }
     this.showKevin = !this.showKevin;
   }
@@ -61,9 +54,7 @@ export class TestComponent implements OnInit {
   }
 
   sendSpotlight() {
-    this.store.dispatch(
-      guide.sendSpotlight({ text: 'some text ' + Math.random() }),
-    );
+    this.store.dispatch(guide.sendSpotlight({ text: 'some text ' + Math.random() }));
   }
 
   hideSpotlight() {
@@ -82,9 +73,7 @@ export class TestComponent implements OnInit {
 
   sendPromptWithNumber() {
     // Change position each time
-    this.store.dispatch(
-      guide.sendPrompt({ position: 'center', text: '2', className: 'round' }),
-    );
+    this.store.dispatch(guide.sendPrompt({ position: 'center', text: '2', className: 'round' }));
   }
 
   hidePrompt() {

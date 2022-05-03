@@ -12,10 +12,7 @@ export const guide = {
 
   updateAvatar: createAction('[Guide] Update Avatar', props<GuideAvatarDTO>()),
   sendMessage: createAction('[Guide] Send Message', props<GuideMessageDTO>()),
-  sendSpotlight: createAction(
-    '[Guide] Send Spotlight',
-    props<GuideSpotlightDTO>(),
-  ),
+  sendSpotlight: createAction('[Guide] Send Spotlight', props<GuideSpotlightDTO>()),
   sendPrompt: createAction('[Guide] Send Prompt', props<GuidePromptDTO>()),
   startVideo: createAction('[Guide] Start Video', props<GuideVideoDTO>()),
 

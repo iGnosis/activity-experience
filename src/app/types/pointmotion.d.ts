@@ -359,10 +359,7 @@ export type LandmarkList = Landmark[];
 /**
  * We support several ways to get image inputs.
  */
-export type InputImage =
-  | HTMLVideoElement
-  | HTMLImageElement
-  | HTMLCanvasElement;
+export type InputImage = HTMLVideoElement | HTMLImageElement | HTMLCanvasElement;
 
 /**
  * Legal inputs.

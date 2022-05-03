@@ -24,10 +24,7 @@ export class VideoService {
    * Extracts frames from the video element and sends them to the store
    *
    */
-  startExtractingFramesFromStream(
-    stream: MediaStream,
-    video: HTMLVideoElement,
-  ) {
+  startExtractingFramesFromStream(stream: MediaStream, video: HTMLVideoElement) {
     const tracks = stream.getVideoTracks();
     if (Array.isArray(tracks) && tracks.length > 0) {
       const video = tracks[0];
@@ -55,11 +52,7 @@ export class VideoService {
     }, 1000);
   }
 
-  _extractFrame(
-    stream: MediaStream,
-    video: HTMLVideoElement,
-    canvas: HTMLCanvasElement,
-  ) {
+  _extractFrame(stream: MediaStream, video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');
     context?.drawImage(video, 0, 0, this.width, this.height);
     // const data = context?.getImageData(0, 0, this.width, this.height).data

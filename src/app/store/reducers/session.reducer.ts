@@ -49,8 +49,7 @@ const _sessionReducer = createReducer(
   }),
   on(session.addRep, (state, data) => {
     if (state.currentActivity) {
-      state.currentActivity.repsCompleted =
-        state.currentActivity.repsCompleted || 0;
+      state.currentActivity.repsCompleted = state.currentActivity.repsCompleted || 0;
       state.currentActivity.repsCompleted += 1;
     }
     return state;

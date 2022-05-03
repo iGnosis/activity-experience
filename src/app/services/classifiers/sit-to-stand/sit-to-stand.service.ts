@@ -2,11 +2,7 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { spotlight } from 'src/app/store/actions/spotlight.actions';
-import {
-  Results,
-  GuideActionShowMessageDTO,
-  GuideState,
-} from 'src/app/types/pointmotion';
+import { Results, GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { AnalyticsService } from '../../analytics/analytics.service';
 import { CareplanService } from '../../careplan/careplan.service';
 import { SoundsService } from '../../sounds/sounds.service';
@@ -244,11 +240,8 @@ export class SitToStandService {
       // console.log(`dist - L: s-h: ${distanceBetweenLeftShoulderAndHip} h-k: ${distanceBetweenLeftHipAndKnee}`)
       // console.log(`dist - R: s-h: ${distanceBetweenRightShoulderAndHip} h-k: ${distanceBetweenRightHipAndKnee}`)
 
-      const isSittingL =
-        distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
-      const isSittingR =
-        distanceBetweenRightShoulderAndHip >
-        1.5 * distanceBetweenRightHipAndKnee;
+      const isSittingL = distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
+      const isSittingR = distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');

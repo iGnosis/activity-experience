@@ -1,8 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import {
-  GuideActionShowMessageDTO,
-  GuideState,
-} from 'src/app/types/pointmotion';
+import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { guide } from '../actions/guide.actions';
 
 /**

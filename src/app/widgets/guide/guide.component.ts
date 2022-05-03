@@ -23,10 +23,7 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('messageBottom') messageBottom!: ElementRef;
   avatarPosition = '';
 
-  constructor(
-    private store: Store<{ guide: GuideState }>,
-    private guideService: GuideService,
-  ) {}
+  constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService) {}
 
   ngAfterViewInit(): void {
     this.store
