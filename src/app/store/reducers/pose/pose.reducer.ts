@@ -4,15 +4,12 @@ import { pose } from '../../actions/pose.actions';
 
 export const initialState: Results | undefined = undefined;
 
-const handleSend = (state: any, data:any) => {
-  return data
-}
+const handleSend = (state: any, data: any) => {
+  return data;
+};
 
-const _poseReducer = createReducer(
-  initialState,
-  on(pose.send, handleSend),
-);
+const _poseReducer = createReducer(initialState, on(pose.send, handleSend));
 
-export function poseReducer(state:any, action:any) {
-  return _poseReducer(state, action)
+export function poseReducer(state: any, action: any) {
+  return _poseReducer(state, action);
 }

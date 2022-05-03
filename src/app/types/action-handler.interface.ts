@@ -1,5 +1,5 @@
 export class ActionHandler {
-  actions?: Array<any>
+  actions?: Array<any>;
 
   subscribedEvents = {
     namespace: {
@@ -9,39 +9,37 @@ export class ActionHandler {
         },
         '*': {
           // catch all
-        }
-      }
-    }
-  }
-  componentName: string
+        },
+      },
+    },
+  };
+  componentName: string;
 
   constructor(settings: { name: string }) {
-    this.componentName = settings.name
+    this.componentName = settings.name;
   }
 
   registerAction(action: any) {
-    this.actions?.push(action)
+    this.actions?.push(action);
     // Subscribe and create an observer
     // Subscribe to observables
   }
 
   handleEvent(event: any) {
     // if the event has an id... directly execute that...
-
     // if (this.subscribedEvents[event.namespace]) {
     // if the event name is registered
     // if the event has an id...
-
     // }
   }
 }
 
 export class Action {
   name?: string;
-  handler?: any
+  handler?: any;
 
   constructor(name: string, handler: any) {
-    this.name = name
-    this.handler = handler
+    this.name = name;
+    this.handler = handler;
   }
 }

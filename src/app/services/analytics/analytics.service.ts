@@ -22,13 +22,13 @@ export class AnalyticsService {
   patientId = '';
   constructor(
     private gql: GqlClientService,
-    private store: Store<{ session: SessionState }>
+    private store: Store<{ session: SessionState }>,
   ) {
     this.store
       .select((state) => state.session.session)
       .subscribe((session) => {
-          this.sessionId = session?.id || '';
-          this.patientId = session?.patient || '';
+        this.sessionId = session?.id || '';
+        this.patientId = session?.patient || '';
       });
   }
 
@@ -63,7 +63,7 @@ export class AnalyticsService {
             id
         }
       }`,
-        analyticsRow
+        analyticsRow,
       );
     }
   }
@@ -92,7 +92,7 @@ export class AnalyticsService {
           id
       }
     }`,
-        sessionEventRow
+        sessionEventRow,
       );
     }
   }
@@ -119,7 +119,7 @@ export class AnalyticsService {
           id
       }
     }`,
-        activityEventRow
+        activityEventRow,
       );
     }
   }
@@ -154,7 +154,7 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-          taskEventRow
+          taskEventRow,
         );
       } else {
         taskEventRow['score'] = event.score;
@@ -175,7 +175,7 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-          taskEventRow
+          taskEventRow,
         );
       }
     }
@@ -193,7 +193,7 @@ export class AnalyticsService {
     		affected_rows
   		}
 		}`,
-        sessionEndedAtRow
+        sessionEndedAtRow,
       );
     }
   }

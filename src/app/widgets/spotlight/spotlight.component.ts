@@ -14,12 +14,11 @@ export class SpotlightComponent implements OnInit, AfterViewInit {
   hidden = false;
   messagesQueue: Array<SpotlightActionShowMessageDTO> = [];
 
-  constructor() { }
+  constructor() {}
 
-  ngAfterViewInit(): void {
-  }
+  ngAfterViewInit(): void {}
 
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   async action_showMessages(data: SpotlightActionShowMessagesDTO) {
     // Show messages at an interval and then throw the next event.

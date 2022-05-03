@@ -29,7 +29,7 @@ export class SessionComponent implements AfterViewInit {
     height: window.innerHeight,
     parent: 'phaser-canvas',
     render: {
-      transparent: true
+      transparent: true,
     },
     transparent: true,
     // backgroundColor: 'rgba(0,0,0,0)',
@@ -59,7 +59,7 @@ export class SessionComponent implements AfterViewInit {
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
     private coordinationService: CoordinationService,
-    private router: Router
+    private router: Router,
   ) {
     this.store
       .select((state) => state.session.session)
@@ -78,7 +78,7 @@ export class SessionComponent implements AfterViewInit {
 
     // aspect ratio of the screen and webcam may be different. make calculations easier
     const box = this.uiHelperService.setBoundingBox(stream);
-    console.log('setBoundingBox:box:', box)
+    console.log('setBoundingBox:box:', box);
     this.updateDimensions(this.video.nativeElement);
 
     this.startGame();
@@ -103,7 +103,7 @@ export class SessionComponent implements AfterViewInit {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
-    this.coordinationService.start(this.game as Phaser.Game, () => { })
+    this.coordinationService.start(this.game as Phaser.Game, () => {});
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       this.analyticsService.sendSessionEvent({

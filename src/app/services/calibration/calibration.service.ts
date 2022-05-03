@@ -20,7 +20,7 @@ export class CalibrationService {
   previousAttemptId = this.attemptId;
   status = 'error';
   activityId: string;
-  isEnabled = false
+  isEnabled = false;
   // configuration = 'hands' // full-body, upper-body, lower-body, hands
 
   constructor(
@@ -31,26 +31,25 @@ export class CalibrationService {
     private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene,
   ) {
-    
     this.activityId = this.analyticsService.getActivityId('Calibration');
   }
 
   enable() {
-    this.isEnabled = true
+    this.isEnabled = true;
   }
 
   disable() {
-    this.isEnabled = false
+    this.isEnabled = false;
   }
 
-  handlePose(results: { pose: Results }): {status: string} | undefined{
+  handlePose(results: { pose: Results }): { status: string } | undefined {
     if (!results) return;
 
     return this.calibrateFullBody(results);
     // // Can have multiple configurations.
     // switch (this.careplanService.getCarePlan().calibration.type) {
     //   case 'full_body':
-        
+
     //   case 'hands':
     //     // return this.calibrateHands(results);
     //     break
@@ -65,7 +64,7 @@ export class CalibrationService {
     switch (numHandsVisible) {
       case 0:
         this.store.dispatch(
-          calibration.error({ pose: results.pose, reason: 'Cannot see hands' })
+          calibration.error({ pose: results.pose, reason: 'Cannot see hands' }),
         );
         // this.store.dispatch(
         //   guide.sendMessages({
@@ -87,7 +86,7 @@ export class CalibrationService {
           calibration.warning({
             pose: results.pose,
             reason: 'Can only see one hand',
-          })
+          }),
         );
         console.error({
           title: 'Calibration',
@@ -106,7 +105,7 @@ export class CalibrationService {
         break;
       case 2:
         this.store.dispatch(
-          calibration.success({ pose: results.pose, reason: 'All well' })
+          calibration.success({ pose: results.pose, reason: 'All well' }),
         );
         // this.store.dispatch(guide.hide())
         // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
@@ -128,14 +127,14 @@ export class CalibrationService {
   }
 
   calibrateFullBody(results: { pose: Results }) {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) return;
 
     const poseLandmarkArray = results.pose.poseLandmarks;
 
     if (!Array.isArray(poseLandmarkArray)) {
       return {
-        status: 'error'
-      }
+        status: 'error',
+      };
     } else {
       // adding these points to make the calibration lenient
       const points = [12, 11, 24, 23, 26, 25];
@@ -147,7 +146,7 @@ export class CalibrationService {
             poseLandmarkArray[point].x *
               this.calibrationScene.sys.game.canvas.width,
             poseLandmarkArray[point].y *
-              this.calibrationScene.sys.game.canvas.height
+              this.calibrationScene.sys.game.canvas.height,
           )
         ) {
           console.log(`point ${point} is out of calibration box`);
@@ -159,7 +158,7 @@ export class CalibrationService {
       if (isCalibrationSuccess) {
         // console.log(`Calibration Successful`);
         return {
-          status: 'success'
+          status: 'success',
         };
       } else {
         // See if there is any point we can't see
@@ -173,12 +172,12 @@ export class CalibrationService {
 
         if (invisiblePoint) {
           return {
-            status: 'error'
-          }
+            status: 'error',
+          };
         } else {
           return {
-            status: 'warning'
-          }
+            status: 'warning',
+          };
         }
       }
     }

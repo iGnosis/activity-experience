@@ -1,6 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import {  Store } from '@ngrx/store';
-import { animate, state, style, transition, trigger } from '@angular/animations';
+import { Store } from '@ngrx/store';
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger,
+} from '@angular/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
@@ -11,105 +17,108 @@ import { SessionService } from 'src/app/services/session/session.service';
   styleUrls: ['./welcome.component.scss'],
   animations: [
     trigger('panelInOut', [
-      transition('void => *', [
-          style({opacity: 0.1}),
-          animate(800)
-      ]),
-      transition('* => void', [
-          animate(800, style({opacity: 0}))
-      ])
+      transition('void => *', [style({ opacity: 0.1 }), animate(800)]),
+      transition('* => void', [animate(800, style({ opacity: 0 }))]),
     ]),
     trigger('faceInOut', [
       transition('void => *', [
-          style({opacity: 0.1, fontSize: '5rem', width: '100vw', height: '100vw'}),
-          animate(800)
+        style({
+          opacity: 0.1,
+          fontSize: '5rem',
+          width: '100vw',
+          height: '100vw',
+        }),
+        animate(800),
       ]),
-      transition('* => void', [
-          animate(400, style({opacity: 0}))
-      ])
+      transition('* => void', [animate(400, style({ opacity: 0 }))]),
     ]),
     trigger('showHide', [
-      state('visible', style({
-        opacity: 1,
-      })),
-      state('hidden', style({
-        opacity: 0
-      })),
-      transition('visible => hidden', [
-        animate('1s')
-      ]),
-      transition('hidden => visible', [
-        animate('1s')
-      ]),
-      transition('void => *', [
-        animate('1s')
-      ]),
-    ])
-  ]
+      state(
+        'visible',
+        style({
+          opacity: 1,
+        }),
+      ),
+      state(
+        'hidden',
+        style({
+          opacity: 0,
+        }),
+      ),
+      transition('visible => hidden', [animate('1s')]),
+      transition('hidden => visible', [animate('1s')]),
+      transition('void => *', [animate('1s')]),
+    ]),
+  ],
 })
 export class WelcomeComponent implements OnInit {
-
-  
   messages = [
     {
       type: 'message',
       text: 'Welcome back',
       timeout: 2000,
-      bg: '#000066'
-    }, {
+      bg: '#000066',
+    },
+    {
       type: 'message',
       text: 'Great to see you',
       timeout: 2000,
-      bg: '#000066'
-    }, 
+      bg: '#000066',
+    },
     {
       type: 'announcement',
       text: `Let's Go`,
       timeout: 3000,
-      bg: '#FFFFFF'
-    }, 
+      bg: '#FFFFFF',
+    },
     {
       type: 'pre-session-survey',
-      bg: '#FFB2B2'
-    }, 
+      bg: '#FFB2B2',
+    },
     {
       type: 'announcement',
       text: `Thanks`,
       timeout: 3000,
-      bg: '#FFFFFF'
-    }, {
+      bg: '#FFFFFF',
+    },
+    {
       type: 'select-genre',
-      bg: '#FFB000'
-    }, {
+      bg: '#FFB000',
+    },
+    {
       type: 'announcement',
       text: `PERFECT`,
       timeout: 3000,
-      bg: '#FFFFFF'
-    }
-  ]
-  sessionId: string
+      bg: '#FFFFFF',
+    },
+  ];
+  sessionId: string;
 
-  currentStep = -1
-  currentMessage: {type: string, text?: string, timeout?: number, bg: string} | undefined
+  currentStep = -1;
+  currentMessage:
+    | { type: string; text?: string; timeout?: number; bg: string }
+    | undefined;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private sessionService: SessionService,
-    private store: Store<{session: any}>
+    private store: Store<{ session: any }>,
   ) {
     // Save the session id in the store
     // If there is no session id, then disable analytics
-    this.sessionId = this.route.snapshot.queryParamMap.get('session') || this.route.snapshot.queryParamMap.get('sessionId') || ''
+    this.sessionId =
+      this.route.snapshot.queryParamMap.get('session') ||
+      this.route.snapshot.queryParamMap.get('sessionId') ||
+      '';
   }
 
   async ngOnInit() {
     // await this.initMessageSequence()
-    if(this.sessionId) {
-      const sessionData = await this.sessionService.get(this.sessionId)
-      this.store.dispatch(session.updateConfig(sessionData.session_by_pk))
+    if (this.sessionId) {
+      const sessionData = await this.sessionService.get(this.sessionId);
+      this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
     }
-    
 
     // if (!enableAnalytics) {
     //   this.messages.push({
@@ -119,59 +128,59 @@ export class WelcomeComponent implements OnInit {
     //     bg: '#000066'
     //   })
     // }
-    await this.showNextStep()
+    await this.showNextStep();
   }
 
   async showNextStep() {
     // await this.sleep(500)
-    this.currentStep += 1
-    if(this.currentStep == this.messages.length - 1) {
-      // Last step is also done :D 
+    this.currentStep += 1;
+    if (this.currentStep == this.messages.length - 1) {
+      // Last step is also done :D
       // Let the user play the game
-      this.router.navigate(['session'])
+      this.router.navigate(['session']);
     }
-    this.currentMessage = this.messages[this.currentStep]
-    this.currentMessage.bg = this.currentMessage.bg || '#000066'
+    this.currentMessage = this.messages[this.currentStep];
+    this.currentMessage.bg = this.currentMessage.bg || '#000066';
     if (this.currentMessage.timeout) {
       // Blank out the page
       setTimeout(() => {
-        this.currentMessage = undefined
-      }, this.currentMessage.timeout - 400)
+        this.currentMessage = undefined;
+      }, this.currentMessage.timeout - 400);
 
       // Set the next message
       setTimeout(() => {
-        this.showNextStep()
-      }, this.currentMessage.timeout)
+        this.showNextStep();
+      }, this.currentMessage.timeout);
     }
   }
 
   async initMessageSequence() {
-    for(let i = 0; i < this.messages.length; i++) {
-      this.currentMessage = this.messages[i]
-      this.currentMessage.bg = this.currentMessage.bg || '#000066'
-      console.log(this.currentMessage)
-      
+    for (let i = 0; i < this.messages.length; i++) {
+      this.currentMessage = this.messages[i];
+      this.currentMessage.bg = this.currentMessage.bg || '#000066';
+      console.log(this.currentMessage);
+
       // await this.sleep(this.currentMessage.timeout - 1000) // Keep 1s for the fadeout animation
-      this.currentMessage = undefined
-      await this.sleep(1000)
+      this.currentMessage = undefined;
+      await this.sleep(1000);
     }
   }
 
   async sleep(timeout: number) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        resolve({})
-      }, timeout)
-    })
+        resolve({});
+      }, timeout);
+    });
   }
 
-  async preSessionMoodSelected(mood: string)  {
-    await this.sessionService.updatePreSessionMood(mood)
-    this.showNextStep()
+  async preSessionMoodSelected(mood: string) {
+    await this.sessionService.updatePreSessionMood(mood);
+    this.showNextStep();
   }
 
   async genreSelected(genre: string) {
-    await this.sessionService.updateGenre(genre)
-    this.showNextStep()
+    await this.sessionService.updateGenre(genre);
+    this.showNextStep();
   }
 }

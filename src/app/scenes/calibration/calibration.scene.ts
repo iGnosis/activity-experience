@@ -51,13 +51,13 @@ export class CalibrationScene extends Phaser.Scene {
       this,
       width / 2,
       height / 2,
-      'check'
+      'check',
     ).setScale(0.2);
     this.wrongImage = new Phaser.GameObjects.Image(
       this,
       width / 2,
       height / 2,
-      'wrong'
+      'wrong',
     ).setScale(0.2);
 
     this.createCalibrationBox(40, 98);
@@ -98,14 +98,14 @@ export class CalibrationScene extends Phaser.Scene {
       (width - this.calibrationBox.width) / 4,
       height / 2,
       (width - this.calibrationBox.width) / 2,
-      height
+      height,
     );
 
     this.calibrationRectangle.right = this.add.rectangle(
       width - (width - this.calibrationBox.width) / 4,
       height / 2,
       (width - this.calibrationBox.width) / 2,
-      height
+      height,
     );
 
     this.calibrationRectangle.top = new Phaser.GameObjects.Rectangle(
@@ -113,7 +113,7 @@ export class CalibrationScene extends Phaser.Scene {
       width / 2,
       (height - this.calibrationBox.height) / 4,
       this.calibrationBox.width,
-      (height - this.calibrationBox.height) / 2
+      (height - this.calibrationBox.height) / 2,
     );
 
     this.calibrationRectangle.bottom = new Phaser.GameObjects.Rectangle(
@@ -121,7 +121,7 @@ export class CalibrationScene extends Phaser.Scene {
       width / 2,
       height - (height - this.calibrationBox.height) / 4,
       this.calibrationBox.width,
-      (height - this.calibrationBox.height) / 2
+      (height - this.calibrationBox.height) / 2,
     );
 
     this.calibrationBox.x = (width - this.calibrationBox.width) / 2;
@@ -132,11 +132,11 @@ export class CalibrationScene extends Phaser.Scene {
       (width - this.calibrationBox.width) / 2,
       (height - this.calibrationBox.height) / 2,
       this.calibrationBox.width,
-      this.calibrationBox.height
+      this.calibrationBox.height,
     ).setOrigin(0, 0);
   }
 
-  override update(time: number, delta: number): void { }
+  override update(time: number, delta: number): void {}
 
   drawCalibrationBox(type: string) {
     if (!this.sys.game || !this.showCalibration) return;
@@ -145,19 +145,19 @@ export class CalibrationScene extends Phaser.Scene {
     console.log(`${width} X ${height}`);
 
     this.add.existing(
-      this.calibrationRectangle.left as Phaser.GameObjects.Rectangle
+      this.calibrationRectangle.left as Phaser.GameObjects.Rectangle,
     );
     this.add.existing(
-      this.calibrationRectangle.right as Phaser.GameObjects.Rectangle
+      this.calibrationRectangle.right as Phaser.GameObjects.Rectangle,
     );
     this.add.existing(
-      this.calibrationRectangle.top as Phaser.GameObjects.Rectangle
+      this.calibrationRectangle.top as Phaser.GameObjects.Rectangle,
     );
     this.add.existing(
-      this.calibrationRectangle.bottom as Phaser.GameObjects.Rectangle
+      this.calibrationRectangle.bottom as Phaser.GameObjects.Rectangle,
     );
     this.add.existing(
-      this.calibrationRectangle.center as Phaser.GameObjects.Rectangle
+      this.calibrationRectangle.center as Phaser.GameObjects.Rectangle,
     );
 
     let fillColor = 0x000066;
@@ -174,8 +174,12 @@ export class CalibrationScene extends Phaser.Scene {
     }
 
     ['top', 'right', 'bottom', 'left'].forEach((rect) => {
-      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setAlpha(1);
-      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setFillStyle(fillColor, 0.3);
+      this.calibrationRectangle[
+        rect as keyof typeof this.calibrationRectangle
+      ]!.setAlpha(1);
+      this.calibrationRectangle[
+        rect as keyof typeof this.calibrationRectangle
+      ]!.setFillStyle(fillColor, 0.3);
     });
 
     if (this.calibrationRectangle && this.calibrationRectangle.center) {
@@ -206,7 +210,9 @@ export class CalibrationScene extends Phaser.Scene {
         });
 
         Object.keys(this.calibrationRectangle).forEach((key) => {
-          this.calibrationRectangle[key as keyof typeof this.calibrationRectangle]!.setAlpha(1);
+          this.calibrationRectangle[
+            key as keyof typeof this.calibrationRectangle
+          ]!.setAlpha(1);
         });
 
         this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
