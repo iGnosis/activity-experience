@@ -136,7 +136,7 @@ export class CalibrationScene extends Phaser.Scene {
     ).setOrigin(0, 0);
   }
 
-  override update(time: number, delta: number): void {}
+  override update(time: number, delta: number): void { }
 
   drawCalibrationBox(type: string) {
     if (!this.sys.game || !this.showCalibration) return;
