@@ -174,10 +174,8 @@ export class CalibrationScene extends Phaser.Scene {
     }
 
     ['top', 'right', 'bottom', 'left'].forEach((rect) => {
-      // @ts-ignore
-      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setAlpha(1);
-      // @ts-ignore
-      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setFillStyle(fillColor, 0.3);
+      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setAlpha(1);
+      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setFillStyle(fillColor, 0.3);
     });
 
     if (this.calibrationRectangle && this.calibrationRectangle.center) {
@@ -206,9 +204,9 @@ export class CalibrationScene extends Phaser.Scene {
         this.tweens.getAllTweens().forEach((tween) => {
           this.tweens.remove(tween);
         });
+
         Object.keys(this.calibrationRectangle).forEach((key) => {
-          // @ts-ignore
-          this.calibrationRectangle[key as keyof typeof this.calibrationRectangle].setAlpha(1);
+          this.calibrationRectangle[key as keyof typeof this.calibrationRectangle]!.setAlpha(1);
         });
 
         this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);

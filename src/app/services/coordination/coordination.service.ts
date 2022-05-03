@@ -570,11 +570,7 @@ export class CoordinationService {
   async nextStep() {
     this.index += 1
     if (this.sequence.length > this.index) {
-      const action: {
-        type: string,
-        name: string,
-        next: string
-      } = this.sequence[this.index]
+      const action = this.sequence[this.index]
       switch (action.type) {
         case 'action':
           await this.handleAction(action)
@@ -592,8 +588,7 @@ export class CoordinationService {
 
         case 'startNewSequence':
           // TODO: track where we left off in the older sequence?
-          // @ts-ignore
-          this.sequence = this[action.name]
+          this.sequence = this[action.name as keyof typeof this]
           this.index = -1
       }
 
