@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { CalibrationRectangle } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
@@ -175,6 +174,7 @@ export class CalibrationScene extends Phaser.Scene {
     }
 
     ['top', 'right', 'bottom', 'left'].forEach((rect) => {
+      // @ts-ignore
       this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setAlpha(1);
       // @ts-ignore
       this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setFillStyle(fillColor, 0.3);

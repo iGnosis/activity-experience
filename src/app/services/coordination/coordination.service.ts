@@ -592,6 +592,7 @@ export class CoordinationService {
 
         case 'startNewSequence':
           // TODO: track where we left off in the older sequence?
+          // @ts-ignore
           this.sequence = this[action.name]
           this.index = -1
       }
