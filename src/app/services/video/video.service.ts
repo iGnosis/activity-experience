@@ -11,7 +11,7 @@ export class VideoService {
   canvas?: HTMLCanvasElement
   width = 0
   height = 0
-  constructor(private store: Store<{frame: Uint8ClampedArray}>) { }
+  constructor(private store: Store<{ frame: Uint8ClampedArray }>) { }
 
   getVideoElement(): HTMLVideoElement | undefined {
     return this.videoElement
@@ -23,11 +23,11 @@ export class VideoService {
 
   /**
    * Extracts frames from the video element and sends them to the store
-   * 
+   *
    */
-  startExtractingFramesFromStream(stream: MediaStream, video: HTMLVideoElement, fps: number) {
+  startExtractingFramesFromStream(stream: MediaStream, video: HTMLVideoElement) {
     const tracks = stream.getVideoTracks()
-    if(Array.isArray(tracks) && tracks.length > 0) {
+    if (Array.isArray(tracks) && tracks.length > 0) {
       const video = tracks[0]
       this.height = video.getSettings().height || 0
       this.width = video.getSettings().width || 0
@@ -43,10 +43,10 @@ export class VideoService {
     this.canvas = this.canvas || document.createElement('canvas')
     this.canvas.width = this.width
     this.canvas.height = this.height
-    
+
     // Let a different function handle extraction of frames at fps
     const repeat = setInterval(() => {
-      if(this.canvas) {
+      if (this.canvas) {
         this._extractFrame(stream, video, this.canvas)
       } else {
         clearInterval(repeat)
@@ -59,8 +59,8 @@ export class VideoService {
     context?.drawImage(video, 0, 0, this.width, this.height)
     // const data = context?.getImageData(0, 0, this.width, this.height).data
     const data = canvas.toDataURL('jpg')
-    if(data) {
-      const update = {frame: data}
+    if (data) {
+      const update = { frame: data }
       this.store.dispatch(frame.send(update))
     }
   }

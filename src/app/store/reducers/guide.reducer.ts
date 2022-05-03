@@ -19,7 +19,7 @@ const initialState: GuideState = {
 
 
 
-const _guideReducer = createReducer(initialState, 
+const _guideReducer = createReducer(initialState,
 
     on(guide.hide, (state, data) => {
         return {}
@@ -57,36 +57,35 @@ const _guideReducer = createReducer(initialState,
 
     on(guide.hideAvatar, (state, data) => {
         const newState = Object.assign({}, state)
-        delete(newState.avatar)
+        delete (newState.avatar)
         return newState
     }),
 
     on(guide.hideMessage, (state, data) => {
         const newState = Object.assign({}, state)
-        delete(newState.message)
+        delete (newState.message)
         return newState
     }),
 
     on(guide.hidePrompt, (state, data) => {
         const newState = Object.assign({}, state)
-        delete(newState.prompt)
+        delete (newState.prompt)
         return newState
     }),
-    
+
     on(guide.hideSpotlight, (state, data) => {
         const newState = Object.assign({}, state)
-        delete(newState.spotlight)
+        delete (newState.spotlight)
         return newState
     }),
 
     on(guide.hideVideo, (state, video) => {
         const newState = Object.assign({}, state)
-        delete(newState.video)
+        delete (newState.video)
         return newState
     })
 )
 
-
-export function guideReducer(state:any, action:any) {
+export function guideReducer(state: any, action: any) {
     return _guideReducer(state, action);
 }

@@ -1,11 +1,9 @@
 import { Injectable, Injector } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { SessionComponent } from 'src/app/pages/session/session.component';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { announcement } from 'src/app/store/actions/announcement.actions';
-import { calibration } from 'src/app/store/actions/calibration.actions';
 import { guide } from 'src/app/store/actions/guide.actions';
-import { AnnouncementState, CalibrationState, GuideState, Results } from 'src/app/types/pointmotion';
+import { AnnouncementState, GuideState, Results } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../sounds/sounds.service';
@@ -18,7 +16,7 @@ import { v4 } from 'uuid';
 export class CoordinationService {
   private prod = true
   private game?: Phaser.Game;
-  private onComplete: Function | undefined
+  private onComplete: any;
   constructor(
     private store: Store<{ guide: GuideState, calibration: any, pose: any, announcement: AnnouncementState }>,
     private injector: Injector,
@@ -35,6 +33,7 @@ export class CoordinationService {
   observables$: any
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown'
+  component?: any
 
   index = -1
   sequence: any = []
@@ -307,7 +306,7 @@ export class CoordinationService {
     this.sleep(5000)
   }
 
-  async start(game: Phaser.Game, onComplete: Function) {
+  async start(game: Phaser.Game, onComplete: any) {
     this.analyticsService.sendSessionEvent({
       event_type: 'sessionStarted'
     })
@@ -385,10 +384,9 @@ export class CoordinationService {
     // do nothing.
     if (status === 'error') return -1
 
-
     // have to get previouspose for calculation
     // work out old distances
-    const oldPoseLandmarkArray = pose?.poseLandmarks!;
+    const oldPoseLandmarkArray = pose?.poseLandmarks;
     const oldLeftHip = oldPoseLandmarkArray[23];
     const oldLeftKnee = oldPoseLandmarkArray[25];
     const oldRightHip = oldPoseLandmarkArray[24];
@@ -409,8 +407,7 @@ export class CoordinationService {
     const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
 
 
-
-    const newPostLandmarkArray = pose?.poseLandmarks!;
+    const newPostLandmarkArray = pose?.poseLandmarks;
     const newLeftHip = newPostLandmarkArray[23];
     const newLeftKnee = newPostLandmarkArray[25];
     const newRightHip = newPostLandmarkArray[24];
@@ -573,7 +570,11 @@ export class CoordinationService {
   async nextStep() {
     this.index += 1
     if (this.sequence.length > this.index) {
-      const action = this.sequence[this.index]
+      const action: {
+        type: string,
+        name: string,
+        next: string
+      } = this.sequence[this.index]
       switch (action.type) {
         case 'action':
           await this.handleAction(action)
@@ -591,76 +592,59 @@ export class CoordinationService {
 
         case 'startNewSequence':
           // TODO: track where we left off in the older sequence?
-          // @ts-ignore
           this.sequence = this[action.name]
           this.index = -1
       }
 
-      // @ts-ignore
       if (action.next != 'manual') {
         // if the next action can be executed automatically
         this.nextStep()
       }
-
     }
   }
 
   async runActivity() {
-
   }
 
   async handleAction(action: any) {
     if (action.action) {
-      // @ts-ignore
       this.store.dispatch(action.action.call(this, action.data))
     }
   }
 
   async handleTimeout(action: any) {
     if (action.data) {
-      // @ts-ignore
       await this.sleep(action.data)
     }
   }
 
   async handleMethod(action: any) {
     if (action.name == this.invokeComponentFunction) {
-      // @ts-ignore
       if (action.sync) {
-        // @ts-ignore
         await this.invokeComponentFunction(action.data.name, action.data.args) // TODO: support sending arguments
       } else {
-        // @ts-ignore
-        this.invokeComponentFunction(action.data.name)
+        this.invokeComponentFunction(action.data.name, [])
       }
 
     } else if (action.name) {
-      // @ts-ignore
       if (action.sync) await action.name()
-      // @ts-ignore
       else action.name()
     }
   }
 
   async handleService(action: any) {
     const service = this.injector.get(action.name)
-    // @ts-ignore
     service[action.method]()
   }
 
   async invokeComponentFunction(methodName: string, params: Array<any>) {
-    // @ts-ignore
     if (this.component && typeof (this.component[methodName]) == 'function') {
       if (params) {
-        // @ts-ignore
         await this.component[methodName](...params)
       } else {
-        // @ts-ignore
         await this.component[methodName]()
       }
-
     }
-
   }
   async sleep(timeout: number) {
     return new Promise((resolve, reject) => {

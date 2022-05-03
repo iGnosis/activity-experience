@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GraphQLClient, gql } from 'graphql-request'
+import { GraphQLClient } from 'graphql-request'
 import { environment } from 'src/environments/environment';
 
 @Injectable({

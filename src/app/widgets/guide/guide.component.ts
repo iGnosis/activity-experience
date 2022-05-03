@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { GuideActionShowMessageDTO, GuideActionShowMessagesDTO, GuideAvatarDTO, GuideMessageDTO, GuidePromptDTO, GuideSpotlightDTO, GuideState } from 'src/app/types/pointmotion';
+import { GuideAvatarDTO, GuideMessageDTO, GuidePromptDTO, GuideSpotlightDTO, GuideState } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
 
@@ -20,9 +19,9 @@ export class GuideComponent implements AfterViewInit {
   avatarPosition = ''
 
   constructor(
-    private store: Store<{guide: GuideState}>,
-    private guideService: GuideService) { 
-    
+    private store: Store<{ guide: GuideState }>,
+    private guideService: GuideService) {
+
   }
 
   ngAfterViewInit(): void {
@@ -61,7 +60,7 @@ export class GuideComponent implements AfterViewInit {
 
     this.store.select(state => state.guide.video).subscribe(video => {
       console.log('video', video);
-      
+
       if (video) {
         this.state.video = video
       } else {
@@ -78,7 +77,7 @@ export class GuideComponent implements AfterViewInit {
       // Handle change
       if (this.state.message.position != newMessage?.position) {
         // do some animation thingy
-      } 
+      }
 
       if (this.state.message.text !== newMessage?.text) {
         this.state.message.text = newMessage?.text
@@ -91,7 +90,7 @@ export class GuideComponent implements AfterViewInit {
       // once the new message box is in position
       this.handleAvatarImagePosition()
     })
-    
+
   }
 
   // avatar image, expression or location can change
@@ -101,10 +100,10 @@ export class GuideComponent implements AfterViewInit {
   }
 
   handleAvatarImagePosition() {
-    if (!this.avatar || !this.avatar.nativeElement) return 
+    if (!this.avatar || !this.avatar.nativeElement) return
 
-    const result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement, 
-                              this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
+    const result = this.guideService.getAvatarPosition(this.state.avatar, this.avatar?.nativeElement,
+      this.messageCenter?.nativeElement, this.messageBottom?.nativeElement)
     setTimeout(() => {
       this.avatar.nativeElement.style.top = result.top
       this.avatar.nativeElement.style.left = result.left
@@ -135,7 +134,7 @@ export class GuideComponent implements AfterViewInit {
 
   handleHidePrompt() {
     console.log(this.state);
-    
+
     this.state.prompt = undefined
     console.log(this.state);
   }

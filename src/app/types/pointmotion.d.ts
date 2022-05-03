@@ -37,8 +37,6 @@ export declare enum CalibrationDetails {
   CALIBRATED = '4',
 }
 
-export type CarePlanAssets = {};
-
 export type CarePlan = {
   name: string;
   createdBy?: Therapist;

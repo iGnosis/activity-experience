@@ -11,12 +11,12 @@ export const initialState: CalibrationState = {
 };
 
 function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, reason: string }) {
-  // initial calibration state.
-  // do nothing.
-  if (state.status === 'error') return -1
+  // initial calibration state. do nothing
+  if (state.status === 'error' || !state.pose || !state.pose.poseLandmarks) return -1
+  if (!data.pose || !data.pose.poseLandmarks) return -1
 
   // work out old distances
-  const oldPoseLandmarkArray = state.pose?.poseLandmarks!;
+  const oldPoseLandmarkArray = state.pose?.poseLandmarks;
   const oldLeftHip = oldPoseLandmarkArray[23];
   const oldLeftKnee = oldPoseLandmarkArray[25];
   const oldRightHip = oldPoseLandmarkArray[24];
@@ -37,7 +37,7 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
   const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
 
   // work out new distances
-  const newPostLandmarkArray = data.pose?.poseLandmarks!;
+  const newPostLandmarkArray = data.pose.poseLandmarks;
   const newLeftHip = newPostLandmarkArray[23];
   const newLeftKnee = newPostLandmarkArray[25];
   const newRightHip = newPostLandmarkArray[24];
@@ -101,7 +101,7 @@ const _calibrationReducer = createReducer(
   // TODO
   on(calibration.warning, (state, data) => {
     console.log('calibration warning');
-    
+
     return {
       status: 'warning',
       reason: data.reason,

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { CalibrationRectangle } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +26,6 @@ export class CalibrationScene extends Phaser.Scene {
     height: number;
   } = { x: 0, y: 0, width: 0, height: 0 };
 
-  // @ts-ignore
   calibrationRectangle: {
     top?: Phaser.GameObjects.Rectangle;
     right?: Phaser.GameObjects.Rectangle;
@@ -137,7 +137,7 @@ export class CalibrationScene extends Phaser.Scene {
     ).setOrigin(0, 0);
   }
 
-  override update(time: number, delta: number): void {}
+  override update(time: number, delta: number): void { }
 
   drawCalibrationBox(type: string) {
     if (!this.sys.game || !this.showCalibration) return;
@@ -174,48 +174,48 @@ export class CalibrationScene extends Phaser.Scene {
         fillColor = 0x00bd3e;
     }
 
-    const x = ['top', 'right', 'bottom', 'left'].forEach((rect) => {
+    ['top', 'right', 'bottom', 'left'].forEach((rect) => {
+      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setAlpha(1);
       // @ts-ignore
-      this.calibrationRectangle[rect].setAlpha(1);
-      // @ts-ignore
-      this.calibrationRectangle[rect].setFillStyle(fillColor, 0.3);
+      this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle].setFillStyle(fillColor, 0.3);
     });
 
-    if (type == 'success') {
-      // @ts-ignore
-      this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
-      // @ts-ignore
-      this.add.existing(this.checkImage);
-      this.tweens.add({
-        targets: [
-          this.calibrationRectangle.top,
-          this.calibrationRectangle.right,
-          this.calibrationRectangle.bottom,
-          this.calibrationRectangle.left,
-          this.calibrationRectangle.center,
-        ],
-        alpha: 0.9,
-        duration: 1000,
-        onComplete: () => {
-          //@ts-ignore
-          // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
-          // Move to whatever activity was going on...
-          this.scene.start('sit2stand');
-        },
-      });
-    } else {
-      this.tweens.getAllTweens().forEach((tween) => {
-        this.tweens.remove(tween);
-      });
-      Object.keys(this.calibrationRectangle).forEach((key) => {
-        // @ts-ignore
-        this.calibrationRectangle[key].setAlpha(1);
-      });
+    if (this.calibrationRectangle && this.calibrationRectangle.center) {
+      if (type == 'success') {
+        this.calibrationRectangle.center.setStrokeStyle(4, 0xffffff);
+        if (this.checkImage) {
+          this.add.existing(this.checkImage);
+        }
+        this.tweens.add({
+          targets: [
+            this.calibrationRectangle.top,
+            this.calibrationRectangle.right,
+            this.calibrationRectangle.bottom,
+            this.calibrationRectangle.left,
+            this.calibrationRectangle.center,
+          ],
+          alpha: 0.9,
+          duration: 1000,
+          onComplete: () => {
+            // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
+            // Move to whatever activity was going on...
+            this.scene.start('sit2stand');
+          },
+        });
+      } else {
+        this.tweens.getAllTweens().forEach((tween) => {
+          this.tweens.remove(tween);
+        });
+        Object.keys(this.calibrationRectangle).forEach((key) => {
+          // @ts-ignore
+          this.calibrationRectangle[key as keyof typeof this.calibrationRectangle].setAlpha(1);
+        });
 
-      // @ts-ignore
-      this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
-      // @ts-ignore
-      this.add.existing(this.wrongImage);
+        this.calibrationRectangle.center.setStrokeStyle(4, 0xf73636);
+        if (this.wrongImage) {
+          this.add.existing(this.wrongImage);
+        }
+      }
     }
   }
 }

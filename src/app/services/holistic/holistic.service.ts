@@ -42,7 +42,6 @@ export class HolisticService {
     this.videoElm = videoElm
 
     // We need to wait until Holistic is done loading the files, only then we set the interval.
-    // @ts-ignore
     await this.holistic?.send({ image: this.videoElm })
 
     // do something
@@ -51,8 +50,9 @@ export class HolisticService {
     // This implementation may be faulty!
     // Shoudn't we read frames every (displayFPSRate * 1000) milliseconds?
     this.interval = setInterval(() => {
-      // @ts-ignore
-      this.holistic?.send({ image: this.videoElm })
+      if (this.videoElm) {
+        this.holistic?.send({ image: this.videoElm })
+      }
     }, 500)
   }
 
