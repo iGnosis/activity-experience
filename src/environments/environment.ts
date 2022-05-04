@@ -2,7 +2,7 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
-import { Environment } from "src/app/types/pointmotion";
+import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
   production: false,

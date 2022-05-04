@@ -1,22 +1,22 @@
 import { createReducer, on } from '@ngrx/store';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
-import { calibration } from 'src/app/store/actions/calibration.actions'
+import { calibration } from 'src/app/store/actions/calibration.actions';
 import { CalibrationState } from 'src/app/types/pointmotion';
 // import { Calibration, CalibrationDetails, CalibrationStatusType } from 'src/app/types/calibration-status';
 
 export const initialState: CalibrationState = {
   status: 'error',
   reason: '',
-  poseHash: 0
+  poseHash: 0,
 };
 
-function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, reason: string }) {
-  // initial calibration state.
-  // do nothing.
-  if (state.status === 'error') return -1
+function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any; reason: string }) {
+  // initial calibration state. do nothing
+  if (state.status === 'error' || !state.pose || !state.pose.poseLandmarks) return -1;
+  if (!data.pose || !data.pose.poseLandmarks) return -1;
 
   // work out old distances
-  const oldPoseLandmarkArray = state.pose?.poseLandmarks!;
+  const oldPoseLandmarkArray = state.pose?.poseLandmarks;
   const oldLeftHip = oldPoseLandmarkArray[23];
   const oldLeftKnee = oldPoseLandmarkArray[25];
   const oldRightHip = oldPoseLandmarkArray[24];
@@ -26,18 +26,18 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
     oldLeftHip.x,
     oldLeftHip.y,
     oldLeftKnee.x,
-    oldLeftKnee.y
-  )
+    oldLeftKnee.y,
+  );
   const oldDistRightHipKnee = SitToStandService.calcDist(
     oldRightHip.x,
     oldRightHip.y,
     oldRightKnee.x,
-    oldRightKnee.y
-  )
-  const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2
+    oldRightKnee.y,
+  );
+  const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2;
 
   // work out new distances
-  const newPostLandmarkArray = data.pose?.poseLandmarks!;
+  const newPostLandmarkArray = data.pose.poseLandmarks;
   const newLeftHip = newPostLandmarkArray[23];
   const newLeftKnee = newPostLandmarkArray[25];
   const newRightHip = newPostLandmarkArray[24];
@@ -47,27 +47,27 @@ function sit2standPoseHashGenerator(state: CalibrationState, data: { pose: any, 
     newLeftHip.x,
     newLeftHip.y,
     newLeftKnee.x,
-    newLeftKnee.y
-  )
+    newLeftKnee.y,
+  );
   const newDistRightHipKnee = SitToStandService.calcDist(
     newRightHip.x,
     newRightHip.y,
     newRightKnee.x,
-    newRightKnee.y
-  )
-  const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2
+    newRightKnee.y,
+  );
+  const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2;
 
   // figuring out a relationship between those two...
-  console.log('oldDistAvg:', oldDistAvg)
-  console.log('newDistAvg:', newDistAvg)
-  console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg)
+  console.log('oldDistAvg:', oldDistAvg);
+  console.log('newDistAvg:', newDistAvg);
+  console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg);
 
-  const result = Math.abs(oldDistAvg - newDistAvg)
+  const result = Math.abs(oldDistAvg - newDistAvg);
   if (result > 0.1) {
-    console.log('a reaction was detected')
-    return 1
+    console.log('a reaction was detected');
+    return 1;
   }
-  return 0
+  return 0;
 
   // console.log('oldDistance / newDistance =', oldDistAvg / newDistAvg)
   // const result = oldDistAvg / newDistAvg
@@ -95,24 +95,24 @@ const _calibrationReducer = createReducer(
       status: 'success',
       reason: data.reason,
       pose: data.pose,
-      poseHash: sit2standPoseHashGenerator(state, data)
-    }
+      poseHash: sit2standPoseHashGenerator(state, data),
+    };
   }),
   // TODO
   on(calibration.warning, (state, data) => {
     console.log('calibration warning');
-    
+
     return {
       status: 'warning',
       reason: data.reason,
-      poseHash: sit2standPoseHashGenerator(state, data)
-    }
+      poseHash: sit2standPoseHashGenerator(state, data),
+    };
   }),
   on(calibration.error, (state, data) => {
     return {
       status: 'error',
-      reason: data.reason
-    }
+      reason: data.reason,
+    };
   }),
 );
 

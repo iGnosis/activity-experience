@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Router, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { FinishedComponent } from './pages/finished/finished.component';
 import { SessionComponent } from './pages/session/session.component';
 import { TestComponent } from './pages/test/test.component';

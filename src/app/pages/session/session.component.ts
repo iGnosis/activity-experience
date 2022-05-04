@@ -5,15 +5,12 @@ import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
-import { CalibrationService } from 'src/app/services/calibration/calibration.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
 import { CoordinationService } from 'src/app/services/coordination/coordination.service';
 import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
-import { VideoService } from 'src/app/services/video/video.service';
-import { session as sessionAction } from 'src/app/store/actions/session.actions';
 import { SessionRow, SessionState } from 'src/app/types/pointmotion';
 @Component({
   selector: 'app-session',
@@ -31,8 +28,9 @@ export class SessionComponent implements AfterViewInit {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'phaser-canvas',
-    // @ts-ignore
-    'render.transparent': true,
+    render: {
+      transparent: true,
+    },
     transparent: true,
     // backgroundColor: 'rgba(0,0,0,0)',
     physics: {
@@ -61,7 +59,7 @@ export class SessionComponent implements AfterViewInit {
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
     private coordinationService: CoordinationService,
-    private router: Router
+    private router: Router,
   ) {
     this.store
       .select((state) => state.session.session)
@@ -80,6 +78,7 @@ export class SessionComponent implements AfterViewInit {
 
     // aspect ratio of the screen and webcam may be different. make calculations easier
     const box = this.uiHelperService.setBoundingBox(stream);
+    console.log('setBoundingBox:box:', box);
     this.updateDimensions(this.video.nativeElement);
 
     this.startGame();
@@ -104,7 +103,7 @@ export class SessionComponent implements AfterViewInit {
     const scenes = [this.calibrationScene, this.sit2standScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
-    this.coordinationService.start(this.game as Phaser.Game, () => { })
+    this.coordinationService.start(this.game as Phaser.Game, () => {});
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       this.analyticsService.sendSessionEvent({

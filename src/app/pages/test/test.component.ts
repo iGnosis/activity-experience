@@ -7,65 +7,76 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 @Component({
   selector: 'app-test',
   templateUrl: './test.component.html',
-  styleUrls: ['./test.component.scss']
+  styleUrls: ['./test.component.scss'],
 })
 export class TestComponent implements OnInit {
+  showKevin = true;
+  showMsginCenter = true;
 
-  showKevin = true
-  showMsginCenter = true
+  constructor(private store: Store<{ guide: GuideState }>) {}
 
-  constructor(
-    private store: Store<{ guide: GuideState }>
-  ) { }
-
-
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   changeAvatar() {
     if (this.showKevin) {
-      this.store.dispatch(guide.updateAvatar({ name: 'kevin', position: 'bottom' }))
+      this.store.dispatch(guide.updateAvatar({ name: 'kevin', position: 'bottom' }));
     } else {
-      this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }))
+      this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
     }
-    this.showKevin = !this.showKevin
+    this.showKevin = !this.showKevin;
   }
 
   hideAvatar() {
-    this.store.dispatch(guide.hideAvatar())
+    this.store.dispatch(guide.hideAvatar());
   }
 
   sendMessage() {
-    this.showMsginCenter = !this.showMsginCenter
+    this.showMsginCenter = !this.showMsginCenter;
     if (this.showMsginCenter) {
-      this.store.dispatch(guide.sendMessage({ position: 'center', text: 'Hello ' + Math.random() }))
+      this.store.dispatch(
+        guide.sendMessage({
+          position: 'center',
+          text: 'Hello ' + Math.random(),
+        }),
+      );
     } else {
-      this.store.dispatch(guide.sendMessage({ position: 'bottom', text: 'Hello ' + Math.random() }))
+      this.store.dispatch(
+        guide.sendMessage({
+          position: 'bottom',
+          text: 'Hello ' + Math.random(),
+        }),
+      );
     }
   }
 
   hideMessage() {
-    this.store.dispatch(guide.hideMessage())
+    this.store.dispatch(guide.hideMessage());
   }
 
   sendSpotlight() {
-    this.store.dispatch(guide.sendSpotlight({ text: 'some text ' + Math.random() }))
+    this.store.dispatch(guide.sendSpotlight({ text: 'some text ' + Math.random() }));
   }
 
   hideSpotlight() {
-    this.store.dispatch(guide.hideSpotlight())
+    this.store.dispatch(guide.hideSpotlight());
   }
 
   sendPromptWithIcon() {
-    this.store.dispatch(guide.sendPrompt({ icon: faArrowLeft, position: 'right', text: 'Move Left' }))
+    this.store.dispatch(
+      guide.sendPrompt({
+        icon: faArrowLeft,
+        position: 'right',
+        text: 'Move Left',
+      }),
+    );
   }
 
   sendPromptWithNumber() {
     // Change position each time
-    this.store.dispatch(guide.sendPrompt({ position: 'center', text: '2', className: 'round' }))
+    this.store.dispatch(guide.sendPrompt({ position: 'center', text: '2', className: 'round' }));
   }
 
   hidePrompt() {
-    this.store.dispatch(guide.hidePrompt())
+    this.store.dispatch(guide.hidePrompt());
   }
 }

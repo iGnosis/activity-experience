@@ -8,9 +8,8 @@ describe('SelectGenreComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SelectGenreComponent ]
-    })
-    .compileComponents();
+      declarations: [SelectGenreComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {
