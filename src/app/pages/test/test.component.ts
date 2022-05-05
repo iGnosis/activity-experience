@@ -79,4 +79,12 @@ export class TestComponent implements OnInit {
   hidePrompt() {
     this.store.dispatch(guide.hidePrompt());
   }
+
+  startTimer() {
+    this.store.dispatch(guide.startTimer({timeout: 5000}))
+  }
+
+  hideTimer() {
+    this.store.dispatch(guide.hideTimer())
+  }
 }

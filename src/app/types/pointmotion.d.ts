@@ -754,12 +754,19 @@ export type GuideVideoDTO = {
   url: string;
 };
 
+export type GuideTimerDTO = {
+  timeout: number;
+  position?: 'top' | 'bottom';
+  color?: string
+}
+
 export type GuideState = {
   avatar?: GuideAvatarDTO;
   message?: GuideMessageDTO;
   spotlight?: GuideSpotlightDTO;
   prompt?: GuidePromptDTO;
   video?: GuideVideoDTO;
+  timer?: GuideTimerDTO
 };
 
 export type AnnouncementState = {

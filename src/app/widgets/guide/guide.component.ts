@@ -6,6 +6,7 @@ import {
   GuidePromptDTO,
   GuideSpotlightDTO,
   GuideState,
+  GuideTimerDTO,
 } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
@@ -21,6 +22,7 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('avatar') avatar!: ElementRef;
   @ViewChild('messageCenter') messageCenter!: ElementRef;
   @ViewChild('messageBottom') messageBottom!: ElementRef;
+  @ViewChild('timer') timer!: ElementRef;
   avatarPosition = '';
 
   constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService) {}
@@ -77,6 +79,35 @@ export class GuideComponent implements AfterViewInit {
           this.state.video = undefined;
         }
       });
+
+    this.store
+      .select((state) => state.guide.timer)
+      .subscribe((timer) => {
+        if (timer) {
+          this.handleStartTimer(timer)
+        } else {
+          this.handleHideTimer()
+        }
+      })
+  }
+
+  handleStartTimer(timer: GuideTimerDTO) {
+    // Most beautiful piece of code (shit) 
+    this.state.timer = timer
+    this.timer.nativeElement.style.width = '0vw'
+    setTimeout(() => {
+      this.timer.nativeElement.style.transitionDuration = timer.timeout +'ms'
+      setTimeout(() => {
+        this.timer.nativeElement.style.width = '100vw'
+        setTimeout(() => {
+          this.state.timer = undefined
+        }, timer.timeout + 200);
+      });
+    }, 100)
+  }
+
+  handleHideTimer() {
+    this.state.timer = undefined
   }
 
   handleSendMessage(newMessage: GuideMessageDTO | undefined) {

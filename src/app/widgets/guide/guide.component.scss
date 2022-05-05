@@ -117,6 +117,16 @@
 }
 
 
+.timer {
+    position: fixed;
+    bottom: 0;
+    height: 16px;
+    left: 0;
+    width: 0vw;
+    transition: width 5s linear;
+    background-color: #FFB000;
+}
+
 // .guide {
 //     width: 100vw;
 //     height: 100vh;
