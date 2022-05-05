@@ -81,10 +81,10 @@ export class TestComponent implements OnInit {
   }
 
   startTimer() {
-    this.store.dispatch(guide.startTimer({timeout: 5000}))
+    this.store.dispatch(guide.startTimer({ timeout: 5000 }));
   }
 
   hideTimer() {
-    this.store.dispatch(guide.hideTimer())
+    this.store.dispatch(guide.hideTimer());
   }
 }

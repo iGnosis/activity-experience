@@ -297,10 +297,10 @@ export class CoordinationService {
       this.isWaitingForReaction = true;
 
       // resolve has status property that can be used to send taskEnded events.
-      this.store.dispatch(guide.startTimer({timeout: 6000}))
+      this.store.dispatch(guide.startTimer({ timeout: 6000 }));
       const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000);
       this.isWaitingForReaction = false;
-      this.store.dispatch(guide.hideTimer())
+      this.store.dispatch(guide.hideTimer());
       // playing chord
       if (res.result === 'success') {
         this.soundService.playNextChord();

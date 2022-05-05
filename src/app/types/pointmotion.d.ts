@@ -757,8 +757,8 @@ export type GuideVideoDTO = {
 export type GuideTimerDTO = {
   timeout: number;
   position?: 'top' | 'bottom';
-  color?: string
-}
+  color?: string;
+};
 
 export type GuideState = {
   avatar?: GuideAvatarDTO;
@@ -766,7 +766,7 @@ export type GuideState = {
   spotlight?: GuideSpotlightDTO;
   prompt?: GuidePromptDTO;
   video?: GuideVideoDTO;
-  timer?: GuideTimerDTO
+  timer?: GuideTimerDTO;
 };
 
 export type AnnouncementState = {
