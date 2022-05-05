@@ -36,7 +36,7 @@
 </div>
 
 
-<div class="timer" #timer [hidden]="!state.timer"></div>
+<div class="timer" #timer *ngIf="state.timer"></div>
 
 <!-- <div class="guide" [hidden]="!messageTitle && !messageBody">
     <h1>{{ messageTitle }}</h1>
