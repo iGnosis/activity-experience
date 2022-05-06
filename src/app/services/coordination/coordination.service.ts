@@ -52,7 +52,14 @@ export class CoordinationService {
   isWaitingForReaction = false;
 
   async welcomeUser() {
-    // await this.sleep(3500)
+    // this.store.dispatch(
+    //   guide.startVideo({
+    //     url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1',
+    //     size: 'lg'
+    //   }),
+    // );
+
+    // await this.sleep(4000000)
 
     this.store.dispatch(
       guide.sendMessage({
@@ -132,28 +139,24 @@ export class CoordinationService {
     await this.sleep(this.prod ? 3500 : 300);
     this.store.dispatch(guide.hideSpotlight());
     await this.sleep(this.prod ? 200 : 100);
-    this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
-    this.store.dispatch(
-      guide.sendMessage({
-        text: "Let's watch how the exercise is done first",
-        position: 'bottom',
-      }),
-    );
-    await this.sleep(this.prod ? 2000 : 300);
+    
+    // this.store.dispatch(
+    //   guide.sendMessage({
+    //     text: "Let's watch how the exercise is done first",
+    //     position: 'bottom',
+    //   }),
+    // );
+    // await this.sleep(this.prod ? 2000 : 300);
 
-    this.soundService.pauseConstantDrum();
-    this.store.dispatch(
-      guide.startVideo({
-        url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1',
-      }),
-    );
-    await this.sleep(this.prod ? 10000 : 5000);
-    this.store.dispatch(guide.hideVideo());
-    this.soundService.startConstantDrum();
+    // this.soundService.pauseConstantDrum();
+    // await this.sleep(this.prod ? 10000 : 5000);
+    // this.store.dispatch(guide.hideVideo());
+    // this.soundService.startConstantDrum();
 
     // Enable sit2stand service
     this.sit2standService.enable();
     await this.sleep(this.prod ? 2000 : 300);
+    this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
     this.store.dispatch(
       guide.sendMessage({
         text: 'Before we start the exercise, please sit down on a chair',

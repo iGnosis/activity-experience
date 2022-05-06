@@ -753,6 +753,7 @@ export type GuidePromptDTO = {
 
 export type GuideVideoDTO = {
   url: string;
+  size: 'md' | 'lg'
 };
 
 export type GuideTimerDTO = {

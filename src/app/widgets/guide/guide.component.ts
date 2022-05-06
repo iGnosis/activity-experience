@@ -7,10 +7,12 @@ import {
   GuideSpotlightDTO,
   GuideState,
   GuideTimerDTO,
+  GuideVideoDTO,
 } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
+import { guide } from 'src/app/store/actions/guide.actions';
 
 @Component({
   selector: 'app-guide',
@@ -24,6 +26,7 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('messageCenter') messageCenter!: ElementRef;
   @ViewChild('messageBottom') messageBottom!: ElementRef;
   @ViewChild('timer') timer!: ElementRef;
+  @ViewChild('yt') yt!: ElementRef;
   avatarPosition = '';
   clearTimeOut: any
   lastText: string = ''
@@ -77,7 +80,7 @@ export class GuideComponent implements AfterViewInit {
       console.log('video', video);
       
       if (video) {
-        this.state.video = video;
+        this.handleStartVideo(video)
       } else {
         this.state.video = undefined;
       }
@@ -94,6 +97,19 @@ export class GuideComponent implements AfterViewInit {
     })
   }
   
+
+  handleStartVideo(video: GuideVideoDTO) {
+    if (!video) return
+
+    this.state.video = video;
+    if(video.size == 'lg') {
+      this.yt.nativeElement.width = window.innerWidth.toString()
+      this.yt.nativeElement.height = window.innerHeight.toString()
+    } else {
+      this.yt.nativeElement.width = '500'
+      this.yt.nativeElement.height = '400'
+    }
+  }
   handleStartTimer(timer: GuideTimerDTO) {
     // Most beautiful piece of code (shit) 
     this.state.timer = undefined
@@ -200,6 +216,10 @@ export class GuideComponent implements AfterViewInit {
         this.soundService.tts(text)
         this.lastText = text
       }
+    }
+
+    onSkipVideoTutorial() {
+      this.store.dispatch(guide.hideVideo())
     }
   }
   
