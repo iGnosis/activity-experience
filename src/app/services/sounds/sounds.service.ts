@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Howl } from 'howler';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -74,5 +75,14 @@ export class SoundsService {
    */
   fade(from: number, to: number, duration: number, id: number = this.constantDrumId as number) {
     this.drums.fade(from, to, duration, id);
+  }
+
+  tts(text: string, speaker = 'mila') {
+    let sound = new Howl({
+      src: [environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text)],
+      autoplay: true,
+      html5: true
+    })
+    sound.play()
   }
 }

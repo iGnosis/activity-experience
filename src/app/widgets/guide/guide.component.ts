@@ -10,6 +10,7 @@ import {
 } from 'src/app/types/pointmotion';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { GuideService } from 'src/app/services/guide/guide.service';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 
 @Component({
   selector: 'app-guide',
@@ -26,7 +27,7 @@ export class GuideComponent implements AfterViewInit {
   avatarPosition = '';
   clearTimeOut: any
   
-  constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService) {}
+  constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService, private soundService: SoundsService) {}
   
   ngAfterViewInit(): void {
     this.store
@@ -120,7 +121,6 @@ export class GuideComponent implements AfterViewInit {
   
   handleSendMessage(newMessage: GuideMessageDTO | undefined) {
     this.state.message = newMessage;
-    console.log(newMessage);
     if (this.state.message) {
       this.state.message = Object.assign({}, this.state.message);
       // Handle change
@@ -134,6 +134,8 @@ export class GuideComponent implements AfterViewInit {
     } else {
       this.state.message = newMessage;
     }
+
+    this.handleTextToSpeech(newMessage?.text)
     
     setTimeout(() => {
       // once the new message box is in position
@@ -190,6 +192,12 @@ export class GuideComponent implements AfterViewInit {
       
       this.state.prompt = undefined;
       console.log(this.state);
+    }
+
+    handleTextToSpeech(text: string | undefined) {
+      if (text) {
+        this.soundService.tts(text)
+      }
     }
   }
   

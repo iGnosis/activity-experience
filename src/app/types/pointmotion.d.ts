@@ -703,6 +703,7 @@ export interface Environment {
   };
   patient: string;
   careplan: string;
+  apiEndpoint: string,
   musicExperience: 'music_experience_1' | 'music_experience_2';
 }
 
