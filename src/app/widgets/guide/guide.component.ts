@@ -26,6 +26,7 @@ export class GuideComponent implements AfterViewInit {
   @ViewChild('timer') timer!: ElementRef;
   avatarPosition = '';
   clearTimeOut: any
+  lastText: string = ''
   
   constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService, private soundService: SoundsService) {}
   
@@ -195,8 +196,9 @@ export class GuideComponent implements AfterViewInit {
     }
 
     handleTextToSpeech(text: string | undefined) {
-      if (text) {
+      if (text && text != this.lastText) {
         this.soundService.tts(text)
+        this.lastText = text
       }
     }
   }
