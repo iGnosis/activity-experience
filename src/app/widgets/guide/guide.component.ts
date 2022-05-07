@@ -187,6 +187,7 @@ export class GuideComponent implements AfterViewInit {
     
     handlePrompt(prompt: GuidePromptDTO) {
       this.state.prompt = Object.assign({}, prompt);
+      this.handleTextToSpeech(prompt.text)
       this.state.prompt.className +=
       ' ' + this.guideService.getPromptClassNames(this.state.prompt.position);
     }

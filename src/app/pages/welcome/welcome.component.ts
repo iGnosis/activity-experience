@@ -4,6 +4,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 
 
 type Message  = { 
@@ -75,6 +76,7 @@ type Message  = {
         },
         {
           type: 'pre-session-survey',
+          text: 'How are you feeling today?',
           bg: '#FFB2B2',
         },
         {
@@ -85,6 +87,7 @@ type Message  = {
         },
         {
           type: 'select-genre',
+          text: 'What type of music do you want to play?',
           bg: '#FFB000',
         },
         {
@@ -108,6 +111,7 @@ type Message  = {
         private route: ActivatedRoute,
         private router: Router,
         private sessionService: SessionService,
+        private soundsService: SoundsService,
         private store: Store<{ session: any }>,
         ) {
           // Save the session id in the store
@@ -134,13 +138,14 @@ type Message  = {
           if (this.currentStep == this.messages.length) {
             // Last step is also done :D
             // Let the user play the game
-            console.log(this.currentStep);
-            console.log('navigating to session page');
             this.router.navigate(['session']);
           }
           if (this.messages[this.currentStep]) {
             this.currentMessage = this.messages[this.currentStep]
             this.currentMessage.bg = this.currentMessage.bg || '#000066';
+            if(this.currentMessage.text) {
+              this.soundsService.tts(this.currentMessage.text)
+            }
             if (this.currentMessage.timeout) {
               // Blank out the page
               setTimeout(() => {
