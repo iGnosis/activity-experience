@@ -53,33 +53,18 @@ export class CoordinationService {
 
   async sendMessage(text: string, position: 'center' | 'bottom', skipWait = false) {
     return new Promise(async (resolve) => {
-      const words = text.split(' ').length / 2
+      const seconds = Math.ceil(text.split(' ').length / 2)
       this.store.dispatch(
         guide.sendMessage({text, position}),
       );
       if (!skipWait) {
-        await this.sleep(this.prod ? words * 1000 : 300);
+        await this.sleep(this.prod ? seconds * 1000 : 300);
       }
       resolve({})
     })
   }
 
   async welcomeUser() {
-    // this.store.dispatch(
-    //   guide.startVideo({
-    //     url: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1',
-    //     size: 'lg'
-    //   }),
-    // );
-
-    // await this.sleep(4000000)
-
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Hi!',
-    //     position: 'center',
-    //   }),
-    // );
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
     await this.sendMessage('Hi!', 'center')
     
@@ -92,31 +77,6 @@ export class CoordinationService {
     await this.sendMessage("Firstly, we need to see you on the screen", 'bottom')
     await this.sendMessage("Please move around such that you can see your whole body inside the red box", 'bottom', true)
 
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Before we start, we need to ensure a few things',
-    //     position: 'bottom',
-    //   }),
-    // );
-
-    // await this.sleep(this.prod ? 3000 : 300);
-
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Firstly, we need to see you on the screen',
-    //     position: 'bottom',
-    //   }),
-    // );
-
-    // await this.sleep(this.prod ? 3000 : 300);
-
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Please move around such that you can see your whole body inside the red box',
-    //     position: 'bottom',
-    //   }),
-    // );
-
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
@@ -128,7 +88,6 @@ export class CoordinationService {
     this.store.dispatch(guide.hideMessage());
     this.store.dispatch(announcement.announce({ message: 'Excellent', timeout: 3000 }));
     await this.sleep(this.prod ? 3500 : 300);
-    // this.store.dispatch(guide.updateAvatar({name: 'mila'}))
     this.store.dispatch(guide.sendSpotlight({ text: 'Starting Next Activity' }));
     // activity started
     this.analyticsService.sendActivityEvent({
@@ -142,18 +101,6 @@ export class CoordinationService {
     this.store.dispatch(guide.hideSpotlight());
     await this.sleep(this.prod ? 200 : 100);
     
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: "Let's watch how the exercise is done first",
-    //     position: 'bottom',
-    //   }),
-    // );
-    // await this.sleep(this.prod ? 2000 : 300);
-
-    // this.soundService.pauseConstantDrum();
-    // await this.sleep(this.prod ? 10000 : 5000);
-    // this.store.dispatch(guide.hideVideo());
-    // this.soundService.startConstantDrum();
 
     // Enable sit2stand service
     this.sit2standService.enable();
@@ -174,76 +121,24 @@ export class CoordinationService {
 
     await this.sendMessage('Let us try it out...', 'center')
 
-    await this.sendMessage('Let us try it out...', 'bottom', false)
+    await this.sendMessage('Let us try it out...', 'bottom', true)
 
     this.store.dispatch(guide.sendPrompt({ className: 'round', text: '1', position: 'center' }))
     await this.sleep(this.prod ? 3000 : 300)
     await this.waitForClass('stand');
     this.soundService.playNextChord();
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Now lets make this exercise interesting',
-    //     position: 'center',
-    //   }),
-    // );
-    // await this.sleep(this.prod ? 2000 : 300);
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'When you see an ODD number you STAND',
-    //     position: 'center',
-    //   }),
-    // );
-    // await this.sleep(this.prod ? 2000 : 300);
-    // this.store.dispatch(guide.sendMessage({ text: 'Let us try it out...', position: 'center' }));
-    // await this.sleep(this.prod ? 3000 : 300);
-    // this.store.dispatch(guide.sendMessage({ text: 'Let us try it out...', position: 'bottom' }));
-    
-    
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Stand when you see an ODD number',
-    //     position: 'bottom',
-    //   }),
-    // );
-    // await this.waitForClass('stand');
-    
-
-    this.store.dispatch(guide.hideAvatar());
-    this.store.dispatch(guide.hidePrompt());
-    this.store.dispatch(guide.hideMessage());
-    await this.sleep(100);
 
     this.store.dispatch(announcement.announce({ message: 'Awesome!', timeout: 3000 }));
     await this.sleep(3500);
 
-
-
-    // this.store.dispatch(guide.sendMessage({ text: 'That was great!', position: 'center' }));
     this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
     this.sendMessage('That was great!', 'center')
-    // await this.sleep(this.prod ? 3000 : 300);
-    this.sendMessage('Now when you see an EVEN number you SIT', 'center')
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'Now when you see an EVEN number you SIT',
-    //     position: 'center',
-    //   }),
-    // );
-    // await this.sleep(this.prod ? 3000 : 300);
+    this.sendMessage('Now when you see an EVEN number you can SIT', 'center')
     this.sendMessage('Let us give it a try?', 'center')
-    // this.store.dispatch(guide.sendMessage({ text: 'Let us give it a try?', position: 'center' }));
-    // await this.sleep(this.prod ? 1000 : 300);
     this.sendMessage('Let us give it a try?', 'bottom', true)
-    // this.store.dispatch(guide.sendMessage({ text: 'Let us give it a try?', position: 'bottom' }));
     this.store.dispatch(guide.sendPrompt({ className: 'round', text: '12', position: 'center' }));
-    // await this.sleep(this.prod ? 3000 : 300);
     this.sendMessage('SIT when you see an EVEN number', 'bottom', true)
-    // this.store.dispatch(
-    //   guide.sendMessage({
-    //     text: 'SIT when you see an EVEN number',
-    //     position: 'bottom',
-    //   }),
-    // );
+    
     await this.waitForClass('sit');
     this.soundService.playNextChord();
 
