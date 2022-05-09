@@ -653,17 +653,11 @@ export type SessionState = {
   session?: SessionRow;
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
-  pauseActivity?: PauseActivityState;
 };
 
 export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame'
 
-export type PauseActivityState = {
-  activitiesCompleted?: string[];
-  currentActivityId: string;
-  stage: ActivityStage;
-  repsCompleted: number;
-};
+
 
 export type ActivityState = {
   name?: string;

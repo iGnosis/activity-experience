@@ -280,7 +280,7 @@ export class CoordinationService {
       this.resumeSit2Stand()
     }
 
-    while (this.successfulReps < 10 && this.calibrationStatus === 'success' && !this.isRecalibrated) {
+    while (this.successfulReps < 10 && this.calibrationStatus === 'success' && !this.isRecalibrated) {12
       this.taskId = v4();
       this.attemptId = v4();
 
@@ -483,7 +483,7 @@ export class CoordinationService {
 
     this.observables$.currentActivity = this.store.select(state => state.session.currentActivity)
       this.observables$.currentActivity.subscribe((res: ActivityState) => {
-        this.successfulReps = res.repsCompleted;
+        this.successfulReps = res.repsCompleted || 0;
       });
   }
 
@@ -746,11 +746,8 @@ export class CoordinationService {
             })
         );
 
-        this.store.dispatch(session.pauseActivity({
-            currentActivityId: this.activityId,
-            stage: this.activityStage,
-            repsCompleted: this.successfulReps
-        }))
+
+      this.analyticsService.sendSessionState(this.activityStage)
 
   }
 
