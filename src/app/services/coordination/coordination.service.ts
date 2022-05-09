@@ -30,7 +30,7 @@ export class CoordinationService {
     private soundService: SoundsService,
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
-  ) {}
+  ) { }
 
   poseCount = 0;
   calibrationSuccessCount = 0;
@@ -443,7 +443,7 @@ export class CoordinationService {
         results.pose,
         calibrationResult!.status,
       );
-      console.log('poseHash:', poseHash);
+      // console.log('poseHash:', poseHash);
       if (poseHash === 1) {
         console.log('event:taskReacted:sent');
         this.analyticsService.sendTaskEvent({
@@ -518,13 +518,12 @@ export class CoordinationService {
     );
     const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2;
 
-    console.log('oldDistAvg:', oldDistAvg);
-    console.log('newDistAvg:', newDistAvg);
-    console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg);
-
     const result = Math.abs(oldDistAvg - newDistAvg);
     if (result > 0.1) {
       console.log('a reaction was detected');
+      console.log('oldDistAvg:', oldDistAvg);
+      console.log('newDistAvg:', newDistAvg);
+      console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg);
       return 1;
     }
     return 0;
@@ -691,7 +690,7 @@ export class CoordinationService {
     }
   }
 
-  async runActivity() {}
+  async runActivity() { }
 
   async handleAction(action: any) {
     if (action.action) {
