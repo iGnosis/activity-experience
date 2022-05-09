@@ -6,10 +6,10 @@ import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
   production: false,
-  // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
+  // harmless stage environment token, TODO: pick up token from localStorage when end to end flow is implemented
   token:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJBbWFuIiwibGFzdE5hbWUiOiJHYXV0YW0iLCJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsicGF0aWVudCIsInRoZXJhcGlzdCIsImFkbWluIl0sIngtaGFzdXJhLWRlZmF1bHQtcm9sZSI6InRoZXJhcGlzdCIsIngtaGFzdXJhLXVzZXItaWQiOiJkODVlMjMxNS0yNGQyLTQ1OTMtODZmZi1mOTcwMGMyZTZhYzQiLCJ4LWhhc3VyYS1wcm92aWRlci1pZCI6IjIwZTY2MTMyLWQ1YjQtNGE3My1iNDU4LWRkMTkyNjVkNmRiYSJ9LCJpYXQiOjE2NDM5NzYyODF9.Tlzven_qWYRS4bLXwjvAi1_BefRYl3Pr8qd3cUPrX5Q',
-  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJBbWFuIiwibGFzdE5hbWUiOiJHYXV0YW0iLCJpZCI6IjkyMDBjMjY1LTM2NzEtNDc3Zi1iZWZjLWFmYjYyN2RlN2NlNSIsInByb3ZpZGVyIjoiZWU0Yjc3MWEtMzJlNS00YWRlLTlhYTItZjk4Njc5MDgwZTUxIiwiaHR0cHM6Ly9oYXN1cmEuaW8vand0L2NsYWltcyI6eyJ4LWhhc3VyYS1hbGxvd2VkLXJvbGVzIjpbInBhdGllbnQiLCJ0aGVyYXBpc3QiLCJhZG1pbiJdLCJ4LWhhc3VyYS1kZWZhdWx0LXJvbGUiOiJ0aGVyYXBpc3QiLCJ4LWhhc3VyYS11c2VyLWlkIjoiOTIwMGMyNjUtMzY3MS00NzdmLWJlZmMtYWZiNjI3ZGU3Y2U1IiwieC1oYXN1cmEtcHJvdmlkZXItaWQiOiJlZTRiNzcxYS0zMmU1LTRhZGUtOWFhMi1mOTg2NzkwODBlNTEifSwiaWF0IjoxNjUyMTAzODM1fQ.lCbvg9Y2ZadLnm1D4u_5ED5_qspwl7CNaTfOC5TSkm4',
+  endpoint: 'https://api.stage.pointmotioncontrol.com/v1/graphql',
   analytics: {
     calibration: true,
   },
