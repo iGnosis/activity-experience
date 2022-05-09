@@ -3,4 +3,3 @@
 
 echo "Running ESLint"
 npm run lint
-git add .
