@@ -47,13 +47,23 @@ const _sessionReducer = createReducer(
     saveToLocalStorage(newState);
     return newState;
   }),
+   on(session.pauseActivity, (state, data) => {
+        const newState = Object.assign({}, state)
+        newState.pauseActivity = data
+        saveToLocalStorage(newState)
+        console.log('activity paused, ', newState)
+        return newState
+    }),
   on(session.addRep, (state, data) => {
-    if (state.currentActivity) {
-      state.currentActivity.repsCompleted = state.currentActivity.repsCompleted || 0;
-      state.currentActivity.repsCompleted += 1;
-    }
-    return state;
-  }),
+        const newState = {
+            ...state,
+            currentActivity: {
+                ...state.currentActivity,
+                repsCompleted : state.currentActivity!.repsCompleted + 1 || 0
+            }
+        }
+        return newState
+    })
 );
 
 export function sessionReducer(state: any, action: any) {
