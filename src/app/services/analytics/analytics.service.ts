@@ -3,6 +3,8 @@ import { Store } from '@ngrx/store';
 import {
   ActivityEvent,
   ActivityEventRow,
+  ActivityStage,
+  ActivityState,
   AnalyticsEvent,
   AnalyticsRow,
   AnalyticsSessionEvent,
@@ -20,12 +22,17 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
+  currentActivity: ActivityState | undefined = undefined
+  nextActivity: ActivityState| undefined = undefined
+
   constructor(private gql: GqlClientService, private store: Store<{ session: SessionState }>) {
     this.store
-      .select((state) => state.session.session)
+      .select((state) => state.session)
       .subscribe((session) => {
-        this.sessionId = session?.id || '';
-        this.patientId = session?.patient || '';
+        this.sessionId = session.session?.id || '';
+        this.patientId = session.session?.patient || '';
+        this.currentActivity = session.currentActivity || undefined,
+        this.nextActivity = session.nextActivity || undefined
       });
   }
 
@@ -177,7 +184,7 @@ export class AnalyticsService {
       }
     }
   }
-
+  
   async sendSessionEndedAt() {
     if (this.sessionId) {
       const sessionEndedAtRow: { endedAt: Date; sessionId: string } = {
@@ -192,6 +199,27 @@ export class AnalyticsService {
 		}`,
         sessionEndedAtRow,
       );
+    }
+  }
+
+  async sendSessionState(stage: ActivityStage) {
+    if (this.sessionId) {
+      const sessionStateRow = {
+        state: {
+          currentActivity: this.currentActivity,
+          nextActivity: this.nextActivity,
+          stage : stage
+        },
+        id: this.sessionId
+      } 
+      return this.gql.req(
+        `mutation SetSessionState($state: jsonb, $id: uuid) {
+          update_session(_set: {state: $state}, where: {id: {_eq: $id}}) {
+            affected_rows
+          }
+        }`,
+        sessionStateRow
+      )
     }
   }
 

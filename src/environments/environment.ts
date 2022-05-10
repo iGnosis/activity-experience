@@ -12,7 +12,8 @@ export const environment: Environment = {
     calibration: true,
   },
   musicExperience: 'music_experience_2',
-  apiEndpoint: 'https://services.dev.pointmotioncontrol.com/'
+  apiEndpoint: 'https://services.dev.pointmotioncontrol.com/',
+  speedUpSession: true
 };
 
 /*

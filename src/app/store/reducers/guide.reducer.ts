@@ -84,8 +84,8 @@ const _guideReducer = createReducer(
 
   on(guide.startTimer, (state, data) => {
     const newState = Object.assign({}, state);
-    newState.timer = data
-    return newState
+    newState.timer = data;
+    return newState;
   }),
 
   on(guide.hideTimer, (state, video) => {

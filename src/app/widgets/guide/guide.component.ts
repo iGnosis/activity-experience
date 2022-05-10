@@ -1,5 +1,14 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
-import { Store } from '@ngrx/store';
+
+
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  Store
+} from '@ngrx/store';
 import {
   GuideAvatarDTO,
   GuideMessageDTO,
@@ -9,10 +18,19 @@ import {
   GuideTimerDTO,
   GuideVideoDTO,
 } from 'src/app/types/pointmotion';
-import { faCoffee } from '@fortawesome/free-solid-svg-icons';
-import { GuideService } from 'src/app/services/guide/guide.service';
-import { SoundsService } from 'src/app/services/sounds/sounds.service';
-import { guide } from 'src/app/store/actions/guide.actions';
+import {
+  faCoffee
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  GuideService
+} from 'src/app/services/guide/guide.service';
+import {
+  SoundsService
+} from 'src/app/services/sounds/sounds.service';
+import {
+  guide
+} from 'src/app/store/actions/guide.actions';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-guide',
@@ -31,7 +49,9 @@ export class GuideComponent implements AfterViewInit {
   clearTimeOut: any
   lastText: string = ''
   
-  constructor(private store: Store<{ guide: GuideState }>, private guideService: GuideService, private soundService: SoundsService) {}
+  constructor(private store: Store < {
+    guide: GuideState
+  } > , private guideService: GuideService, private soundService: SoundsService) {}
   
   ngAfterViewInit(): void {
     this.store
@@ -90,19 +110,19 @@ export class GuideComponent implements AfterViewInit {
     .select((state) => state.guide.timer)
     .subscribe((timer) => {
       if (timer) {
-        this.handleStartTimer(timer)
+        this.handleStartTimer(timer);
       } else {
-        this.handleHideTimer()
+        this.handleHideTimer();
       }
-    })
+    });
   }
   
-
+  
   handleStartVideo(video: GuideVideoDTO) {
     if (!video) return
-
+    
     this.state.video = video;
-    if(video.size == 'lg') {
+    if (video.size == 'lg') {
       this.yt.nativeElement.width = window.innerWidth.toString()
       this.yt.nativeElement.height = window.innerHeight.toString()
     } else {
@@ -111,29 +131,28 @@ export class GuideComponent implements AfterViewInit {
     }
   }
   handleStartTimer(timer: GuideTimerDTO) {
-    // Most beautiful piece of code (shit) 
-    this.state.timer = undefined
+    // Most beautiful piece of code (shit)
+    this.state.timer = undefined;
     setTimeout(() => {
-      this.state.timer = timer
+      this.state.timer = timer;
       setTimeout(() => {
-        this.timer.nativeElement.style.width = '0vw'
-        clearTimeout(this.clearTimeOut)
+        this.timer.nativeElement.style.width = '0vw';
+        clearTimeout(this.clearTimeOut);
         setTimeout(() => {
-          this.timer.nativeElement.style.transitionDuration = timer.timeout +'ms'
+          this.timer.nativeElement.style.transitionDuration = timer.timeout + 'ms';
           setTimeout(() => {
-            this.timer.nativeElement.style.width = '100vw'
+            this.timer.nativeElement.style.width = '100vw';
             this.clearTimeOut = setTimeout(() => {
-              this.state.timer = undefined
+              this.state.timer = undefined;
             }, timer.timeout + 200);
           });
-        }, 100)
-      })
+        }, 100);
+      });
     });
-    
   }
   
   handleHideTimer() {
-    this.state.timer = undefined
+    this.state.timer = undefined;
   }
   
   handleSendMessage(newMessage: GuideMessageDTO | undefined) {
@@ -151,7 +170,7 @@ export class GuideComponent implements AfterViewInit {
     } else {
       this.state.message = newMessage;
     }
-
+    
     this.handleTextToSpeech(newMessage?.text)
     
     setTimeout(() => {
@@ -192,6 +211,35 @@ export class GuideComponent implements AfterViewInit {
       ' ' + this.guideService.getPromptClassNames(this.state.prompt.position);
     }
     
+    
+    // handleHideMessage() {
+    //   this.state.message = undefined;
+    // }
+    
+    // handleHideSpotlight() {
+    //   this.state.spotlight = undefined;
+    // }
+    
+    // handleHidePrompt() {
+    //   console.log(this.state);
+    
+    //   this.state.prompt = undefined;
+    //   console.log(this.state);
+    // }
+    
+    handleTextToSpeech(text: string | undefined) {
+      if(environment.speedUpSession) return
+      
+      if (text && text != this.lastText) {
+        this.soundService.tts(text)
+        this.lastText = text
+      }
+    }
+    
+    onSkipVideoTutorial() {
+      this.store.dispatch(guide.hideVideo())
+    }
+    
     handleHideAvatar() {
       console.log('hide avatar');
       this.state.avatar = undefined;
@@ -211,16 +259,6 @@ export class GuideComponent implements AfterViewInit {
       this.state.prompt = undefined;
       console.log(this.state);
     }
-
-    handleTextToSpeech(text: string | undefined) {
-      if (text && text != this.lastText) {
-        this.soundService.tts(text)
-        this.lastText = text
-      }
-    }
-
-    onSkipVideoTutorial() {
-      this.store.dispatch(guide.hideVideo())
-    }
   }
+  
   

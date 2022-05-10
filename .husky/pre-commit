@@ -1,5 +1,6 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# echo "Running ESLint"
-# npm run lint
+echo "Running ESLint"
+npm run lint
+git add .

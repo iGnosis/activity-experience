@@ -655,9 +655,13 @@ export type SessionState = {
   nextActivity?: ActivityState;
 };
 
+export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame'
+
+
+
 export type ActivityState = {
-  name: string;
-  totalReps: number;
+  name?: string;
+  totalReps?: number;
   repsCompleted: number;
   timeElapsed?: number;
 };
@@ -703,8 +707,9 @@ export interface Environment {
   };
   // patient: string;
   // careplan: string;
-  apiEndpoint: string,
+  apiEndpoint: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
+  speedUpSession?: boolean;
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
@@ -759,8 +764,8 @@ export type GuideVideoDTO = {
 export type GuideTimerDTO = {
   timeout: number;
   position?: 'top' | 'bottom';
-  color?: string
-}
+  color?: string;
+};
 
 export type GuideState = {
   avatar?: GuideAvatarDTO;
@@ -768,7 +773,7 @@ export type GuideState = {
   spotlight?: GuideSpotlightDTO;
   prompt?: GuidePromptDTO;
   video?: GuideVideoDTO;
-  timer?: GuideTimerDTO
+  timer?: GuideTimerDTO;
 };
 
 export type AnnouncementState = {
