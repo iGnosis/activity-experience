@@ -696,13 +696,13 @@ export type Patient = {
 // }
 export interface Environment {
   production: boolean;
-  token: string;
+  // token: string;
   endpoint: string;
   analytics: {
     calibration: boolean;
   };
-  patient: string;
-  careplan: string;
+  // patient: string;
+  // careplan: string;
   apiEndpoint: string,
   musicExperience: 'music_experience_1' | 'music_experience_2';
 }

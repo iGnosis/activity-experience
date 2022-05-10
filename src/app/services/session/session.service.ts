@@ -10,25 +10,25 @@ export class SessionService {
   sessionId: string | undefined;
   constructor(private client: GqlClientService) {}
 
-  async new() {
-    return this.client.req(
-      gql`
-        mutation StartSession($careplan: uuid!, $patient: uuid!) {
-          insert_session_one(object: { careplan: $careplan, patient: $patient }) {
-            id
-            createdAt
-            updatedAt
-            careplan
-            patient
-          }
-        }
-      `,
-      {
-        careplan: environment.careplan,
-        patient: environment.patient,
-      },
-    );
-  }
+  // async new() {
+  //   return this.client.req(
+  //     gql`
+  //       mutation StartSession($careplan: uuid!, $patient: uuid!) {
+  //         insert_session_one(object: { careplan: $careplan, patient: $patient }) {
+  //           id
+  //           createdAt
+  //           updatedAt
+  //           careplan
+  //           patient
+  //         }
+  //       }
+  //     `,
+  //     {
+  //       careplan: environment.careplan,
+  //       patient: environment.patient,
+  //     },
+  //   );
+  // }
 
   async get(id: string) {
     this.sessionId = id;
