@@ -697,6 +697,7 @@ export type Patient = {
 //   genre?: string
 // }
 export interface Environment {
+  stageName: string;
   production: boolean;
   // token: string;
   endpoint: string;

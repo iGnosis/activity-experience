@@ -78,6 +78,9 @@ export class SoundsService {
   }
 
   tts(text: string, speaker = 'mila') {
+    console.log(environment);
+    if (environment.speedUpSession) return;
+
     const sound = new Howl({
       src: [environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text)],
       autoplay: true,

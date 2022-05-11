@@ -23,7 +23,6 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root',
 })
 export class CoordinationService {
-  private prod = environment.speedUpSession;
   private game?: Phaser.Game;
   private onComplete: any;
   constructor(
@@ -78,7 +77,7 @@ export class CoordinationService {
       const seconds = Math.ceil(text.split(' ').length / 2);
       this.store.dispatch(guide.sendMessage({ text, position }));
       if (!skipWait) {
-        await this.sleep(this.prod ? seconds * 1000 : 300);
+        await this.sleep(environment.speedUpSession ? 300 : seconds * 1000);
       }
       resolve({});
     });
@@ -88,7 +87,7 @@ export class CoordinationService {
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
     await this.sendMessage('Hi!', 'center');
 
-    await this.sleep(this.prod ? 1000 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 1000);
 
     await this.sendMessage(
       'My name is Mila. I am thrilled to be working with you today.',
@@ -116,7 +115,7 @@ export class CoordinationService {
     this.store.dispatch(guide.hideAvatar());
     this.store.dispatch(guide.hideMessage());
     this.store.dispatch(announcement.announce({ message: 'Excellent', timeout: 3000 }));
-    await this.sleep(this.prod ? 3500 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 3500);
     this.store.dispatch(guide.sendSpotlight({ text: 'Starting Next Activity' }));
     // activity started
     this.analyticsService.sendActivityEvent({
@@ -124,15 +123,15 @@ export class CoordinationService {
       event_type: 'activityStarted',
     });
 
-    await this.sleep(this.prod ? 3500 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 3500);
     this.store.dispatch(guide.sendSpotlight({ text: 'SIT TO STAND' }));
-    await this.sleep(this.prod ? 3500 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 3500);
     this.store.dispatch(guide.hideSpotlight());
-    await this.sleep(this.prod ? 200 : 100);
+    await this.sleep(environment.speedUpSession ? 100 : 200);
 
     // Enable sit2stand service
     this.sit2standService.enable();
-    await this.sleep(this.prod ? 2000 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 2000);
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
 
     await this.sendMessage('Before we start the exercise, please sit down on a chair', 'center');
@@ -156,7 +155,7 @@ export class CoordinationService {
     await this.sendMessage('Let us try it out...', 'bottom', true);
 
     this.store.dispatch(guide.sendPrompt({ className: 'round', text: '1', position: 'center' }));
-    await this.sleep(this.prod ? 3000 : 300);
+    await this.sleep(environment.speedUpSession ? 300 : 3000);
     await this.waitForClass('stand');
     this.soundService.playNextChord();
 

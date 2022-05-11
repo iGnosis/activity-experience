@@ -5,6 +5,7 @@
 import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
+  stageName: 'default',
   production: false,
   // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
