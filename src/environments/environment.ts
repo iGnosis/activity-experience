@@ -13,7 +13,7 @@ export const environment: Environment = {
   },
   musicExperience: 'music_experience_2',
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com/',
-  speedUpSession: true
+  speedUpSession: true,
 };
 
 /*

@@ -47,19 +47,19 @@ const _sessionReducer = createReducer(
     saveToLocalStorage(newState);
     return newState;
   }),
-    on(session.addRep, (state, data) => {
-        if (state.currentActivity) {
-            const newState = {
-                ...state,
-                currentActivity: {
-                    ...state.currentActivity,
-                    repsCompleted: state.currentActivity!.repsCompleted + 1 || 0,
-                }
-            }
-            return newState
-        }
-        return state
-    })
+  on(session.addRep, (state, data) => {
+    if (state.currentActivity) {
+      const newState = {
+        ...state,
+        currentActivity: {
+          ...state.currentActivity,
+          repsCompleted: state.currentActivity!.repsCompleted + 1 || 0,
+        },
+      };
+      return newState;
+    }
+    return state;
+  }),
 );
 
 export function sessionReducer(state: any, action: any) {

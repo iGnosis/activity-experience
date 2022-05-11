@@ -655,9 +655,7 @@ export type SessionState = {
   nextActivity?: ActivityState;
 };
 
-export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame'
-
-
+export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
 
 export type ActivityState = {
   name?: string;
@@ -758,7 +756,7 @@ export type GuidePromptDTO = {
 
 export type GuideVideoDTO = {
   url: string;
-  size: 'md' | 'lg'
+  size: 'md' | 'lg';
 };
 
 export type GuideTimerDTO = {

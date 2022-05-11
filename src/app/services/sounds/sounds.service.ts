@@ -78,11 +78,11 @@ export class SoundsService {
   }
 
   tts(text: string, speaker = 'mila') {
-    let sound = new Howl({
+    const sound = new Howl({
       src: [environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text)],
       autoplay: true,
-      html5: true
-    })
-    sound.play()
+      html5: true,
+    });
+    sound.play();
   }
 }
