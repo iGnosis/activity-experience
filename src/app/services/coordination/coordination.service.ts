@@ -103,15 +103,7 @@ export class CoordinationService {
       true,
     );
 
-    // this.activityStage = 'explain';
-    if (this.poseCount < 8) {
-      this.store.dispatch(
-        guide.sendMessage({
-          text: 'Ooops! Seems like our AI failed to load. Please reload the page and try again?',
-          position: 'center',
-        }),
-      );
-    }
+    this.activityStage = 'explain';
 
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
