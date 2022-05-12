@@ -48,6 +48,7 @@ export class CoordinationService {
     );
   }
 
+  poseCount = 0;
   calibrationSuccessCount = 0;
   calibrationStatus = 'error';
 
@@ -102,7 +103,16 @@ export class CoordinationService {
       true,
     );
 
-    this.activityStage = 'explain';
+    // this.activityStage = 'explain';
+    if (this.poseCount < 8) {
+      this.store.dispatch(
+        guide.sendMessage({
+          text: 'Ooops! Seems like our AI failed to load. Please reload the page and try again?',
+          position: 'center',
+        }),
+      );
+    }
+
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
@@ -118,6 +128,7 @@ export class CoordinationService {
     await this.sleep(environment.speedUpSession ? 300 : 3500);
     this.store.dispatch(guide.sendSpotlight({ text: 'Starting Next Activity' }));
     // activity started
+    console.log('event:activityStarted:sent');
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityStarted',
@@ -354,11 +365,13 @@ export class CoordinationService {
 
   async postPlaySit2Stand() {
     // activity ended
+    console.log('event:activityEnded:sent');
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityEnded',
     });
-    // assuming that the session ended event has to be sent here
+
+    console.log('event:sessionEnded:sent');
     this.analyticsService.sendSessionEvent({
       event_type: 'sessionEnded',
     });
@@ -378,6 +391,7 @@ export class CoordinationService {
   }
 
   async start(game: Phaser.Game, onComplete: any) {
+    console.log('event:sessionStarted:sent');
     this.analyticsService.sendSessionEvent({
       event_type: 'sessionStarted',
     });
@@ -422,8 +436,28 @@ export class CoordinationService {
   }
 
   handlePose(results: { pose: Results }) {
+    this.poseCount++;
     //   console.log('handlePose:results:', results)
     const calibrationResult = this.calibrationService.handlePose(results);
+
+    if (this.isWaitingForReaction) {
+      const poseHash = this.sit2standPoseHashGenerator(
+        this.previousPose,
+        results.pose,
+        calibrationResult!.status,
+      );
+      // console.log('poseHash:', poseHash);
+      if (poseHash === 1) {
+        console.log('event:taskReacted:sent');
+        this.analyticsService.sendTaskEvent({
+          activity: this.activityId,
+          attempt_id: this.attemptId,
+          event_type: 'taskReacted',
+          task_id: this.taskId,
+          task_name: this.currentClass,
+        });
+      }
+    }
 
     this.previousPose = results.pose;
 
@@ -431,20 +465,6 @@ export class CoordinationService {
     if (calibrationResult && this.calibrationStatus !== calibrationResult.status) {
       this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status);
       this.calibrationStatus = calibrationResult.status;
-
-      if (this.isWaitingForReaction) {
-        const poseHash = this.sit2standPoseHashGenerator(results.pose, calibrationResult.status);
-        console.log(poseHash);
-        if (poseHash === 1) {
-          this.analyticsService.sendTaskEvent({
-            activity: this.activityId,
-            attempt_id: this.attemptId,
-            event_type: 'taskReacted',
-            task_id: this.taskId,
-            task_name: this.currentClass,
-          });
-        }
-      }
     }
 
     if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
@@ -454,14 +474,14 @@ export class CoordinationService {
     }
   }
 
-  sit2standPoseHashGenerator(pose: Results, status: string) {
+  sit2standPoseHashGenerator(oldPose: Results, newPose: Results, status: string) {
     // initial calibration state.
     // do nothing.
     if (status === 'error') return -1;
 
     // have to get previouspose for calculation
     // work out old distances
-    const oldPoseLandmarkArray = pose?.poseLandmarks;
+    const oldPoseLandmarkArray = oldPose?.poseLandmarks;
     const oldLeftHip = oldPoseLandmarkArray[23];
     const oldLeftKnee = oldPoseLandmarkArray[25];
     const oldRightHip = oldPoseLandmarkArray[24];
@@ -481,7 +501,7 @@ export class CoordinationService {
     );
     const oldDistAvg = (oldDistLeftHipKnee + oldDistRightHipKnee) / 2;
 
-    const newPostLandmarkArray = pose?.poseLandmarks;
+    const newPostLandmarkArray = newPose?.poseLandmarks;
     const newLeftHip = newPostLandmarkArray[23];
     const newLeftKnee = newPostLandmarkArray[25];
     const newRightHip = newPostLandmarkArray[24];
@@ -501,13 +521,12 @@ export class CoordinationService {
     );
     const newDistAvg = (newDistLeftHipKnee + newDistRightHipKnee) / 2;
 
-    console.log('oldDistAvg:', oldDistAvg);
-    console.log('newDistAvg:', newDistAvg);
-    console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg);
-
     const result = Math.abs(oldDistAvg - newDistAvg);
     if (result > 0.1) {
       console.log('a reaction was detected');
+      console.log('oldDistAvg:', oldDistAvg);
+      console.log('newDistAvg:', newDistAvg);
+      console.log('oldDistance - newDistance =', oldDistAvg - newDistAvg);
       return 1;
     }
     return 0;
@@ -590,7 +609,6 @@ export class CoordinationService {
     switch (newStatus) {
       case 'warning':
         this.handleCalibrationWarning(oldStatus, newStatus);
-
         break;
       case 'success':
         this.handleCalibrationSuccess(oldStatus, newStatus);
@@ -713,7 +731,7 @@ export class CoordinationService {
     }
   }
 
-  async runActivity() {}
+  async runActivity() { }
 
   async handleAction(action: any) {
     if (action.action) {
