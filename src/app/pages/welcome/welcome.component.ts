@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
+import { environment } from 'src/environments/environment';
 
 type Message = {
   type: 'message' | 'announcement' | 'pre-session-survey' | 'select-genre' | 'tutorial';
@@ -119,6 +120,7 @@ export class WelcomeComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('session') ||
       this.route.snapshot.queryParamMap.get('sessionId') ||
       '';
+    console.log('Environment ', environment.stageName);
   }
 
   async ngOnInit() {
