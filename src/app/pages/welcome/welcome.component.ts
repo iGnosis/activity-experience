@@ -125,12 +125,13 @@ export class WelcomeComponent implements OnInit {
 
   async ngOnInit() {
     // await this.initMessageSequence()
-    if (this.sessionId) {
-      const sessionData = await this.sessionService.get(this.sessionId);
-      this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
-    }
-
-    await this.showNextStep();
+    setTimeout(async () => {
+      if (this.sessionId) {
+        const sessionData = await this.sessionService.get(this.sessionId);
+        this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+      }
+      await this.showNextStep();
+    }, 2000);
   }
 
   async showNextStep() {
