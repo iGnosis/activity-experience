@@ -219,7 +219,7 @@ export class CoordinationService {
         this.attemptId = v4();
 
         // sending the taskStarted event
-        console.log('event:taskStarted:sent')
+        console.log('event:taskStarted:sent');
         this.analyticsService.sendTaskEvent({
           activity: this.activityId,
           attempt_id: this.attemptId,
@@ -263,7 +263,7 @@ export class CoordinationService {
 
         // playing chord
         if (res.result === 'success') {
-          console.log('event:taskEnded:sent:1')
+          console.log('event:taskEnded:sent:1');
           this.soundService.playNextChord();
           this.store.dispatch(session.addRep());
           this.analyticsService.sendTaskEvent({
@@ -277,7 +277,7 @@ export class CoordinationService {
           this.isWaitingForReaction = false;
         } else {
           // sending task ended with score 0 event.
-          console.log('event:taskEnded:sent:0')
+          console.log('event:taskEnded:sent:0');
           this.analyticsService.sendTaskEvent({
             activity: this.activityId,
             attempt_id: this.attemptId,
@@ -729,7 +729,7 @@ export class CoordinationService {
     }
   }
 
-  async runActivity() { }
+  async runActivity() {}
 
   async handleAction(action: any) {
     if (action.action) {
