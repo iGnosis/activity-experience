@@ -379,11 +379,11 @@ export class CoordinationService {
     this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
     // this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }));
-    this.sendMessage('YOU WERE AMAZING!!!', 'center');
+    await this.sendMessage('YOU WERE AMAZING!!!', 'center');
     // ending constantDrum here
     this.soundService.endConstantDrum();
     this.sleep(3000);
-    this.store.dispatch(guide.sendMessage({ text: 'Thank you for playing!', position: 'center' }));
+    await this.sendMessage('Thank you for playing!', 'center');
     this.sleep(5000);
   }
 
