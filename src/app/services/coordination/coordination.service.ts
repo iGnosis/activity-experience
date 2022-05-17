@@ -219,12 +219,13 @@ export class CoordinationService {
         this.attemptId = v4();
 
         // sending the taskStarted event
+        console.log('event:taskStarted:sent');
         this.analyticsService.sendTaskEvent({
           activity: this.activityId,
           attempt_id: this.attemptId,
           event_type: 'taskStarted',
           task_id: this.taskId,
-          task_name: 'sit2stand',
+          task_name: desiredClass,
         });
 
         console.log('successful attempt no:', this.successfulReps);
@@ -252,16 +253,17 @@ export class CoordinationService {
             position: 'right',
           }),
         );
+
         this.isWaitingForReaction = true;
 
         // resolve has status property that can be used to send taskEnded events.
         this.store.dispatch(guide.startTimer({ timeout: 6000 }));
         const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000);
-        this.isWaitingForReaction = false;
         this.store.dispatch(guide.hideTimer());
 
         // playing chord
         if (res.result === 'success') {
+          console.log('event:taskEnded:sent:1');
           this.soundService.playNextChord();
           this.store.dispatch(session.addRep());
           this.analyticsService.sendTaskEvent({
@@ -272,8 +274,10 @@ export class CoordinationService {
             score: 1,
             task_name: desiredClass,
           });
+          this.isWaitingForReaction = false;
         } else {
           // sending task ended with score 0 event.
+          console.log('event:taskEnded:sent:0');
           this.analyticsService.sendTaskEvent({
             activity: this.activityId,
             attempt_id: this.attemptId,
@@ -282,6 +286,7 @@ export class CoordinationService {
             score: 0,
             task_name: desiredClass,
           });
+          this.isWaitingForReaction = false;
         }
       }
 
@@ -432,6 +437,7 @@ export class CoordinationService {
     //   console.log('handlePose:results:', results)
     const calibrationResult = this.calibrationService.handlePose(results);
 
+    // console.log('isWaitingForReaction:', this.isWaitingForReaction)
     if (this.isWaitingForReaction) {
       const poseHash = this.sit2standPoseHashGenerator(
         this.previousPose,
@@ -723,7 +729,7 @@ export class CoordinationService {
     }
   }
 
-  async runActivity() { }
+  async runActivity() {}
 
   async handleAction(action: any) {
     if (action.action) {
