@@ -161,17 +161,17 @@ export class CoordinationService {
     await this.sleep(environment.speedUpSession ? 300 : 3000);
     await this.waitForClass('stand');
     this.soundService.playNextChord();
-
+    this.store.dispatch(guide.hidePrompt())
     this.store.dispatch(announcement.announce({ message: 'Awesome!', timeout: 3000 }));
     await this.sleep(3500);
 
     this.store.dispatch(guide.updateAvatar({ name: 'mila', position: 'center' }));
-    this.sendMessage('That was great!', 'center');
-    this.sendMessage('Now when you see an EVEN number you can SIT', 'center');
-    this.sendMessage('Let us give it a try?', 'center');
-    this.sendMessage('Let us give it a try?', 'bottom', true);
+    await this.sendMessage('That was great!', 'center');
+    await this.sendMessage('Now when you see an EVEN number you can SIT', 'center');
+    await this.sendMessage('Let us give it a try?', 'center');
+    await this.sendMessage('Let us give it a try?', 'bottom', true);
     this.store.dispatch(guide.sendPrompt({ className: 'round', text: '12', position: 'center' }));
-    this.sendMessage('SIT when you see an EVEN number', 'bottom', true);
+    await this.sendMessage('SIT when you see an EVEN number', 'bottom');
 
     await this.waitForClass('sit');
     this.soundService.playNextChord();
