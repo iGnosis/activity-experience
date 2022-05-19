@@ -6,9 +6,18 @@ import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { environment } from 'src/environments/environment';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
+type SessionDetails = { heading: string; checkList: string[]; text?: string };
 type Message = {
-  type: 'message' | 'announcement' | 'pre-session-survey' | 'select-genre' | 'tutorial';
+  type:
+    | 'session-start-confirmation'
+    | 'message'
+    | 'announcement'
+    | 'pre-session-survey'
+    | 'select-genre'
+    | 'tutorial';
+  sessionDetails?: SessionDetails;
   text?: string;
   timeout?: number;
   bg: string;
@@ -55,7 +64,21 @@ type Message = {
   ],
 })
 export class WelcomeComponent implements OnInit {
+  chevronRightIcon = faChevronRight;
   messages: Array<Message> = [
+    {
+      type: 'session-start-confirmation',
+      bg: '#000066',
+      sessionDetails: {
+        heading: 'Sit, Stand, Achieve',
+        checkList: [
+          'For this session you will require a CHAIR to perform certain activities.',
+          'Make sure that only you are in front of the screen.',
+          'Take periodic rests if you feel tired.',
+          'Make sure you are in a space where you can move freely.',
+        ],
+      },
+    },
     {
       type: 'message',
       text: 'Welcome back',
@@ -168,6 +191,10 @@ export class WelcomeComponent implements OnInit {
         resolve({});
       }, timeout);
     });
+  }
+
+  async sessionStartConfirmation() {
+    this.showNextStep();
   }
 
   async preSessionMoodSelected(mood: string) {

@@ -44,3 +44,53 @@
         right: 32px;
     }
 }
+
+.session-details-div{
+    padding-top: 120px;
+}
+
+.heading-text {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 80px;
+    line-height: 100px;
+    color: #FFFFFF;
+    padding-left: 180px;
+    padding-bottom: 50px;
+}
+
+.check-list {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 48px;
+    color: #FFFFFF;
+    padding-bottom: 50px;
+    padding-left: 240px;
+    line-height: 200%;
+}
+
+.btn-start {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 24px;
+    gap: 10px;
+    width: 906px;
+    height: 64px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+
+.btn-text{
+    font-style: normal;
+        font-weight: 700;
+        font-size: 36px;
+        line-height: 136.02%;
+        color: #000066;
+        flex: none;
+        order: 1;
+        flex-grow: 0;
+}

@@ -1,6 +1,17 @@
 <div class="welcome" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
     <div style="width: 100vw; height: 100vh;" *ngIf="currentMessage">
 
+         <div class="display-1 text-left session-details-div"
+        [@panelInOut] *ngIf="currentMessage.type =='session-start-confirmation'">
+         <div class="heading-text text-white text-left" >{{currentMessage.sessionDetails!.heading}}</div>
+         <ul class="check-list" >
+             <li class="text-white text-left" *ngFor="let checkList of currentMessage.sessionDetails!.checkList">{{checkList}}</li>
+         </ul>
+         <div class="w-full text-center">
+             <button class="btn-start btn-text" (click)="sessionStartConfirmation()">Start Session <fa-icon style="padding-left: 30px;" [icon]="chevronRightIcon"></fa-icon> </button>
+         </div>
+        </div>
+
         <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center"
         [@panelInOut] *ngIf="currentMessage.type =='message'">{{currentMessage.text}}</div>
         

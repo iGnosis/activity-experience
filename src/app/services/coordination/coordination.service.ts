@@ -161,7 +161,7 @@ export class CoordinationService {
     await this.sleep(environment.speedUpSession ? 300 : 3000);
     await this.waitForClass('stand');
     this.soundService.playNextChord();
-    this.store.dispatch(guide.hidePrompt())
+    this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(announcement.announce({ message: 'Awesome!', timeout: 3000 }));
     await this.sleep(3500);
 
@@ -171,7 +171,7 @@ export class CoordinationService {
     await this.sendMessage('Let us give it a try?', 'center');
     await this.sendMessage('Let us give it a try?', 'bottom', true);
     this.store.dispatch(guide.sendPrompt({ className: 'round', text: '12', position: 'center' }));
-    await this.sendMessage('SIT when you see an EVEN number', 'bottom');
+    // await this.sendMessage('SIT when you see an EVEN number', 'bottom');
 
     await this.waitForClass('sit');
     this.soundService.playNextChord();
