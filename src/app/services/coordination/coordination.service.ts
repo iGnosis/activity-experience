@@ -161,7 +161,7 @@ export class CoordinationService {
     await this.sleep(environment.speedUpSession ? 300 : 3000);
     await this.waitForClass('stand');
     this.soundService.playNextChord();
-    this.store.dispatch(guide.hidePrompt())
+    this.store.dispatch(guide.hidePrompt());
     this.store.dispatch(announcement.announce({ message: 'Awesome!', timeout: 3000 }));
     await this.sleep(3500);
 
