@@ -215,7 +215,7 @@ export class GuideComponent implements AfterViewInit {
   handleTextToSpeech(text: string | undefined) {
     if (environment.speedUpSession) return;
 
-    if (text && text != this.lastText) {
+    if (text && text !== this.lastText) {
       this.soundService.tts(text);
       this.lastText = text;
     }
