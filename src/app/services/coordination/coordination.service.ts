@@ -70,7 +70,7 @@ export class CoordinationService {
   isWaitingForReaction = false;
 
   successfulReps = 0;
-  gameCompleted = false;
+  activityCompleted = false;
   isRecalibrated = false;
 
   async sendMessage(text: string, position: 'center' | 'bottom', skipWait = false) {
@@ -358,7 +358,6 @@ export class CoordinationService {
         }
 
         if (this.successfulReps >= 10) {
-          this.gameCompleted = true;
           this.activityStage = 'postGame';
         }
       }
@@ -446,6 +445,8 @@ export class CoordinationService {
     });
 
     this.analyticsService.sendSessionEndedAt();
+    this.activityCompleted = true;
+    this.calibrationService.disable();
 
     await this.step('postGame', 'hidePrompt');
     await this.step('postGame', 'updateAvatar', { name: 'mila' });
@@ -509,9 +510,6 @@ export class CoordinationService {
         reject({});
         return;
       } else if (step === 'preGame' && this.calibrationStatus !== 'success') {
-        reject({});
-        return;
-      } else if (step === 'game' && this.calibrationStatus !== 'success') {
         reject({});
         return;
       }
