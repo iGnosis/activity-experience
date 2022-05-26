@@ -7,6 +7,7 @@ import { SessionService } from 'src/app/services/session/session.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
 
 type SessionDetails = { heading: string; checkList: string[]; text?: string };
 type Message = {
@@ -160,7 +161,12 @@ export class WelcomeComponent implements OnInit {
   async showNextStep() {
     // await this.sleep(500)
     this.currentStep += 1;
+
+    // if (this.messages[this.currentStep].type === 'tutorial') {
+    //   this.soundsService.stopPreSessionGenreSound();
+    // }
     if (this.currentStep == this.messages.length) {
+      this.soundsService.stopPreSessionGenreSound();
       // Last step is also done :D
       // Let the user play the game
       this.router.navigate(['session']);
@@ -197,13 +203,15 @@ export class WelcomeComponent implements OnInit {
     this.showNextStep();
   }
 
-  async preSessionMoodSelected(mood: string) {
-    await this.sessionService.updatePreSessionMood(mood);
+  async preSessionMoodSelected(mood: string | PreSessionMood) {
+    this.soundsService.playPreSessionMoodSound(mood as PreSessionMood);
+    await this.sessionService.updatePreSessionMood(mood as PreSessionMood);
     this.showNextStep();
   }
 
-  async genreSelected(genre: string) {
-    await this.sessionService.updateGenre(genre);
+  async genreSelected(genre: string | PreSessionGenre) {
+    this.soundsService.playGenreSound(genre as PreSessionGenre);
+    await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
   }
 }

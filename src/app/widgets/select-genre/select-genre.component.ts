@@ -1,4 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { PreSessionGenre } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-select-genre',
@@ -8,7 +9,7 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 export class SelectGenreComponent implements OnInit {
   @Output() selected = new EventEmitter<string>();
 
-  genres: Array<{ title: string; selected?: boolean }> = [
+  genres: Array<{ title: PreSessionGenre; selected?: boolean }> = [
     {
       title: 'Classic',
     },

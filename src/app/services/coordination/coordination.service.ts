@@ -85,6 +85,8 @@ export class CoordinationService {
   }
   async welcomeUser() {
     this.activityStage = 'welcome';
+
+    this.soundService.playActivityInstructionSound();
     await this.step('welcome', 'updateAvatar', { name: 'mila' });
     await this.step('welcome', 'sendMessage', { text: 'Hi!', position: 'center' });
     // await this.sendMessage('Hi!', 'center');
@@ -206,7 +208,8 @@ export class CoordinationService {
       });
       await this.step('explain', 'sleep', environment.speedUpSession ? 300 : 3000);
       await this.step('explain', 'waitForClass', 'stand');
-      this.soundService.playNextChord();
+      // this.soundService.playNextChord();
+      this.soundService.playActivityInstructionSuccess();
       await this.step('explain', 'hidePrompt');
       await this.step('explain', 'announcement', { message: 'Awesome!', timeout: 3000 });
 
@@ -240,7 +243,8 @@ export class CoordinationService {
       });
 
       await this.step('explain', 'waitForClass', 'sit');
-      this.soundService.playNextChord();
+      // this.soundService.playNextChord();
+      this.soundService.playActivityInstructionSuccess();
 
       await this.step('explain', 'hideAvatar');
       await this.step('explain', 'hidePrompt');
@@ -258,6 +262,7 @@ export class CoordinationService {
       await this.step('explain', 'sleep', 3000);
 
       this.sit2StandExplained = true;
+      this.soundService.pauseActivityInstructionSound();
       this.activityStage = 'preGame';
       this.runSit2Stand();
     } catch (err) {
@@ -334,7 +339,8 @@ export class CoordinationService {
 
           // playing chord
           if (res.result === 'success') {
-            this.soundService.playNextChord();
+            // this.soundService.playNextChord();
+            this.soundService.playActivitySound('success');
             this.store.dispatch(session.addRep());
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
@@ -346,6 +352,7 @@ export class CoordinationService {
             });
           } else {
             // sending task ended with score 0 event.
+            this.soundService.playActivitySound('error');
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
               attempt_id: this.attemptId,
@@ -453,12 +460,13 @@ export class CoordinationService {
     // this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }));
     await this.step('postGame', 'sendMessage', { text: 'YOU WERE AMAZING!!!', position: 'center' });
     // ending constantDrum here
-    this.soundService.endConstantDrum();
+    // this.soundService.endConstantDrum();
     await this.step('postGame', 'sleep', 3000);
     await this.step('postGame', 'sendMessage', {
       text: 'Thank you for playing!',
       position: 'center',
     });
+    this.soundService.playActivitySound('ended');
     await this.step('postGame', 'sleep', 5000);
   }
 
@@ -507,6 +515,7 @@ export class CoordinationService {
     return new Promise(async (resolve, reject) => {
       // check if the user is calibrated or not
       if (step === 'explain' && this.calibrationStatus !== 'success') {
+        this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
       } else if (step === 'preGame' && this.calibrationStatus !== 'success') {
@@ -793,7 +802,7 @@ export class CoordinationService {
 
   startSit2StandScene() {
     this.sit2standService.enable();
-    this.soundService.startConstantDrum();
+    // this.soundService.startConstantDrum();
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
@@ -813,6 +822,7 @@ export class CoordinationService {
       this.isRecalibrated = true;
       this.playSit2Stand();
     } else {
+      this.soundService.resumeActivityInstructionSound();
       this.clearPrompts();
       this.runSit2Stand();
     }
@@ -820,7 +830,7 @@ export class CoordinationService {
 
   handleCalibrationSuccess(oldStatus: string, newStatus: string) {
     this.calibrationScene.drawCalibrationBox('success');
-
+    this.soundService.playCalibrationSound('success');
     // this.soundService.startConstantDrum()
     this.startSit2StandScene();
   }
@@ -832,8 +842,9 @@ export class CoordinationService {
 
   handleCalibrationError(oldStatus: string, newStatus: string) {
     this.startCalibrationScene();
+    this.soundService.playCalibrationSound('error');
     this.calibrationScene.drawCalibrationBox('error');
-    this.soundService.pauseConstantDrum();
+    // this.soundService.pauseConstantDrum();
 
     this.pauseActivity();
   }

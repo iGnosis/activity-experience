@@ -561,6 +561,9 @@ export declare class Holistic implements HolisticInterface {
   setOptions(options: Options): void;
 }
 
+export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
+export type PreSessionGenre = 'Classic' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+
 export interface CalibrationState {
   pose?: Results;
   status: string;

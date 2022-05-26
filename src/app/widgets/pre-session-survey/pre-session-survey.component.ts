@@ -1,4 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { PreSessionMood } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-pre-session-survey',
@@ -8,7 +9,7 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 export class PreSessionSurveyComponent implements OnInit {
   @Output() selected = new EventEmitter<string>();
 
-  moods: Array<{ title: string; icon: string; selected?: boolean }> = [
+  moods: Array<{ title: PreSessionMood; icon: string; selected?: boolean }> = [
     {
       title: 'Irritated',
       icon: 'assets/images/moods/irritated.svg',
