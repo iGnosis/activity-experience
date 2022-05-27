@@ -45,6 +45,12 @@ export class SessionService {
             }
             careplanByCareplan {
               name
+              careplan_activities {
+                activity
+                activityByActivity {
+                  name
+                }
+              }
             }
           }
         }

@@ -7,6 +7,7 @@ import {
   ActivityStage,
   ActivityState,
   AnnouncementState,
+  CarePlan,
   GuideState,
   Results,
   SessionState,
@@ -18,6 +19,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { v4 } from 'uuid';
 import { session } from 'src/app/store/actions/session.actions';
 import { environment } from 'src/environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +42,19 @@ export class CoordinationService {
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
   ) {
+    this.store
+      .select((store) => store.session.session?.careplanByCareplan)
+      .subscribe((careplan: CarePlan | undefined) => {
+        careplan!.careplan_activities.forEach((activity) => {
+          if (activity.activityByActivity.name === 'Sit to Stand') {
+            this.activityId = activity.activity;
+          }
+        });
+        if (this.activityId === undefined) {
+          // a fallback activity id if needed!!
+        }
+        console.log('activity id in coordination', this.activityId);
+      });
     this.store.dispatch(
       session.startActivity({
         totalReps: 10,
@@ -51,7 +66,11 @@ export class CoordinationService {
   poseCount = 0;
   calibrationStatus = 'error';
 
-  observables$: any;
+  observables$: {
+    activityId: Observable<string | undefined>;
+    pose: Observable<any>;
+    currentActivity: Observable<ActivityState | undefined>;
+  };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
   activityStage: ActivityStage = 'welcome';
@@ -61,7 +80,7 @@ export class CoordinationService {
   sequence: any = [];
   sit2StandExplained = false;
 
-  activityId = '0fa7d873-fd22-4784-8095-780028ceb08e';
+  activityId: string;
   attemptId = v4();
   taskId = v4();
 
@@ -459,6 +478,8 @@ export class CoordinationService {
       text: 'Thank you for playing!',
       position: 'center',
     });
+
+    this.store.dispatch(session.setSessionEnded());
     await this.step('postGame', 'sleep', 5000);
   }
 
@@ -589,8 +610,8 @@ export class CoordinationService {
     });
 
     this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
-    this.observables$.currentActivity.subscribe((res: ActivityState) => {
-      this.successfulReps = res.repsCompleted || 0;
+    this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
+      this.successfulReps = res!.repsCompleted || 0;
     });
   }
 

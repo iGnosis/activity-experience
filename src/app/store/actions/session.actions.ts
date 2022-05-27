@@ -8,4 +8,5 @@ export const session = {
   updateConfig: createAction('[Session] Update Config', props<SessionRow>()),
   setPreSessionMood: createAction('[Session] Set Pre-Session Mood', props<{ mood: string }>()),
   setPostSessionMood: createAction('[Session] Set Post-Session Mood', props<{ mood: string }>()),
+  setSessionEnded: createAction('[Session] Set Session-Ended'),
 };

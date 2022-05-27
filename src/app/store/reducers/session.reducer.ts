@@ -60,6 +60,11 @@ const _sessionReducer = createReducer(
     }
     return state;
   }),
+  on(session.setSessionEnded, (state) => {
+    const newState = Object.assign({}, state);
+    newState.isSessionEnded = true;
+    return newState;
+  }),
 );
 
 export function sessionReducer(state: any, action: any) {

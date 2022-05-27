@@ -1,7 +1,7 @@
 <div class="welcome" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
     <div style="width: 100vw; height: 100vh;" *ngIf="currentMessage">
 
-         <div class="container-fluid text-left text-white pt-lg-20 pt-md-10 pt-sm-6 w-full" *ngIf="currentMessage.type =='session-start-confirmation'" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
+         <div [@panelInOut] class="container-fluid text-left text-white pt-lg-20 pt-md-10 pt-sm-6 w-full" *ngIf="currentMessage.type =='session-start-confirmation'" [style.backgroundColor]="currentMessage? currentMessage.bg: '#000066'">
              <div class="container-sm">
                  <p class="h1 text-left text-white" style="font-size: 60px;">{{currentMessage.sessionDetails!.heading}}</p>
                  <ul class="px-10 py-12 " style="line-height: 200%;">
