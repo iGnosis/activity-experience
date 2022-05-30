@@ -30,9 +30,7 @@ export class CalibrationService {
     private careplanService: CareplanService,
     private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene,
-  ) {
-    this.activityId = this.analyticsService.getActivityId('Calibration');
-  }
+  ) {}
 
   enable() {
     this.isEnabled = true;

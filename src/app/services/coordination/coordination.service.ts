@@ -42,19 +42,6 @@ export class CoordinationService {
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
   ) {
-    this.store
-      .select((store) => store.session.session?.careplanByCareplan)
-      .subscribe((careplan: CarePlan | undefined) => {
-        careplan!.careplan_activities.forEach((activity) => {
-          if (activity.activityByActivity.name === 'Sit to Stand') {
-            this.activityId = activity.activity;
-          }
-        });
-        if (this.activityId === undefined) {
-          // a fallback activity id if needed!!
-        }
-        console.log('activity id in coordination', this.activityId);
-      });
     this.store.dispatch(
       session.startActivity({
         totalReps: 10,
@@ -80,7 +67,7 @@ export class CoordinationService {
   sequence: any = [];
   sit2StandExplained = false;
 
-  activityId: string;
+  activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
   attemptId = v4();
   taskId = v4();
 

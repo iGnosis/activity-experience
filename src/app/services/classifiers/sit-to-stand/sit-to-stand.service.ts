@@ -111,11 +111,8 @@ export class SitToStandService {
       guide: GuideState;
     }>,
     private analyticsService: AnalyticsService,
-    private soundService: SoundsService,
-    private calibrationScene: CalibrationScene,
   ) {
-    this.activityId = this.analyticsService.getActivityId('Sit to Stand');
-
+    this.activityId = this.analyticsService.getActivityId('Sit to Stand') as string;
     console.log('starting activity');
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
