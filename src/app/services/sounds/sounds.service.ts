@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Howl } from 'howler';
-import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
+import { PreSessionGenre } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -13,17 +13,39 @@ export class SoundsService {
   currentChord = 1;
   isEnabled = false;
 
-  preSessionMoodSound!: Howl;
   preSessionGenreSound!: Howl;
   preSessionGenreSoundId!: number;
   activityInstructionSound!: Howl;
-  activityInstructionSuccessSound!: Howl;
-  playActivitySuccessSound!: Howl;
-  playActivityErrorSound!: Howl;
   sessionStartSound!: Howl;
-  playActivityEndedSound!: Howl;
-  calibrationSuccessSound!: Howl;
-  calibrationErrorSound!: Howl;
+  rewardSound!: Howl;
+
+  activityErrorSound: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_incorrect.mp3',
+    html5: true,
+  });
+  activitySuccessSound: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Success .mp3',
+    html5: true,
+  });
+  calibrationSuccessSound: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_calibrated.mp3',
+    html5: true,
+  });
+  calibrationErrorSound: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+    html5: true,
+  });
+
+  preSessionMoodSound = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Feelings Prompt.mp3',
+    html5: true,
+    loop: true,
+  });
+
+  feelingSelectionSound = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Feeling Selection.mp3',
+    html5: true,
+  });
 
   chords = new Howl({
     src: 'assets/sounds/soundsprites/chordsSprite.mp3',
@@ -79,13 +101,6 @@ export class SoundsService {
     this.currentChord += 1;
   }
 
-  /**
-   *
-   * @param from From volume
-   * @param to To Volume
-   * @param duration Duration of fading
-   * @param id (Optional) ID of the music to fade, by default it will take constantDrumId
-   */
   fadeDrums(
     from: number,
     to: number,
@@ -100,7 +115,6 @@ export class SoundsService {
   playSessionStartSound() {
     this.sessionStartSound = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_Starting Session.mp3',
-      autoplay: true,
       html5: true,
       loop: true,
     });
@@ -114,23 +128,21 @@ export class SoundsService {
   }
 
   playPreSessionMoodSound() {
-    this.preSessionMoodSound = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_Feelings Prompt.mp3',
-      autoplay: true,
-      html5: true,
-      loop: true,
-    });
     this.preSessionMoodSound.play();
+  }
+
+  stopPreSessionMoodSound() {
+    if (this.preSessionMoodSound.playing()) {
+      this.preSessionMoodSound.stop();
+    }
   }
 
   playGenreSound(genre: PreSessionGenre) {
     switch (genre) {
       case 'Classic':
         this.preSessionMoodSound.stop();
-        // play sound for genre selection here!
         this.preSessionGenreSound = new Howl({
           src: 'assets/sounds/soundscapes/Sound Health Soundscape_Classical.mp3',
-          autoplay: true,
           html5: true,
           loop: true,
         });
@@ -140,7 +152,6 @@ export class SoundsService {
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
           src: 'assets/sounds/soundscapes/Sound Health Soundscape_Jazz.mp3',
-          autoplay: true,
           html5: true,
           loop: true,
         });
@@ -150,7 +161,6 @@ export class SoundsService {
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
           src: 'assets/sounds/soundscapes/Sound Health Soundscape_Rock.mp3',
-          autoplay: true,
           html5: true,
           loop: true,
         });
@@ -160,7 +170,6 @@ export class SoundsService {
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
           src: 'assets/sounds/soundscapes/Sound Health Soundscape_Dance.mp3',
-          autoplay: true,
           html5: true,
           loop: true,
         });
@@ -170,7 +179,6 @@ export class SoundsService {
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
           src: 'assets/sounds/soundscapes/Sound Health Soundscape_surprise me.mp3',
-          autoplay: true,
           html5: true,
           loop: true,
         });
@@ -179,20 +187,18 @@ export class SoundsService {
     }
   }
 
-  stopPreSessionMoodSound() {
-    if (this.preSessionMoodSound.playing()) {
-      this.preSessionMoodSound.stop();
+  stopPreSessionGenreSound() {
+    if (this.preSessionGenreSound.playing(this.preSessionGenreSoundId)) {
+      this.preSessionGenreSound.stop(this.preSessionGenreSoundId);
     }
   }
 
   playActivityInstructionSound() {
     this.activityInstructionSound = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
-      autoplay: true,
       html5: true,
       loop: true,
     });
-    this.activityInstructionSound.volume(0.5);
     this.activityInstructionSound.play();
   }
 
@@ -208,70 +214,39 @@ export class SoundsService {
     }
   }
 
-  playActivityInstructionSuccess() {
-    this.activityInstructionSuccessSound = new Howl({
-      src: 'assets/sounds/temp-calibration-error.mp3',
-      autoplay: true,
-      html5: true,
-    });
-    this.activityInstructionSuccessSound.play();
-  }
-
-  playActivitySound(type: 'success' | 'error' | 'ended') {
+  playActivitySound(type: 'success' | 'error') {
     switch (type) {
       case 'success':
-        this.playActivitySuccessSound = new Howl({
-          src: 'assets/sounds/temp-activity-error.mp3',
-          autoplay: true,
-          html5: true,
-        });
-        this.playActivitySuccessSound.play();
+        this.activitySuccessSound.play();
         break;
       case 'error':
-        this.playActivityErrorSound = new Howl({
-          src: 'assets/sounds/temp-activity-error.mp3',
-          autoplay: true,
-          html5: true,
-        });
-        this.playActivityErrorSound.play();
+        this.activityErrorSound.play();
         break;
-      case 'ended':
-        this.playActivityEndedSound = new Howl({
-          src: 'assets/sounds/temp-activity-ended.mp3',
-          autoplay: true,
-          html5: true,
-        });
-        this.playActivityEndedSound.play();
-        break;
-    }
-  }
-
-  stopPreSessionGenreSound() {
-    if (this.preSessionGenreSound.playing(this.preSessionGenreSoundId)) {
-      this.preSessionGenreSound.stop(this.preSessionGenreSoundId);
     }
   }
 
   playCalibrationSound(type: 'success' | 'error') {
     switch (type) {
       case 'success':
-        this.calibrationSuccessSound = new Howl({
-          src: 'assets/sounds/temp-calibration-success.mp3',
-          autoplay: true,
-          html5: true,
-        });
-        this.calibrationSuccessSound.volume(0.5);
         this.calibrationSuccessSound.play();
         break;
       case 'error':
-        this.calibrationErrorSound = new Howl({
-          src: 'assets/sounds/temp-calibration-error.mp3',
-          autoplay: true,
-          html5: true,
-        });
-        this.calibrationErrorSound.volume(0.5);
         this.calibrationErrorSound.play();
         break;
+    }
+  }
+
+  playRewardSound() {
+    this.rewardSound = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_reward.mp3',
+      html5: true,
+    });
+    this.rewardSound.play();
+  }
+
+  stopRewardSound() {
+    if (this.rewardSound.playing()) {
+      this.rewardSound.stop();
     }
   }
 

@@ -36,11 +36,13 @@ export class PreSessionSurveyComponent implements OnInit {
   constructor(private soundsService: SoundsService) {}
 
   ngOnInit(): void {
+    this.soundsService.stopSessionStartSound();
     this.soundsService.playPreSessionMoodSound();
   }
 
   selectMood(mood: { title: string; selected?: boolean }) {
     this.soundsService.stopPreSessionMoodSound();
+    this.soundsService.feelingSelectionSound.play();
     mood.selected = true;
     setTimeout(() => {
       this.selected.emit(mood.title);

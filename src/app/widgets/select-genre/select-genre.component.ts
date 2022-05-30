@@ -1,4 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { PreSessionGenre } from 'src/app/types/pointmotion';
 
 @Component({
@@ -27,11 +28,12 @@ export class SelectGenreComponent implements OnInit {
     },
   ];
 
-  constructor() {}
+  constructor(private soundsService: SoundsService) {}
 
   ngOnInit(): void {}
 
   selectGenre(mood: { title: string; selected?: boolean }) {
+    this.soundsService.playGenreSound(mood.title as PreSessionGenre);
     mood.selected = true;
     setTimeout(() => {
       this.selected.emit(mood.title);

@@ -162,11 +162,13 @@ export class WelcomeComponent implements OnInit {
     // await this.sleep(500)
     this.currentStep += 1;
 
-    // if (this.messages[this.currentStep].type === 'tutorial') {
-    //   this.soundsService.stopPreSessionGenreSound();
-    // }
+    if (this.messages[this.currentStep]) {
+      if (this.messages[this.currentStep].type === 'tutorial') {
+        this.soundsService.stopPreSessionGenreSound();
+      }
+    }
     if (this.currentStep == this.messages.length) {
-      this.soundsService.stopPreSessionGenreSound();
+      // this.soundsService.stopPreSessionGenreSound();
       // Last step is also done :D
       // Let the user play the game
       this.router.navigate(['session']);
@@ -200,6 +202,7 @@ export class WelcomeComponent implements OnInit {
   }
 
   async sessionStartConfirmation() {
+    this.soundsService.playSessionStartSound();
     this.showNextStep();
   }
 
@@ -209,7 +212,6 @@ export class WelcomeComponent implements OnInit {
   }
 
   async genreSelected(genre: string | PreSessionGenre) {
-    this.soundsService.playGenreSound(genre as PreSessionGenre);
     await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
   }

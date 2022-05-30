@@ -187,6 +187,7 @@ export class CoordinationService {
       await this.step('explain', 'waitForClass', 'sit');
 
       await this.step('explain', 'announcement', { message: 'Perfect', timeout: 3000 });
+      this.soundService.playActivitySound('success');
       await this.step('explain', 'sleep', 3500);
 
       await this.step('explain', 'sendMessage', {
@@ -215,7 +216,7 @@ export class CoordinationService {
       await this.step('explain', 'sleep', environment.speedUpSession ? 300 : 3000);
       await this.step('explain', 'waitForClass', 'stand');
       // this.soundService.playNextChord();
-      this.soundService.playActivityInstructionSuccess();
+      this.soundService.playActivitySound('success');
       await this.step('explain', 'hidePrompt');
       await this.step('explain', 'announcement', { message: 'Awesome!', timeout: 3000 });
 
@@ -250,7 +251,7 @@ export class CoordinationService {
 
       await this.step('explain', 'waitForClass', 'sit');
       // this.soundService.playNextChord();
-      this.soundService.playActivityInstructionSuccess();
+      this.soundService.playActivitySound('success');
 
       await this.step('explain', 'hideAvatar');
       await this.step('explain', 'hidePrompt');
@@ -472,9 +473,9 @@ export class CoordinationService {
       text: 'Thank you for playing!',
       position: 'center',
     });
-    this.soundService.playActivitySound('ended');
 
     this.store.dispatch(session.setSessionEnded());
+    this.soundService.playRewardSound();
     await this.step('postGame', 'sleep', 5000);
   }
 
