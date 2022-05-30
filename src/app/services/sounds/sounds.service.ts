@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Howl } from 'howler';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -8,8 +9,8 @@ export class SoundsService {
   constructor() {}
 
   constantDrumId?: number;
-  currentChord: number = 1;
-  isEnabled = false
+  currentChord = 1;
+  isEnabled = false;
 
   chords = new Howl({
     src: 'assets/sounds/soundsprites/chordsSprite.mp3',
@@ -38,7 +39,7 @@ export class SoundsService {
 
   startConstantDrum() {
     if (!this.isConstantDrumPlaying()) {
-      this.constantDrumId = this.drums.play('constantDrum');  
+      this.constantDrumId = this.drums.play('constantDrum');
     }
   }
 
@@ -70,14 +71,21 @@ export class SoundsService {
    * @param from From volume
    * @param to To Volume
    * @param duration Duration of fading from 'From Volume' to 'To Volume'
-   * @param id (Optional) ID of the music to fade, by default it take constantDrumId
+   * @param id (Optional) ID of the music to fade, by default it will take constantDrumId
    */
-  fade(
-    from: number,
-    to: number,
-    duration: number,
-    id: number = this.constantDrumId as number
-  ) {
+  fade(from: number, to: number, duration: number, id: number = this.constantDrumId as number) {
     this.drums.fade(from, to, duration, id);
+  }
+
+  tts(text: string, speaker = 'mila') {
+    console.log(environment);
+    if (environment.speedUpSession) return;
+
+    const sound = new Howl({
+      src: [environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text)],
+      autoplay: true,
+      html5: true,
+    });
+    sound.play();
   }
 }

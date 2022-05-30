@@ -18,7 +18,7 @@ export class SitToStandService {
   private currentClass = 'unknown';
   private repsCompleted = 0;
   private totalTasks = 0;
-  distanceThreshold: any
+  distanceThreshold: any;
   private activityExplained = false;
   private task: {
     text: string;
@@ -27,12 +27,12 @@ export class SitToStandService {
     className: string;
     celebrated: boolean;
   } = {
-      text: 'ONE',
-      title: '1',
-      timeout: 5000,
-      className: 'stand',
-      celebrated: false,
-    };
+    text: 'ONE',
+    title: '1',
+    timeout: 5000,
+    className: 'stand',
+    celebrated: false,
+  };
 
   activityId: string;
   taskId = v4();
@@ -105,14 +105,18 @@ export class SitToStandService {
 
   constructor(
     private careplan: CareplanService,
-    private store: Store<{ calibration: any; spotlight: any, guide: GuideState }>,
+    private store: Store<{
+      calibration: any;
+      spotlight: any;
+      guide: GuideState;
+    }>,
     private analyticsService: AnalyticsService,
     private soundService: SoundsService,
-    private calibrationScene: CalibrationScene
+    private calibrationScene: CalibrationScene,
   ) {
     this.activityId = this.analyticsService.getActivityId('Sit to Stand');
 
-    console.log('starting activity')
+    console.log('starting activity');
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityStarted',
@@ -120,7 +124,8 @@ export class SitToStandService {
 
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
     try {
-      this.distanceThreshold = this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
+      this.distanceThreshold =
+        this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
     } catch (err) {
       console.error(err);
       this.distanceThreshold = 0.25;
@@ -159,15 +164,15 @@ export class SitToStandService {
     this.store
       .select((state) => state.calibration.poseHash)
       .subscribe((poseHash: number) => {
-        console.log('poseHash:', poseHash)
-        console.log('isWaitingForReaction:', this.isWaitingForReaction)
+        console.log('poseHash:', poseHash);
+        console.log('isWaitingForReaction:', this.isWaitingForReaction);
         if (this.isWaitingForReaction && poseHash == 1) {
           // send reaction event for current running task
-          console.log('sending reaction event.')
-          this.sendTaskReactedEvent()
-          this.isWaitingForReaction = false
+          console.log('sending reaction event.');
+          this.sendTaskReactedEvent();
+          this.isWaitingForReaction = false;
         }
-      })
+      });
   }
 
   debounce(func: any, timeout = 300) {
@@ -180,7 +185,9 @@ export class SitToStandService {
     };
   }
 
-  classify(pose: Results): { result: 'unknown' | 'disabled' | 'sit' | 'stand' } {
+  classify(pose: Results): {
+    result: 'unknown' | 'disabled' | 'sit' | 'stand';
+  } {
     if (this.enabled) {
       const postLandmarkArray = pose.poseLandmarks;
 
@@ -209,34 +216,32 @@ export class SitToStandService {
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
-        leftHip.y
+        leftHip.y,
       );
       const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
-        rightHip.y
+        rightHip.y,
       );
       const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
-        leftKnee.y
+        leftKnee.y,
       );
       const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,
-        rightKnee.y
+        rightKnee.y,
       );
 
       // console.log(`dist - L: s-h: ${distanceBetweenLeftShoulderAndHip} h-k: ${distanceBetweenLeftHipAndKnee}`)
       // console.log(`dist - R: s-h: ${distanceBetweenRightShoulderAndHip} h-k: ${distanceBetweenRightHipAndKnee}`)
 
-      const isSittingL =
-        distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
-      const isSittingR =
-        distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
+      const isSittingL = distanceBetweenLeftShoulderAndHip > 1.5 * distanceBetweenLeftHipAndKnee;
+      const isSittingR = distanceBetweenRightShoulderAndHip > 1.5 * distanceBetweenRightHipAndKnee;
 
       if (isSittingL && isSittingR) {
         console.log('sitting down');
@@ -412,19 +417,19 @@ export class SitToStandService {
     this.taskId = v4();
 
     // 0 - 99
-    const randomNum = Math.floor(Math.random() * 100)
-    let className = 'stand'
+    const randomNum = Math.floor(Math.random() * 100);
+    let className = 'stand';
 
     // sit on even numbers
     if (randomNum % 2 === 0) {
-      className = 'sit'
+      className = 'sit';
     }
 
     // init new task
-    this.task.text = `${randomNum}`
-    this.task.className = className
-    this.task.timeout = 5000
-    this.task.celebrated = false
+    this.task.text = `${randomNum}`;
+    this.task.className = className;
+    this.task.timeout = 5000;
+    this.task.celebrated = false;
     this.totalTasks++;
   }
 
@@ -437,7 +442,7 @@ export class SitToStandService {
   }
 
   isEnabled() {
-    return this.enabled
+    return this.enabled;
   }
 
   sendTaskReactedEvent() {
@@ -446,19 +451,19 @@ export class SitToStandService {
       attempt_id: this.attemptId,
       event_type: 'taskReacted',
       task_id: this.taskId,
-      task_name: this.task.className
+      task_name: this.task.className,
     });
   }
 
   sendTaskEndedEvent(score: number) {
-    console.log('ending a task')
+    console.log('ending a task');
     this.analyticsService.sendTaskEvent({
       activity: this.activityId,
       attempt_id: this.attemptId,
       event_type: 'taskEnded',
       task_id: this.taskId,
       score,
-      task_name: this.task.className
+      task_name: this.task.className,
     });
   }
 }

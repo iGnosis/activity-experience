@@ -1,5 +1,5 @@
-import { createAction } from "@ngrx/store";
+import { createAction } from '@ngrx/store';
 
 export const spotlight = {
-    celebrate: createAction('[Spotlight] Show')
-}
+  celebrate: createAction('[Spotlight] Show'),
+};

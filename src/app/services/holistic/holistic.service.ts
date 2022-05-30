@@ -3,14 +3,12 @@ import { Holistic, Options } from '@mediapipe/holistic';
 import { Store } from '@ngrx/store';
 import { pose } from 'src/app/store/actions/pose.actions';
 import { Results } from 'src/app/types/pointmotion';
-import { CalibrationService } from '../calibration/calibration.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HolisticService {
-
-  holistic?: Holistic
+  holistic?: Holistic;
   options: Options = {
     modelComplexity: 1,
     smoothLandmarks: true,
@@ -18,51 +16,51 @@ export class HolisticService {
     smoothSegmentation: true,
     refineFaceLandmarks: true,
     minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5
-  }
-  interval: any
-  videoElm?: HTMLVideoElement
-  constructor(
-    private store: Store<{ pose: Results }>,
-    private calibrationService: CalibrationService,
-  ) {
+    minTrackingConfidence: 0.5,
+  };
+  interval: any;
+  videoElm?: HTMLVideoElement;
+  constructor(private store: Store<{ pose: Results }>) {}
 
-  }
-
-  start(videoElm: HTMLVideoElement, fps: number = 1) {
-
+  async start(videoElm: HTMLVideoElement, fps = 25) {
     this.holistic = new Holistic({
       locateFile: (file) => {
-        console.log('loading holistic:', file);
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-      }
+        console.log('loading holistic file:', file);
+        // stick to v0.5 as to avoid breaking changes.
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/${file}`;
+      },
     });
 
-    this.holistic.setOptions(this.options)
+    this.holistic.setOptions(this.options);
     this.holistic.onResults((results) => {
-      // // @ts-ignore
-      // results.createdAt = new Date()
-      this.handleResults(results)
-    })
+      this.handleResults(results);
+    });
+    this.videoElm = videoElm;
 
-    this.videoElm = videoElm
+    // We need to wait until Holistic is done loading the files, only then we set the interval.
+    await this.holistic?.send({ image: this.videoElm });
+
+    // do something
+    console.log('holistic files must be loaded by now');
+
+    // This implementation may be faulty!
+    // Shoudn't we read frames every (displayFPSRate * 1000) milliseconds?
     this.interval = setInterval(() => {
-      // @ts-ignore
-      this.holistic?.send({ image: this.videoElm }).catch((error) => {
-        console.error('error sending image to the model:', error)
-      })
-    }, 500)
+      if (this.videoElm) {
+        this.holistic?.send({ image: this.videoElm });
+      }
+    }, 500);
   }
 
   stop() {
-    clearInterval(this.interval)
+    clearInterval(this.interval);
     // throw new Error('not implemented')
   }
 
   private handleResults(results: Results) {
     // console.log(results)
     if (results) {
-      this.store.dispatch(pose.send({ pose: results }))
+      this.store.dispatch(pose.send({ pose: results }));
     }
   }
 }

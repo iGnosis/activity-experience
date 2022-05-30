@@ -31,11 +31,13 @@
 </div>
 
 
-<div class="video d-flex justify-content-center align-items-center" *ngIf="state.video">
-    <iframe width="700" height="395" [src]="state.video.url | safe: 'resourceUrl'" title="Sit To Stand" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>        
+<div class="video d-flex justify-content-center align-items-center" [ngClass]="{'lg': state.video.size == 'lg'}" *ngIf="state.video">
+    <iframe #yt  [src]="state.video.url | safe: 'resourceUrl'" title="Sit To Stand" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>        
+    <button class="btn btn-primary" (click)="onSkipVideoTutorial()">Skip Video Introduction</button>
 </div>
 
 
+<div class="timer" #timer *ngIf="state.timer"></div>
 
 <!-- <div class="guide" [hidden]="!messageTitle && !messageBody">
     <h1>{{ messageTitle }}</h1>

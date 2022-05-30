@@ -3,98 +3,103 @@ import { Injectable } from '@angular/core';
 import { CarePlan } from '../../types/pointmotion.d';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CareplanService {
-  
   careplan: CarePlan = {
-    "name": "Name of the careplan",
+    name: 'Name of the careplan',
     // "createdBy": {},
-    "assets": {
-      "audio": {
-        "bg": "https://example.com/bg.mp3",
-        "chime": "https://example.com/bg.mp3",
-        "drum": "https://example.com/bg.mp3"
-      }
+    assets: {
+      audio: {
+        bg: 'https://example.com/bg.mp3',
+        chime: 'https://example.com/bg.mp3',
+        drum: 'https://example.com/bg.mp3',
+      },
     },
-    "calibration": {
-      type: 'full_body'
+    calibration: {
+      type: 'full_body',
     },
-    "events": [
+    events: [
       // Welcome stuff
       {
-        "id": "event0",
-        "source": 'session',
-        "description": "Show a welcome message",
-        "logging": {
-          "debug": true,
-          "error": true
+        id: 'event0',
+        source: 'session',
+        description: 'Show a welcome message',
+        logging: {
+          debug: true,
+          error: true,
         },
-        "trigger": {
-          "source": 'session',
-          "name": "ready",
-          "comment": "When the assets are loaded"
+        trigger: {
+          source: 'session',
+          name: 'ready',
+          comment: 'When the assets are loaded',
         },
-        "actions": [
+        actions: [
           {
-            "component": 'spotlight',
-            "handler": "show",
+            component: 'spotlight',
+            handler: 'show',
           },
           {
-            "component": 'spotlight',
-            "handler": "showMessages",
-            "params": {
+            component: 'spotlight',
+            handler: 'showMessages',
+            params: {
               id: '123',
               data: {
                 messages: [
-                  {text: 'Hi', timeout: 1000},
-                  {text: 'Welcome to Sound Health', timeout: 300000},
-                  {text: 'We will start with your calibration', timeout: 3000},
-                ]
-              }
+                  { text: 'Hi', timeout: 1000 },
+                  { text: 'Welcome to Sound Health', timeout: 300000 },
+                  {
+                    text: 'We will start with your calibration',
+                    timeout: 3000,
+                  },
+                ],
+              },
             },
-            "hooks": {
-              "afterAction": [{
-                "component": 'spotlight',
-                "handler": "hide"
-              }, {
-                "component": "event",
-                "handler": "dispatchEventId",
-                "params": {
-                  "id": "start_game"
-                }
-              }]
-            }
-          }
-        ]
-      }, 
+            hooks: {
+              afterAction: [
+                {
+                  component: 'spotlight',
+                  handler: 'hide',
+                },
+                {
+                  component: 'event',
+                  handler: 'dispatchEventId',
+                  params: {
+                    id: 'start_game',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
       // After the welcome, start the game and media pipe
       {
         trigger: {
-          id: "start_game"
+          id: 'start_game',
         },
         actions: [
           {
             component: 'session',
-            handler: 'startGame'
-          }, 
+            handler: 'startGame',
+          },
           {
             component: 'session',
-            handler: 'startMediaPipe'
-          }
+            handler: 'startMediaPipe',
+          },
         ],
-        source: 'event'
-      }, 
+        source: 'event',
+      },
       // While it's not calibrated
       {
         trigger: {
           source: 'calibration.service',
-          name: 'error'
+          name: 'error',
         },
         actions: [
           {
             component: 'sit2stand.service',
-            handler: 'disable'
+            handler: 'disable',
           },
         ],
       },
@@ -102,82 +107,89 @@ export class CareplanService {
       {
         trigger: {
           source: 'calibration.scene',
-          name: 'completed'
+          name: 'completed',
         },
         actions: [
           {
             component: 'spotlight',
-            handler: 'show'
+            handler: 'show',
           },
           {
-            "component": 'spotlight',
-            "handler": "showMessages",
-            "params": {
-              "id": '123',
-              "data": {
-                "messages": [
-                  {"text": 'Perfect', timeout: 1000},
+            component: 'spotlight',
+            handler: 'showMessages',
+            params: {
+              id: '123',
+              data: {
+                messages: [
+                  { text: 'Perfect', timeout: 1000 },
                   // {"text": 'Restarting the game', timeout: 3000},
-                ]
-              }
+                ],
+              },
             },
-            "hooks": {
-              "afterAction": [{
-                "component": 'calibration.scene',
-                "handler": "startActivity",
-                "hooks": {
-                  "beforeAction": [
-                    {
-                      "component": "spotlight",
-                      "handler": "hide"
-                    },
-                  ]
-                }
-              }]
-            }
+            hooks: {
+              afterAction: [
+                {
+                  component: 'calibration.scene',
+                  handler: 'startActivity',
+                  hooks: {
+                    beforeAction: [
+                      {
+                        component: 'spotlight',
+                        handler: 'hide',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
           },
           {
             component: 'sit2stand.service',
-            handler: 'enable'
-          }
+            handler: 'enable',
+          },
         ],
       },
       // Calibration success
       {
         trigger: {
           source: 'calibration.service',
-          name: 'success'
+          name: 'success',
         },
         actions: [
           {
             component: 'sit2stand.service',
-            handler: 'enable'
+            handler: 'enable',
           },
         ],
-      }
+      },
     ],
-    activities: [
-      'sit2stand'
+    careplan_activities: [
+      {
+        activity: '0fa7d873-fd22-4784-8095-780028ceb08e',
+        activityByActivity: {
+          name: 'Sit to Stand',
+        },
+      },
     ],
     config: {
-      'sit2stand': {
+      sit2stand: {
         reps: 5,
         repTimeout: 3000,
-        pointDistanceThreshold: 0.25
-      }
-    }
-  }
-  
-  constructor() { }
-  
+        pointDistanceThreshold: 0.25,
+      },
+    },
+  };
+
+  constructor() {}
+
   async downloadCarePlan(sessionId: string) {
     console.log('downloading careplan');
-    
-    localStorage.setItem('careplan', JSON.stringify(this.careplan))
-    return this.careplan
+
+    localStorage.setItem('careplan', JSON.stringify(this.careplan));
+    return this.careplan;
   }
 
   getCarePlan(): CarePlan {
-    return this.careplan
+    return this.careplan;
   }
 }

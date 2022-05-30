@@ -25,7 +25,7 @@ import { FinishedComponent } from './pages/finished/finished.component';
 import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { announcementReducer } from './store/reducers/annoucement.reducer';
-import { SafePipeModule } from 'safe-pipe'
+import { SafePipeModule } from 'safe-pipe';
 @NgModule({
   declarations: [
     AppComponent,
@@ -39,7 +39,7 @@ import { SafePipeModule } from 'safe-pipe'
     PreSessionSurveyComponent,
     SelectGenreComponent,
     FinishedComponent,
-    TestComponent
+    TestComponent,
   ],
   imports: [
     BrowserModule,
@@ -47,7 +47,7 @@ import { SafePipeModule } from 'safe-pipe'
     BrowserAnimationsModule,
     StoreModule.forRoot({
       calibration: calibrationReducer, // calibration status, calibrated data
-      frame: frameReducer, // 
+      frame: frameReducer, //
       pose: poseReducer, // all the poses from Media Pipe
       test: testReducer,
       guide: guideReducer, // Updating the guide
@@ -56,10 +56,10 @@ import { SafePipeModule } from 'safe-pipe'
       announcement: announcementReducer,
     }),
     FontAwesomeModule,
-    SafePipeModule
+    SafePipeModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule { }
+export class AppModule {}

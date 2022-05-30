@@ -8,33 +8,29 @@ import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
   providedIn: 'root',
 })
 export class SitToStandScene extends Phaser.Scene {
-  
   constructor(
     private videoService: VideoService,
     private uiHelperService: UiHelperService,
-    private store: Store<{ calibration: any; frame: any }>
+    private store: Store<{ calibration: any; frame: any }>,
   ) {
     super({ key: 'sit2stand' });
   }
 
-  preload() {
-  }
+  preload() {}
 
   create() {
-      // this.add.circle(300, 300, 500, 0xFFFF00, 0.5)
+    // this.add.circle(300, 300, 500, 0xFFFF00, 0.5)
     // this.add.text(300, 300, 'Sit to stand activity', { fontSize: '30px' });
   }
 
-  override update(time: number, delta: number): void {
-  }
+  override update(time: number, delta: number): void {}
 
   action_startCalibration(data: any) {
     // alert('action_startCalibration')
     console.log('start calibration screen');
-    
+
     if (this.scene) {
-      this.scene.start('calibration')
+      this.scene.start('calibration');
     }
   }
-
 }

@@ -3,6 +3,8 @@ import { Store } from '@ngrx/store';
 import {
   ActivityEvent,
   ActivityEventRow,
+  ActivityStage,
+  ActivityState,
   AnalyticsEvent,
   AnalyticsRow,
   AnalyticsSessionEvent,
@@ -20,20 +22,17 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
-  constructor(
-    private gql: GqlClientService,
-    private store: Store<{ session: SessionState }>
-  ) {
-    this.store
-      .select((state) => state.session.session?.id)
-      .subscribe((sid) => {
-        this.sessionId = sid || '';
-      });
+  currentActivity: ActivityState | undefined = undefined;
+  nextActivity: ActivityState | undefined = undefined;
 
+  constructor(private gql: GqlClientService, private store: Store<{ session: SessionState }>) {
     this.store
-      .select((state) => state.session.session?.patient)
-      .subscribe((pid) => {
-        this.patientId = pid || '';
+      .select((state) => state.session)
+      .subscribe((session) => {
+        this.sessionId = session.session?.id || '';
+        this.patientId = session.session?.patient || '';
+        (this.currentActivity = session.currentActivity || undefined),
+          (this.nextActivity = session.nextActivity || undefined);
       });
   }
 
@@ -68,7 +67,7 @@ export class AnalyticsService {
             id
         }
       }`,
-        analyticsRow
+        analyticsRow,
       );
     }
   }
@@ -97,7 +96,7 @@ export class AnalyticsService {
           id
       }
     }`,
-        sessionEventRow
+        sessionEventRow,
       );
     }
   }
@@ -124,14 +123,14 @@ export class AnalyticsService {
           id
       }
     }`,
-        activityEventRow
+        activityEventRow,
       );
     }
   }
 
   async sendTaskEvent(event: TaskEvent) {
     if (this.sessionId) {
-      let taskEventRow: TaskEventRow = {
+      const taskEventRow: TaskEventRow = {
         patient: this.patientId, // TODO remove hardcoded
         session: this.sessionId, // TODO remove hardcoded
         activity: event.activity,
@@ -159,7 +158,7 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-          taskEventRow
+          taskEventRow,
         );
       } else {
         taskEventRow['score'] = event.score;
@@ -180,7 +179,7 @@ export class AnalyticsService {
 						id
 				}
 			}`,
-          taskEventRow
+          taskEventRow,
         );
       }
     }
@@ -198,7 +197,28 @@ export class AnalyticsService {
     		affected_rows
   		}
 		}`,
-        sessionEndedAtRow
+        sessionEndedAtRow,
+      );
+    }
+  }
+
+  async sendSessionState(stage: ActivityStage) {
+    if (this.sessionId) {
+      const sessionStateRow = {
+        state: {
+          currentActivity: this.currentActivity,
+          nextActivity: this.nextActivity,
+          stage: stage,
+        },
+        id: this.sessionId,
+      };
+      return this.gql.req(
+        `mutation SetSessionState($state: jsonb, $id: uuid) {
+          update_session(_set: {state: $state}, where: {id: {_eq: $id}}) {
+            affected_rows
+          }
+        }`,
+        sessionStateRow,
       );
     }
   }

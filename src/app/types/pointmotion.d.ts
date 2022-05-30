@@ -37,15 +37,18 @@ export declare enum CalibrationDetails {
   CALIBRATED = '4',
 }
 
-export type CarePlanAssets = {};
-
 export type CarePlan = {
   name: string;
   createdBy?: Therapist;
   assets: any;
   events: Array<SessionEvent>;
   calibration: CalibrationConfig;
-  activities: Array<string>;
+  careplan_activities: Array<{
+    activity: string;
+    activityByActivity: {
+      name: string;
+    };
+  }>;
   config: any;
   // trigger: Trigger
   // actions: Array<Action>
@@ -351,7 +354,7 @@ export type NormalizedLandmarkListList = NormalizedLandmarkList[];
 /**
  * Represents a single landmark (not normalized).
  */
-export interface Landmark extends NormalizedLandmark { }
+export type Landmark = NormalizedLandmark;
 
 /**
  * Detected points are returned as a collection of landmarks.
@@ -361,10 +364,7 @@ export type LandmarkList = Landmark[];
 /**
  * We support several ways to get image inputs.
  */
-export type InputImage =
-  | HTMLVideoElement
-  | HTMLImageElement
-  | HTMLCanvasElement;
+export type InputImage = HTMLVideoElement | HTMLImageElement | HTMLCanvasElement;
 
 /**
  * Legal inputs.
@@ -567,7 +567,7 @@ export declare class Holistic implements HolisticInterface {
 }
 
 export interface CalibrationState {
-  pose?: Results,
+  pose?: Results;
   status: string;
   reason: string;
   poseHash?: number;
@@ -616,9 +616,6 @@ export type AnalyticsSessionEvent = {
   event_type: AnalyticsSessionEventType;
 };
 
-
-
-
 export type ActivityEventType = 'activityStarted' | 'activityEnded';
 
 export type ActivityEventRow = {
@@ -661,11 +658,14 @@ export type SessionState = {
   session?: SessionRow;
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
+  isSessionEnded?: boolean;
 };
 
+export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
+
 export type ActivityState = {
-  name: string;
-  totalReps: number;
+  name?: string;
+  totalReps?: number;
   repsCompleted: number;
   timeElapsed?: number;
 };
@@ -703,68 +703,86 @@ export type Patient = {
 //   genre?: string
 // }
 export interface Environment {
+  stageName: string;
   production: boolean;
-  token: string;
+  // token: string;
   endpoint: string;
   analytics: {
     calibration: boolean;
   };
-  patient: string;
-  careplan: string;
+  // patient: string;
+  // careplan: string;
+  apiEndpoint: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
+  speedUpSession?: boolean;
 }
 
-
-export type EntryAnimation = 'fadeIn' | 'slideIn'
-export type ExitAnimation = 'fadeOut' | 'slideOut'
+export type EntryAnimation = 'fadeIn' | 'slideIn';
+export type ExitAnimation = 'fadeOut' | 'slideOut';
 export type GuideAvatarDTO = {
-  name: 'kevin' | 'mila',
-  expression?: 'neutral' | 'happy' | 'sad',
-  position?: 'center' | 'bottom'
-  className?: string,
-  entryAnimation?: EntryAnimation,
-  exitAnimation?: ExitAnimation
-}
+  name: 'kevin' | 'mila';
+  expression?: 'neutral' | 'happy' | 'sad';
+  position?: 'center' | 'bottom';
+  className?: string;
+  entryAnimation?: EntryAnimation;
+  exitAnimation?: ExitAnimation;
+};
 
 export type GuideMessageDTO = {
-  text?: string,
-  className?: string,
-  position: 'center' | 'bottom'
-  entryAnimation?: EntryAnimation,
-  exitAnimation?: ExitAnimation
-}
+  text?: string;
+  className?: string;
+  position: 'center' | 'bottom';
+  entryAnimation?: EntryAnimation;
+  exitAnimation?: ExitAnimation;
+};
 
 export type GuideSpotlightDTO = {
-  text: string,
-  className?: string,
-  entryAnimation?: EntryAnimation,
-  exitAnimation?: ExitAnimation
-}
+  text: string;
+  className?: string;
+  entryAnimation?: EntryAnimation;
+  exitAnimation?: ExitAnimation;
+};
 
 export type GuidePromptDTO = {
-  text?: string,
-  icon?: IconDefinition, // font-awesome icon only
-  className?: string,
-  position: 'left' | 'right' | 'top' | 'bottom' | 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
-  entryAnimation?: EntryAnimation,
-  exitAnimation?: ExitAnimation
-}
+  text?: string;
+  icon?: IconDefinition; // font-awesome icon only
+  className?: string;
+  position:
+    | 'left'
+    | 'right'
+    | 'top'
+    | 'bottom'
+    | 'center'
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right';
+  entryAnimation?: EntryAnimation;
+  exitAnimation?: ExitAnimation;
+};
 
 export type GuideVideoDTO = {
-  url: string
-}
+  url: string;
+  size: 'md' | 'lg';
+};
+
+export type GuideTimerDTO = {
+  timeout: number;
+  position?: 'top' | 'bottom';
+  color?: string;
+};
 
 export type GuideState = {
-  avatar?: GuideAvatarDTO,
-  message?: GuideMessageDTO,
-  spotlight?: GuideSpotlightDTO,
-  prompt?: GuidePromptDTO,
-  video?: GuideVideoDTO
-}
-
+  avatar?: GuideAvatarDTO;
+  message?: GuideMessageDTO;
+  spotlight?: GuideSpotlightDTO;
+  prompt?: GuidePromptDTO;
+  video?: GuideVideoDTO;
+  timer?: GuideTimerDTO;
+};
 
 export type AnnouncementState = {
-  message: string,
-  timeout?: number,
-  background?: string
-}
+  message: string;
+  timeout?: number;
+  background?: string;
+};

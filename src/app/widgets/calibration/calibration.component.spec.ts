@@ -8,9 +8,8 @@ describe('CalibrationComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ CalibrationComponent ]
-    })
-    .compileComponents();
+      declarations: [CalibrationComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {

@@ -8,9 +8,8 @@ describe('PreSessionSurveyComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PreSessionSurveyComponent ]
-    })
-    .compileComponents();
+      declarations: [PreSessionSurveyComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {
