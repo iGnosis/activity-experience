@@ -20,6 +20,7 @@ export class SoundsService {
   activityInstructionSuccessSound!: Howl;
   playActivitySuccessSound!: Howl;
   playActivityErrorSound!: Howl;
+  sessionStartSound!: Howl;
   playActivityEndedSound!: Howl;
   calibrationSuccessSound!: Howl;
   calibrationErrorSound!: Howl;
@@ -96,54 +97,30 @@ export class SoundsService {
 
   // TODO: remove preSession sounds from sped up activity
 
-  playPreSessionMoodSound(mood: PreSessionMood) {
-    switch (mood) {
-      case 'Irritated':
-        this.preSessionMoodSound = new Howl({
-          src: 'assets/sounds/preSesssionMood sounds/temp-irritated-sound.mp3',
-          autoplay: true,
-          html5: true,
-          loop: true,
-        });
-        this.preSessionMoodSound.play();
-        break;
-      case 'Anxious':
-        this.preSessionMoodSound = new Howl({
-          src: 'assets/sounds/preSesssionMood sounds/temp-anxious-sound.mp3',
-          autoplay: true,
-          html5: true,
-          loop: true,
-        });
-        this.preSessionMoodSound.play();
-        break;
-      case 'Okay':
-        this.preSessionMoodSound = new Howl({
-          src: 'assets/sounds/preSesssionMood sounds/temp-okay-sound.mp3',
-          autoplay: true,
-          html5: true,
-          loop: true,
-        });
-        this.preSessionMoodSound.play();
-        break;
-      case 'Good':
-        this.preSessionMoodSound = new Howl({
-          src: 'assets/sounds/preSesssionMood sounds/temp-good-sound.mp3',
-          autoplay: true,
-          html5: true,
-          loop: true,
-        });
-        this.preSessionMoodSound.play();
-        break;
-      case 'Daring':
-        this.preSessionMoodSound = new Howl({
-          src: 'assets/sounds/preSesssionMood sounds/temp-daring-sound.mp3',
-          autoplay: true,
-          html5: true,
-          loop: true,
-        });
-        this.preSessionMoodSound.play();
-        break;
+  playSessionStartSound() {
+    this.sessionStartSound = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_Starting Session.mp3',
+      autoplay: true,
+      html5: true,
+      loop: true,
+    });
+    this.sessionStartSound.play();
+  }
+
+  stopSessionStartSound() {
+    if (this.sessionStartSound.playing()) {
+      this.sessionStartSound.stop();
     }
+  }
+
+  playPreSessionMoodSound() {
+    this.preSessionMoodSound = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_Feelings Prompt.mp3',
+      autoplay: true,
+      html5: true,
+      loop: true,
+    });
+    this.preSessionMoodSound.play();
   }
 
   playGenreSound(genre: PreSessionGenre) {
@@ -152,7 +129,7 @@ export class SoundsService {
         this.preSessionMoodSound.stop();
         // play sound for genre selection here!
         this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/preSessionGenre sounds/temp-classic-sound.mp3',
+          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Classical.mp3',
           autoplay: true,
           html5: true,
           loop: true,
@@ -162,7 +139,7 @@ export class SoundsService {
       case 'Jazz':
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/preSessionGenre sounds/temp-jazz-sound.mp3',
+          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Jazz.mp3',
           autoplay: true,
           html5: true,
           loop: true,
@@ -172,7 +149,7 @@ export class SoundsService {
       case 'Rock':
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/preSessionGenre sounds/temp-rock-sound.mp3',
+          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Rock.mp3',
           autoplay: true,
           html5: true,
           loop: true,
@@ -182,7 +159,7 @@ export class SoundsService {
       case 'Dance':
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/preSessionGenre sounds/temp-dance-sound.mp3',
+          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Dance.mp3',
           autoplay: true,
           html5: true,
           loop: true,
@@ -192,7 +169,7 @@ export class SoundsService {
       case 'Surprise Me!':
         this.preSessionMoodSound.stop();
         this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/preSessionGenre sounds/temp-surprise-sound.mp3',
+          src: 'assets/sounds/soundscapes/Sound Health Soundscape_surprise me.mp3',
           autoplay: true,
           html5: true,
           loop: true,
@@ -202,9 +179,15 @@ export class SoundsService {
     }
   }
 
+  stopPreSessionMoodSound() {
+    if (this.preSessionMoodSound.playing()) {
+      this.preSessionMoodSound.stop();
+    }
+  }
+
   playActivityInstructionSound() {
     this.activityInstructionSound = new Howl({
-      src: 'assets/sounds/temp-activity-instruction.mp3',
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
       autoplay: true,
       html5: true,
       loop: true,

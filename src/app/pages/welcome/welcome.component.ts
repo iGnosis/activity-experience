@@ -204,7 +204,6 @@ export class WelcomeComponent implements OnInit {
   }
 
   async preSessionMoodSelected(mood: string | PreSessionMood) {
-    this.soundsService.playPreSessionMoodSound(mood as PreSessionMood);
     await this.sessionService.updatePreSessionMood(mood as PreSessionMood);
     this.showNextStep();
   }
