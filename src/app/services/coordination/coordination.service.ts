@@ -7,6 +7,7 @@ import {
   ActivityStage,
   ActivityState,
   AnnouncementState,
+  CarePlan,
   GuideState,
   Results,
   SessionState,
@@ -18,6 +19,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { v4 } from 'uuid';
 import { session } from 'src/app/store/actions/session.actions';
 import { environment } from 'src/environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -51,7 +53,11 @@ export class CoordinationService {
   poseCount = 0;
   calibrationStatus = 'error';
 
-  observables$: any;
+  observables$: {
+    activityId: Observable<string | undefined>;
+    pose: Observable<any>;
+    currentActivity: Observable<ActivityState | undefined>;
+  };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
   activityStage: ActivityStage = 'welcome';
@@ -61,7 +67,7 @@ export class CoordinationService {
   sequence: any = [];
   sit2StandExplained = false;
 
-  activityId = '0fa7d873-fd22-4784-8095-780028ceb08e';
+  activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
   attemptId = v4();
   taskId = v4();
 
@@ -467,6 +473,8 @@ export class CoordinationService {
       position: 'center',
     });
     this.soundService.playActivitySound('ended');
+
+    this.store.dispatch(session.setSessionEnded());
     await this.step('postGame', 'sleep', 5000);
   }
 
@@ -598,8 +606,8 @@ export class CoordinationService {
     });
 
     this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
-    this.observables$.currentActivity.subscribe((res: ActivityState) => {
-      this.successfulReps = res.repsCompleted || 0;
+    this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
+      this.successfulReps = res!.repsCompleted || 0;
     });
   }
 

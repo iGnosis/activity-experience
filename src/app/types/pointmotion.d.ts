@@ -43,7 +43,12 @@ export type CarePlan = {
   assets: any;
   events: Array<SessionEvent>;
   calibration: CalibrationConfig;
-  activities: Array<string>;
+  careplan_activities: Array<{
+    activity: string;
+    activityByActivity: {
+      name: string;
+    };
+  }>;
   config: any;
   // trigger: Trigger
   // actions: Array<Action>
@@ -656,6 +661,7 @@ export type SessionState = {
   session?: SessionRow;
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
+  isSessionEnded?: boolean;
 };
 
 export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';

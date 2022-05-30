@@ -8,12 +8,12 @@ export const environment: Environment = {
   stageName: 'stage',
   production: false,
   // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
-  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  endpoint: 'https://api.stage.pointmotioncontrol.com/v1/graphql',
   analytics: {
     calibration: true,
   },
   musicExperience: 'music_experience_2',
-  apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
+  apiEndpoint: 'https://services.stage.pointmotioncontrol.com',
   speedUpSession: false,
 };
 
