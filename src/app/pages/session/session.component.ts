@@ -150,10 +150,13 @@ export class SessionComponent implements AfterViewInit {
     }, 2000);
   }
 
-  sessionEndEvent() {
-    window.parent.postMessage({
-      patient: { id: this.session?.patient },
-      session: { id: this.session?.id },
-    });
+  sendSessionEndEvent() {
+    window.parent.postMessage(
+      {
+        patient: { id: this.session?.patient },
+        session: { id: this.session?.id },
+      },
+      'http://localhost:4200',
+    );
   }
 }
