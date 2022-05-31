@@ -9,6 +9,7 @@ import {
   AnalyticsRow,
   AnalyticsSessionEvent,
   AnalyticsSessionEventRow,
+  CarePlan,
   SessionState,
   TaskEvent,
   TaskEventRow,
@@ -16,12 +17,18 @@ import {
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
 
+interface ActivityList {
+  name: string;
+  id: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
+  activities: ActivityList[];
   currentActivity: ActivityState | undefined = undefined;
   nextActivity: ActivityState | undefined = undefined;
 
@@ -33,6 +40,17 @@ export class AnalyticsService {
         this.patientId = session.session?.patient || '';
         (this.currentActivity = session.currentActivity || undefined),
           (this.nextActivity = session.nextActivity || undefined);
+      });
+
+    this.store
+      .select((store) => store.session.session?.careplanByCareplan)
+      .subscribe((careplan) => {
+        this.activities = careplan!.careplan_activities.map((careplan_activity) => {
+          return {
+            name: careplan_activity.activityByActivity.name,
+            id: careplan_activity.activity,
+          };
+        });
       });
   }
 
@@ -224,14 +242,9 @@ export class AnalyticsService {
   }
 
   getActivityId(name: string) {
-    switch (name) {
-      case 'Calibration':
-        return 'd97e90d4-6c7f-4013-94f7-ba61fd52acdc';
-      case 'Sit to Stand':
-        return '0fa7d873-fd22-4784-8095-780028ceb08e';
-      default:
-        console.error(name);
-        throw new Error('Activity not found ');
+    if (!this.activities) {
+      return;
     }
+    return this.activities.find((activity) => activity.name === name)?.id;
   }
 }
