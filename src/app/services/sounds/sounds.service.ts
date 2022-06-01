@@ -13,12 +13,20 @@ export class SoundsService {
   currentChord = 1;
   isEnabled = false;
 
-  preSessionGenreSound!: Howl;
-  preSessionGenreSoundId!: number;
-  activityInstructionSound!: Howl;
   sessionStartSound!: Howl;
   rewardSound!: Howl;
 
+  preSessionGenreClassicId: number;
+  preSessionGenreJazzId: number;
+  preSessionGenreRockId: number;
+  preSessionGenreDanceId: number;
+  preSessionGenreSurpriseId: number;
+
+  activityInstructionSound: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
+    html5: true,
+    loop: true,
+  });
   activityErrorSound: Howl = new Howl({
     src: 'assets/sounds/soundscapes/Sound Health Soundscape_incorrect.mp3',
     html5: true,
@@ -45,6 +53,32 @@ export class SoundsService {
   feelingSelectionSound = new Howl({
     src: 'assets/sounds/soundscapes/Sound Health Soundscape_Feeling Selection.mp3',
     html5: true,
+  });
+
+  preSessionGenreClassic: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Classical.mp3',
+    html5: true,
+    loop: true,
+  });
+  preSessionGenreJazz: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Jazz.mp3',
+    html5: true,
+    loop: true,
+  });
+  preSessionGenreRock: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Rock.mp3',
+    html5: true,
+    loop: true,
+  });
+  preSessionGenreDance: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Dance.mp3',
+    html5: true,
+    loop: true,
+  });
+  preSessionGenreSurprise: Howl = new Howl({
+    src: 'assets/sounds/soundscapes/Sound Health Soundscape_surprise me.mp3',
+    html5: true,
+    loop: true,
   });
 
   chords = new Howl({
@@ -111,7 +145,6 @@ export class SoundsService {
   }
 
   // TODO: remove preSession sounds from sped up activity
-
   playSessionStartSound() {
     this.sessionStartSound = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_Starting Session.mp3',
@@ -138,67 +171,49 @@ export class SoundsService {
   }
 
   playGenreSound(genre: PreSessionGenre) {
+    if (this.preSessionMoodSound.playing()) {
+      this.preSessionMoodSound.stop();
+    }
     switch (genre) {
       case 'Classic':
-        this.preSessionMoodSound.stop();
-        this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Classical.mp3',
-          html5: true,
-          loop: true,
-        });
-        this.preSessionGenreSoundId = this.preSessionGenreSound.play();
+        this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
         break;
       case 'Jazz':
-        this.preSessionMoodSound.stop();
-        this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Jazz.mp3',
-          html5: true,
-          loop: true,
-        });
-        this.preSessionGenreSoundId = this.preSessionGenreSound.play();
+        this.preSessionGenreJazzId = this.preSessionGenreJazz.play();
         break;
       case 'Rock':
-        this.preSessionMoodSound.stop();
-        this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Rock.mp3',
-          html5: true,
-          loop: true,
-        });
-        this.preSessionGenreSoundId = this.preSessionGenreSound.play();
+        this.preSessionGenreRockId = this.preSessionGenreRock.play();
         break;
       case 'Dance':
-        this.preSessionMoodSound.stop();
-        this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_Dance.mp3',
-          html5: true,
-          loop: true,
-        });
-        this.preSessionGenreSoundId = this.preSessionGenreSound.play();
+        this.preSessionGenreDanceId = this.preSessionGenreDance.play();
         break;
       case 'Surprise Me!':
-        this.preSessionMoodSound.stop();
-        this.preSessionGenreSound = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_surprise me.mp3',
-          html5: true,
-          loop: true,
-        });
-        this.preSessionGenreSoundId = this.preSessionGenreSound.play();
+        this.preSessionGenreSurpriseId = this.preSessionGenreSurprise.play();
         break;
     }
   }
 
-  stopPreSessionGenreSound() {
-    if (this.preSessionGenreSound.playing(this.preSessionGenreSoundId)) {
-      this.preSessionGenreSound.stop(this.preSessionGenreSoundId);
+  stopGenreSound(genre: PreSessionGenre) {
+    switch (genre) {
+      case 'Classic':
+        this.preSessionGenreClassic.stop(this.preSessionGenreClassicId);
+        break;
+      case 'Jazz':
+        this.preSessionGenreJazz.stop(this.preSessionGenreJazzId);
+        break;
+      case 'Rock':
+        this.preSessionGenreRock.stop(this.preSessionGenreRockId);
+        break;
+      case 'Dance':
+        this.preSessionGenreDance.stop(this.preSessionGenreDanceId);
+        break;
+      case 'Surprise Me!':
+        this.preSessionGenreSurprise.stop(this.preSessionGenreSurpriseId);
+        break;
     }
   }
 
   playActivityInstructionSound() {
-    this.activityInstructionSound = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
-      html5: true,
-      loop: true,
-    });
     this.activityInstructionSound.play();
   }
 

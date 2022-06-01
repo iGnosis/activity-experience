@@ -32,8 +32,16 @@ export class SelectGenreComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  playMusic(genre: string) {
+    this.soundsService.playGenreSound(genre as PreSessionGenre);
+  }
+
+  stopMusic(genre: string) {
+    this.soundsService.stopGenreSound(genre as PreSessionGenre);
+  }
+
   selectGenre(mood: { title: string; selected?: boolean }) {
-    this.soundsService.playGenreSound(mood.title as PreSessionGenre);
+    this.soundsService.stopGenreSound(mood.title as PreSessionGenre);
     mood.selected = true;
     setTimeout(() => {
       this.selected.emit(mood.title);
