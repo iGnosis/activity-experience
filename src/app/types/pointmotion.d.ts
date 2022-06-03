@@ -718,6 +718,7 @@ export interface Environment {
   apiEndpoint: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
   speedUpSession?: boolean;
+  postSessionRedirectEndpoint: string;
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';

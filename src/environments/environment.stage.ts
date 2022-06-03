@@ -15,6 +15,7 @@ export const environment: Environment = {
   musicExperience: 'music_experience_2',
   apiEndpoint: 'https://services.stage.pointmotioncontrol.com',
   speedUpSession: false,
+  postSessionRedirectEndpoint: 'https://provider.stage.pointmotioncontrol.com',
 };
 
 /*

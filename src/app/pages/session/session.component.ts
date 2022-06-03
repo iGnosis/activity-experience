@@ -156,7 +156,7 @@ export class SessionComponent implements AfterViewInit {
         patient: { id: this.session?.patient },
         session: { id: this.session?.id },
       },
-      'http://localhost:4200',
+      '*',
     );
   }
 }
