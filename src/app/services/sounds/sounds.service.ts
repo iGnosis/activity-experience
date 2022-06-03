@@ -176,13 +176,23 @@ export class SoundsService {
     }
     switch (genre) {
       case 'Classic':
-        this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
+        if (!this.preSessionGenreClassic.playing(this.preSessionGenreClassicId)) {
+          this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
+        }
         break;
       case 'Jazz':
-        this.preSessionGenreJazzId = this.preSessionGenreJazz.play();
+        if (!this.preSessionGenreJazz.playing(this.preSessionGenreJazzId)) {
+          this.preSessionGenreJazzId = this.preSessionGenreJazz.play();
+        } else {
+          Howler.stop();
+        }
         break;
       case 'Rock':
-        this.preSessionGenreRockId = this.preSessionGenreRock.play();
+        if (!this.preSessionGenreRock.playing(this.preSessionGenreRockId)) {
+          this.preSessionGenreRockId = this.preSessionGenreRock.play();
+        } else {
+          Howler.stop();
+        }
         break;
       case 'Dance':
         this.preSessionGenreDanceId = this.preSessionGenreDance.play();
@@ -194,23 +204,24 @@ export class SoundsService {
   }
 
   stopGenreSound(genre: PreSessionGenre) {
-    switch (genre) {
-      case 'Classic':
-        this.preSessionGenreClassic.stop(this.preSessionGenreClassicId);
-        break;
-      case 'Jazz':
-        this.preSessionGenreJazz.stop(this.preSessionGenreJazzId);
-        break;
-      case 'Rock':
-        this.preSessionGenreRock.stop(this.preSessionGenreRockId);
-        break;
-      case 'Dance':
-        this.preSessionGenreDance.stop(this.preSessionGenreDanceId);
-        break;
-      case 'Surprise Me!':
-        this.preSessionGenreSurprise.stop(this.preSessionGenreSurpriseId);
-        break;
-    }
+    // Howler.stop()
+    // switch (genre) {
+    //   case 'Classic':
+    this.preSessionGenreClassic.stop(this.preSessionGenreClassicId);
+    //   break;
+    // case 'Jazz':
+    this.preSessionGenreJazz.stop(this.preSessionGenreJazzId);
+    //   break;
+    // case 'Rock':
+    this.preSessionGenreRock.stop(this.preSessionGenreRockId);
+    //   break;
+    // case 'Dance':
+    this.preSessionGenreDance.stop(this.preSessionGenreDanceId);
+    //   break;
+    // case 'Surprise Me!':
+    this.preSessionGenreSurprise.stop(this.preSessionGenreSurpriseId);
+    //     break;
+    // }
   }
 
   playActivityInstructionSound() {

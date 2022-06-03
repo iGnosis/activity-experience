@@ -346,8 +346,8 @@ export class CoordinationService {
 
           // playing chord
           if (res.result === 'success') {
-            // this.soundService.playNextChord();
-            this.soundService.playActivitySound('success');
+            this.soundService.playNextChord();
+            // this.soundService.playActivitySound('success');
             this.store.dispatch(session.addRep());
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
@@ -359,7 +359,7 @@ export class CoordinationService {
             });
           } else {
             // sending task ended with score 0 event.
-            this.soundService.playActivitySound('error');
+            // this.soundService.playActivitySound('error');
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
               attempt_id: this.attemptId,
@@ -387,6 +387,9 @@ export class CoordinationService {
   async prePlaySit2Stand() {
     try {
       this.activityStage = 'preGame';
+      if (!this.soundService.isConstantDrumPlaying()) {
+        this.soundService.startConstantDrum();
+      }
       await this.waitForCalibraion('success');
       await this.step('preGame', 'updateAvatar', { name: 'mila', position: 'center' });
       await this.step('preGame', 'sendMessage', {
@@ -474,6 +477,7 @@ export class CoordinationService {
       position: 'center',
     });
 
+    this.soundService.pauseConstantDrum();
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
     await this.step('postGame', 'sleep', 5000);
@@ -828,6 +832,9 @@ export class CoordinationService {
       this.activityStage === 'postGame'
     ) {
       this.clearPrompts();
+      if (!this.soundService.isConstantDrumPlaying()) {
+        this.soundService.startConstantDrum();
+      }
       this.isRecalibrated = true;
       this.playSit2Stand();
     } else {
@@ -859,6 +866,14 @@ export class CoordinationService {
   }
 
   async pauseActivity() {
+    if (
+      this.activityStage === 'preGame' ||
+      this.activityStage === 'game' ||
+      this.activityStage === 'postGame'
+    ) {
+      this.soundService.pauseConstantDrum();
+    }
+
     this.clearPrompts();
     this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
 
