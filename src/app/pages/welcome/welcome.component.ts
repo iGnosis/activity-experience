@@ -144,7 +144,8 @@ export class WelcomeComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('session') ||
       this.route.snapshot.queryParamMap.get('sessionId') ||
       '';
-    console.log('Environment ', environment.stageName);
+    console.log('sessionId:', this.sessionId)
+    console.log('Environment:', environment.stageName);
   }
 
   async ngOnInit() {

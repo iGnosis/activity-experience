@@ -104,16 +104,15 @@ export class AnalyticsService {
       }
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $event_type: String, $created_at: bigint! ) {
-      insert_events_one(object:
-        {
-          patient: $patient,
-          session: $session,
-          event_type: $event_type,
-          created_at: $created_at,
-        }) {
-          id
-      }
-    }`,
+          insert_events_one(object: {
+              patient: $patient,
+              session: $session,
+              event_type: $event_type,
+              created_at: $created_at,
+          }) {
+            id
+          }
+        }`,
         sessionEventRow,
       );
     }
@@ -167,8 +166,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at
@@ -187,8 +186,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at,

@@ -70,6 +70,8 @@ export class CoordinationService {
   activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
   attemptId = v4();
   taskId = v4();
+  desiredClass: "sit" | "stand" | "unknown"
+  previousDesiredClass: "sit" | "stand" | "unknown"
 
   currentPose!: Results;
   previousPose!: Results;
@@ -288,8 +290,8 @@ export class CoordinationService {
       await this.waitForCalibraion('success');
       if (this.activityStage === 'game' && this.calibrationStatus === 'success') {
         // Do 5 reps: TODO get number of reps from the careplan
-        let desiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
-        let previousDesiredClass: 'sit' | 'stand' | 'unknown' = 'unknown';
+        this.desiredClass = 'unknown';
+        this.previousDesiredClass = 'unknown';
 
         if (this.isRecalibrated) {
           this.resumeSit2Stand();
@@ -300,21 +302,11 @@ export class CoordinationService {
           this.calibrationStatus === 'success' &&
           !this.isRecalibrated
         ) {
-          12;
           this.taskId = v4();
           this.attemptId = v4();
 
-          // sending the taskStarted event
-          this.analyticsService.sendTaskEvent({
-            activity: this.activityId,
-            attempt_id: this.attemptId,
-            event_type: 'taskStarted',
-            task_id: this.taskId,
-            task_name: 'sit2stand',
-          });
-
           console.log('successful attempt no:', this.successfulReps);
-          previousDesiredClass = desiredClass;
+          this.previousDesiredClass = this.desiredClass;
 
           let num: number;
           if (this.successfulReps === 0) {
@@ -326,10 +318,20 @@ export class CoordinationService {
           }
 
           if (num % 2 === 0) {
-            desiredClass = 'sit';
+            this.desiredClass = 'sit';
           } else {
-            desiredClass = 'stand';
+            this.desiredClass = 'stand';
           }
+
+          // sending the taskStarted event
+          console.log('event:taskStarted:sent');
+          this.analyticsService.sendTaskEvent({
+            activity: this.activityId,
+            attempt_id: this.attemptId,
+            event_type: 'taskStarted',
+            task_id: this.taskId,
+            task_name: this.desiredClass,
+          });
 
           await this.step('game', 'sendPrompt', {
             text: num.toString(),
@@ -340,7 +342,7 @@ export class CoordinationService {
 
           // resolve has status property that can be used to send taskEnded events.
           await this.step('game', 'startTimer', { timeout: 6000 });
-          const res = await this.waitForClassOrTimeOut(desiredClass, previousDesiredClass, 6000);
+          const res = await this.waitForClassOrTimeOut(this.desiredClass, this.previousDesiredClass, 6000);
           this.isWaitingForReaction = false;
           await this.step('game', 'hideTimer');
 
@@ -349,24 +351,26 @@ export class CoordinationService {
             this.soundService.playNextChord();
             // this.soundService.playActivitySound('success');
             this.store.dispatch(session.addRep());
+            console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
               attempt_id: this.attemptId,
               event_type: 'taskEnded',
               task_id: this.taskId,
               score: 1,
-              task_name: desiredClass,
+              task_name: this.desiredClass,
             });
           } else {
             // sending task ended with score 0 event.
             // this.soundService.playActivitySound('error');
+            console.log('event:taskEnded:sent:score', 0);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
               attempt_id: this.attemptId,
               event_type: 'taskEnded',
               task_id: this.taskId,
               score: 0,
-              task_name: desiredClass,
+              task_name: this.desiredClass,
             });
           }
         }
@@ -631,24 +635,25 @@ export class CoordinationService {
       this.calibrationStatus = calibrationResult.status;
     }
 
-    // if (this.isWaitingForReaction) {
-    //   const poseHash = this.sit2standPoseHashGenerator(
-    //     this.previousPose,
-    //     results.pose,
-    //     calibrationResult!.status,
-    //   );
-    //   // console.log('poseHash:', poseHash);
-    //   if (poseHash === 1) {
-    //     console.log('event:taskReacted:sent');
-    //     this.analyticsService.sendTaskEvent({
-    //       activity: this.activityId,
-    //       attempt_id: this.attemptId,
-    //       event_type: 'taskReacted',
-    //       task_id: this.taskId,
-    //       task_name: this.currentClass,
-    //     });
-    //   }
-    // }
+    if (this.isWaitingForReaction) {
+      const poseHash = this.sit2standPoseHashGenerator(
+        this.previousPose,
+        results.pose,
+        calibrationResult!.status,
+      );
+      // console.log('poseHash:', poseHash);
+      if (poseHash === 1) {
+        console.log('event:taskReacted:sent');
+        this.analyticsService.sendTaskEvent({
+          activity: this.activityId,
+          attempt_id: this.attemptId,
+          event_type: 'taskReacted',
+          task_id: this.taskId,
+          task_name: this.desiredClass,
+        });
+        this.isWaitingForReaction = false;
+      }
+    }
 
     if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
       const newClass = this.sit2standService.classify(results.pose).result;
