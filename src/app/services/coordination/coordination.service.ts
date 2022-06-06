@@ -70,8 +70,8 @@ export class CoordinationService {
   activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
   attemptId = v4();
   taskId = v4();
-  desiredClass: "sit" | "stand" | "unknown"
-  previousDesiredClass: "sit" | "stand" | "unknown"
+  desiredClass: 'sit' | 'stand' | 'unknown';
+  previousDesiredClass: 'sit' | 'stand' | 'unknown';
 
   currentPose!: Results;
   previousPose!: Results;
@@ -342,7 +342,11 @@ export class CoordinationService {
 
           // resolve has status property that can be used to send taskEnded events.
           await this.step('game', 'startTimer', { timeout: 6000 });
-          const res = await this.waitForClassOrTimeOut(this.desiredClass, this.previousDesiredClass, 6000);
+          const res = await this.waitForClassOrTimeOut(
+            this.desiredClass,
+            this.previousDesiredClass,
+            6000,
+          );
           this.isWaitingForReaction = false;
           await this.step('game', 'hideTimer');
 

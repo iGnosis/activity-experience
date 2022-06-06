@@ -144,7 +144,7 @@ export class WelcomeComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('session') ||
       this.route.snapshot.queryParamMap.get('sessionId') ||
       '';
-    console.log('sessionId:', this.sessionId)
+    console.log('sessionId:', this.sessionId);
     console.log('Environment:', environment.stageName);
   }
 
