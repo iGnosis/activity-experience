@@ -36,7 +36,8 @@ export class AnalyticsService {
   constructor(
     private gql: GqlClientService,
     private store: Store<{ session: SessionState }>,
-    private debugService: DebugService) {
+    private debugService: DebugService,
+  ) {
     this.store
       .select((state) => state.session)
       .subscribe((session) => {
@@ -170,8 +171,8 @@ export class AnalyticsService {
       this.debugService.pushItem({
         eventType: event.event_type,
         taskId: event.task_id,
-        taskName: event.task_name
-      })
+        taskName: event.task_name,
+      });
 
       if (!(event.score && event.event_type === 'taskEnded')) {
         return this.gql.req(

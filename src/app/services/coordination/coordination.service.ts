@@ -42,7 +42,7 @@ export class CoordinationService {
     private soundService: SoundsService,
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
-    private debugService: DebugService
+    private debugService: DebugService,
   ) {
     this.store.dispatch(
       session.startActivity({
