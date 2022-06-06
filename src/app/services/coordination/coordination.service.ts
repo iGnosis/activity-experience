@@ -20,6 +20,7 @@ import { v4 } from 'uuid';
 import { session } from 'src/app/store/actions/session.actions';
 import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
+import { DebugService } from '../analytics/debug/debug.service';
 
 @Injectable({
   providedIn: 'root',
@@ -41,6 +42,7 @@ export class CoordinationService {
     private soundService: SoundsService,
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
+    private debugService: DebugService
   ) {
     this.store.dispatch(
       session.startActivity({
@@ -468,6 +470,7 @@ export class CoordinationService {
     this.analyticsService.sendSessionEvent({
       event_type: 'sessionEnded',
     });
+    this.debugService.inspectStack();
 
     this.analyticsService.sendSessionEndedAt();
     this.activityCompleted = true;
@@ -655,7 +658,6 @@ export class CoordinationService {
           task_id: this.taskId,
           task_name: this.desiredClass,
         });
-        this.isWaitingForReaction = false;
       }
     }
 

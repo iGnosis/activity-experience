@@ -790,3 +790,9 @@ export type AnnouncementState = {
   timeout?: number;
   background?: string;
 };
+
+export type DebugStackItem = {
+  eventType: string;
+  taskName?: string;
+  taskId?: string;
+};
