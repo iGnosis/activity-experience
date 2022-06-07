@@ -576,7 +576,7 @@ export interface CalibrationState {
   poseHash?: number;
 }
 
-export type TaskName = 'calibration' | 'sit' | 'stand';
+export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
   | 'activityStarted'
@@ -630,8 +630,8 @@ export type ActivityEventRow = {
 };
 
 export type ActivityEvent = {
-  activity: string;
   event_type: ActivityEventType;
+  activity: string;
 };
 
 export type TaskEventType = 'taskStarted' | 'taskReacted' | 'taskEnded';
@@ -790,3 +790,12 @@ export type AnnouncementState = {
   timeout?: number;
   background?: string;
 };
+
+export type DebugTaskEvent = {
+  event_type: TaskEventType;
+  task_id: string;
+  task_name: TaskName;
+  reacted: boolean;
+};
+
+export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;

@@ -16,6 +16,7 @@ import {
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { DebugService } from './debug/debug.service';
 
 interface ActivityList {
   name: string;
@@ -32,7 +33,11 @@ export class AnalyticsService {
   currentActivity: ActivityState | undefined = undefined;
   nextActivity: ActivityState | undefined = undefined;
 
-  constructor(private gql: GqlClientService, private store: Store<{ session: SessionState }>) {
+  constructor(
+    private gql: GqlClientService,
+    private store: Store<{ session: SessionState }>,
+    private debugService: DebugService,
+  ) {
     this.store
       .select((state) => state.session)
       .subscribe((session) => {
@@ -99,21 +104,22 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
+      this.debugService.pushEvent(event);
+
       if (event.event_type === 'sessionEnded') {
         console.log(this.sendSessionEndedAt());
       }
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $event_type: String, $created_at: bigint! ) {
-      insert_events_one(object:
-        {
-          patient: $patient,
-          session: $session,
-          event_type: $event_type,
-          created_at: $created_at,
-        }) {
-          id
-      }
-    }`,
+          insert_events_one(object: {
+              patient: $patient,
+              session: $session,
+              event_type: $event_type,
+              created_at: $created_at,
+          }) {
+            id
+          }
+        }`,
         sessionEventRow,
       );
     }
@@ -128,6 +134,9 @@ export class AnalyticsService {
         event_type: event.event_type,
         created_at: new Date().getTime(),
       };
+
+      this.debugService.pushEvent(event);
+
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $event_type: String, $created_at: bigint! ) {
       insert_events_one(object:
@@ -159,6 +168,14 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
+      const isTaskReacted = event.event_type === 'taskReacted' ? true : false;
+      this.debugService.pushEvent({
+        event_type: event.event_type,
+        task_id: event.task_id,
+        task_name: event.task_name,
+        reacted: isTaskReacted,
+      });
+
       if (!(event.score && event.event_type === 'taskEnded')) {
         return this.gql.req(
           `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid,$task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint! ) {
@@ -167,8 +184,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at
@@ -187,8 +204,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at,

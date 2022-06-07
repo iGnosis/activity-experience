@@ -110,10 +110,6 @@ export class SessionComponent implements AfterViewInit {
     this.coordinationService.start(this.game as Phaser.Game, () => {});
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
-      this.analyticsService.sendSessionEvent({
-        event_type: 'sessionStarted',
-      });
-
       // Start mediapipe
       this.startMediaPipe();
     });
@@ -128,14 +124,6 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async sendSessionEndedEvent() {
-    console.log('sending end session event');
-    try {
-      await this.analyticsService.sendSessionEvent({
-        event_type: 'sessionEnded',
-      });
-    } catch (err) {
-      console.error(err);
-    }
     this.router.navigate(['/finished']);
   }
 
