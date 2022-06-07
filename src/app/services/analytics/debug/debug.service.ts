@@ -1,9 +1,13 @@
 import { Injectable } from '@angular/core';
-import { DebugTaskEvent, DebugStackEvents, TaskName, ActivityEvent } from 'src/app/types/pointmotion';
+import {
+  DebugTaskEvent,
+  DebugStackEvents,
+  TaskName,
+  ActivityEvent,
+} from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
-
 export class DebugService {
   constructor() {}
 
@@ -30,47 +34,46 @@ export class DebugService {
   pushEvent(eventToInsert: DebugStackEvents) {
     // only runs on 'ended' events.
     if (eventToInsert.event_type in this.endedEvents) {
-      let peekItem = this._peekStack();
+      const peekItem = this._peekStack();
 
       // should have at least two events.
       if (peekItem === undefined) {
         console.warn('event to insert:', eventToInsert);
         console.warn('cannot peek item - stack is empty:', this.items);
-        return
+        return;
       }
 
       // should have 'start' and 'end' events.
       if (peekItem.event_type !== (this.endedEvents as any)[eventToInsert.event_type]) {
         console.warn('event to insert:', eventToInsert);
         console.warn('start and end events mismatch:', this.items);
-        return
+        return;
       }
 
       // runs on 'taskEnded'
       if (this._isTaskEvent(eventToInsert)) {
-
         // event type should match.
         if (!this._isTaskEvent(peekItem)) {
           console.warn('event to insert:', eventToInsert);
           console.warn('stack data inconsistent:', this.items);
-          return
+          return;
         }
 
         // task_id should match.
         if (peekItem.task_id !== eventToInsert.task_id) {
           console.warn('event to insert:', eventToInsert);
           console.warn('task_id mismatch:', this.items);
-          return
+          return;
         }
 
         // reaction time should be present if previous task was different.
-        if (this.counter == 1 && (peekItem.task_name !== this.previousTask && !peekItem.reacted)) {
+        if (this.counter == 1 && peekItem.task_name !== this.previousTask && !peekItem.reacted) {
           console.warn('event to insert:', eventToInsert);
           console.warn('reaction time event not sent:', this.items);
 
           // so that stack isn't corrupted.
           this._popItem();
-          return
+          return;
         }
 
         // ... or this.previousTask = eventToInsert.task_name;
@@ -80,19 +83,18 @@ export class DebugService {
 
       // runs on 'activityEnded'
       else if (this._isActivityEvent(eventToInsert)) {
-
         // event type should match.
         if (!this._isActivityEvent(peekItem)) {
           console.warn('event to insert:', eventToInsert);
           console.warn('stack data inconsistent:', this.items);
-          return
+          return;
         }
 
         // activity name should match
         if (eventToInsert.activity !== peekItem.activity) {
           console.warn('event to insert:', eventToInsert);
           console.warn('activity name mismatch:', this.items);
-          return
+          return;
         }
       }
 
@@ -102,40 +104,40 @@ export class DebugService {
         if (peekItem.event_type !== 'sessionStarted') {
           console.warn('event to insert:', eventToInsert);
           console.warn('stack data inconsistent:', this.items);
-          return
+          return;
         }
       }
 
       this._popItem();
-    }
-
-    else if (eventToInsert.event_type === 'taskReacted') {
-      let peekItem = this._peekStack();
+    } else if (eventToInsert.event_type === 'taskReacted') {
+      const peekItem = this._peekStack();
 
       // should have at least two events.
       if (peekItem === undefined) {
         console.warn('event to insert:', eventToInsert);
         console.warn('cannot peek item - stack is empty:', this.items);
-        return
+        return;
       }
 
       // event type should match.
-      if (!this._isTaskEvent(peekItem) || peekItem.event_type !== 'taskStarted' || peekItem.reacted === true) {
+      if (
+        !this._isTaskEvent(peekItem) ||
+        peekItem.event_type !== 'taskStarted' ||
+        peekItem.reacted === true
+      ) {
         console.warn('event to insert:', eventToInsert);
         console.warn('stack data inconsistent:', this.items);
-        return
+        return;
       }
 
       peekItem.reacted = true;
-    }
-
-    else {
+    } else {
       this.items.push(eventToInsert);
     }
   }
 
   _peekStack() {
-    return this.items[this.items.length - 1]
+    return this.items[this.items.length - 1];
   }
 
   _popItem() {

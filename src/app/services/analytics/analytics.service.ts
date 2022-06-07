@@ -168,13 +168,13 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
-      let isTaskReacted = (event.event_type === 'taskReacted') ? true : false
+      const isTaskReacted = event.event_type === 'taskReacted' ? true : false;
       this.debugService.pushEvent({
         event_type: event.event_type,
         task_id: event.task_id,
         task_name: event.task_name,
-        reacted: isTaskReacted
-      })
+        reacted: isTaskReacted,
+      });
 
       if (!(event.score && event.event_type === 'taskEnded')) {
         return this.gql.req(
