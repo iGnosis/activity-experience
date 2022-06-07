@@ -104,7 +104,7 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
-      this.debugService.pushItem({ eventType: event.event_type });
+      this.debugService.pushEvent(event);
 
       if (event.event_type === 'sessionEnded') {
         console.log(this.sendSessionEndedAt());
@@ -135,7 +135,7 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
-      this.debugService.pushItem({ eventType: event.event_type });
+      this.debugService.pushEvent(event);
 
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $event_type: String, $created_at: bigint! ) {
@@ -168,11 +168,13 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
-      this.debugService.pushItem({
-        eventType: event.event_type,
-        taskId: event.task_id,
-        taskName: event.task_name,
-      });
+      let isTaskReacted = (event.event_type === 'taskReacted') ? true : false
+      this.debugService.pushEvent({
+        event_type: event.event_type,
+        task_id: event.task_id,
+        task_name: event.task_name,
+        reacted: isTaskReacted
+      })
 
       if (!(event.score && event.event_type === 'taskEnded')) {
         return this.gql.req(

@@ -14,7 +14,7 @@ export const environment: Environment = {
   },
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
   musicExperience: 'music_experience_2',
-  speedUpSession: false,
+  speedUpSession: true,
   postSessionRedirectEndpoint: 'http://localhost:4200',
 };
 
