@@ -128,7 +128,7 @@ export class WelcomeComponent implements OnInit {
     },
   ];
   sessionId: string;
-
+  intervalId: any;
   currentStep = -1;
   currentMessage: Message | undefined;
 
