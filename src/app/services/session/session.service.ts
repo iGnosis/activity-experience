@@ -9,6 +9,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 })
 export class SessionService {
   sessionId: string | undefined;
+
   constructor(private client: GqlClientService) {}
 
   // async new() {
@@ -31,7 +32,7 @@ export class SessionService {
   //   );
   // }
 
-  async get(id: string) {
+  async getSession(id: string) {
     this.sessionId = id;
     return this.client.req(
       gql`

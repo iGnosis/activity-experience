@@ -8,6 +8,7 @@ import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
+import { UserService } from 'src/app/services/user/user.service';
 
 type SessionDetails = { heading: string; checkList: string[]; text?: string };
 type Message = {
@@ -136,6 +137,7 @@ export class WelcomeComponent implements OnInit {
     private router: Router,
     private sessionService: SessionService,
     private soundsService: SoundsService,
+    private userService: UserService,
     private store: Store<{ session: any }>,
   ) {
     // Save the session id in the store
@@ -144,19 +146,39 @@ export class WelcomeComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('session') ||
       this.route.snapshot.queryParamMap.get('sessionId') ||
       '';
-    console.log('sessionId:', this.sessionId);
-    console.log('Environment:', environment.stageName);
   }
 
   async ngOnInit() {
-    // await this.initMessageSequence()
-    setTimeout(async () => {
-      if (this.sessionId) {
-        const sessionData = await this.sessionService.get(this.sessionId);
-        this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
-      }
-      await this.showNextStep();
-    }, 2000);
+    // Ask the parent window to send a token... we're ready, well almost.
+    window.parent.postMessage(
+      {
+        type: 'activity-experience-ready',
+        data: {
+          status: 'ready',
+        },
+      },
+      '*',
+    );
+
+    // Handle the incoming token
+    window.addEventListener(
+      'message',
+      (data) => {
+        const tokenHandled = this.userService.handleToken(data);
+        if (tokenHandled) {
+          this.start();
+        }
+      },
+      false,
+    );
+  }
+
+  async start() {
+    if (this.sessionId) {
+      const sessionData = await this.sessionService.getSession(this.sessionId);
+      this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+    }
+    await this.showNextStep();
   }
 
   async showNextStep() {
