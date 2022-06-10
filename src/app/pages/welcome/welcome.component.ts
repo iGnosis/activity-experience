@@ -127,7 +127,7 @@ export class WelcomeComponent implements OnInit {
     },
   ];
   sessionId: string;
-
+  intervalId: any;
   currentStep = -1;
   currentMessage: Message | undefined;
 
@@ -150,13 +150,18 @@ export class WelcomeComponent implements OnInit {
 
   async ngOnInit() {
     // await this.initMessageSequence()
-    setTimeout(async () => {
-      if (this.sessionId) {
-        const sessionData = await this.sessionService.get(this.sessionId);
-        this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+    this.intervalId = setInterval(() => {
+      if (localStorage.getItem('token')) {
+        setTimeout(async () => {
+          if (this.sessionId) {
+            const sessionData = await this.sessionService.get(this.sessionId);
+            this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+          }
+          await this.showNextStep();
+        }, 2000);
+        clearInterval(this.intervalId);
       }
-      await this.showNextStep();
-    }, 2000);
+    }, 1000);
   }
 
   async showNextStep() {
