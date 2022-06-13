@@ -10,14 +10,5 @@
 <body>
   <app-root></app-root>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
-  <script>
-    window.addEventListener("message", (event) => {
-      if(event && event.data) {
-        if (event.data.token) {
-          localStorage.setItem('token', event.data.token)
-        }
-      }
-    }, false);
-  </script>
 </body>
 </html>

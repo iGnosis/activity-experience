@@ -9,12 +9,19 @@ import {
   AnalyticsRow,
   AnalyticsSessionEvent,
   AnalyticsSessionEventRow,
+  CarePlan,
   SessionState,
   TaskEvent,
   TaskEventRow,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { DebugService } from './debug/debug.service';
+
+interface ActivityList {
+  name: string;
+  id: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -22,10 +29,15 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
+  activities: ActivityList[];
   currentActivity: ActivityState | undefined = undefined;
   nextActivity: ActivityState | undefined = undefined;
 
-  constructor(private gql: GqlClientService, private store: Store<{ session: SessionState }>) {
+  constructor(
+    private gql: GqlClientService,
+    private store: Store<{ session: SessionState }>,
+    private debugService: DebugService,
+  ) {
     this.store
       .select((state) => state.session)
       .subscribe((session) => {
@@ -33,6 +45,17 @@ export class AnalyticsService {
         this.patientId = session.session?.patient || '';
         (this.currentActivity = session.currentActivity || undefined),
           (this.nextActivity = session.nextActivity || undefined);
+      });
+
+    this.store
+      .select((store) => store.session.session?.careplanByCareplan)
+      .subscribe((careplan) => {
+        this.activities = careplan!.careplan_activities.map((careplan_activity) => {
+          return {
+            name: careplan_activity.activityByActivity.name,
+            id: careplan_activity.activity,
+          };
+        });
       });
   }
 
@@ -81,21 +104,22 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
+      this.debugService.pushEvent(event);
+
       if (event.event_type === 'sessionEnded') {
         console.log(this.sendSessionEndedAt());
       }
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $event_type: String, $created_at: bigint! ) {
-      insert_events_one(object:
-        {
-          patient: $patient,
-          session: $session,
-          event_type: $event_type,
-          created_at: $created_at,
-        }) {
-          id
-      }
-    }`,
+          insert_events_one(object: {
+              patient: $patient,
+              session: $session,
+              event_type: $event_type,
+              created_at: $created_at,
+          }) {
+            id
+          }
+        }`,
         sessionEventRow,
       );
     }
@@ -110,6 +134,9 @@ export class AnalyticsService {
         event_type: event.event_type,
         created_at: new Date().getTime(),
       };
+
+      this.debugService.pushEvent(event);
+
       return this.gql.req(
         `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid, $event_type: String, $created_at: bigint! ) {
       insert_events_one(object:
@@ -141,6 +168,14 @@ export class AnalyticsService {
         created_at: new Date().getTime(),
       };
 
+      const isTaskReacted = event.event_type === 'taskReacted' ? true : false;
+      this.debugService.pushEvent({
+        event_type: event.event_type,
+        task_id: event.task_id,
+        task_name: event.task_name,
+        reacted: isTaskReacted,
+      });
+
       if (!(event.score && event.event_type === 'taskEnded')) {
         return this.gql.req(
           `mutation InsertEvent($patient: uuid, $session: uuid, $activity: uuid,$task_id: uuid, $attempt_id: uuid, $task_name: String, $event_type: String, $created_at: bigint! ) {
@@ -149,8 +184,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at
@@ -169,8 +204,8 @@ export class AnalyticsService {
 						patient: $patient,
 						session: $session,
 						activity: $activity,
-						task_id: $task_id, 
-						attempt_id: $attempt_id, 
+						task_id: $task_id,
+						attempt_id: $attempt_id,
 						task_name: $task_name,
 						event_type: $event_type,
 						created_at: $created_at,
@@ -224,14 +259,9 @@ export class AnalyticsService {
   }
 
   getActivityId(name: string) {
-    switch (name) {
-      case 'Calibration':
-        return 'd97e90d4-6c7f-4013-94f7-ba61fd52acdc';
-      case 'Sit to Stand':
-        return '0fa7d873-fd22-4784-8095-780028ceb08e';
-      default:
-        console.error(name);
-        throw new Error('Activity not found ');
+    if (!this.activities) {
+      return;
     }
+    return this.activities.find((activity) => activity.name === name)?.id;
   }
 }

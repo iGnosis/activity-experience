@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'graphql-request';
+import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
 
@@ -8,6 +9,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 })
 export class SessionService {
   sessionId: string | undefined;
+
   constructor(private client: GqlClientService) {}
 
   // async new() {
@@ -30,7 +32,7 @@ export class SessionService {
   //   );
   // }
 
-  async get(id: string) {
+  async getSession(id: string) {
     this.sessionId = id;
     return this.client.req(
       gql`
@@ -45,6 +47,12 @@ export class SessionService {
             }
             careplanByCareplan {
               name
+              careplan_activities {
+                activity
+                activityByActivity {
+                  name
+                }
+              }
             }
           }
         }
@@ -53,7 +61,7 @@ export class SessionService {
     );
   }
 
-  async updatePreSessionMood(mood: string) {
+  async updatePreSessionMood(mood: PreSessionMood) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');
       return;
@@ -93,7 +101,7 @@ export class SessionService {
     );
   }
 
-  async updateGenre(genre: string) {
+  async updateGenre(genre: PreSessionGenre) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');
       return;

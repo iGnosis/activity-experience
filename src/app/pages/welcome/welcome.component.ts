@@ -6,9 +6,20 @@ import { session } from 'src/app/store/actions/session.actions';
 import { SessionService } from 'src/app/services/session/session.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { environment } from 'src/environments/environment';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
+import { UserService } from 'src/app/services/user/user.service';
 
+type SessionDetails = { heading: string; checkList: string[]; text?: string };
 type Message = {
-  type: 'message' | 'announcement' | 'pre-session-survey' | 'select-genre' | 'tutorial';
+  type:
+    | 'session-start-confirmation'
+    | 'message'
+    | 'announcement'
+    | 'pre-session-survey'
+    | 'select-genre'
+    | 'tutorial';
+  sessionDetails?: SessionDetails;
   text?: string;
   timeout?: number;
   bg: string;
@@ -55,7 +66,21 @@ type Message = {
   ],
 })
 export class WelcomeComponent implements OnInit {
+  chevronRightIcon = faChevronRight;
   messages: Array<Message> = [
+    {
+      type: 'session-start-confirmation',
+      bg: '#000066',
+      sessionDetails: {
+        heading: 'Sit, Stand, Achieve',
+        checkList: [
+          'For this session you will require a CHAIR to perform certain activities.',
+          'Make sure that only you are in front of the screen.',
+          'Take periodic rests if you feel tired.',
+          'Make sure you are in a space where you can move freely.',
+        ],
+      },
+    },
     {
       type: 'message',
       text: 'Welcome back',
@@ -103,7 +128,7 @@ export class WelcomeComponent implements OnInit {
     },
   ];
   sessionId: string;
-
+  intervalId: any;
   currentStep = -1;
   currentMessage: Message | undefined;
 
@@ -112,6 +137,7 @@ export class WelcomeComponent implements OnInit {
     private router: Router,
     private sessionService: SessionService,
     private soundsService: SoundsService,
+    private userService: UserService,
     private store: Store<{ session: any }>,
   ) {
     // Save the session id in the store
@@ -120,24 +146,52 @@ export class WelcomeComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('session') ||
       this.route.snapshot.queryParamMap.get('sessionId') ||
       '';
-    console.log('Environment ', environment.stageName);
   }
 
   async ngOnInit() {
-    // await this.initMessageSequence()
-    setTimeout(async () => {
-      if (this.sessionId) {
-        const sessionData = await this.sessionService.get(this.sessionId);
-        this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
-      }
-      await this.showNextStep();
-    }, 2000);
+    // Ask the parent window to send a token... we're ready, well almost.
+    window.parent.postMessage(
+      {
+        type: 'activity-experience-ready',
+        data: {
+          status: 'ready',
+        },
+      },
+      '*',
+    );
+
+    // Handle the incoming token
+    window.addEventListener(
+      'message',
+      (data) => {
+        const tokenHandled = this.userService.handleToken(data);
+        if (tokenHandled) {
+          this.start();
+        }
+      },
+      false,
+    );
+  }
+
+  async start() {
+    if (this.sessionId) {
+      const sessionData = await this.sessionService.getSession(this.sessionId);
+      this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+    }
+    await this.showNextStep();
   }
 
   async showNextStep() {
     // await this.sleep(500)
     this.currentStep += 1;
+
+    // if (this.messages[this.currentStep]) {
+    //   if (this.messages[this.currentStep].type === 'tutorial') {
+    //     this.soundsService.stopPreSessionGenreSound(Genre);
+    //   }
+    // }
     if (this.currentStep == this.messages.length) {
+      // this.soundsService.stopPreSessionGenreSound();
       // Last step is also done :D
       // Let the user play the game
       this.router.navigate(['session']);
@@ -170,13 +224,18 @@ export class WelcomeComponent implements OnInit {
     });
   }
 
-  async preSessionMoodSelected(mood: string) {
-    await this.sessionService.updatePreSessionMood(mood);
+  async sessionStartConfirmation() {
+    this.soundsService.playSessionStartSound();
     this.showNextStep();
   }
 
-  async genreSelected(genre: string) {
-    await this.sessionService.updateGenre(genre);
+  async preSessionMoodSelected(mood: string | PreSessionMood) {
+    await this.sessionService.updatePreSessionMood(mood as PreSessionMood);
+    this.showNextStep();
+  }
+
+  async genreSelected(genre: string | PreSessionGenre) {
+    await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
   }
 }

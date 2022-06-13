@@ -17,6 +17,15 @@ export class GqlClientService {
     });
   }
 
+  refreshClient(jwt?: string) {
+    const token = jwt || localStorage.getItem('token');
+    this.client = new GraphQLClient(environment.endpoint, {
+      headers: {
+        authorization: 'Bearer ' + token,
+      },
+    });
+  }
+
   async req(request: string, variables?: any) {
     return this.client.request(request, variables);
   }

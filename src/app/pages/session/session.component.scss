@@ -45,6 +45,18 @@ app-guide {
     z-index: 3;
 }
 
+#end-session {
+    padding: 10px;
+    margin: 20px;
+    cursor: pointer;
+    position: fixed;
+    right: 0;
+    // top: 10;
+    bottom: 0;
+    // left: 10;
+    z-index: 3;
+}
+
 app-select-genre {
     position: absolute;
     z-index: 3;

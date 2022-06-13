@@ -3,7 +3,7 @@
 
     <div class="container mt-6">
         <div class="row mt-6 options">
-            <div class="col p-5 m-2" (click)="selectGenre(genre)" [ngClass]="{'bg-success': genre.selected, 'bg-primary': !genre.selected}" *ngFor="let genre of genres">
+            <div class="col p-5 m-2"  (mouseenter)="debouncedPlayMusic(genre.title)" (mouseleave)="stopMusic(genre.title)" (click)="selectGenre(genre)" [ngClass]="{'bg-success': genre.selected, 'bg-primary': !genre.selected}" *ngFor="let genre of genres">
                 <!-- <img [src]="genre.icon" [alt]="genre.title"> -->
                 <h2 class="text-white text-center mt-4 text-uppercase">{{ genre.title }}</h2>
             </div>

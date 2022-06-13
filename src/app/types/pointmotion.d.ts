@@ -43,7 +43,12 @@ export type CarePlan = {
   assets: any;
   events: Array<SessionEvent>;
   calibration: CalibrationConfig;
-  activities: Array<string>;
+  careplan_activities: Array<{
+    activity: string;
+    activityByActivity: {
+      name: string;
+    };
+  }>;
   config: any;
   // trigger: Trigger
   // actions: Array<Action>
@@ -561,6 +566,9 @@ export declare class Holistic implements HolisticInterface {
   setOptions(options: Options): void;
 }
 
+export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
+export type PreSessionGenre = 'Classic' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+
 export interface CalibrationState {
   pose?: Results;
   status: string;
@@ -568,7 +576,7 @@ export interface CalibrationState {
   poseHash?: number;
 }
 
-export type TaskName = 'calibration' | 'sit' | 'stand';
+export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
   | 'activityStarted'
@@ -622,8 +630,8 @@ export type ActivityEventRow = {
 };
 
 export type ActivityEvent = {
-  activity: string;
   event_type: ActivityEventType;
+  activity: string;
 };
 
 export type TaskEventType = 'taskStarted' | 'taskReacted' | 'taskEnded';
@@ -653,6 +661,7 @@ export type SessionState = {
   session?: SessionRow;
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
+  isSessionEnded?: boolean;
 };
 
 export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
@@ -709,6 +718,7 @@ export interface Environment {
   apiEndpoint: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
   speedUpSession?: boolean;
+  postSessionRedirectEndpoint: string;
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
@@ -780,3 +790,12 @@ export type AnnouncementState = {
   timeout?: number;
   background?: string;
 };
+
+export type DebugTaskEvent = {
+  event_type: TaskEventType;
+  task_id: string;
+  task_name: TaskName;
+  reacted: boolean;
+};
+
+export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;

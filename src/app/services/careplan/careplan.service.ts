@@ -163,7 +163,14 @@ export class CareplanService {
         ],
       },
     ],
-    activities: ['sit2stand'],
+    careplan_activities: [
+      {
+        activity: '0fa7d873-fd22-4784-8095-780028ceb08e',
+        activityByActivity: {
+          name: 'Sit to Stand',
+        },
+      },
+    ],
     config: {
       sit2stand: {
         reps: 5,

@@ -8,5 +8,7 @@
         id="close-session"
         width="70px"
         (click)="sendSessionEndedEvent()"
-    >
+    />
+  
+    <button *ngIf="sessionEnded" class="btn btn-white btn-lg" id="end-session" style="font-size: 20px;" (click)="sendSessionEndEvent()">Continue <fa-icon style="padding-left: 30px;" [icon]="chevronRightIcon"></fa-icon> </button>
 </div>

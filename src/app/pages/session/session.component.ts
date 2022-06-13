@@ -12,6 +12,8 @@ import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { SessionRow, SessionState } from 'src/app/types/pointmotion';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+
 @Component({
   selector: 'app-session',
   templateUrl: './session.component.html',
@@ -41,11 +43,12 @@ export class SessionComponent implements AfterViewInit {
     },
   };
   careplan: any;
+  chevronRightIcon = faChevronRight;
   isEndSessionVisible = false;
   announcement = '';
   selectGenre = false;
 
-  sessionEnded = true;
+  sessionEnded: boolean | undefined = false;
 
   // DI the needed scenes
   constructor(
@@ -62,9 +65,10 @@ export class SessionComponent implements AfterViewInit {
     private router: Router,
   ) {
     this.store
-      .select((state) => state.session.session)
+      .select((state) => state.session)
       .subscribe((session) => {
-        this.session = session;
+        this.session = session.session;
+        this.sessionEnded = session.isSessionEnded;
       });
   }
 
@@ -106,10 +110,6 @@ export class SessionComponent implements AfterViewInit {
     this.coordinationService.start(this.game as Phaser.Game, () => {});
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
-      this.analyticsService.sendSessionEvent({
-        event_type: 'sessionStarted',
-      });
-
       // Start mediapipe
       this.startMediaPipe();
     });
@@ -124,14 +124,6 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async sendSessionEndedEvent() {
-    console.log('sending end session event');
-    try {
-      await this.analyticsService.sendSessionEvent({
-        event_type: 'sessionEnded',
-      });
-    } catch (err) {
-      console.error(err);
-    }
     this.router.navigate(['/finished']);
   }
 
@@ -144,5 +136,15 @@ export class SessionComponent implements AfterViewInit {
     this.timeoutId = setTimeout(() => {
       this.isEndSessionVisible = false;
     }, 2000);
+  }
+
+  sendSessionEndEvent() {
+    window.parent.postMessage(
+      {
+        patient: { id: this.session?.patient },
+        session: { id: this.session?.id },
+      },
+      '*',
+    );
   }
 }
