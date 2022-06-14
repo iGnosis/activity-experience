@@ -127,7 +127,7 @@ export class WelcomeComponent implements OnInit {
       timeout: 275000, // length of video + some extra time
     },
   ];
-  sessionId: string;
+  sessionId = 'bfce8d96-fd18-4fea-9097-cb3b01ee025a';
   intervalId: any;
   currentStep = -1;
   currentMessage: Message | undefined;
@@ -176,7 +176,12 @@ export class WelcomeComponent implements OnInit {
   async start() {
     if (this.sessionId) {
       const sessionData = await this.sessionService.getSession(this.sessionId);
+      console.log(sessionData, sessionData);
       this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
+      if (sessionData.session_by_pk.state.stage) {
+        console.log('state present', sessionData.session_by_pk.state.stage);
+        this.router.navigate(['session']);
+      }
     }
     await this.showNextStep();
   }

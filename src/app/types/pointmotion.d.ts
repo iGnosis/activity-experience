@@ -685,6 +685,10 @@ export type SessionRow = {
   genre?: string;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
+  state: {
+    stage?: ActivityStage;
+    currentActivity?: ActivityState;
+  };
 };
 
 export type Patient = {

@@ -41,6 +41,7 @@ export class SessionService {
             id
             patient
             careplan
+            state
             patientByPatient {
               identifier
               preferredGenres
