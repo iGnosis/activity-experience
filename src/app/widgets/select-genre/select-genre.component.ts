@@ -31,6 +31,9 @@ export class SelectGenreComponent implements OnInit {
     },
   ];
 
+  intervalId: any;
+
+  playState: 'play' | 'stop' | undefined = undefined;
   constructor(private soundsService: SoundsService) {
     this.debouncedPlayMusic = this.debounce((genre: string) => {
       this.playMusic(genre);
@@ -50,11 +53,13 @@ export class SelectGenreComponent implements OnInit {
   }
 
   playMusic(genre: string) {
+    this.playState = 'play';
     this.soundsService.playGenreSound(genre as PreSessionGenre);
   }
 
-  stopMusic(genre: string) {
-    this.soundsService.stopGenreSound(genre as PreSessionGenre);
+  stopMusic(genre?: string) {
+    this.playState = 'stop';
+    Howler.stop();
   }
 
   selectGenre(mood: { title: string; selected?: boolean }) {
