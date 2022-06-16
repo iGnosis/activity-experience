@@ -178,50 +178,34 @@ export class SoundsService {
       case 'Classic':
         if (!this.preSessionGenreClassic.playing(this.preSessionGenreClassicId)) {
           this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
+          this.preSessionGenreClassic.fade(0, 80, 3000, this.preSessionGenreClassicId);
         }
         break;
       case 'Jazz':
         if (!this.preSessionGenreJazz.playing(this.preSessionGenreJazzId)) {
-          this.preSessionGenreJazzId = this.preSessionGenreJazz.play();
-        } else {
-          Howler.stop();
+          this.preSessionGenreJazzId = this.preSessionGenreJazz.fade(0, 80, 3000).play();
         }
         break;
       case 'Rock':
         if (!this.preSessionGenreRock.playing(this.preSessionGenreRockId)) {
-          this.preSessionGenreRockId = this.preSessionGenreRock.play();
-        } else {
-          Howler.stop();
+          this.preSessionGenreRockId = this.preSessionGenreRock.fade(0, 80, 3000).play();
         }
         break;
       case 'Dance':
-        this.preSessionGenreDanceId = this.preSessionGenreDance.play();
+        if (!this.preSessionGenreDance.playing(this.preSessionGenreDanceId)) {
+          this.preSessionGenreDanceId = this.preSessionGenreDance.fade(0, 80, 3000).play();
+        }
         break;
       case 'Surprise Me!':
-        this.preSessionGenreSurpriseId = this.preSessionGenreSurprise.play();
+        if (!this.preSessionGenreSurprise.playing(this.preSessionGenreSurpriseId)) {
+          this.preSessionGenreSurpriseId = this.preSessionGenreSurprise.fade(0, 80, 3000).play();
+        }
         break;
     }
   }
 
-  stopGenreSound(genre: PreSessionGenre) {
-    // Howler.stop()
-    // switch (genre) {
-    //   case 'Classic':
-    this.preSessionGenreClassic.stop(this.preSessionGenreClassicId);
-    //   break;
-    // case 'Jazz':
-    this.preSessionGenreJazz.stop(this.preSessionGenreJazzId);
-    //   break;
-    // case 'Rock':
-    this.preSessionGenreRock.stop(this.preSessionGenreRockId);
-    //   break;
-    // case 'Dance':
-    this.preSessionGenreDance.stop(this.preSessionGenreDanceId);
-    //   break;
-    // case 'Surprise Me!':
-    this.preSessionGenreSurprise.stop(this.preSessionGenreSurpriseId);
-    //     break;
-    // }
+  stopGenreSound(genre?: PreSessionGenre) {
+    Howler.stop();
   }
 
   playActivityInstructionSound() {

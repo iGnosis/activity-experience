@@ -182,16 +182,8 @@ export class WelcomeComponent implements OnInit {
   }
 
   async showNextStep() {
-    // await this.sleep(500)
     this.currentStep += 1;
-
-    // if (this.messages[this.currentStep]) {
-    //   if (this.messages[this.currentStep].type === 'tutorial') {
-    //     this.soundsService.stopPreSessionGenreSound(Genre);
-    //   }
-    // }
     if (this.currentStep == this.messages.length) {
-      // this.soundsService.stopPreSessionGenreSound();
       // Last step is also done :D
       // Let the user play the game
       this.router.navigate(['session']);
