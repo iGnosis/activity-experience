@@ -662,6 +662,12 @@ export type SessionState = {
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
   isSessionEnded?: boolean;
+  stage?: ActivityStage;
+};
+
+export type SessionStateField = {
+  stage?: ActivityStage;
+  currentActivity?: ActivityState;
 };
 
 export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
@@ -678,14 +684,14 @@ export type SessionRow = {
   createdAt?: Date;
   updatedAt?: Date;
   endedAt?: Date;
-  patient: string;
-  careplan: string;
+  patient?: string;
+  careplan?: string;
   preSessionMood?: string;
   postSessionMood?: string;
   genre?: string;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
-  state: {
+  state?: {
     stage?: ActivityStage;
     currentActivity?: ActivityState;
   };

@@ -100,29 +100,29 @@ export class CoordinationService {
     // this.activityStage = 'welcome';
 
     this.soundService.playActivityInstructionSound();
-    await this.step(this.activityStage, 'updateAvatar', { name: 'mila' });
-    await this.step(this.activityStage, 'sendMessage', { text: 'Hi!', position: 'center' });
+    await this.step('welcome', 'updateAvatar', { name: 'mila' });
+    await this.step('welcome', 'sendMessage', { text: 'Hi!', position: 'center' });
     // await this.sendMessage('Hi!', 'center');
 
-    await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 1000);
-    await this.step(this.activityStage, 'sendMessage', {
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 1000);
+    await this.step('welcome', 'sendMessage', {
       text: 'My name is Mila. I am thrilled to be working with you today.',
       position: 'center',
     });
 
-    await this.step(this.activityStage, 'sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: "I am here to guide you through today's session.",
       position: 'center',
     });
-    await this.step(this.activityStage, 'sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Before we start, we need to ensure a few things.',
       position: 'bottom',
     });
-    await this.step(this.activityStage, 'sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Firstly, we need to see you on the screen.',
       position: 'bottom',
     });
-    await this.step(this.activityStage, 'sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Please move around such that you can see your whole body inside the red box.',
       position: 'bottom',
       skipWait: true,
@@ -635,7 +635,12 @@ export class CoordinationService {
 
     this.observables$.session = this.store.select((state) => state.session.session);
     this.session = this.getValue(this.observables$.session);
-    this.activityStage = this.session.state.stage || 'explain';
+    if (this.session.state && this.session.state.stage) {
+      this.activityStage = this.session.state.stage;
+    } else {
+      // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
+      this.activityStage = 'explain';
+    }
     console.log(this.activityStage);
   }
 

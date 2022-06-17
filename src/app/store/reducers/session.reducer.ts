@@ -56,6 +56,7 @@ const _sessionReducer = createReducer(
           repsCompleted: state.currentActivity!.repsCompleted + 1 || 0,
         },
       };
+      saveToLocalStorage(newState);
       return newState;
     }
     return state;
@@ -63,6 +64,23 @@ const _sessionReducer = createReducer(
   on(session.setSessionEnded, (state) => {
     const newState = Object.assign({}, state);
     newState.isSessionEnded = true;
+    saveToLocalStorage(newState);
+    return newState;
+  }),
+  on(session.updateSessionState, (state, data) => {
+    // const newState = Object.assign({}, state);
+    const newState: SessionState = {
+      ...state,
+      session: {
+        ...state.session,
+        state: {
+          ...state.session?.state,
+          stage: data.stage,
+          currentActivity: data.currentActivity,
+        },
+      },
+    };
+    saveToLocalStorage(newState);
     return newState;
   }),
 );

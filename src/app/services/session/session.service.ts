@@ -32,6 +32,34 @@ export class SessionService {
   //   );
   // }
 
+  async getUserSessionsBetweenDates(patient: string, startDate: Date, endDate: Date) {
+    return this.client.req(
+      gql`
+        query fetchUserSessions(
+          $patient: uuid = ""
+          $startDate: timestamptz = ""
+          $endDate: timestamptz = ""
+        ) {
+          session(
+            where: {
+              _and: { patient: { _eq: $patient }, state: { _is_null: false } }
+              createdAt: { _gte: $startDate, _lte: $endDate }
+            }
+            order_by: { createdAt: desc }
+          ) {
+            id
+            state
+          }
+        }
+      `,
+      {
+        patient,
+        startDate,
+        endDate,
+      },
+    );
+  }
+
   async getSession(id: string) {
     this.sessionId = id;
     return this.client.req(

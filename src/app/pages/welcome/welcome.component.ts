@@ -7,8 +7,15 @@ import { SessionService } from 'src/app/services/session/session.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
+import {
+  ActivityStage,
+  PreSessionGenre,
+  PreSessionMood,
+  SessionStateField,
+} from 'src/app/types/pointmotion';
 import { UserService } from 'src/app/services/user/user.service';
+import { gql } from 'graphql-request';
+import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 
 type SessionDetails = { heading: string; checkList: string[]; text?: string };
 type Message = {
@@ -24,6 +31,20 @@ type Message = {
   timeout?: number;
   bg: string;
 };
+
+interface FetchUserSessionsResponse {
+  session: {
+    id: string;
+    state: {
+      stage: ActivityStage;
+      currentActivity: {
+        type: string;
+        totalReps: number;
+        repsCompleted: number;
+      };
+    };
+  }[];
+}
 
 @Component({
   selector: 'app-welcome',
@@ -139,6 +160,7 @@ export class WelcomeComponent implements OnInit {
     private soundsService: SoundsService,
     private userService: UserService,
     private store: Store<{ session: any }>,
+    private analyticsService: AnalyticsService,
   ) {
     // Save the session id in the store
     // If there is no session id, then disable analytics
@@ -178,9 +200,29 @@ export class WelcomeComponent implements OnInit {
       const sessionData = await this.sessionService.getSession(this.sessionId);
       console.log(sessionData, sessionData);
       this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
-      if (sessionData.session_by_pk.state.stage) {
-        console.log('state present', sessionData.session_by_pk.state.stage);
-        this.router.navigate(['session']);
+
+      // if stage is present in session.state then we will skip the preSession and will proceed to the session directly.
+      if (sessionData.session_by_pk.patient) {
+        const currentDate = new Date(new Date().toISOString().split('T')[0]!);
+        const futureDate = this.getFutureDate(currentDate, 1);
+
+        const response: FetchUserSessionsResponse =
+          await this.sessionService.getUserSessionsBetweenDates(
+            sessionData.session_by_pk.patient,
+            currentDate,
+            futureDate,
+          );
+        console.log('existing session', response.session[0]);
+        if (response.session[0] && response.session[0].state && response.session[0].state.stage) {
+          this.analyticsService.sendSessionState(response.session[0].state.stage as ActivityStage);
+          this.store.dispatch(
+            session.updateSessionState({
+              stage: response.session[0].state.stage,
+              currentActivity: response.session[0].state.currentActivity,
+            }),
+          );
+          this.router.navigate(['session']);
+        }
       }
     }
     await this.showNextStep();
@@ -234,5 +276,9 @@ export class WelcomeComponent implements OnInit {
   async genreSelected(genre: string | PreSessionGenre) {
     await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
+  }
+
+  getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
+    return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
   }
 }
