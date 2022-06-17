@@ -121,15 +121,18 @@ export class CalibrationService {
 
     const poseLandmarkArray = results.pose.poseLandmarks;
 
+    const points = [12, 11, 24, 23, 26, 25];
+    // calling drawCalibrationPoints() here!!!
+
     if (!Array.isArray(poseLandmarkArray)) {
       return {
         status: 'error',
       };
     } else {
-      // adding these points to make the calibration lenient
-      const points = [12, 11, 24, 23, 26, 25];
       // const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
-      const isCalibrationSuccess = points.every((point) => {
+      const unCalibratedPoints: number[] = [];
+      const calibratedPoints: number[] = [];
+      points.forEach((point) => {
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
           !this.calibrationBoxContains(
@@ -138,13 +141,13 @@ export class CalibrationService {
           )
         ) {
           console.log(`point ${point} is out of calibration box`);
-          return false;
+          unCalibratedPoints.push(point);
+        } else {
+          calibratedPoints.push(point);
         }
-        return true;
       });
 
-      if (isCalibrationSuccess) {
-        // console.log(`Calibration Successful`);
+      if (calibratedPoints.length === points.length) {
         return {
           status: 'success',
         };
@@ -159,10 +162,20 @@ export class CalibrationService {
         });
 
         if (invisiblePoint) {
+          this.calibrationScene.drawCalibrationPoints(
+            results.pose,
+            calibratedPoints,
+            unCalibratedPoints,
+          );
           return {
             status: 'error',
           };
         } else {
+          this.calibrationScene.drawCalibrationPoints(
+            results.pose,
+            calibratedPoints,
+            unCalibratedPoints,
+          );
           return {
             status: 'warning',
           };

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Holistic, Options } from '@mediapipe/holistic';
 import { Store } from '@ngrx/store';
+import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { pose } from 'src/app/store/actions/pose.actions';
 import { Results } from 'src/app/types/pointmotion';
 
@@ -20,7 +21,10 @@ export class HolisticService {
   };
   interval: any;
   videoElm?: HTMLVideoElement;
-  constructor(private store: Store<{ pose: Results }>) {}
+  constructor(
+    private store: Store<{ pose: Results }>,
+    private calibrationScene: CalibrationScene,
+  ) {}
 
   async start(videoElm: HTMLVideoElement, fps = 25) {
     this.holistic = new Holistic({
@@ -33,6 +37,8 @@ export class HolisticService {
 
     this.holistic.setOptions(this.options);
     this.holistic.onResults((results) => {
+      // as soon as we are getting the new results we are destroying the exisiting calibration pose and points to make it look more realtime!
+      this.calibrationScene.destroyGraphics();
       this.handleResults(results);
     });
     this.videoElm = videoElm;
@@ -49,7 +55,7 @@ export class HolisticService {
       if (this.videoElm) {
         this.holistic?.send({ image: this.videoElm });
       }
-    }, 500);
+    }, 200);
   }
 
   stop() {
