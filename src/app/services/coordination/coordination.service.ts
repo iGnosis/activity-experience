@@ -59,7 +59,7 @@ export class CoordinationService {
   session: SessionRow;
   observables$: {
     activityId: Observable<string | undefined>;
-    pose: Observable<any>;
+    pose: Observable<{ pose: Results }>;
     currentActivity: Observable<ActivityState | undefined>;
     session: Observable<SessionRow | undefined>;
   };
@@ -831,9 +831,9 @@ export class CoordinationService {
         this.handleCalibrationSuccess(oldStatus, newStatus);
         break;
       case 'error':
-      default:
         this.handleCalibrationError(oldStatus, newStatus);
         break;
+      default:
     }
   }
 

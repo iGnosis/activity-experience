@@ -40,7 +40,7 @@ export class CalibrationService {
     this.isEnabled = false;
   }
 
-  handlePose(results: { pose: Results }): { status: string } | undefined {
+  handlePose(results: { pose: Results }): { status: 'error' | 'warning' | 'success' } | undefined {
     if (!results) return;
 
     return this.calibrateFullBody(results);
@@ -116,7 +116,11 @@ export class CalibrationService {
     );
   }
 
-  calibrateFullBody(results: { pose: Results }) {
+  calibrateFullBody(results: { pose: Results }):
+    | {
+        status: 'error' | 'warning' | 'success';
+      }
+    | undefined {
     if (!this.isEnabled) return;
 
     const poseLandmarkArray = results.pose.poseLandmarks;

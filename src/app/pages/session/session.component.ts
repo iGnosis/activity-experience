@@ -13,6 +13,7 @@ import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { SessionRow, SessionState } from 'src/app/types/pointmotion';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ExperimentScene } from 'src/app/scenes/experiment/experiment.scene';
 
 @Component({
   selector: 'app-session',
@@ -61,6 +62,7 @@ export class SessionComponent implements AfterViewInit {
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
     private sit2standScene: SitToStandScene,
+    private experimentScene: ExperimentScene,
     private coordinationService: CoordinationService,
     private router: Router,
   ) {
@@ -104,10 +106,11 @@ export class SessionComponent implements AfterViewInit {
   }
 
   async startGame() {
-    const scenes = [this.calibrationScene, this.sit2standScene];
+    const scenes = [this.calibrationScene, this.sit2standScene, this.experimentScene];
     this.config.scene = scenes;
     this.game = new Phaser.Game(this.config);
-    this.coordinationService.start(this.game as Phaser.Game, () => {});
+    // this.coordinationService.start(this.game as Phaser.Game, () => {});
+    this.experimentScene.start();
     this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
     setTimeout(() => {
       // Start mediapipe
