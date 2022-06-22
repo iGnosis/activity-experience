@@ -10,11 +10,17 @@ import { CalibrationScene } from '../calibration/calibration.scene';
   providedIn: 'root',
 })
 export class ExperimentScene extends Phaser.Scene {
+  leftRect!: Phaser.GameObjects.Rectangle;
+  rightRect!: Phaser.GameObjects.Rectangle;
+  pose!: Results;
+  ball!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   observables$: {
     pose: Observable<{ pose: Results }>;
     session: Observable<SessionRow | undefined>;
   };
   calibrationStatus: 'success' | 'error' | 'warning' = 'error';
+  text!: Phaser.GameObjects.Text;
+  collisionCount = 0;
 
   constructor(
     private store: Store<{ pose: any }>,
@@ -24,11 +30,80 @@ export class ExperimentScene extends Phaser.Scene {
     super({ key: 'experiment' });
   }
 
-  preload() {}
-  create() {
-    this.scene.add;
+  preload() {
+    this.load.svg('red_ball', 'assets/images/ball_red.svg');
   }
-  override update(time: number, delta: number): void {}
+  create() {
+    const { width, height } = this.game.canvas;
+
+    this.text = this.add.text(20, 20, '', {
+      font: '60px Courier',
+      color: '#00ff00',
+    });
+    this.text.setText(this.collisionCount.toString());
+
+    this.physics.world.setBounds(0, 0, width, height);
+    this.physics.world.setBoundsCollision(true, true, true, true);
+    this.ball = this.physics.add.sprite(500, 0, 'red_ball').setScale(2, 2);
+    console.log(this.ball.width);
+    this.ball.setCircle(this.ball.width / 2);
+    this.ball.setFriction(0, 0);
+    this.ball.setVelocity(120, 80);
+    this.ball.setGravityY(200);
+    this.ball.setCollideWorldBounds(true, 1, 1);
+
+    // if (this.leftHand && this.ball) {
+    this.physics.add.overlap(
+      this.leftRect,
+      this.ball,
+      (e) => {
+        console.log(e);
+        this.collisionCount += 1;
+        console.log(this.collisionCount);
+        this.text.setText(this.collisionCount.toString());
+      },
+      undefined,
+      this,
+    );
+    // }
+
+    // if (this.rightHand && this.ball) {
+    this.physics.add.overlap(
+      this.rightRect,
+      this.ball,
+      (e) => {
+        console.log(e);
+        this.collisionCount += 1;
+        console.log(this.collisionCount);
+        this.text.setText(this.collisionCount.toString());
+      },
+      undefined,
+      this,
+    );
+    // }
+  }
+  override update(time: number, delta: number): void {
+    const { height, width } = this.game.canvas;
+    // this.text.setText(this.collisionCount.toString());
+    // this.destroyGraphics();
+    // if (this.pose) {
+    //   this.drawRects(this.pose);
+    // }
+
+    if (this.ball && this.ball.x >= 1100) {
+      if (this.ball.active) {
+        this.ball.destroy(true);
+      }
+    }
+
+    if (!this.ball.active) {
+      this.ball = this.physics.add.sprite(500, 0, 'red_ball').setScale(2, 2);
+      this.ball.setFriction(0, 0);
+      this.ball.setVelocity(80, 80);
+      this.ball.setGravityY(200);
+      this.ball.setCollideWorldBounds(true, 1, 1);
+    }
+  }
 
   start() {
     this.startExperimentScene();
@@ -62,8 +137,10 @@ export class ExperimentScene extends Phaser.Scene {
     this.observables$.pose = this.store.select((state) => state.pose);
     this.observables$.pose.subscribe((results: { pose: Results }) => {
       if (results) {
-        console.log(results);
+        this.pose = results.pose;
         this.handlePose(results);
+        this.destroyGraphics();
+        this.drawRects(this.pose);
       }
     });
   }
@@ -101,5 +178,115 @@ export class ExperimentScene extends Phaser.Scene {
   handleCalibrationError(error: string) {
     this.calibrationScene.drawCalibrationBox(error);
     this.startCalibrationScene();
+  }
+
+  destroyGraphics() {
+    if (this.leftHand) {
+      this.leftHand.destroy();
+    }
+    if (this.rightHand) {
+      this.rightHand.destroy();
+    }
+  }
+
+  leftHand?: Phaser.GameObjects.Graphics = undefined;
+  rightHand?: Phaser.GameObjects.Graphics = undefined;
+
+  drawRects(poseResults: Results) {
+    const { width, height } = this.game.canvas;
+    const rightElbow = poseResults.poseLandmarks[14];
+    const leftElbow = poseResults.poseLandmarks[13];
+    const rightWrist = poseResults.poseLandmarks[16];
+    const leftWrist = poseResults.poseLandmarks[15];
+
+    if (this.leftRect) {
+      this.leftRect.destroy(true);
+    }
+
+    if (this.rightRect) {
+      this.rightRect.destroy(true);
+    }
+
+    if (!rightElbow || !leftElbow || !rightWrist || !leftWrist) {
+      return;
+    }
+
+    const leftRectAngle =
+      Math.atan2(
+        leftWrist.y * height - leftElbow.y * height,
+        leftWrist.x * width - leftElbow.x * width,
+      ) *
+      (180 / Math.PI);
+
+    const rightRectAngle =
+      Math.atan2(
+        rightWrist.y * height - rightElbow.y * height,
+        rightWrist.x * width - rightElbow.x * width,
+      ) *
+      (180 / Math.PI);
+    console.log(`left ${leftRectAngle} right ${rightRectAngle}`);
+
+    // ! method - 1
+    this.leftRect = new Phaser.GameObjects.Rectangle(
+      this,
+      width - leftElbow.x * width,
+      leftElbow.y * height,
+      20,
+      40,
+      0xffffff,
+      1,
+    ).setAngle(leftRectAngle);
+
+    this.physics.add.existing(this.leftRect);
+
+    this.rightRect = new Phaser.GameObjects.Rectangle(
+      this,
+      width - rightElbow.x * width,
+      rightElbow.y * height,
+      20,
+      40,
+      0xffffff,
+      1,
+    ).setAngle(rightRectAngle);
+
+    this.physics.add.existing(this.rightRect);
+
+    // ! method - 2
+    // this.leftHand = this.add.graphics();
+    // this.leftHand!.lineStyle(20, 0xff0000, 0.3);
+    // this.leftHand!.lineBetween(
+    //   width - leftElbow.x * width,
+    //   leftElbow.y * height,
+    //   width - leftWrist.x * width,
+    //   leftWrist.y * height,
+    // );
+
+    // // this.physics.world.enable(this.leftHand);
+    // this.leftHand.setInteractive();
+    // this.physics.add.existing(this.leftHand);
+
+    // this.rightHand = this.add.graphics();
+    // this.rightHand!.lineStyle(20, 0xff0000, 0.3);
+    // this.rightHand!.lineBetween(
+    //   width - rightElbow.x * width,
+    //   rightElbow.y * height,
+    //   width - rightWrist.x * width,
+    //   rightWrist.y * height,
+    // );
+
+    // // this.physics.world.enable(this.rightHand);
+    // this.rightHand.setInteractive();
+    // this.physics.add.existing(this.rightHand);
+
+    // ! method - 3
+    // this.graphics = this.add.graphics({ fillStyle: { color: 0xffff00, alpha: 1 } });
+    // this.graphics!.lineStyle(20, 0xffff00);
+    // const left = new Phaser.Geom.Rectangle(
+    //   width - leftElbow.x,
+    //   leftElbow.y,
+    //   10,
+    //   height - leftElbow.y - leftWrist.y,
+    // );
+    // this.graphics!.strokeRectShape(left);
   }
 }

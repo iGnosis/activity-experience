@@ -39,7 +39,9 @@ export class SessionComponent implements AfterViewInit {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { y: 200 },
+        gravity: { y: 0 },
+        debug: true,
+        debugShowVelocity: true,
       },
     },
   };
