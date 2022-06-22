@@ -22,6 +22,7 @@ import { session } from 'src/app/store/actions/session.actions';
 import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { DebugService } from '../analytics/debug/debug.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +30,12 @@ import { DebugService } from '../analytics/debug/debug.service';
 export class CoordinationService {
   private game?: Phaser.Game;
   private onComplete: any;
+
+  private promptsArr: number[] = [];
+  private currentPromptIdx = 0;
+  private totalReps = 10;
+  private repsArr: ('odd' | 'even')[] = [];
+
   constructor(
     private store: Store<{
       session: SessionState;
@@ -44,7 +51,23 @@ export class CoordinationService {
     private sit2standService: SitToStandService,
     private analyticsService: AnalyticsService,
     private debugService: DebugService,
+    private route: ActivatedRoute,
   ) {
+    const prompts =
+      this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
+      this.route.snapshot.queryParamMap.get('prompt')?.split(',') ||
+      undefined;
+
+    if (prompts && prompts.length > 0) {
+      this.totalReps = prompts.length;
+      for (let i = 0; i < prompts.length; i++) {
+        console.log(prompts[i]);
+        this.promptsArr.push(parseInt(prompts[i]));
+      }
+    }
+
+    console.log(this.promptsArr);
+
     this.store.dispatch(
       session.startActivity({
         totalReps: 10,
@@ -307,7 +330,7 @@ export class CoordinationService {
         }
 
         while (
-          this.successfulReps < 10 &&
+          this.successfulReps < this.totalReps &&
           this.calibrationStatus === 'success' &&
           !this.isRecalibrated
         ) {
@@ -319,17 +342,50 @@ export class CoordinationService {
 
           let num: number;
           if (this.successfulReps === 0) {
-            this.currentClass === 'stand'
-              ? (num = Math.floor((Math.random() * 100) / 2) * 2)
-              : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
+            if (this.promptsArr.length > 0) {
+              num = this.promptsArr[this.currentPromptIdx];
+            } else {
+              this.currentClass === 'stand'
+                ? (num = Math.floor((Math.random() * 100) / 2) * 2)
+                : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
+            }
           } else {
-            num = Math.floor(Math.random() * 100);
+            if (this.promptsArr.length >= 1) {
+              num = this.promptsArr[this.currentPromptIdx];
+            } else {
+              if (this.repsArr.length >= 2) {
+                console.log(
+                  `${this.repsArr[this.currentPromptIdx - 2]} ${
+                    this.repsArr[this.currentPromptIdx - 1]
+                  }`,
+                );
+                if (
+                  this.repsArr[this.currentPromptIdx - 1] === 'even' &&
+                  this.repsArr[this.currentPromptIdx - 2] === 'even'
+                ) {
+                  num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
+                } else if (
+                  this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
+                  this.repsArr[this.currentPromptIdx - 2] === 'odd'
+                ) {
+                  num = Math.floor((Math.random() * 100) / 2) * 2;
+                } else {
+                  num = Math.floor(Math.random() * 100);
+                }
+              } else {
+                num = Math.floor(Math.random() * 100);
+              }
+            }
           }
+
+          console.log('repsArr', this.repsArr);
 
           if (num % 2 === 0) {
             this.desiredClass = 'sit';
+            this.repsArr.push('even');
           } else {
             this.desiredClass = 'stand';
+            this.repsArr.push('odd');
           }
 
           // sending the taskStarted event
@@ -361,6 +417,7 @@ export class CoordinationService {
 
           // playing chord
           if (res.result === 'success') {
+            this.currentPromptIdx += 1;
             this.soundService.playNextChord();
             this.store.dispatch(session.addRep());
             console.log('event:taskEnded:sent:score', 1);
@@ -373,6 +430,7 @@ export class CoordinationService {
               task_name: this.desiredClass,
             });
           } else {
+            this.currentPromptIdx += 1;
             console.log('event:taskEnded:sent:score', 0);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
@@ -385,7 +443,7 @@ export class CoordinationService {
           }
         }
 
-        if (this.successfulReps >= 10) {
+        if (this.successfulReps >= this.totalReps) {
           this.activityStage = 'postGame';
           this.analyticsService.sendSessionState(this.activityStage);
         }
@@ -635,7 +693,7 @@ export class CoordinationService {
 
     this.observables$.session = this.store.select((state) => state.session.session);
     this.session = this.getValue(this.observables$.session);
-    if (this.session.state && this.session.state.stage) {
+    if (this.session && this.session.state && this.session.state.stage) {
       this.activityStage = this.session.state.stage;
     } else {
       // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
