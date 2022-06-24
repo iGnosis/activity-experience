@@ -16,6 +16,7 @@ import {
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { JwtService } from '../jwt/jwt.service';
 import { DebugService } from './debug/debug.service';
 
 interface ActivityList {
@@ -29,7 +30,7 @@ interface ActivityList {
 export class AnalyticsService {
   sessionId = '';
   patientId = '';
-  activities: ActivityList[];
+  activities: ActivityList[] | undefined;
   currentActivity: ActivityState | undefined = undefined;
   nextActivity: ActivityState | undefined = undefined;
 
@@ -37,6 +38,7 @@ export class AnalyticsService {
     private gql: GqlClientService,
     private store: Store<{ session: SessionState }>,
     private debugService: DebugService,
+    private jwtService: JwtService,
   ) {
     this.store
       .select((state) => state.session)
@@ -50,7 +52,7 @@ export class AnalyticsService {
     this.store
       .select((store) => store.session.session?.careplanByCareplan)
       .subscribe((careplan) => {
-        this.activities = careplan!.careplan_activities.map((careplan_activity) => {
+        this.activities = careplan?.careplan_activities.map((careplan_activity) => {
           return {
             name: careplan_activity.activityByActivity.name,
             id: careplan_activity.activity,
@@ -61,6 +63,9 @@ export class AnalyticsService {
 
   // TODO: batch events, save them in localStorage and let a webworker process the queue
   async sendEvent(event: AnalyticsEvent) {
+    if (this.jwtService.isPlayer()) {
+      return;
+    }
     if (this.sessionId) {
       const analyticsRow: AnalyticsRow = {
         patient: this.patientId, // TODO remove hardcoded
@@ -96,6 +101,9 @@ export class AnalyticsService {
   }
 
   async sendSessionEvent(event: AnalyticsSessionEvent) {
+    if (this.jwtService.isPlayer()) {
+      return;
+    }
     if (this.sessionId) {
       const sessionEventRow: AnalyticsSessionEventRow = {
         patient: this.patientId, // TODO remove hardcoded
@@ -126,6 +134,9 @@ export class AnalyticsService {
   }
 
   async sendActivityEvent(event: ActivityEvent) {
+    if (this.jwtService.isPlayer()) {
+      return;
+    }
     if (this.sessionId) {
       const activityEventRow: ActivityEventRow = {
         patient: this.patientId, // TODO remove hardcoded
@@ -156,6 +167,9 @@ export class AnalyticsService {
   }
 
   async sendTaskEvent(event: TaskEvent) {
+    if (this.jwtService.isPlayer()) {
+      return;
+    }
     if (this.sessionId) {
       const taskEventRow: TaskEventRow = {
         patient: this.patientId, // TODO remove hardcoded

@@ -43,6 +43,7 @@ export class HolisticService {
     });
     this.videoElm = videoElm;
 
+    await this.holistic.initialize();
     // We need to wait until Holistic is done loading the files, only then we set the interval.
     await this.holistic?.send({ image: this.videoElm });
 

@@ -3,6 +3,7 @@ import { gql } from 'graphql-request';
 import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +11,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 export class SessionService {
   sessionId: string | undefined;
 
-  constructor(private client: GqlClientService) {}
+  constructor(private client: GqlClientService, private jwtService: JwtService) {}
 
   // async new() {
   //   return this.client.req(
@@ -62,32 +63,46 @@ export class SessionService {
 
   async getSession(id: string) {
     this.sessionId = id;
-    return this.client.req(
-      gql`
+    let query = gql`
+      query GetSessionDetails($id: uuid!) {
+        session_by_pk(id: $id) {
+          id
+          patient
+          careplan
+          state
+          patientByPatient {
+            identifier
+            preferredGenres
+          }
+          careplanByCareplan {
+            name
+            careplan_activities {
+              activity
+              activityByActivity {
+                name
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    if (this.jwtService.isPlayer()) {
+      query = gql`
         query GetSessionDetails($id: uuid!) {
           session_by_pk(id: $id) {
             id
             patient
-            careplan
             state
             patientByPatient {
               identifier
               preferredGenres
             }
-            careplanByCareplan {
-              name
-              careplan_activities {
-                activity
-                activityByActivity {
-                  name
-                }
-              }
-            }
           }
         }
-      `,
-      { id },
-    );
+      `;
+    }
+    return this.client.req(query, { id });
   }
 
   async updatePreSessionMood(mood: PreSessionMood) {
