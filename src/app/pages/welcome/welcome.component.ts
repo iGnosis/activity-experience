@@ -198,7 +198,7 @@ export class WelcomeComponent implements OnInit {
   async start() {
     if (this.sessionId) {
       const sessionData = await this.sessionService.getSession(this.sessionId);
-      console.log(sessionData, sessionData);
+      console.log('sessionData', sessionData);
       this.store.dispatch(session.updateConfig(sessionData.session_by_pk));
 
       // if stage is present in session.state then we will skip the preSession and will proceed to the session directly.
