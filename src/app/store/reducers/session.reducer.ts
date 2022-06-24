@@ -64,7 +64,6 @@ const _sessionReducer = createReducer(
   on(session.setSessionEnded, (state) => {
     const newState = Object.assign({}, state);
     newState.isSessionEnded = true;
-    saveToLocalStorage(newState);
     return newState;
   }),
   on(session.updateSessionState, (state, data) => {

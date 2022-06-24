@@ -688,12 +688,17 @@ export class CoordinationService {
 
     this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
     this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
-      this.successfulReps = res!.repsCompleted || 0;
+      this.successfulReps = res?.repsCompleted || 0;
     });
 
     this.observables$.session = this.store.select((state) => state.session.session);
     this.session = this.getValue(this.observables$.session);
-    if (this.session && this.session.state && this.session.state.stage) {
+    if (
+      this.session &&
+      this.session.state &&
+      this.session.state.stage &&
+      this.session.state.stage !== 'postGame'
+    ) {
       this.activityStage = this.session.state.stage;
     } else {
       // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
