@@ -1,3 +1,5 @@
+@import 'src/app/variables';
+
 .pre-session-survey {
     .txt {
         min-height: 30vh;
@@ -19,7 +21,7 @@
             }
         }
         .col:hover {
-            top: -30px
+            background-color: darken($primary, 10%) !important;
         }
     }
 }

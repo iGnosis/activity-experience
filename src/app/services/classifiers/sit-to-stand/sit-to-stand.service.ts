@@ -34,7 +34,6 @@ export class SitToStandService {
     celebrated: false,
   };
 
-  activityId: string;
   taskId = v4();
   attemptId = v4();
 
@@ -112,31 +111,22 @@ export class SitToStandService {
     }>,
     private analyticsService: AnalyticsService,
   ) {
-    this.activityId = this.analyticsService.getActivityId('Sit to Stand') as string;
-    console.log('starting activity');
-    this.analyticsService.sendActivityEvent({
-      activity: this.activityId,
-      event_type: 'activityStarted',
-    });
-
     // Try pulling in the distance threshold from the careplan config. Fallback to 0.25
-    try {
-      this.distanceThreshold =
-        this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
-    } catch (err) {
-      console.error(err);
-      this.distanceThreshold = 0.25;
-    }
-
+    // try {
+    //   this.distanceThreshold =
+    //     this.careplan.getCarePlan().config['sit2stand'].pointDistanceThreshold;
+    // } catch (err) {
+    //   console.error(err);
+    //   this.distanceThreshold = 0.25;
+    // }
     // Listen to the poses... From calibration service
-    this.store
-      .select((state) => state.calibration)
-      .subscribe((data: any) => {
-        if (data && data.pose) {
-          this.classify(data.pose);
-        }
-      });
-
+    // this.store
+    //   .select((state) => state.calibration)
+    //   .subscribe((data: any) => {
+    //     if (data && data.pose) {
+    //       this.classify(data.pose);
+    //     }
+    //   });
     // this.store
     //   .select((state) => state.calibration.status)
     //   .subscribe((status: string) => {
@@ -157,19 +147,6 @@ export class SitToStandService {
     //       //   this.debounce(this.pauseActivity(), 3000);
     //     }
     //   });
-
-    this.store
-      .select((state) => state.calibration.poseHash)
-      .subscribe((poseHash: number) => {
-        console.log('poseHash:', poseHash);
-        console.log('isWaitingForReaction:', this.isWaitingForReaction);
-        if (this.isWaitingForReaction && poseHash == 1) {
-          // send reaction event for current running task
-          console.log('sending reaction event.');
-          this.sendTaskReactedEvent();
-          this.isWaitingForReaction = false;
-        }
-      });
   }
 
   debounce(func: any, timeout = 300) {
@@ -440,27 +417,5 @@ export class SitToStandService {
 
   isEnabled() {
     return this.enabled;
-  }
-
-  sendTaskReactedEvent() {
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskReacted',
-      task_id: this.taskId,
-      task_name: this.task.className,
-    });
-  }
-
-  sendTaskEndedEvent(score: number) {
-    console.log('ending a task');
-    this.analyticsService.sendTaskEvent({
-      activity: this.activityId,
-      attempt_id: this.attemptId,
-      event_type: 'taskEnded',
-      task_id: this.taskId,
-      score,
-      task_name: this.task.className,
-    });
   }
 }

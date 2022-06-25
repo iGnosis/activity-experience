@@ -5,7 +5,7 @@
 import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
-  stageName: 'dev',
+  stageName: 'local',
   production: false,
   // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
@@ -15,7 +15,7 @@ export const environment: Environment = {
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
   musicExperience: 'music_experience_2',
   speedUpSession: false,
-  postSessionRedirectEndpoint: 'https://provider.dev.pointmotioncontrol.com',
+  postSessionRedirectEndpoint: 'http://localhost:4200',
 };
 
 /*

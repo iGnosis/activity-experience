@@ -1,14 +1,17 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'graphql-request';
+import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SessionService {
   sessionId: string | undefined;
-  constructor(private client: GqlClientService) {}
+
+  constructor(private client: GqlClientService, private jwtService: JwtService) {}
 
   // async new() {
   //   return this.client.req(
@@ -30,36 +33,79 @@ export class SessionService {
   //   );
   // }
 
-  async get(id: string) {
-    this.sessionId = id;
+  async getUserSessionsBetweenDates(patient: string, startDate: Date, endDate: Date) {
     return this.client.req(
       gql`
-        query GetSessionDetails($id: uuid!) {
-          session_by_pk(id: $id) {
-            id
-            patient
-            careplan
-            patientByPatient {
-              identifier
-              preferredGenres
+        query fetchUserSessions(
+          $patient: uuid = ""
+          $startDate: timestamptz = ""
+          $endDate: timestamptz = ""
+        ) {
+          session(
+            where: {
+              _and: { patient: { _eq: $patient }, state: { _is_null: false } }
+              createdAt: { _gte: $startDate, _lte: $endDate }
             }
-            careplanByCareplan {
-              name
-              careplan_activities {
-                activity
-                activityByActivity {
-                  name
-                }
+            order_by: { createdAt: desc }
+          ) {
+            id
+            state
+          }
+        }
+      `,
+      {
+        patient,
+        startDate,
+        endDate,
+      },
+    );
+  }
+
+  async getSession(id: string) {
+    this.sessionId = id;
+    let query = gql`
+      query GetSessionDetails($id: uuid!) {
+        session_by_pk(id: $id) {
+          id
+          patient
+          careplan
+          state
+          patientByPatient {
+            identifier
+            preferredGenres
+          }
+          careplanByCareplan {
+            name
+            careplan_activities {
+              activity
+              activityByActivity {
+                name
               }
             }
           }
         }
-      `,
-      { id },
-    );
+      }
+    `;
+
+    if (this.jwtService.isPlayer()) {
+      query = gql`
+        query GetSessionDetails($id: uuid!) {
+          session_by_pk(id: $id) {
+            id
+            patient
+            state
+            patientByPatient {
+              identifier
+              preferredGenres
+            }
+          }
+        }
+      `;
+    }
+    return this.client.req(query, { id });
   }
 
-  async updatePreSessionMood(mood: string) {
+  async updatePreSessionMood(mood: PreSessionMood) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');
       return;
@@ -99,7 +145,7 @@ export class SessionService {
     );
   }
 
-  async updateGenre(genre: string) {
+  async updateGenre(genre: PreSessionGenre) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');
       return;

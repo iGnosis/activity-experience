@@ -566,6 +566,9 @@ export declare class Holistic implements HolisticInterface {
   setOptions(options: Options): void;
 }
 
+export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
+export type PreSessionGenre = 'Classic' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+
 export interface CalibrationState {
   pose?: Results;
   status: string;
@@ -573,7 +576,7 @@ export interface CalibrationState {
   poseHash?: number;
 }
 
-export type TaskName = 'calibration' | 'sit' | 'stand';
+export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
   | 'activityStarted'
@@ -627,8 +630,8 @@ export type ActivityEventRow = {
 };
 
 export type ActivityEvent = {
-  activity: string;
   event_type: ActivityEventType;
+  activity: string;
 };
 
 export type TaskEventType = 'taskStarted' | 'taskReacted' | 'taskEnded';
@@ -659,6 +662,12 @@ export type SessionState = {
   currentActivity?: ActivityState;
   nextActivity?: ActivityState;
   isSessionEnded?: boolean;
+  stage?: ActivityStage;
+};
+
+export type SessionStateField = {
+  stage?: ActivityStage;
+  currentActivity?: ActivityState;
 };
 
 export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
@@ -675,13 +684,17 @@ export type SessionRow = {
   createdAt?: Date;
   updatedAt?: Date;
   endedAt?: Date;
-  patient: string;
-  careplan: string;
+  patient?: string;
+  careplan?: string;
   preSessionMood?: string;
   postSessionMood?: string;
   genre?: string;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
+  state?: {
+    stage?: ActivityStage;
+    currentActivity?: ActivityState;
+  };
 };
 
 export type Patient = {
@@ -715,6 +728,7 @@ export interface Environment {
   apiEndpoint: string;
   musicExperience: 'music_experience_1' | 'music_experience_2';
   speedUpSession?: boolean;
+  postSessionRedirectEndpoint: string;
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
@@ -786,3 +800,12 @@ export type AnnouncementState = {
   timeout?: number;
   background?: string;
 };
+
+export type DebugTaskEvent = {
+  event_type: TaskEventType;
+  task_id: string;
+  task_name: TaskName;
+  reacted: boolean;
+};
+
+export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
