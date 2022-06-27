@@ -53,33 +53,33 @@ export class ExperimentScene extends Phaser.Scene {
     this.ball.setCollideWorldBounds(true, 1, 1);
 
     // if (this.leftHand && this.ball) {
-    this.physics.add.overlap(
-      this.leftRect,
-      this.ball,
-      (e) => {
-        console.log(e);
-        this.collisionCount += 1;
-        console.log(this.collisionCount);
-        this.text.setText(this.collisionCount.toString());
-      },
-      undefined,
-      this,
-    );
+    // this.physics.add.overlap(
+    //   this.leftRect,
+    //   this.ball,
+    //   (e) => {
+    //     console.log(e);
+    //     this.collisionCount += 1;
+    //     console.log(this.collisionCount);
+    //     this.text.setText(this.collisionCount.toString());
+    //   },
+    //   undefined,
+    //   this,
+    // );
     // }
 
     // if (this.rightHand && this.ball) {
-    this.physics.add.overlap(
-      this.rightRect,
-      this.ball,
-      (e) => {
-        console.log(e);
-        this.collisionCount += 1;
-        console.log(this.collisionCount);
-        this.text.setText(this.collisionCount.toString());
-      },
-      undefined,
-      this,
-    );
+    // this.physics.add.overlap(
+    //   this.rightRect,
+    //   this.ball,
+    //   (e) => {
+    //     console.log(e);
+    //     this.collisionCount += 1;
+    //     console.log(this.collisionCount);
+    //     this.text.setText(this.collisionCount.toString());
+    //   },
+    //   undefined,
+    //   this,
+    // );
     // }
   }
   override update(time: number, delta: number): void {
