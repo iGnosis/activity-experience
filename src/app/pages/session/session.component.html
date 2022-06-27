@@ -1,14 +1,33 @@
 <div #sessionElm (mousemove)="showEndSession()">
-    <video id="webcam" muted="true" autoplay="true" width="100" height="100" #videoElm></video>
-    <div id="phaser-canvas" #canvasElm></div>
-    <app-guide></app-guide> 
-    <app-announcement></app-announcement>
-    <img *ngIf="isEndSessionVisible" 
-        src="assets/images/xmark-solid-red.svg" 
-        id="close-session"
-        width="70px"
-        (click)="sendSessionEndedEvent()"
-    />
-  
-    <button *ngIf="sessionEnded" class="btn btn-white btn-lg" id="end-session" style="font-size: 20px;" (click)="sendSessionEndEvent()">Continue <fa-icon style="padding-left: 30px;" [icon]="chevronRightIcon"></fa-icon> </button>
+  <video id="webcam" muted="true" autoplay="true" width="100" height="100" #videoElm></video>
+  <div id="phaser-canvas" #canvasElm></div>
+  <app-guide></app-guide>
+  <app-announcement></app-announcement>
+  <img *ngIf="isEndSessionVisible" src="assets/images/xmark-solid-red.svg" id="close-session" width="70px"
+    (click)="openSessionCloseModal()" />
+
+  <button *ngIf="sessionEnded" class="btn btn-white btn-lg" id="end-session" style="font-size: 20px;"
+    (click)="sendSessionEndEvent()">Continue <fa-icon style="padding-left: 30px;" [icon]="chevronRightIcon"></fa-icon>
+  </button>
 </div>
+
+<ng-template #sessionCloseModal>
+  <div class="modal-content shadow-4">
+    <div class="modal-body">
+      <div class="text-center py-5 px-5">
+        <div class="icon icon-shape rounded-circle bg-soft-danger text-danger text-lg">
+          <i class="bi bi-exclamation-octagon-fill"></i>
+        </div>
+        <h3 class="mt-7 mb-4">Close Session?</h3>
+        <p class="text-sm text-muted">
+          This will close the session. Are you sure you want to continue?
+        </p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-sm btn-neutral" data-bs-dismiss="modal"
+        (click)="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-danger" (click)="closeSessionConfirmed()">Close Session</button>
+    </div>
+  </div>
+</ng-template>
