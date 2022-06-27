@@ -56,7 +56,7 @@ jobs:
 
           # Include the devDependencies irrespective of the NODE_ENV
           npm install --include dev
-          npm install -g @angular/cli
+          # npm install -g @angular/cli
           npm run build -- -c "$ENVIRONMENT"
 
       - uses: jakejarvis/s3-sync-action@v0.5.1
