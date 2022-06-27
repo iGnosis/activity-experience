@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import * as Phaser from 'phaser';
@@ -13,6 +13,8 @@ import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { SessionRow, SessionState } from 'src/app/types/pointmotion';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { session } from 'src/app/store/actions/session.actions';
 
 @Component({
   selector: 'app-session',
@@ -23,6 +25,8 @@ export class SessionComponent implements AfterViewInit {
   @ViewChild('videoElm') video!: ElementRef;
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('sessionElm') sessionElm!: ElementRef;
+  @ViewChild('sessionCloseModal', { read: TemplateRef })
+  sessionCloseModal: TemplateRef<any>;
   game?: Phaser.Game;
   session: SessionRow | undefined;
   config: Phaser.Types.Core.GameConfig = {
@@ -63,6 +67,7 @@ export class SessionComponent implements AfterViewInit {
     private sit2standScene: SitToStandScene,
     private coordinationService: CoordinationService,
     private router: Router,
+    private modalService: NgbModal,
   ) {
     this.store
       .select((state) => state.session)
@@ -123,8 +128,8 @@ export class SessionComponent implements AfterViewInit {
     }, 2000); // gives time for things to settle down
   }
 
-  async sendSessionEndedEvent() {
-    this.router.navigate(['/finished']);
+  async openSessionCloseModal() {
+    this.modalService.open(this.sessionCloseModal, { centered: true });
   }
 
   timeoutId?: any;
@@ -138,6 +143,11 @@ export class SessionComponent implements AfterViewInit {
     }, 2000);
   }
 
+  closeSessionConfirmed() {
+    this.analyticsService.sendSessionEndedAt();
+    Howler.stop();
+    this.sendSessionEndEvent();
+  }
   sendSessionEndEvent() {
     window.parent.postMessage(
       {
@@ -146,5 +156,9 @@ export class SessionComponent implements AfterViewInit {
       },
       '*',
     );
+  }
+
+  closeModal() {
+    this.modalService.dismissAll();
   }
 }
