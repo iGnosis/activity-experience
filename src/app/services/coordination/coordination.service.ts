@@ -123,6 +123,14 @@ export class CoordinationService {
     // this.activityStage = 'welcome';
 
     this.soundService.playActivityInstructionSound();
+
+    await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 3500);
+    await this.step('welcome', 'sendSpotlight', { text: 'SIT TO STAND' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 3500);
+    await this.step('welcome', 'hideSpotlight');
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 3500);
+
     await this.step('welcome', 'updateAvatar', { name: 'mila' });
     await this.step('welcome', 'sendMessage', { text: 'Hi!', position: 'center' });
     // await this.sendMessage('Hi!', 'center');
@@ -137,6 +145,7 @@ export class CoordinationService {
       text: "I am here to guide you through today's session.",
       position: 'center',
     });
+
     await this.step('welcome', 'sendMessage', {
       text: 'Before we start, we need to ensure a few things.',
       position: 'bottom',
@@ -156,6 +165,7 @@ export class CoordinationService {
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
+    await this.waitForCalibraion('success');
     // Result of calibration to be captured in the subscribeToState method
   }
 
@@ -177,11 +187,11 @@ export class CoordinationService {
 
     try {
       await this.waitForCalibraion('success');
-      await this.step(this.activityStage, 'hideAvatar');
-      await this.step(this.activityStage, 'hideMessage');
-      await this.step(this.activityStage, 'announcement', { message: 'Excellent', timeout: 3000 });
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-      await this.step(this.activityStage, 'sendSpotlight', { text: 'Starting Next Activity' });
+
+      await this.step('welcome', 'hideAvatar');
+      await this.step('welcome', 'hideMessage');
+      await this.step('welcome', 'announcement', { message: 'Excellent', timeout: 3000 });
+      await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 3500);
 
       // activity started
       console.log('event:activityStarted:sent');
@@ -190,17 +200,11 @@ export class CoordinationService {
         event_type: 'activityStarted',
       });
 
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-      await this.step(this.activityStage, 'sendSpotlight', { text: 'SIT TO STAND' });
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-
-      await this.step(this.activityStage, 'hideSpotlight');
-
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 100 : 200);
+      // await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 100 : 200);
 
       // Enable sit2stand service
       this.sit2standService.enable();
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
+      // await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila' });
 
       await this.step(this.activityStage, 'sendMessage', {
@@ -930,16 +934,20 @@ export class CoordinationService {
       this.activityStage === 'explain'
     ) {
       this.clearPrompts();
-      if (!this.soundService.isConstantDrumPlaying()) {
-        this.soundService.startConstantDrum();
-      }
-      if (this.activityStage === 'explain') {
-        this.soundService.resumeActivityInstructionSound();
-        this.runSit2Stand();
-      } else {
+      if (
+        this.activityStage === 'preGame' ||
+        this.activityStage === 'game' ||
+        this.activityStage === 'postGame'
+      ) {
+        if (!this.soundService.isConstantDrumPlaying()) {
+          this.soundService.startConstantDrum();
+        }
         this.isRecalibrated = true;
         console.log('starting playsit2stand with ', this.activityStage);
         this.playSit2Stand(this.activityStage);
+      } else if (this.activityStage === 'explain') {
+        this.soundService.resumeActivityInstructionSound();
+        this.runSit2Stand();
       }
     }
   }

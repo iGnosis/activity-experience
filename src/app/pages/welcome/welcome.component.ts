@@ -278,6 +278,7 @@ export class WelcomeComponent implements OnInit {
   async genreSelected(genre: string | PreSessionGenre) {
     await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
+    Howler.stop();
   }
 
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
