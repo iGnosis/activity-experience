@@ -227,56 +227,56 @@ export class ExperimentScene extends Phaser.Scene {
     console.log(`left ${leftRectAngle} right ${rightRectAngle}`);
 
     // ! method - 1
-    this.leftRect = new Phaser.GameObjects.Rectangle(
-      this,
-      width - leftElbow.x * width,
-      leftElbow.y * height,
-      20,
-      40,
-      0xffffff,
-      1,
-    ).setAngle(leftRectAngle);
-
-    this.physics.add.existing(this.leftRect);
-
-    this.rightRect = new Phaser.GameObjects.Rectangle(
-      this,
-      width - rightElbow.x * width,
-      rightElbow.y * height,
-      20,
-      40,
-      0xffffff,
-      1,
-    ).setAngle(rightRectAngle);
-
-    this.physics.add.existing(this.rightRect);
-
-    // ! method - 2
-    // this.leftHand = this.add.graphics();
-    // this.leftHand!.lineStyle(20, 0xff0000, 0.3);
-    // this.leftHand!.lineBetween(
+    // this.leftRect = new Phaser.GameObjects.Rectangle(
+    //   this,
     //   width - leftElbow.x * width,
     //   leftElbow.y * height,
-    //   width - leftWrist.x * width,
-    //   leftWrist.y * height,
-    // );
+    //   20,
+    //   40,
+    //   0xffffff,
+    //   1,
+    // ).setAngle(leftRectAngle);
 
-    // // this.physics.world.enable(this.leftHand);
-    // this.leftHand.setInteractive();
-    // this.physics.add.existing(this.leftHand);
+    // this.physics.add.existing(this.leftRect);
 
-    // this.rightHand = this.add.graphics();
-    // this.rightHand!.lineStyle(20, 0xff0000, 0.3);
-    // this.rightHand!.lineBetween(
+    // this.rightRect = new Phaser.GameObjects.Rectangle(
+    //   this,
     //   width - rightElbow.x * width,
     //   rightElbow.y * height,
-    //   width - rightWrist.x * width,
-    //   rightWrist.y * height,
-    // );
+    //   20,
+    //   40,
+    //   0xffffff,
+    //   1,
+    // ).setAngle(rightRectAngle);
 
-    // // this.physics.world.enable(this.rightHand);
-    // this.rightHand.setInteractive();
-    // this.physics.add.existing(this.rightHand);
+    // this.physics.add.existing(this.rightRect);
+
+    // ! method - 2
+    this.leftHand = this.add.graphics();
+    this.leftHand!.lineStyle(20, 0xff0000, 0.3);
+    this.leftHand!.lineBetween(
+      width - leftElbow.x * width,
+      leftElbow.y * height,
+      width - leftWrist.x * width,
+      leftWrist.y * height,
+    );
+
+    // this.physics.world.enable(this.leftHand);
+    this.leftHand.setInteractive();
+    this.physics.add.existing(this.leftHand);
+
+    this.rightHand = this.add.graphics();
+    this.rightHand!.lineStyle(20, 0xff0000, 0.3);
+    this.rightHand!.lineBetween(
+      width - rightElbow.x * width,
+      rightElbow.y * height,
+      width - rightWrist.x * width,
+      rightWrist.y * height,
+    );
+
+    // this.physics.world.enable(this.rightHand);
+    this.rightHand.setInteractive();
+    this.physics.add.existing(this.rightHand);
 
     // ! method - 3
     // this.graphics = this.add.graphics({ fillStyle: { color: 0xffff00, alpha: 1 } });
