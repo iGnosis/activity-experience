@@ -21,6 +21,8 @@ export class ExperimentScene extends Phaser.Scene {
   calibrationStatus: 'success' | 'error' | 'warning' = 'error';
   text!: Phaser.GameObjects.Text;
   collisionCount = 0;
+  leftHandSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  rightHandSprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 
   constructor(
     private store: Store<{ pose: any }>,
@@ -81,6 +83,12 @@ export class ExperimentScene extends Phaser.Scene {
     //   this,
     // );
     // }
+
+    if (this.ball && this.leftHandSprite) {
+      this.physics.add.collider(this.ball, this.leftHandSprite, () => {
+        console.log('overllaped left');
+      });
+    }
   }
   override update(time: number, delta: number): void {
     const { height, width } = this.game.canvas;
@@ -252,7 +260,7 @@ export class ExperimentScene extends Phaser.Scene {
     // this.physics.add.existing(this.rightRect);
 
     // ! method - 2
-    this.leftHand = this.add.graphics();
+    this.leftHand = new Phaser.GameObjects.Graphics(this);
     this.leftHand!.lineStyle(20, 0xff0000, 0.3);
     this.leftHand!.lineBetween(
       width - leftElbow.x * width,
@@ -261,11 +269,25 @@ export class ExperimentScene extends Phaser.Scene {
       leftWrist.y * height,
     );
 
+    if (this.leftHandSprite) {
+      this.leftHandSprite.destroy();
+    }
+    if (this.leftHand) {
+      this.leftHand?.generateTexture('left-hand');
+      this.leftHandSprite = this.physics.add
+        .sprite(0, 0, 'left-hand')
+        .setOrigin(0.5)
+        .setAlpha(0.3)
+        .setInteractive()
+        .setCollideWorldBounds(true, 1, 1)
+        .setImmovable();
+    }
+
     // this.physics.world.enable(this.leftHand);
     this.leftHand.setInteractive();
     this.physics.add.existing(this.leftHand);
 
-    this.rightHand = this.add.graphics();
+    this.rightHand = new Phaser.GameObjects.Graphics(this);
     this.rightHand!.lineStyle(20, 0xff0000, 0.3);
     this.rightHand!.lineBetween(
       width - rightElbow.x * width,
@@ -274,6 +296,19 @@ export class ExperimentScene extends Phaser.Scene {
       rightWrist.y * height,
     );
 
+    if (this.rightHandSprite) {
+      this.rightHandSprite.destroy();
+    }
+    if (this.rightHand) {
+      this.rightHand?.generateTexture('right-hand');
+      this.rightHandSprite = this.physics.add
+        .sprite(0, 0, 'right-hand')
+        .setOrigin(0.5)
+        .setAlpha(0.3)
+        .setInteractive()
+        .setCollideWorldBounds(true, 1, 1)
+        .setImmovable();
+    }
     // this.physics.world.enable(this.rightHand);
     this.rightHand.setInteractive();
     this.physics.add.existing(this.rightHand);
