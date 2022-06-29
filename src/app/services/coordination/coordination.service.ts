@@ -212,6 +212,17 @@ export class CoordinationService {
         position: 'bottom',
         skipWait: true,
       });
+
+      // if by this time, poseCount is less than 10, then it means mediapipe has failed.
+      // ask user to refresh the page
+      if (this.poseCount < 10) {
+        await this.step(this.activityStage, 'sendMessage', {
+          text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
+          position: 'center'
+        })
+        await this.step(this.activityStage, 'sleep', 60000);
+      }
+
       await this.step(this.activityStage, 'sleep', 500);
 
       await this.step(this.activityStage, 'waitForClass', 'sit');
