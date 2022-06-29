@@ -149,6 +149,17 @@ export class CoordinationService {
       text: 'Firstly, we need to see you on the screen.',
       position: 'bottom',
     });
+
+    // if by this time, poseCount is less than 10, then it means mediapipe has failed.
+    // ask user to refresh the page
+    if (this.poseCount < 10) {
+      await this.step(this.activityStage, 'sendMessage', {
+        text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
+        position: 'center',
+      });
+      await this.step(this.activityStage, 'sleep', 60000);
+    }
+
     await this.step('welcome', 'sendMessage', {
       text: 'Please move around such that you can see your whole body inside the red box.',
       position: 'bottom',
@@ -212,16 +223,6 @@ export class CoordinationService {
         position: 'bottom',
         skipWait: true,
       });
-
-      // if by this time, poseCount is less than 10, then it means mediapipe has failed.
-      // ask user to refresh the page
-      if (this.poseCount < 10) {
-        await this.step(this.activityStage, 'sendMessage', {
-          text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
-          position: 'center',
-        });
-        await this.step(this.activityStage, 'sleep', 60000);
-      }
 
       await this.step(this.activityStage, 'sleep', 500);
 
