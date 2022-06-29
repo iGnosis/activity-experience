@@ -7,7 +7,6 @@ import {
   ActivityStage,
   ActivityState,
   AnnouncementState,
-  CarePlan,
   GuideState,
   Results,
   SessionRow,
@@ -57,15 +56,12 @@ export class CoordinationService {
       this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
       this.route.snapshot.queryParamMap.get('prompt')?.split(',') ||
       undefined;
-
     if (prompts && prompts.length > 0) {
       this.totalReps = prompts.length;
       for (let i = 0; i < prompts.length; i++) {
-        console.log(prompts[i]);
         this.promptsArr.push(parseInt(prompts[i]));
       }
     }
-
     console.log(this.promptsArr);
 
     this.store.dispatch(
@@ -108,6 +104,7 @@ export class CoordinationService {
   successfulReps = 0;
   activityCompleted = false;
   isRecalibrated = false;
+  private welcomeStageComplete = false;
 
   async sendMessage(text: string, position: 'center' | 'bottom', skipWait = false) {
     return new Promise(async (resolve) => {
@@ -120,8 +117,6 @@ export class CoordinationService {
     });
   }
   async welcomeUser() {
-    // this.activityStage = 'welcome';
-
     this.soundService.playActivityInstructionSound();
 
     await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
@@ -159,17 +154,19 @@ export class CoordinationService {
       position: 'bottom',
       skipWait: true,
     });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
 
     // this.activityStage = 'explain';
     // this.analyticsService.sendSessionState(this.activityStage);
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
-    await this.waitForCalibraion('success');
+
+    this.welcomeStageComplete = true;
     // Result of calibration to be captured in the subscribeToState method
   }
 
-  async waitForCalibraion(className: 'success' | 'error') {
+  async waitForCalibration(className: 'success' | 'error' | 'warning') {
     return new Promise((resolve) => {
       if (this.calibrationStatus == className) resolve({});
       // set interval
@@ -186,12 +183,10 @@ export class CoordinationService {
     this.activityStage = 'explain';
 
     try {
-      await this.waitForCalibraion('success');
-
-      await this.step('welcome', 'hideAvatar');
-      await this.step('welcome', 'hideMessage');
-      await this.step('welcome', 'announcement', { message: 'Excellent', timeout: 3000 });
-      await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 3500);
+      await this.step(this.activityStage, 'hideAvatar');
+      await this.step(this.activityStage, 'hideMessage');
+      await this.step(this.activityStage, 'announcement', { message: 'Excellent', timeout: 3000 });
+      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
 
       // activity started
       console.log('event:activityStarted:sent');
@@ -250,8 +245,8 @@ export class CoordinationService {
       });
       await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3000);
       await this.step(this.activityStage, 'waitForClass', 'stand');
-      // this.soundService.playNextChord();
       this.soundService.playActivitySound('success');
+
       await this.step(this.activityStage, 'hidePrompt');
       await this.step(this.activityStage, 'announcement', { message: 'Awesome!', timeout: 3000 });
 
@@ -317,14 +312,14 @@ export class CoordinationService {
     if (stage) {
       this.activityStage = stage;
     }
-    if (this.activityStage === 'preGame') {
+    if (this.activityStage === 'preGame' && this.calibrationStatus !== 'error') {
       await this.prePlaySit2Stand();
     }
-    await this.sleep(2000);
 
     try {
-      await this.waitForCalibraion('success');
-      if (this.activityStage === 'game' && this.calibrationStatus === 'success') {
+      // await this.waitForCalibration('success');
+      console.log('activity stage, calibstatus:', this.activityStage, this.calibrationStatus);
+      if (this.activityStage === 'game') {
         // Do 5 reps: TODO get number of reps from the careplan
         this.desiredClass = 'unknown';
         this.previousDesiredClass = 'unknown';
@@ -335,13 +330,12 @@ export class CoordinationService {
 
         while (
           this.successfulReps < this.totalReps &&
-          this.calibrationStatus === 'success' &&
+          this.calibrationStatus !== 'error' &&
           !this.isRecalibrated
         ) {
           this.taskId = v4();
           this.attemptId = v4();
 
-          console.log('successful attempt no:', this.successfulReps);
           this.previousDesiredClass = this.desiredClass;
 
           let num: number;
@@ -358,11 +352,6 @@ export class CoordinationService {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
               if (this.repsArr.length >= 2) {
-                console.log(
-                  `${this.repsArr[this.currentPromptIdx - 2]} ${
-                    this.repsArr[this.currentPromptIdx - 1]
-                  }`,
-                );
                 if (
                   this.repsArr[this.currentPromptIdx - 1] === 'even' &&
                   this.repsArr[this.currentPromptIdx - 2] === 'even'
@@ -456,7 +445,7 @@ export class CoordinationService {
       return;
     }
 
-    if (this.activityStage === 'postGame' && this.calibrationStatus === 'success') {
+    if (this.activityStage === 'postGame' && this.calibrationStatus !== 'error') {
       await this.postPlaySit2Stand();
     }
   }
@@ -467,7 +456,6 @@ export class CoordinationService {
       if (!this.soundService.isConstantDrumPlaying()) {
         this.soundService.startConstantDrum();
       }
-      await this.waitForCalibraion('success');
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
       await this.step(this.activityStage, 'sendMessage', {
         text: 'STAND up when you are ready to start...',
@@ -607,14 +595,18 @@ export class CoordinationService {
   ) {
     return new Promise(async (resolve, reject) => {
       // check if the user is calibrated or not
-      if (step === 'explain' && this.calibrationStatus !== 'success') {
+      if (step === 'explain' && this.calibrationStatus === 'error') {
         this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
-      } else if (step === 'preGame' && this.calibrationStatus !== 'success') {
+      } else if (step === 'preGame' && this.calibrationStatus === 'error') {
         reject({});
         return;
       }
+      // else if (step === 'game' && this.calibrationStatus === 'error') {
+      //   reject({});
+      //   return;
+      // }
 
       switch (type) {
         case 'updateAvatar':
@@ -751,7 +743,7 @@ export class CoordinationService {
       }
     }
 
-    if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
+    if (this.calibrationStatus !== 'error' && this.sit2standService.isEnabled()) {
       const newClass = this.sit2standService.classify(results.pose).result;
       this.handleClassChange(this.currentClass, newClass);
       this.currentClass = newClass;
@@ -872,10 +864,6 @@ export class CoordinationService {
     });
   }
 
-  // handleClassChange(oldClass: string, newClass: string) {
-  //   // Do something?
-  // }
-
   async startCalibrationScene() {
     this.sit2standService.disable();
     if (this.game?.scene.isActive('sit2stand')) {
@@ -883,7 +871,6 @@ export class CoordinationService {
       console.log('sit2stand is active. turning off');
       this.game?.scene.start('calibration');
       console.log('start calibration');
-      // this.action_startMediaPipe()
     } else {
       console.log('calibration is already active');
     }
@@ -914,9 +901,10 @@ export class CoordinationService {
     this.store.dispatch(guide.hideVideo());
   }
 
-  startSit2StandScene() {
+  async startSit2StandScene() {
     this.sit2standService.enable();
     // this.soundService.startConstantDrum();
+
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
@@ -943,7 +931,6 @@ export class CoordinationService {
           this.soundService.startConstantDrum();
         }
         this.isRecalibrated = true;
-        console.log('starting playsit2stand with ', this.activityStage);
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
         this.soundService.resumeActivityInstructionSound();
@@ -955,21 +942,17 @@ export class CoordinationService {
   handleCalibrationSuccess(oldStatus: string, newStatus: string) {
     this.calibrationScene.drawCalibrationBox('success');
     this.soundService.playCalibrationSound('success');
-    // this.soundService.startConstantDrum()
     this.startSit2StandScene();
   }
 
   handleCalibrationWarning(oldStatus: string, newStatus: string) {
     this.calibrationScene.drawCalibrationBox('warning');
-    // TODO: If the earlier status was
   }
 
   handleCalibrationError(oldStatus: string, newStatus: string) {
     this.startCalibrationScene();
     this.soundService.playCalibrationSound('error');
     this.calibrationScene.drawCalibrationBox('error');
-    // this.soundService.pauseConstantDrum();
-
     this.pauseActivity();
   }
 

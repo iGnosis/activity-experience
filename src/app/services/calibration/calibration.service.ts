@@ -7,6 +7,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { CareplanService } from '../careplan/careplan.service';
 import { v4 } from 'uuid';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { NormalizedLandmarkList } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
@@ -122,7 +123,6 @@ export class CalibrationService {
     const poseLandmarkArray = results.pose.poseLandmarks;
 
     const points = [12, 11, 24, 23, 26, 25];
-    // calling drawCalibrationPoints() here!!!
 
     if (!Array.isArray(poseLandmarkArray)) {
       return {
@@ -132,7 +132,9 @@ export class CalibrationService {
       // const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
       const unCalibratedPoints: number[] = [];
       const calibratedPoints: number[] = [];
+      const pointsPoseLandmarkArray: NormalizedLandmarkList = [];
       points.forEach((point) => {
+        pointsPoseLandmarkArray.push(poseLandmarkArray[point]);
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
           !this.calibrationBoxContains(
@@ -147,13 +149,14 @@ export class CalibrationService {
         }
       });
 
-      if (calibratedPoints.length === points.length) {
+      // if all the points are in the calibration box, we will send the status as success!
+      if (points.length === calibratedPoints.length) {
         return {
           status: 'success',
         };
       } else {
         // See if there is any point we can't see
-        const invisiblePoint = poseLandmarkArray.find((x) => {
+        const invisiblePoint = pointsPoseLandmarkArray.find((x) => {
           if (!x.visibility || x.visibility < 0.7) {
             return true;
           } else {
@@ -161,6 +164,7 @@ export class CalibrationService {
           }
         });
 
+        // if there is any point we can't see, we will send the status as error!
         if (invisiblePoint) {
           this.calibrationScene.drawCalibrationPoints(
             results.pose,
@@ -170,7 +174,9 @@ export class CalibrationService {
           return {
             status: 'error',
           };
-        } else {
+        }
+        // else if all the points are visible, we will send the status as warning!
+        else {
           this.calibrationScene.drawCalibrationPoints(
             results.pose,
             calibratedPoints,
