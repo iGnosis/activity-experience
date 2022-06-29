@@ -218,8 +218,8 @@ export class CoordinationService {
       if (this.poseCount < 10) {
         await this.step(this.activityStage, 'sendMessage', {
           text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
-          position: 'center'
-        })
+          position: 'center',
+        });
         await this.step(this.activityStage, 'sleep', 60000);
       }
 
