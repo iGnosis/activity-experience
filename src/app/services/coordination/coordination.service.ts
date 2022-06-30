@@ -198,14 +198,14 @@ export class CoordinationService {
 
     try {
       if (this.calibrationStatus === 'error' || this.calibrationStatus === 'warning') {
-        await this.step('welcome', 'sendMessage', {
+        await this.step(this.activityStage, 'sendMessage', {
           text: 'Please move around such that you can see your whole body inside the red box.',
           position: 'bottom',
           skipWait: true,
         });
-        await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+        await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
         this.calibrationScene.drawCalibrationBox('error');
-        await this.step('welcome', 'sleep', 2000);
+        await this.step(this.activityStage, 'sleep', 2000);
         await this.waitForCalibration('success');
       }
       // if (this.welcomeStageComplete) {
