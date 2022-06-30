@@ -32,7 +32,7 @@ export class CoordinationService {
 
   private promptsArr: number[] = [];
   private currentPromptIdx = 0;
-  private totalReps = 50;
+  private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
 
   constructor(
