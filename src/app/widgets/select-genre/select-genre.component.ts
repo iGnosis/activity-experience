@@ -10,6 +10,7 @@ import { PreSessionGenre } from 'src/app/types/pointmotion';
 })
 export class SelectGenreComponent implements OnInit {
   @Output() selected = new EventEmitter<string>();
+  timer: any;
 
   debouncedPlayMusic: (...args: any[]) => void;
 
@@ -43,10 +44,9 @@ export class SelectGenreComponent implements OnInit {
   ngOnInit(): void {}
 
   debounce(func: any, timeout = 300) {
-    let timer: any;
     return (...args: any[]) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
         func.apply(this, args);
       }, timeout);
     };
@@ -58,6 +58,7 @@ export class SelectGenreComponent implements OnInit {
   }
 
   stopMusic(genre?: string) {
+    if (genre) clearTimeout(this.timer);
     this.playState = 'stop';
     Howler.stop();
   }
