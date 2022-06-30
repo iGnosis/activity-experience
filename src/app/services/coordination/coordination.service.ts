@@ -197,10 +197,20 @@ export class CoordinationService {
     this.activityStage = 'explain';
 
     try {
-      if (this.welcomeStageComplete) {
+      if (this.calibrationStatus === 'error' || this.calibrationStatus === 'warning') {
+        await this.step('welcome', 'sendMessage', {
+          text: 'Please move around such that you can see your whole body inside the red box.',
+          position: 'bottom',
+          skipWait: true,
+        });
+        await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+        this.calibrationScene.drawCalibrationBox('error');
+        await this.step('welcome', 'sleep', 2000);
         await this.waitForCalibration('success');
-        this.welcomeStageComplete = false;
       }
+      // if (this.welcomeStageComplete) {
+      //   this.welcomeStageComplete = false;
+      // }
       await this.step(this.activityStage, 'hideAvatar');
       await this.step(this.activityStage, 'hideMessage');
       await this.step(this.activityStage, 'announcement', { message: 'Excellent', timeout: 3000 });
