@@ -157,7 +157,7 @@ export class CalibrationService {
       } else {
         // See if there is any point we can't see
         const invisiblePoint = pointsPoseLandmarkArray.find((x) => {
-          if (!x.visibility || x.visibility < 0.7) {
+          if (!x.visibility || x.visibility < 0.6) {
             return true;
           } else {
             return false;

@@ -167,8 +167,6 @@ export class CoordinationService {
     });
     await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
 
-    // this.activityStage = 'explain';
-    // this.analyticsService.sendSessionState(this.activityStage);
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
@@ -311,11 +309,20 @@ export class CoordinationService {
       this.soundService.pauseActivityInstructionSound();
 
       this.activityStage = 'preGame';
-      this.analyticsService.sendSessionState(this.activityStage);
+      this.sendSessionState(this.activityStage);
 
       this.runSit2Stand();
     } catch (err) {
+      console.log('explain ended');
       return;
+    }
+  }
+
+  sendSessionState(activityStage: ActivityStage) {
+    try {
+      this.analyticsService.sendSessionState(activityStage);
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -331,7 +338,7 @@ export class CoordinationService {
     try {
       // await this.waitForCalibration('success');
       console.log('activity stage, calibstatus:', this.activityStage, this.calibrationStatus);
-      if (this.activityStage === 'game') {
+      if (this.activityStage === 'game' && this.calibrationStatus !== 'error') {
         // Do 5 reps: TODO get number of reps from the careplan
         this.desiredClass = 'unknown';
         this.previousDesiredClass = 'unknown';
@@ -450,10 +457,11 @@ export class CoordinationService {
 
         if (this.successfulReps >= this.totalReps) {
           this.activityStage = 'postGame';
-          this.analyticsService.sendSessionState(this.activityStage);
+          this.sendSessionState(this.activityStage);
         }
       }
     } catch (err) {
+      console.log('game function stopped');
       return;
     }
 
@@ -485,7 +493,7 @@ export class CoordinationService {
       await this.step(this.activityStage, 'sleep', 1000);
       await this.step(this.activityStage, 'hideSpotlight');
       this.activityStage = 'game';
-      this.analyticsService.sendSessionState(this.activityStage);
+      this.sendSessionState(this.activityStage);
     } catch (err) {
       return;
     }
@@ -614,11 +622,10 @@ export class CoordinationService {
       } else if (step === 'preGame' && this.calibrationStatus === 'error') {
         reject({});
         return;
+      } else if (step === 'game' && this.calibrationStatus === 'error') {
+        reject({});
+        return;
       }
-      // else if (step === 'game' && this.calibrationStatus === 'error') {
-      //   reject({});
-      //   return;
-      // }
 
       switch (type) {
         case 'updateAvatar':
@@ -933,12 +940,14 @@ export class CoordinationService {
       this.activityStage === 'postGame' ||
       this.activityStage === 'explain'
     ) {
-      this.clearPrompts();
-      if (
-        this.activityStage === 'preGame' ||
-        this.activityStage === 'game' ||
-        this.activityStage === 'postGame'
-      ) {
+      if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
+        this.clearPrompts();
+        if (!this.soundService.isConstantDrumPlaying()) {
+          this.soundService.startConstantDrum();
+        }
+        this.playSit2Stand(this.activityStage);
+      } else if (this.activityStage === 'game') {
+        this.clearPrompts();
         if (!this.soundService.isConstantDrumPlaying()) {
           this.soundService.startConstantDrum();
         }
@@ -987,7 +996,7 @@ export class CoordinationService {
       }),
     );
 
-    this.analyticsService.sendSessionState(this.activityStage);
+    this.sendSessionState(this.activityStage);
   }
 
   async nextStep() {

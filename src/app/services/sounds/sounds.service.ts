@@ -175,7 +175,7 @@ export class SoundsService {
       this.preSessionMoodSound.stop();
     }
     switch (genre) {
-      case 'Classic':
+      case 'Classical':
         if (!this.preSessionGenreClassic.playing(this.preSessionGenreClassicId)) {
           this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
           this.preSessionGenreClassic.fade(0, 80, 3000, this.preSessionGenreClassicId);
