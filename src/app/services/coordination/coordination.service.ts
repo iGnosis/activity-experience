@@ -8,6 +8,7 @@ import {
   ActivityState,
   AnnouncementState,
   GuideState,
+  PreSessionGenre,
   Results,
   SessionRow,
   SessionState,
@@ -34,6 +35,7 @@ export class CoordinationService {
   private currentPromptIdx = 0;
   private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
+  private genre: PreSessionGenre;
 
   constructor(
     private store: Store<{
@@ -81,6 +83,7 @@ export class CoordinationService {
     pose: Observable<any>;
     currentActivity: Observable<ActivityState | undefined>;
     session: Observable<SessionRow | undefined>;
+    genre?: Observable<PreSessionGenre | undefined>;
   };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
@@ -162,7 +165,8 @@ export class CoordinationService {
         text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
         position: 'center',
       });
-      await this.step('welcome', 'sleep', 60000);
+      await this.step('welcome', 'sleep', 10000);
+      window.location.reload();
     }
 
     await this.step('welcome', 'sendMessage', {
@@ -464,7 +468,7 @@ export class CoordinationService {
           // playing chord
           if (res.result === 'success') {
             this.currentPromptIdx += 1;
-            this.soundService.playNextChord();
+            this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
             console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
@@ -513,8 +517,8 @@ export class CoordinationService {
   async prePlaySit2Stand() {
     try {
       this.activityStage = 'preGame';
-      if (!this.soundService.isConstantDrumPlaying()) {
-        this.soundService.startConstantDrum();
+      if (!this.soundService.isBacktrackPlaying(this.genre)) {
+        this.soundService.playMusic(this.genre, 'backtrack');
       }
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
       await this.step(this.activityStage, 'sendMessage', {
@@ -604,7 +608,7 @@ export class CoordinationService {
       position: 'center',
     });
 
-    this.soundService.pauseConstantDrum();
+    this.soundService.pauseBacktrack(this.genre);
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
     await this.step('postGame', 'sleep', 5000);
@@ -738,12 +742,22 @@ export class CoordinationService {
   subscribeToState() {
     this.observables$ = this.observables$ || {};
     // Subscribe to the pose
-
     this.observables$.pose = this.store.select((state) => state.pose);
     this.observables$.pose.subscribe((results: { pose: Results }) => {
       this.previousPose = this.currentPose;
       if (results) {
         this.handlePose(results);
+      }
+    });
+
+    this.observables$.genre = this.store.select((store) => store.session.session?.genre);
+    this.observables$.genre.subscribe((genreSelected) => {
+      if (genreSelected) {
+        this.genre = genreSelected;
+        this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
+      } else {
+        // fallback case
+        this.genre = 'Jazz';
       }
     });
 
@@ -972,7 +986,6 @@ export class CoordinationService {
 
   async startSit2StandScene() {
     this.sit2standService.enable();
-    // this.soundService.startConstantDrum();
 
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
@@ -993,15 +1006,15 @@ export class CoordinationService {
       if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
         this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
-        if (!this.soundService.isConstantDrumPlaying()) {
-          this.soundService.startConstantDrum();
+        if (!this.soundService.isBacktrackPlaying(this.genre)) {
+          this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'game') {
         this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
-        if (!this.soundService.isConstantDrumPlaying()) {
-          this.soundService.startConstantDrum();
+        if (!this.soundService.isBacktrackPlaying(this.genre)) {
+          this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.isRecalibrated = true;
         this.playSit2Stand(this.activityStage);
@@ -1035,7 +1048,7 @@ export class CoordinationService {
       this.activityStage === 'game' ||
       this.activityStage === 'postGame'
     ) {
-      this.soundService.pauseConstantDrum();
+      this.soundService.pauseBacktrack(this.genre);
     }
 
     this.clearPrompts();

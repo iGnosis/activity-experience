@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { Howl } from 'howler';
-import { PreSessionGenre } from 'src/app/types/pointmotion';
+import { Observable, retry } from 'rxjs';
+import { PreSessionGenre, SessionState } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SoundsService {
+  observable$: {
+    genre$: Observable<string | undefined>;
+  };
+  genre = 'Jazz';
   constructor() {}
 
   constantDrumId?: number;
@@ -106,7 +112,317 @@ export class SoundsService {
     },
   });
 
-  startConstantDrum() {
+  ambient: Howl;
+  dance: Howl;
+  rock: Howl;
+  jazz: Howl;
+  classical: Howl;
+  loadMusicFiles(genre: PreSessionGenre) {
+    switch (genre) {
+      case 'Surprise Me!':
+        this.ambient = new Howl({
+          src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
+          sprite: {
+            'ambient 1': [0, 6295.510204081633],
+            'ambient 2': [8000, 6295.510204081634],
+            'ambient 3': [16000, 6295.510204081634],
+            'ambient 4': [24000, 6295.510204081634],
+            'ambient 5': [32000, 6295.51020408163],
+            'ambient 6': [40000, 6295.51020408163],
+            'ambient 7': [48000, 6295.51020408163],
+            'ambient 8': [56000, 6295.51020408163],
+            'ambient 9': [64000, 6295.510204081637],
+            'ambient 10': [72000, 6295.510204081637],
+            'ambient 11': [80000, 6295.510204081637],
+            'ambient 12': [88000, 6295.510204081637],
+            'ambient 13': [96000, 6295.510204081637],
+            'ambient 14': [104000, 6295.510204081637],
+            'ambient 15': [112000, 6295.510204081637],
+            'ambient 16': [120000, 11284.897959183667],
+          },
+        });
+        break;
+      case 'Dance':
+        this.dance = new Howl({
+          src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
+          sprite: {
+            trigger1: [0, 3448.1632653061224],
+            trigger2: [5000, 3448.163265306123],
+            trigger3: [10000, 3448.163265306123],
+            trigger4: [15000, 3448.163265306121],
+            trigger5: [20000, 3448.163265306121],
+            trigger6: [25000, 3448.163265306121],
+            trigger7: [30000, 3448.163265306121],
+            trigger8: [35000, 3448.163265306121],
+            trigger9: [40000, 3448.163265306121],
+            trigger10: [45000, 3448.163265306121],
+            trigger11: [50000, 3448.163265306121],
+            trigger12: [55000, 3448.163265306121],
+            trigger13: [60000, 3448.163265306121],
+            trigger14: [65000, 3448.163265306121],
+            trigger15: [70000, 3448.163265306121],
+            trigger16: [75000, 3448.163265306121],
+            trigger17: [80000, 3448.163265306121],
+            trigger18: [85000, 3448.163265306121],
+            trigger19: [90000, 3448.163265306121],
+            trigger20: [95000, 3448.163265306121],
+            trigger21: [100000, 3448.163265306121],
+            trigger22: [105000, 3448.163265306121],
+            trigger23: [110000, 3448.163265306121],
+            trigger24: [115000, 3448.163265306121],
+            trigger25: [120000, 3448.163265306121],
+            trigger26: [125000, 3448.163265306135],
+            trigger27: [130000, 3448.163265306135],
+            trigger28: [135000, 3448.163265306135],
+            trigger29: [140000, 3448.163265306135],
+            trigger30: [145000, 3448.163265306135],
+            trigger31: [150000, 3448.163265306135],
+            trigger32: [155000, 3448.163265306135],
+            backtrack: [160000, 108225.30612244895, true],
+          },
+        });
+        break;
+      case 'Rock':
+        this.rock = new Howl({
+          src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
+          sprite: {
+            rock1: [0, 3186.9387755102043],
+            rock2: [5000, 3186.9387755102034],
+            rock3: [10000, 3186.9387755102034],
+            rock4: [15000, 3186.9387755102034],
+            rock5: [20000, 3186.9387755102034],
+            rock6: [25000, 3186.9387755102034],
+            rock7: [30000, 3186.9387755102066],
+            rock8: [35000, 3186.9387755102066],
+            rock9: [40000, 3186.9387755102066],
+            rock10: [45000, 3186.9387755102066],
+            rock11: [50000, 3186.9387755102066],
+            rock12: [55000, 3186.9387755102066],
+            rock13: [60000, 3186.9387755102066],
+            rock14: [65000, 3186.9387755102],
+            rock15: [70000, 3186.9387755102],
+            rock16: [75000, 3186.9387755102],
+            backtrack: [80000, 56137.14285714286, true],
+          },
+        });
+        break;
+      case 'Classical':
+        this.classical = new Howl({
+          src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
+          sprite: {
+            set1rep1: [0, 8960],
+            set1rep2: [10000, 8960],
+            set1rep3: [20000, 8960],
+            set1rep4: [30000, 8960],
+            set1rep5: [40000, 8960],
+            set1rep6: [50000, 8960],
+            set2rep2: [60000, 8960.000000000007],
+            set2rep3: [70000, 8960.000000000007],
+            set2rep4: [80000, 8960.000000000007],
+            set2rep5: [90000, 8960.000000000007],
+            set2rep6: [100000, 8960.000000000007],
+            set2rep1: [110000, 8960.000000000007],
+            set3rep7: [120000, 8960.000000000007],
+            set3rep1: [130000, 8960.000000000007],
+            set3rep2: [140000, 8960.000000000007],
+            set3rep3: [150000, 8960.000000000007],
+            set3rep4: [160000, 8960.000000000007],
+            set3rep5: [170000, 8960.000000000007],
+            set3rep6: [180000, 8960.000000000007],
+            'backtrack set1': [190000, 62275.918367346945, true],
+            'backtrack set2': [254000, 53394.28571428573, true],
+            'backtrack set3': [309000, 62275.918367346945, true],
+          },
+        });
+        break;
+      case 'Jazz':
+        break;
+    }
+  }
+
+  isBacktrackPlaying(genre: PreSessionGenre) {
+    switch (genre) {
+      case 'Classical':
+        if (this.currentClassicalBacktrackId) {
+          return this.classical.playing(this.currentClassicalBacktrackId);
+        }
+        return false;
+      case 'Dance':
+        if (this.danceBacktrackId) {
+          return this.dance.playing(this.danceBacktrackId);
+        }
+        return false;
+      case 'Rock':
+        if (this.rockBacktrackId) {
+          return this.rock.playing(this.rockBacktrackId);
+        }
+        return false;
+      case 'Surprise Me!':
+        return false;
+      case 'Jazz':
+        return this.isConstantDrumPlaying();
+      default:
+        return false;
+    }
+  }
+
+  pauseBacktrack(genre: PreSessionGenre) {
+    switch (genre) {
+      case 'Classical':
+        if (
+          this.currentClassicalBacktrackId &&
+          this.classical.playing(this.currentClassicalBacktrackId)
+        ) {
+          this.classical.pause(this.currentClassicalBacktrackId);
+        }
+        break;
+      case 'Dance':
+        if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
+          this.dance.pause(this.danceBacktrackId);
+        }
+        break;
+      case 'Rock':
+        if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
+          this.rock.pause(this.rockBacktrackId);
+        }
+        break;
+      case 'Surprise Me!':
+        return;
+      case 'Jazz':
+        this.pauseConstantDrum();
+    }
+  }
+
+  currentClassicalSet = 1;
+  currentClassicalRep = 1;
+  currentClassicalBacktrackId: number;
+  currentClassicalTriggerId: number;
+  danceBacktrackId: number;
+  danceTriggerId: number;
+  currentDanceTrigger = 1;
+  rockBacktrackId: number;
+  rockTriggerId: number;
+  currentRockTrigger = 1;
+  ambientTriggerId: number;
+  currentAmbientTrigger = 1;
+  playMusic(genre: PreSessionGenre, type: 'backtrack' | 'trigger') {
+    switch (genre) {
+      case 'Classical':
+        if (!this.classical) {
+          return;
+        }
+        if (type === 'backtrack') {
+          console.log(`playing backtrack set${this.currentClassicalSet}`);
+          if (this.classical.playing(this.currentClassicalBacktrackId)) {
+            this.classical.stop(this.currentClassicalBacktrackId);
+          }
+          this.currentClassicalBacktrackId = this.classical.play(
+            `backtrack set${this.currentClassicalSet}`,
+          );
+        } else {
+          console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
+          if (this.classical.playing(this.currentClassicalTriggerId)) {
+            this.classical.stop(this.currentClassicalTriggerId);
+          }
+          this.currentClassicalTriggerId = this.classical.play(
+            `set${this.currentClassicalSet}rep${this.currentClassicalRep}`,
+          );
+          this.currentClassicalRep += 1;
+          if (this.currentClassicalSet === 1 && this.currentClassicalRep === 6) {
+            console.log('set 1 ended, starting set 2, resetting reps to 0');
+            this.currentClassicalSet = 2;
+            this.currentClassicalRep = 1;
+            if (this.classical.playing(this.currentClassicalBacktrackId)) {
+              this.classical.stop(this.currentClassicalBacktrackId);
+            }
+            this.currentClassicalBacktrackId = this.classical.play(
+              `backtrack set${this.currentClassicalSet}`,
+            );
+          } else if (this.currentClassicalSet === 2 && this.currentClassicalRep === 6) {
+            console.log('set 2 ended, starting set 3, resetting reps to 0');
+            this.currentClassicalSet = 3;
+            this.currentClassicalRep = 1;
+            if (this.classical.playing(this.currentClassicalBacktrackId)) {
+              this.classical.stop(this.currentClassicalBacktrackId);
+            }
+            this.currentClassicalBacktrackId = this.classical.play(
+              `backtrack set${this.currentClassicalSet}`,
+            );
+          } else if (this.currentClassicalSet === 3 && this.currentClassicalRep === 7) {
+            console.log('set 3 ended, starting set 1, resetting reps to 0');
+            this.currentClassicalSet = 1;
+            this.currentClassicalRep = 1;
+            if (this.classical.playing(this.currentClassicalBacktrackId)) {
+              this.classical.stop(this.currentClassicalBacktrackId);
+            }
+            this.currentClassicalBacktrackId = this.classical.play(
+              `backtrack set${this.currentClassicalSet}`,
+            );
+          }
+        }
+        break;
+      case 'Dance':
+        if (!this.dance) {
+          return;
+        }
+        if (type === 'backtrack') {
+          console.log('playing dance backtrack');
+          if (!this.dance.playing(this.danceBacktrackId)) {
+            this.danceBacktrackId = this.dance.play('backtrack');
+          }
+        } else {
+          this.danceTriggerId = this.dance.play(`trigger${this.currentDanceTrigger}`);
+          this.currentDanceTrigger += 1;
+          if (this.currentDanceTrigger === 33) {
+            this.currentDanceTrigger = 1;
+          }
+        }
+        break;
+      case 'Rock':
+        if (!this.rock) {
+          return;
+        }
+        if (type === 'backtrack') {
+          console.log('playing rock backtrack');
+          if (!this.rock.playing(this.rockBacktrackId)) {
+            this.rockBacktrackId = this.rock.play('backtrack');
+          }
+        } else {
+          this.rockTriggerId = this.rock.play(`rock${this.currentRockTrigger}`);
+          this.currentRockTrigger += 1;
+          if (this.currentRockTrigger === 17) {
+            this.currentRockTrigger = 1;
+          }
+        }
+        break;
+      case 'Surprise Me!':
+        if (!this.ambient) {
+          return;
+        }
+        if (type === 'backtrack') {
+          console.log('No ambient backtrack');
+          return;
+        } else {
+          if (this.ambient.playing(this.ambientTriggerId)) {
+            this.ambient.stop(this.ambientTriggerId);
+          }
+          this.ambientTriggerId = this.ambient.play(`ambient ${this.currentAmbientTrigger}`);
+          this.currentAmbientTrigger += 1;
+          if (this.currentAmbientTrigger === 17) {
+            this.currentAmbientTrigger = 1;
+          }
+        }
+        break;
+      case 'Jazz':
+        if (type === 'backtrack') {
+          this.playConstantDrum();
+        } else {
+          this.playNextChord();
+        }
+    }
+  }
+
+  playConstantDrum() {
     if (!this.isConstantDrumPlaying()) {
       this.constantDrumId = this.drums.play('constantDrum');
     }

@@ -34,6 +34,7 @@ type Message = {
 
 interface FetchUserSessionsResponse {
   session: {
+    genre: PreSessionGenre;
     id: string;
     state: {
       stage: ActivityStage;
@@ -213,6 +214,12 @@ export class WelcomeComponent implements OnInit {
             futureDate,
           );
         console.log('existing session', response.session[0]);
+
+        // getting genre from the previous sessions, so that even if a session starts from middle, we can play the selected genre.
+        if (response.session[0] && response.session[0].genre) {
+          this.store.dispatch(session.setGenre({ genre: response.session[0].genre }));
+          this.sessionService.updateGenre(response.session[0].genre as PreSessionGenre);
+        }
         if (response.session[0] && response.session[0].state && response.session[0].state.stage) {
           this.analyticsService.sendSessionState(response.session[0].state.stage as ActivityStage);
           this.store.dispatch(
@@ -278,7 +285,6 @@ export class WelcomeComponent implements OnInit {
   async genreSelected(genre: string | PreSessionGenre) {
     await this.sessionService.updateGenre(genre as PreSessionGenre);
     this.showNextStep();
-    Howler.stop();
   }
 
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {

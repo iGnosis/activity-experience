@@ -688,7 +688,7 @@ export type SessionRow = {
   careplan?: string;
   preSessionMood?: string;
   postSessionMood?: string;
-  genre?: string;
+  genre?: PreSessionGenre;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
   state?: {

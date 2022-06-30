@@ -50,6 +50,7 @@ export class SessionService {
           ) {
             id
             state
+            genre
           }
         }
       `,

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { getTestBed } from '@angular/core/testing';
+import { Store } from '@ngrx/store';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
+import { session } from 'src/app/store/actions/session.actions';
 import { PreSessionGenre } from 'src/app/types/pointmotion';
 
 @Component({
@@ -35,7 +37,7 @@ export class SelectGenreComponent implements OnInit {
   intervalId: any;
 
   playState: 'play' | 'stop' | undefined = undefined;
-  constructor(private soundsService: SoundsService) {
+  constructor(private soundsService: SoundsService, private store: Store) {
     this.debouncedPlayMusic = this.debounce((genre: string) => {
       this.playMusic(genre);
     }, 300);
@@ -66,6 +68,7 @@ export class SelectGenreComponent implements OnInit {
   selectGenre(mood: { title: string; selected?: boolean }) {
     this.soundsService.stopGenreSound(mood.title as PreSessionGenre);
     mood.selected = true;
+    this.store.dispatch(session.setGenre({ genre: mood.title as PreSessionGenre }));
     setTimeout(() => {
       this.selected.emit(mood.title);
     }, 1000);
