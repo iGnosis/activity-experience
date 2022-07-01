@@ -46,13 +46,20 @@ export class ExperimentScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, width, height);
     this.physics.world.setBoundsCollision(true, true, true, true);
-    this.ball = this.physics.add.sprite(390, 0, 'red_ball').setScale(2, 2).setOrigin(0, 0);
+    this.ball = this.physics.add.sprite(0, height, 'red_ball').setScale(2, 2).setOrigin(0, 0);
     console.log(this.ball.width);
     this.ball.setCircle(this.ball.width / 2);
     this.ball.setFriction(0, 0);
-    this.ball.setVelocity(80, 80);
+    this.ball.setVelocity(200, -500).setDrag(0.8);
+    this.ball.body.useDamping = true;
     this.ball.setGravityY(200);
-    this.ball.setCollideWorldBounds(true, 1, 1);
+
+    if (this.ball && this.leftHand) {
+      this.physics.world.overlap(this.ball, [this.leftHand], () => {
+        this.text.setText((++this.collisionCount).toString());
+        this.ball.destroy();
+      });
+    }
 
     // if (this.leftHand && this.ball) {
     // this.physics.add.overlap(
@@ -99,11 +106,11 @@ export class ExperimentScene extends Phaser.Scene {
     }
 
     if (!this.ball.active) {
-      this.ball = this.physics.add.sprite(400, 0, 'red_ball').setScale(2, 2);
+      this.ball = this.physics.add.sprite(0, height, 'red_ball').setScale(2, 2);
       this.ball.setFriction(0, 0);
-      this.ball.setVelocity(80, 80);
       this.ball.setGravityY(200);
-      this.ball.setCollideWorldBounds(true, 1, 1);
+      this.ball.setVelocity(200, -500).setDrag(0.8);
+      this.ball.body.useDamping = true;
     }
   }
 
@@ -194,8 +201,8 @@ export class ExperimentScene extends Phaser.Scene {
     }
   }
 
-  leftHand?: Phaser.GameObjects.Graphics = undefined;
-  rightHand?: Phaser.GameObjects.Graphics = undefined;
+  leftHand?: any;
+  rightHand?: any;
 
   drawRects(poseResults: Results) {
     const { width, height } = this.game.canvas;
@@ -203,6 +210,8 @@ export class ExperimentScene extends Phaser.Scene {
     const leftElbow = poseResults.poseLandmarks[13];
     const rightWrist = poseResults.poseLandmarks[16];
     const leftWrist = poseResults.poseLandmarks[15];
+    const leftPalmTop = poseResults.poseLandmarks[19];
+    const rightPalmTop = poseResults.poseLandmarks[20];
 
     if (this.leftRect) {
       this.leftRect.destroy(true);
@@ -257,39 +266,65 @@ export class ExperimentScene extends Phaser.Scene {
     // this.physics.add.existing(this.rightRect);
 
     // ! method - 2
-    this.leftHand = this.add.graphics().setInteractive();
-    this.leftHand!.lineStyle(20, 0xff0000, 0.3);
-    this.leftHand!.lineBetween(
-      width - leftElbow.x * width,
-      leftElbow.y * height,
-      width - leftWrist.x * width,
-      leftWrist.y * height,
-    );
-    this.physics.add.existing(this.leftHand);
+    // this.leftHand = this.add.graphics().setInteractive();
+    // this.leftHand!.lineStyle(20, 0xff0000, 0.3);
+    // this.leftHand!.lineBetween(
+    //   width - leftElbow.x * width,
+    //   leftElbow.y * height,
+    //   width - leftWrist.x * width,
+    //   leftWrist.y * height,
+    // );
+    // this.physics.add.existing(this.leftHand);
 
+    // if (this.leftHand) {
+    //   this.leftHand?.generateTexture(
+    //     'left-hand',
+    //     Math.abs(leftElbow.x * width - leftWrist.x * width),
+    //     Math.abs(leftWrist.y * height - leftElbow.y * height),
+    //   );
+    //   this.leftHandSprite = this.physics.add
+    //     .sprite(width - leftElbow.x * width, leftElbow.y * height, 'left-hand')
+    //     .setOrigin(0.5)
+    //     .setAlpha(0.3)
+    //     .setInteractive();
+    // }
+    // if (this.ball && this.leftHandSprite) {
+    //   this.physics.world.overlap(
+    //     this.ball,
+    //     [this.leftHandSprite],
+    //     () => {
+    //       this.text.setText((++this.collisionCount).toString());
+    //       this.ball.destroy();
+    //     },
+    //     undefined,
+    //     null,
+    //   );
+    // }
+    this.leftHand = this.add
+      .circle(width - leftPalmTop.x * width, height * leftPalmTop.y, 30, 0xff0000, 0.3)
+      .setInteractive();
     if (this.leftHand) {
-      this.leftHand?.generateTexture(
-        'left-hand',
-        (this.leftHand as any).body.width,
-        (this.leftHand as any).body.height,
-      );
-      this.leftHandSprite = this.physics.add
-        .sprite(width - leftElbow.x * width, leftElbow.y * height, 'left-hand')
-        .setOrigin(0.5)
-        .setAlpha(0.3)
-        .setInteractive();
+      this.physics.add.existing(this.leftHand);
     }
-    if (this.ball && this.leftHandSprite) {
-      this.physics.world.overlap(
-        this.ball,
-        [this.leftHandSprite],
-        () => {
-          this.text.setText((++this.collisionCount).toString());
-          this.ball.destroy();
-        },
-        undefined,
-        null,
-      );
+
+    if (this.ball && this.leftHand) {
+      this.physics.world.overlap(this.ball, [this.leftHand], () => {
+        this.text.setText((++this.collisionCount).toString());
+        this.ball.destroy();
+      });
+    }
+    this.rightHand = this.add
+      .circle(width - rightPalmTop.x * width, height * rightPalmTop.y, 30, 0xff0000, 0.3)
+      .setInteractive();
+    if (this.rightHand) {
+      this.physics.add.existing(this.rightHand);
+    }
+
+    if (this.ball && this.rightHand) {
+      this.physics.world.overlap(this.ball, [this.rightHand], () => {
+        this.text.setText((++this.collisionCount).toString());
+        this.ball.destroy();
+      });
     }
 
     // if(this.physics.overlap) {
