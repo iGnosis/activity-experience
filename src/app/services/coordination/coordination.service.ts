@@ -7,8 +7,8 @@ import {
   ActivityStage,
   ActivityState,
   AnnouncementState,
-  CarePlan,
   GuideState,
+  PreSessionGenre,
   Results,
   SessionRow,
   SessionState,
@@ -35,6 +35,7 @@ export class CoordinationService {
   private currentPromptIdx = 0;
   private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
+  private genre: PreSessionGenre;
 
   constructor(
     private store: Store<{
@@ -57,15 +58,12 @@ export class CoordinationService {
       this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
       this.route.snapshot.queryParamMap.get('prompt')?.split(',') ||
       undefined;
-
     if (prompts && prompts.length > 0) {
       this.totalReps = prompts.length;
       for (let i = 0; i < prompts.length; i++) {
-        console.log(prompts[i]);
         this.promptsArr.push(parseInt(prompts[i]));
       }
     }
-
     console.log(this.promptsArr);
 
     this.store.dispatch(
@@ -85,6 +83,7 @@ export class CoordinationService {
     pose: Observable<any>;
     currentActivity: Observable<ActivityState | undefined>;
     session: Observable<SessionRow | undefined>;
+    genre?: Observable<PreSessionGenre | undefined>;
   };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
@@ -100,6 +99,11 @@ export class CoordinationService {
   taskId = v4();
   desiredClass: 'sit' | 'stand' | 'unknown';
   previousDesiredClass: 'sit' | 'stand' | 'unknown';
+  previousRep?: {
+    class: 'sit' | 'stand';
+    isSuccess: boolean;
+  } = undefined;
+  previousRepClass: 'sit' | 'stand';
 
   currentPose!: Results;
   previousPose!: Results;
@@ -108,6 +112,7 @@ export class CoordinationService {
   successfulReps = 0;
   activityCompleted = false;
   isRecalibrated = false;
+  private welcomeStageComplete = false;
 
   async sendMessage(text: string, position: 'center' | 'bottom', skipWait = false) {
     return new Promise(async (resolve) => {
@@ -120,9 +125,15 @@ export class CoordinationService {
     });
   }
   async welcomeUser() {
-    // this.activityStage = 'welcome';
-
     this.soundService.playActivityInstructionSound();
+
+    await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+    await this.step('welcome', 'sendSpotlight', { text: 'SIT TO STAND' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+    await this.step('welcome', 'hideSpotlight');
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+
     await this.step('welcome', 'updateAvatar', { name: 'mila' });
     await this.step('welcome', 'sendMessage', { text: 'Hi!', position: 'center' });
     // await this.sendMessage('Hi!', 'center');
@@ -137,6 +148,7 @@ export class CoordinationService {
       text: "I am here to guide you through today's session.",
       position: 'center',
     });
+
     await this.step('welcome', 'sendMessage', {
       text: 'Before we start, we need to ensure a few things.',
       position: 'bottom',
@@ -145,21 +157,34 @@ export class CoordinationService {
       text: 'Firstly, we need to see you on the screen.',
       position: 'bottom',
     });
+
+    // if by this time, poseCount is less than 10, then it means mediapipe has failed.
+    // ask user to refresh the page
+    if (this.poseCount < 10) {
+      await this.step('welcome', 'sendMessage', {
+        text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
+        position: 'center',
+      });
+      await this.step('welcome', 'sleep', 10000);
+      window.location.reload();
+    }
+
     await this.step('welcome', 'sendMessage', {
       text: 'Please move around such that you can see your whole body inside the red box.',
       position: 'bottom',
       skipWait: true,
     });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
 
-    // this.activityStage = 'explain';
-    // this.analyticsService.sendSessionState(this.activityStage);
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
     this.calibrationService.enable();
+
+    this.welcomeStageComplete = true;
     // Result of calibration to be captured in the subscribeToState method
   }
 
-  async waitForCalibraion(className: 'success' | 'error') {
+  async waitForCalibration(className: 'success' | 'error' | 'warning') {
     return new Promise((resolve) => {
       if (this.calibrationStatus == className) resolve({});
       // set interval
@@ -176,12 +201,24 @@ export class CoordinationService {
     this.activityStage = 'explain';
 
     try {
-      await this.waitForCalibraion('success');
+      if (this.calibrationStatus === 'error' || this.calibrationStatus === 'warning') {
+        await this.step(this.activityStage, 'sendMessage', {
+          text: 'Please move around such that you can see your whole body inside the red box.',
+          position: 'bottom',
+          skipWait: true,
+        });
+        await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
+        this.calibrationScene.drawCalibrationBox('error');
+        await this.step(this.activityStage, 'sleep', 2000);
+        await this.waitForCalibration('success');
+      }
+      // if (this.welcomeStageComplete) {
+      //   this.welcomeStageComplete = false;
+      // }
       await this.step(this.activityStage, 'hideAvatar');
       await this.step(this.activityStage, 'hideMessage');
       await this.step(this.activityStage, 'announcement', { message: 'Excellent', timeout: 3000 });
       await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-      await this.step(this.activityStage, 'sendSpotlight', { text: 'Starting Next Activity' });
 
       // activity started
       console.log('event:activityStarted:sent');
@@ -190,17 +227,11 @@ export class CoordinationService {
         event_type: 'activityStarted',
       });
 
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-      await this.step(this.activityStage, 'sendSpotlight', { text: 'SIT TO STAND' });
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
-
-      await this.step(this.activityStage, 'hideSpotlight');
-
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 100 : 200);
+      // await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 100 : 200);
 
       // Enable sit2stand service
       this.sit2standService.enable();
-      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
+      // await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila' });
 
       await this.step(this.activityStage, 'sendMessage', {
@@ -213,6 +244,7 @@ export class CoordinationService {
         position: 'bottom',
         skipWait: true,
       });
+
       await this.step(this.activityStage, 'sleep', 500);
 
       await this.step(this.activityStage, 'waitForClass', 'sit');
@@ -246,8 +278,8 @@ export class CoordinationService {
       });
       await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3000);
       await this.step(this.activityStage, 'waitForClass', 'stand');
-      // this.soundService.playNextChord();
       this.soundService.playActivitySound('success');
+
       await this.step(this.activityStage, 'hidePrompt');
       await this.step(this.activityStage, 'announcement', { message: 'Awesome!', timeout: 3000 });
 
@@ -300,11 +332,20 @@ export class CoordinationService {
       this.soundService.pauseActivityInstructionSound();
 
       this.activityStage = 'preGame';
-      this.analyticsService.sendSessionState(this.activityStage);
+      this.sendSessionState(this.activityStage);
 
       this.runSit2Stand();
     } catch (err) {
+      console.log('explain ended');
       return;
+    }
+  }
+
+  sendSessionState(activityStage: ActivityStage) {
+    try {
+      this.analyticsService.sendSessionState(activityStage);
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -313,31 +354,31 @@ export class CoordinationService {
     if (stage) {
       this.activityStage = stage;
     }
-    if (this.activityStage === 'preGame') {
+    if (this.activityStage === 'preGame' && this.calibrationStatus !== 'error') {
       await this.prePlaySit2Stand();
     }
-    await this.sleep(2000);
 
     try {
-      await this.waitForCalibraion('success');
-      if (this.activityStage === 'game' && this.calibrationStatus === 'success') {
+      // await this.waitForCalibration('success');
+      console.log('activity stage, calibstatus:', this.activityStage, this.calibrationStatus);
+      if (this.activityStage === 'game' && this.calibrationStatus !== 'error') {
         // Do 5 reps: TODO get number of reps from the careplan
         this.desiredClass = 'unknown';
         this.previousDesiredClass = 'unknown';
 
         if (this.isRecalibrated) {
-          this.resumeSit2Stand();
+          await this.resumeSit2Stand();
+          console.log('resume sit2stand completed');
         }
 
         while (
           this.successfulReps < this.totalReps &&
-          this.calibrationStatus === 'success' &&
+          this.calibrationStatus !== 'error' &&
           !this.isRecalibrated
         ) {
           this.taskId = v4();
           this.attemptId = v4();
 
-          console.log('successful attempt no:', this.successfulReps);
           this.previousDesiredClass = this.desiredClass;
 
           let num: number;
@@ -353,39 +394,48 @@ export class CoordinationService {
             if (this.promptsArr.length >= 1) {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
-              if (this.repsArr.length >= 2) {
-                console.log(
-                  `${this.repsArr[this.currentPromptIdx - 2]} ${
-                    this.repsArr[this.currentPromptIdx - 1]
-                  }`,
-                );
-                if (
-                  this.repsArr[this.currentPromptIdx - 1] === 'even' &&
-                  this.repsArr[this.currentPromptIdx - 2] === 'even'
-                ) {
-                  num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
-                } else if (
-                  this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
-                  this.repsArr[this.currentPromptIdx - 2] === 'odd'
-                ) {
-                  num = Math.floor((Math.random() * 100) / 2) * 2;
+              if (this.previousRep && !this.previousRep.isSuccess) {
+                console.log('prevuios rep class', this.previousRepClass);
+                this.previousRep.class === 'stand'
+                  ? (num = Math.floor((Math.random() * 100) / 2) * 2)
+                  : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
+              } else {
+                if (this.repsArr.length >= 2) {
+                  if (
+                    this.repsArr[this.currentPromptIdx - 1] === 'even' &&
+                    this.repsArr[this.currentPromptIdx - 2] === 'even'
+                  ) {
+                    num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
+                  } else if (
+                    this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
+                    this.repsArr[this.currentPromptIdx - 2] === 'odd'
+                  ) {
+                    num = Math.floor((Math.random() * 100) / 2) * 2;
+                  } else {
+                    num = Math.floor(Math.random() * 100);
+                  }
                 } else {
                   num = Math.floor(Math.random() * 100);
                 }
-              } else {
-                num = Math.floor(Math.random() * 100);
               }
             }
           }
 
           console.log('repsArr', this.repsArr);
+          console.log('number', num);
 
           if (num % 2 === 0) {
             this.desiredClass = 'sit';
             this.repsArr.push('even');
+            if (this.previousRep) {
+              this.previousRep.class = 'sit';
+            }
           } else {
             this.desiredClass = 'stand';
             this.repsArr.push('odd');
+            if (this.previousRep) {
+              this.previousRep.class = 'stand';
+            }
           }
 
           // sending the taskStarted event
@@ -418,7 +468,7 @@ export class CoordinationService {
           // playing chord
           if (res.result === 'success') {
             this.currentPromptIdx += 1;
-            this.soundService.playNextChord();
+            this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
             console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
@@ -429,6 +479,9 @@ export class CoordinationService {
               score: 1,
               task_name: this.desiredClass,
             });
+            if (this.previousRep) {
+              this.previousRep.isSuccess = true;
+            }
           } else {
             this.currentPromptIdx += 1;
             console.log('event:taskEnded:sent:score', 0);
@@ -440,19 +493,23 @@ export class CoordinationService {
               score: 0,
               task_name: this.desiredClass,
             });
+            if (this.previousRep) {
+              this.previousRep.isSuccess = false;
+            }
           }
         }
 
         if (this.successfulReps >= this.totalReps) {
           this.activityStage = 'postGame';
-          this.analyticsService.sendSessionState(this.activityStage);
+          this.sendSessionState(this.activityStage);
         }
       }
     } catch (err) {
+      console.log('game function exited');
       return;
     }
 
-    if (this.activityStage === 'postGame' && this.calibrationStatus === 'success') {
+    if (this.activityStage === 'postGame' && this.calibrationStatus !== 'error') {
       await this.postPlaySit2Stand();
     }
   }
@@ -460,10 +517,9 @@ export class CoordinationService {
   async prePlaySit2Stand() {
     try {
       this.activityStage = 'preGame';
-      if (!this.soundService.isConstantDrumPlaying()) {
-        this.soundService.startConstantDrum();
+      if (!this.soundService.isBacktrackPlaying(this.genre)) {
+        this.soundService.playMusic(this.genre, 'backtrack');
       }
-      await this.waitForCalibraion('success');
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
       await this.step(this.activityStage, 'sendMessage', {
         text: 'STAND up when you are ready to start...',
@@ -481,8 +537,9 @@ export class CoordinationService {
       await this.step(this.activityStage, 'sleep', 1000);
       await this.step(this.activityStage, 'hideSpotlight');
       this.activityStage = 'game';
-      this.analyticsService.sendSessionState(this.activityStage);
+      this.sendSessionState(this.activityStage);
     } catch (err) {
+      console.log('exited preplaysit2stand');
       return;
     }
   }
@@ -519,7 +576,6 @@ export class CoordinationService {
     await this.sleep(1000);
     this.store.dispatch(guide.hideSpotlight());
     this.isRecalibrated = false;
-    this.playSit2Stand();
   }
 
   async postPlaySit2Stand() {
@@ -552,7 +608,7 @@ export class CoordinationService {
       position: 'center',
     });
 
-    this.soundService.pauseConstantDrum();
+    this.soundService.pauseBacktrack(this.genre);
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
     await this.step('postGame', 'sleep', 5000);
@@ -603,11 +659,15 @@ export class CoordinationService {
   ) {
     return new Promise(async (resolve, reject) => {
       // check if the user is calibrated or not
-      if (step === 'explain' && this.calibrationStatus !== 'success') {
+      console.log(step, type, data);
+      if (step === 'explain' && this.calibrationStatus === 'error') {
         this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
-      } else if (step === 'preGame' && this.calibrationStatus !== 'success') {
+      } else if (step === 'preGame' && this.calibrationStatus === 'error') {
+        reject({});
+        return;
+      } else if (step === 'game' && this.calibrationStatus === 'error') {
         reject({});
         return;
       }
@@ -639,9 +699,14 @@ export class CoordinationService {
           resolve({});
           return;
         case 'waitForClass':
-          await this.waitForClass(data);
-          resolve({});
-          return;
+          try {
+            await this.waitForClass(data);
+            resolve({});
+            return;
+          } catch (err) {
+            reject({});
+            return;
+          }
         case 'sendPrompt':
           this.store.dispatch(guide.sendPrompt(data));
           resolve({});
@@ -677,12 +742,22 @@ export class CoordinationService {
   subscribeToState() {
     this.observables$ = this.observables$ || {};
     // Subscribe to the pose
-
     this.observables$.pose = this.store.select((state) => state.pose);
     this.observables$.pose.subscribe((results: { pose: Results }) => {
       this.previousPose = this.currentPose;
       if (results) {
         this.handlePose(results);
+      }
+    });
+
+    this.observables$.genre = this.store.select((store) => store.session.session?.genre);
+    this.observables$.genre.subscribe((genreSelected) => {
+      if (genreSelected) {
+        this.genre = genreSelected;
+        this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
+      } else {
+        // fallback case
+        this.genre = 'Jazz';
       }
     });
 
@@ -724,8 +799,8 @@ export class CoordinationService {
     const calibrationResult = this.calibrationService.handlePose(results);
     // Call appropriate hook when status changes
     if (calibrationResult && this.calibrationStatus !== calibrationResult.status) {
-      this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status);
       this.calibrationStatus = calibrationResult.status;
+      this.handleCalibrationResult(this.calibrationStatus, calibrationResult.status);
     }
 
     if (this.isWaitingForReaction) {
@@ -747,7 +822,7 @@ export class CoordinationService {
       }
     }
 
-    if (this.calibrationStatus == 'success' && this.sit2standService.isEnabled()) {
+    if (this.calibrationStatus !== 'error' && this.sit2standService.isEnabled()) {
       const newClass = this.sit2standService.classify(results.pose).result;
       this.handleClassChange(this.currentClass, newClass);
       this.currentClass = newClass;
@@ -817,10 +892,14 @@ export class CoordinationService {
   }
 
   async waitForClass(className: 'sit' | 'stand') {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (this.currentClass == className) resolve({});
       // set interval
       const interval = setInterval(() => {
+        if (this.calibrationStatus === 'error') {
+          reject({});
+          clearInterval(interval);
+        }
         if (this.currentClass == className) {
           resolve({});
           clearInterval(interval);
@@ -868,10 +947,6 @@ export class CoordinationService {
     });
   }
 
-  // handleClassChange(oldClass: string, newClass: string) {
-  //   // Do something?
-  // }
-
   async startCalibrationScene() {
     this.sit2standService.disable();
     if (this.game?.scene.isActive('sit2stand')) {
@@ -879,7 +954,6 @@ export class CoordinationService {
       console.log('sit2stand is active. turning off');
       this.game?.scene.start('calibration');
       console.log('start calibration');
-      // this.action_startMediaPipe()
     } else {
       console.log('calibration is already active');
     }
@@ -910,9 +984,9 @@ export class CoordinationService {
     this.store.dispatch(guide.hideVideo());
   }
 
-  startSit2StandScene() {
+  async startSit2StandScene() {
     this.sit2standService.enable();
-    // this.soundService.startConstantDrum();
+
     if (this.game?.scene.isActive('calibration')) {
       this.game.scene.stop('calibration');
       console.log('calibration is active. turning off');
@@ -929,17 +1003,24 @@ export class CoordinationService {
       this.activityStage === 'postGame' ||
       this.activityStage === 'explain'
     ) {
-      this.clearPrompts();
-      if (!this.soundService.isConstantDrumPlaying()) {
-        this.soundService.startConstantDrum();
-      }
-      if (this.activityStage === 'explain') {
+      if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
+        this.soundService.pauseActivityInstructionSound();
+        this.clearPrompts();
+        if (!this.soundService.isBacktrackPlaying(this.genre)) {
+          this.soundService.playMusic(this.genre, 'backtrack');
+        }
+        this.playSit2Stand(this.activityStage);
+      } else if (this.activityStage === 'game') {
+        this.soundService.pauseActivityInstructionSound();
+        this.clearPrompts();
+        if (!this.soundService.isBacktrackPlaying(this.genre)) {
+          this.soundService.playMusic(this.genre, 'backtrack');
+        }
+        this.isRecalibrated = true;
+        this.playSit2Stand(this.activityStage);
+      } else if (this.activityStage === 'explain') {
         this.soundService.resumeActivityInstructionSound();
         this.runSit2Stand();
-      } else {
-        this.isRecalibrated = true;
-        console.log('starting playsit2stand with ', this.activityStage);
-        this.playSit2Stand(this.activityStage);
       }
     }
   }
@@ -947,21 +1028,17 @@ export class CoordinationService {
   handleCalibrationSuccess(oldStatus: string, newStatus: string) {
     this.calibrationScene.drawCalibrationBox('success');
     this.soundService.playCalibrationSound('success');
-    // this.soundService.startConstantDrum()
     this.startSit2StandScene();
   }
 
   handleCalibrationWarning(oldStatus: string, newStatus: string) {
     this.calibrationScene.drawCalibrationBox('warning');
-    // TODO: If the earlier status was
   }
 
   handleCalibrationError(oldStatus: string, newStatus: string) {
     this.startCalibrationScene();
     this.soundService.playCalibrationSound('error');
     this.calibrationScene.drawCalibrationBox('error');
-    // this.soundService.pauseConstantDrum();
-
     this.pauseActivity();
   }
 
@@ -971,7 +1048,7 @@ export class CoordinationService {
       this.activityStage === 'game' ||
       this.activityStage === 'postGame'
     ) {
-      this.soundService.pauseConstantDrum();
+      this.soundService.pauseBacktrack(this.genre);
     }
 
     this.clearPrompts();
@@ -984,7 +1061,7 @@ export class CoordinationService {
       }),
     );
 
-    this.analyticsService.sendSessionState(this.activityStage);
+    this.sendSessionState(this.activityStage);
   }
 
   async nextStep() {

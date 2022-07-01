@@ -82,6 +82,18 @@ const _sessionReducer = createReducer(
     saveToLocalStorage(newState);
     return newState;
   }),
+  on(session.setGenre, (state, data) => {
+    const newState: SessionState = {
+      ...state,
+      session: {
+        ...state.session,
+        genre: data.genre,
+      },
+    };
+    console.log('genreSelected session state: ', newState);
+    saveToLocalStorage(newState);
+    return newState;
+  }),
 );
 
 export function sessionReducer(state: any, action: any) {

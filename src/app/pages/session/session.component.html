@@ -31,3 +31,20 @@
     </div>
   </div>
 </ng-template>
+
+<ng-template #noVideoModal>
+  <div class="modal-content shadow-4">
+    <div class="modal-body">
+      <div class="text-center py-5 px-5">
+        <div class="icon icon-shape rounded-circle bg-soft-danger text-danger text-lg">
+          <i class="bi bi-exclamation-octagon-fill"></i>
+        </div>
+        <h3 class="mt-7 mb-4">No Camera found</h3>
+        <p class="text-sm text-muted">
+          We need to access your Camera to continue. We got the following error message when we tried accessing your
+          camera: {{noVideoError}}
+        </p>
+      </div>
+    </div>
+  </div>
+</ng-template>

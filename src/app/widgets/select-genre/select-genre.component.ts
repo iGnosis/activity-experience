@@ -1,6 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { getTestBed } from '@angular/core/testing';
+import { Store } from '@ngrx/store';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
+import { session } from 'src/app/store/actions/session.actions';
 import { PreSessionGenre } from 'src/app/types/pointmotion';
 
 @Component({
@@ -10,12 +12,13 @@ import { PreSessionGenre } from 'src/app/types/pointmotion';
 })
 export class SelectGenreComponent implements OnInit {
   @Output() selected = new EventEmitter<string>();
+  timer: any;
 
   debouncedPlayMusic: (...args: any[]) => void;
 
   genres: Array<{ title: PreSessionGenre; selected?: boolean }> = [
     {
-      title: 'Classic',
+      title: 'Classical',
     },
     {
       title: 'Jazz',
@@ -34,7 +37,7 @@ export class SelectGenreComponent implements OnInit {
   intervalId: any;
 
   playState: 'play' | 'stop' | undefined = undefined;
-  constructor(private soundsService: SoundsService) {
+  constructor(private soundsService: SoundsService, private store: Store) {
     this.debouncedPlayMusic = this.debounce((genre: string) => {
       this.playMusic(genre);
     }, 300);
@@ -43,10 +46,9 @@ export class SelectGenreComponent implements OnInit {
   ngOnInit(): void {}
 
   debounce(func: any, timeout = 300) {
-    let timer: any;
     return (...args: any[]) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
         func.apply(this, args);
       }, timeout);
     };
@@ -58,6 +60,7 @@ export class SelectGenreComponent implements OnInit {
   }
 
   stopMusic(genre?: string) {
+    if (genre) clearTimeout(this.timer);
     this.playState = 'stop';
     Howler.stop();
   }
@@ -65,6 +68,7 @@ export class SelectGenreComponent implements OnInit {
   selectGenre(mood: { title: string; selected?: boolean }) {
     this.soundsService.stopGenreSound(mood.title as PreSessionGenre);
     mood.selected = true;
+    this.store.dispatch(session.setGenre({ genre: mood.title as PreSessionGenre }));
     setTimeout(() => {
       this.selected.emit(mood.title);
     }, 1000);

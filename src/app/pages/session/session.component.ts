@@ -27,6 +27,8 @@ export class SessionComponent implements AfterViewInit {
   @ViewChild('sessionElm') sessionElm!: ElementRef;
   @ViewChild('sessionCloseModal', { read: TemplateRef })
   sessionCloseModal: TemplateRef<any>;
+  @ViewChild('noVideoModal', { read: TemplateRef })
+  noVideoModal: TemplateRef<any>;
   game?: Phaser.Game;
   session: SessionRow | undefined;
   config: Phaser.Types.Core.GameConfig = {
@@ -51,6 +53,7 @@ export class SessionComponent implements AfterViewInit {
   isEndSessionVisible = false;
   announcement = '';
   selectGenre = false;
+  noVideoError: string;
 
   sessionEnded: boolean | undefined = false;
 
@@ -79,18 +82,27 @@ export class SessionComponent implements AfterViewInit {
 
   async ngAfterViewInit() {
     // start the video
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false,
-    });
-    this.video.nativeElement.srcObject = stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      this.video.nativeElement.srcObject = stream;
+      const box = this.uiHelperService.setBoundingBox(stream);
+      console.log('setBoundingBox:box:', box);
+      // aspect ratio of the screen and webcam may be different. make calculations easier
+      this.updateDimensions(this.video.nativeElement);
 
-    // aspect ratio of the screen and webcam may be different. make calculations easier
-    const box = this.uiHelperService.setBoundingBox(stream);
-    console.log('setBoundingBox:box:', box);
-    this.updateDimensions(this.video.nativeElement);
-
-    this.startGame();
+      this.startGame();
+    } catch (err: any) {
+      console.log(err);
+      this.noVideoError = err.toString().replace('DOMException:', '');
+      this.modalService.open(this.noVideoModal, {
+        centered: true,
+        keyboard: false,
+        backdrop: 'static',
+      });
+    }
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
