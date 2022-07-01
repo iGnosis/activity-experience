@@ -50,7 +50,7 @@ export class ExperimentScene extends Phaser.Scene {
     console.log(this.ball.width);
     this.ball.setCircle(this.ball.width / 2);
     this.ball.setFriction(0, 0);
-    this.ball.setVelocity(0, 80);
+    this.ball.setVelocity(80, 80);
     this.ball.setGravityY(200);
     this.ball.setCollideWorldBounds(true, 1, 1);
 
@@ -99,9 +99,9 @@ export class ExperimentScene extends Phaser.Scene {
     }
 
     if (!this.ball.active) {
-      this.ball = this.physics.add.sprite(500, 0, 'red_ball').setScale(2, 2);
+      this.ball = this.physics.add.sprite(400, 0, 'red_ball').setScale(2, 2);
       this.ball.setFriction(0, 0);
-      this.ball.setVelocity(0, 0);
+      this.ball.setVelocity(80, 80);
       this.ball.setGravityY(200);
       this.ball.setCollideWorldBounds(true, 1, 1);
     }
@@ -270,12 +270,12 @@ export class ExperimentScene extends Phaser.Scene {
     if (this.leftHand) {
       this.leftHand?.generateTexture(
         'left-hand',
-        leftWrist.x * width - leftElbow.x * width,
-        leftWrist.y * height - leftElbow.y * height,
+        (this.leftHand as any).body.width,
+        (this.leftHand as any).body.height,
       );
       this.leftHandSprite = this.physics.add
         .sprite(width - leftElbow.x * width, leftElbow.y * height, 'left-hand')
-        .setOrigin(1, 0.5)
+        .setOrigin(0.5)
         .setAlpha(0.3)
         .setInteractive();
     }
