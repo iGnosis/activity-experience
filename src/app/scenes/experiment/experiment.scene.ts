@@ -46,11 +46,11 @@ export class ExperimentScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, width, height);
     this.physics.world.setBoundsCollision(true, true, true, true);
-    this.ball = this.physics.add.sprite(500, 0, 'red_ball').setScale(2, 2);
+    this.ball = this.physics.add.sprite(390, 0, 'red_ball').setScale(2, 2).setOrigin(0, 0);
     console.log(this.ball.width);
     this.ball.setCircle(this.ball.width / 2);
     this.ball.setFriction(0, 0);
-    this.ball.setVelocity(120, 80);
+    this.ball.setVelocity(0, 80);
     this.ball.setGravityY(200);
     this.ball.setCollideWorldBounds(true, 1, 1);
 
@@ -83,12 +83,6 @@ export class ExperimentScene extends Phaser.Scene {
     //   this,
     // );
     // }
-
-    if (this.ball && this.leftHandSprite) {
-      this.physics.add.collider(this.ball, this.leftHandSprite, () => {
-        console.log('overllaped left');
-      });
-    }
   }
   override update(time: number, delta: number): void {
     const { height, width } = this.game.canvas;
@@ -107,7 +101,7 @@ export class ExperimentScene extends Phaser.Scene {
     if (!this.ball.active) {
       this.ball = this.physics.add.sprite(500, 0, 'red_ball').setScale(2, 2);
       this.ball.setFriction(0, 0);
-      this.ball.setVelocity(80, 80);
+      this.ball.setVelocity(0, 0);
       this.ball.setGravityY(200);
       this.ball.setCollideWorldBounds(true, 1, 1);
     }
@@ -192,6 +186,9 @@ export class ExperimentScene extends Phaser.Scene {
     if (this.leftHand) {
       this.leftHand.destroy();
     }
+    if (this.leftHandSprite) {
+      this.leftHandSprite.destroy();
+    }
     if (this.rightHand) {
       this.rightHand.destroy();
     }
@@ -260,7 +257,7 @@ export class ExperimentScene extends Phaser.Scene {
     // this.physics.add.existing(this.rightRect);
 
     // ! method - 2
-    this.leftHand = new Phaser.GameObjects.Graphics(this);
+    this.leftHand = this.add.graphics().setInteractive();
     this.leftHand!.lineStyle(20, 0xff0000, 0.3);
     this.leftHand!.lineBetween(
       width - leftElbow.x * width,
@@ -268,50 +265,60 @@ export class ExperimentScene extends Phaser.Scene {
       width - leftWrist.x * width,
       leftWrist.y * height,
     );
-
-    if (this.leftHandSprite) {
-      this.leftHandSprite.destroy();
-    }
-    if (this.leftHand) {
-      this.leftHand?.generateTexture('left-hand');
-      this.leftHandSprite = this.physics.add
-        .sprite(0, 0, 'left-hand')
-        .setOrigin(0.5)
-        .setAlpha(0.3)
-        .setInteractive()
-        .setCollideWorldBounds(true, 1, 1)
-        .setImmovable();
-    }
-
-    // this.physics.world.enable(this.leftHand);
-    this.leftHand.setInteractive();
     this.physics.add.existing(this.leftHand);
 
-    this.rightHand = new Phaser.GameObjects.Graphics(this);
-    this.rightHand!.lineStyle(20, 0xff0000, 0.3);
-    this.rightHand!.lineBetween(
-      width - rightElbow.x * width,
-      rightElbow.y * height,
-      width - rightWrist.x * width,
-      rightWrist.y * height,
-    );
-
-    if (this.rightHandSprite) {
-      this.rightHandSprite.destroy();
-    }
-    if (this.rightHand) {
-      this.rightHand?.generateTexture('right-hand');
-      this.rightHandSprite = this.physics.add
-        .sprite(0, 0, 'right-hand')
-        .setOrigin(0.5)
+    if (this.leftHand) {
+      this.leftHand?.generateTexture(
+        'left-hand',
+        leftWrist.x * width - leftElbow.x * width,
+        leftWrist.y * height - leftElbow.y * height,
+      );
+      this.leftHandSprite = this.physics.add
+        .sprite(width - leftElbow.x * width, leftElbow.y * height, 'left-hand')
+        .setOrigin(1, 0.5)
         .setAlpha(0.3)
-        .setInteractive()
-        .setCollideWorldBounds(true, 1, 1)
-        .setImmovable();
+        .setInteractive();
     }
+    if (this.ball && this.leftHandSprite) {
+      this.physics.world.overlap(
+        this.ball,
+        [this.leftHandSprite],
+        () => {
+          this.text.setText((++this.collisionCount).toString());
+          this.ball.destroy();
+        },
+        undefined,
+        null,
+      );
+    }
+
+    // if(this.physics.overlap) {
+    //   alert('overllaped left');
+    // }
+
+    // this.physics.world.enable(this.leftHand);
+
+    // this.rightHand = new Phaser.GameObjects.Graphics(this);
+    // this.rightHand!.lineStyle(20, 0xff0000, 0.3);
+    // this.rightHand!.lineBetween(
+    //   width - rightElbow.x * width,
+    //   rightElbow.y * height,
+    //   width - rightWrist.x * width,
+    //   rightWrist.y * height,
+    // );
+    // if (this.rightHand) {
+    //   this.rightHand?.generateTexture('right-hand');
+    //   this.rightHandSprite = this.physics.add
+    //     .sprite(0, 0, 'right-hand')
+    //     .setOrigin(0.5)
+    //     .setAlpha(0.3)
+    //     .setInteractive()
+    //     .setCollideWorldBounds(true, 1, 1)
+    //     .setImmovable();
+    // }
     // this.physics.world.enable(this.rightHand);
-    this.rightHand.setInteractive();
-    this.physics.add.existing(this.rightHand);
+    // this.rightHand.setInteractive();
+    // this.physics.add.existing(this.rightHand);
 
     // ! method - 3
     // this.graphics = this.add.graphics({ fillStyle: { color: 0xffff00, alpha: 1 } });
