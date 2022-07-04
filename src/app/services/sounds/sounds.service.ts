@@ -116,7 +116,8 @@ export class SoundsService {
   dance: Howl;
   rock: Howl;
   jazz: Howl;
-  classical: Howl;
+  classicalBacktrack: Howl;
+  classicalTrigger: Howl;
   loadMusicFiles(genre: PreSessionGenre) {
     switch (genre) {
       case 'Surprise Me!':
@@ -207,31 +208,56 @@ export class SoundsService {
         });
         break;
       case 'Classical':
-        this.classical = new Howl({
+        this.classicalBacktrack = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
           sprite: {
-            set1rep1: [0, 8960],
-            set1rep2: [10000, 8960],
-            set1rep3: [20000, 8960],
-            set1rep4: [30000, 8960],
-            set1rep5: [40000, 8960],
-            set1rep6: [50000, 8960],
-            set2rep2: [60000, 8960.000000000007],
-            set2rep3: [70000, 8960.000000000007],
-            set2rep4: [80000, 8960.000000000007],
-            set2rep5: [90000, 8960.000000000007],
-            set2rep6: [100000, 8960.000000000007],
-            set2rep1: [110000, 8960.000000000007],
-            set3rep7: [120000, 8960.000000000007],
-            set3rep1: [130000, 8960.000000000007],
-            set3rep2: [140000, 8960.000000000007],
-            set3rep3: [150000, 8960.000000000007],
-            set3rep4: [160000, 8960.000000000007],
-            set3rep5: [170000, 8960.000000000007],
-            set3rep6: [180000, 8960.000000000007],
-            'backtrack set1': [190000, 62275.918367346945, true],
-            'backtrack set2': [254000, 53394.28571428573, true],
-            'backtrack set3': [309000, 62275.918367346945, true],
+            'backtrack set1': [64000, 62275.918367346945, true],
+            'backtrack set2': [128000, 53394.28571428573, true],
+            'backtrack set3': [0, 62275.91836734694, true],
+          },
+        });
+
+        this.classicalTrigger = new Howl({
+          src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
+          sprite: {
+            set1rep1: [183000, 4519.183673469399, true],
+            set1rep2: [189000, 4519.183673469399, true],
+            set1rep3: [195000, 4519.183673469399, true],
+            set1rep4: [201000, 4519.183673469399, true],
+            set1rep5: [207000, 4519.183673469399, true],
+            set1rep6: [213000, 4519.183673469399, true],
+            set1rep7: [219000, 4519.183673469399, true],
+            set1rep8: [225000, 4519.183673469399, true],
+            set1rep9: [231000, 4519.183673469399, true],
+            set1rep10: [237000, 4519.183673469399, true],
+            set1rep11: [243000, 4519.183673469399, true],
+            set1rep12: [249000, 4519.183673469399, true],
+            set2rep1: [255000, 4519.183673469399, true],
+            set2rep2: [261000, 4519.183673469399, true],
+            set2rep3: [267000, 4519.183673469399, true],
+            set2rep4: [273000, 4519.183673469399, true],
+            set2rep5: [279000, 4519.183673469399, true],
+            set2rep6: [285000, 4519.183673469399, true],
+            set2rep7: [291000, 4519.183673469399, true],
+            set2rep8: [297000, 4519.183673469399, true],
+            set2rep9: [303000, 4519.183673469399, true],
+            set2rep10: [309000, 4519.183673469399, true],
+            set2rep11: [315000, 4519.183673469399, true],
+            set2rep12: [321000, 4519.183673469399, true],
+            set3rep1: [357000, 4519.183673469399, true],
+            set3rep2: [363000, 4519.183673469399, true],
+            set3rep3: [369000, 4519.183673469399, true],
+            set3rep4: [375000, 4519.183673469399, true],
+            set3rep5: [381000, 4519.183673469399, true],
+            set3rep6: [387000, 4519.183673469399, true],
+            set3rep7: [393000, 4519.183673469399, true],
+            set3rep8: [399000, 4519.183673469399, true],
+            set3rep9: [405000, 4519.183673469399, true],
+            set3rep10: [327000, 4519.183673469399, true],
+            set3rep11: [333000, 4519.183673469399, true],
+            set3rep12: [339000, 4519.183673469399, true],
+            set3rep13: [345000, 4519.183673469399, true],
+            set3rep14: [351000, 4519.183673469399, true],
           },
         });
         break;
@@ -269,7 +295,7 @@ export class SoundsService {
     switch (genre) {
       case 'Classical':
         if (this.currentClassicalBacktrackId) {
-          return this.classical.playing(this.currentClassicalBacktrackId);
+          return this.classicalBacktrack.playing(this.currentClassicalBacktrackId);
         }
         return false;
       case 'Dance':
@@ -296,9 +322,9 @@ export class SoundsService {
       case 'Classical':
         if (
           this.currentClassicalBacktrackId &&
-          this.classical.playing(this.currentClassicalBacktrackId)
+          this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
         ) {
-          this.classical.pause(this.currentClassicalBacktrackId);
+          this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
         }
         break;
       case 'Dance':
@@ -333,61 +359,54 @@ export class SoundsService {
   playMusic(genre: PreSessionGenre, type: 'backtrack' | 'trigger') {
     switch (genre) {
       case 'Classical':
-        if (!this.classical) {
+        if (!this.classicalBacktrack || !this.classicalTrigger) {
           return;
         }
         if (type === 'backtrack') {
           console.log(`playing backtrack set${this.currentClassicalSet}`);
-          if (this.classical.playing(this.currentClassicalBacktrackId)) {
-            this.classical.stop(this.currentClassicalBacktrackId);
+          if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
+            this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
           }
-          this.currentClassicalBacktrackId = this.classical.play(
+          this.currentClassicalBacktrackId = this.classicalBacktrack.play(
             `backtrack set${this.currentClassicalSet}`,
           );
         } else {
           console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
-          if (this.classical.playing(this.currentClassicalTriggerId)) {
-            this.classical.stop(this.currentClassicalTriggerId);
-          }
           const soundTrackKey = `set${this.currentClassicalSet}rep${this.currentClassicalRep}`;
-          this.currentClassicalTriggerId = this.classical
-            .fade(
-              0.7,
-              0,
-              this.classicalTracksAndDuration[soundTrackKey],
-              this.currentClassicalTriggerId,
-            )
-            .play(soundTrackKey);
-
+          if (this.classicalTrigger.playing(this.currentClassicalTriggerId)) {
+            this.classicalTrigger.stop(this.currentClassicalTriggerId);
+          }
+          this.classicalTrigger.volume(0.8);
+          this.currentClassicalTriggerId = this.classicalTrigger.play(soundTrackKey);
           this.currentClassicalRep += 1;
-          if (this.currentClassicalSet === 1 && this.currentClassicalRep === 6) {
+          if (this.currentClassicalSet === 1 && this.currentClassicalRep === 12) {
             console.log('set 1 ended, starting set 2, resetting reps to 0');
             this.currentClassicalSet = 2;
             this.currentClassicalRep = 1;
-            if (this.classical.playing(this.currentClassicalBacktrackId)) {
-              this.classical.stop(this.currentClassicalBacktrackId);
+            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
+              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classical.play(
+            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
               `backtrack set${this.currentClassicalSet}`,
             );
-          } else if (this.currentClassicalSet === 2 && this.currentClassicalRep === 6) {
+          } else if (this.currentClassicalSet === 2 && this.currentClassicalRep === 12) {
             console.log('set 2 ended, starting set 3, resetting reps to 0');
             this.currentClassicalSet = 3;
             this.currentClassicalRep = 1;
-            if (this.classical.playing(this.currentClassicalBacktrackId)) {
-              this.classical.stop(this.currentClassicalBacktrackId);
+            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
+              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classical.play(
+            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
               `backtrack set${this.currentClassicalSet}`,
             );
-          } else if (this.currentClassicalSet === 3 && this.currentClassicalRep === 7) {
+          } else if (this.currentClassicalSet === 3 && this.currentClassicalRep === 14) {
             console.log('set 3 ended, starting set 1, resetting reps to 0');
             this.currentClassicalSet = 1;
             this.currentClassicalRep = 1;
-            if (this.classical.playing(this.currentClassicalBacktrackId)) {
-              this.classical.stop(this.currentClassicalBacktrackId);
+            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
+              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classical.play(
+            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
               `backtrack set${this.currentClassicalSet}`,
             );
           }
@@ -525,8 +544,9 @@ export class SoundsService {
     switch (genre) {
       case 'Classical':
         if (!this.preSessionGenreClassic.playing(this.preSessionGenreClassicId)) {
-          this.preSessionGenreClassicId = this.preSessionGenreClassic.play();
-          this.preSessionGenreClassic.fade(0, 80, 3000, this.preSessionGenreClassicId);
+          this.preSessionGenreClassicId = this.preSessionGenreClassic
+            .fade(0, 80, 3000, this.preSessionGenreClassicId)
+            .play();
         }
         break;
       case 'Jazz':
