@@ -32,7 +32,7 @@ export class HolisticService {
         console.log('loading holistic file:', file);
         // stick to v0.5 as to avoid breaking changes.
         // return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/${file}`;
-        return `assets/mediapipe/holistic/0.5/${file}`
+        return `assets/mediapipe/holistic/0.5/${file}`;
       },
     });
 
