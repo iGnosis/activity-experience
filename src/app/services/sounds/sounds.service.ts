@@ -266,31 +266,7 @@ export class SoundsService {
     }
   }
 
-  classicalTracksAndDuration: any = {
-    set1rep1: 8690,
-    set1rep2: 8960,
-    set1rep3: 8960,
-    set1rep4: 8960,
-    set1rep5: 8960,
-    set1rep6: 8960,
-    set2rep2: 8960.000000000007,
-    set2rep3: 8960.000000000007,
-    set2rep4: 8960.000000000007,
-    set2rep5: 8960.000000000007,
-    set2rep6: 8960.000000000007,
-    set2rep1: 8960.000000000007,
-    set3rep7: 8960.000000000007,
-    set3rep1: 8960.000000000007,
-    set3rep2: 8960.000000000007,
-    set3rep3: 8960.000000000007,
-    set3rep4: 8960.000000000007,
-    set3rep5: 8960.000000000007,
-    set3rep6: 8960.000000000007,
-    'backtrack set1': 62275.91836734694,
-    'backtrack set2': 53394.28571428573,
-    'backtrack set3': 62275.918367346945,
-  };
-
+  classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
   isBacktrackPlaying(genre: PreSessionGenre) {
     switch (genre) {
       case 'Classical':
@@ -376,8 +352,17 @@ export class SoundsService {
           if (this.classicalTrigger.playing(this.currentClassicalTriggerId)) {
             this.classicalTrigger.stop(this.currentClassicalTriggerId);
           }
-          this.classicalTrigger.volume(0.8);
+          this.classicalTrigger.volume(0.7);
           this.currentClassicalTriggerId = this.classicalTrigger.play(soundTrackKey);
+          this.classicalTrigger.fade(0, 0.7, 1500, this.currentClassicalTriggerId);
+          setTimeout(() => {
+            this.classicalTrigger.fade(
+              0.7,
+              0,
+              this.classicTriggerFadeoutDuration,
+              this.currentClassicalTriggerId,
+            );
+          }, 1500);
           this.currentClassicalRep += 1;
           if (this.currentClassicalSet === 1 && this.currentClassicalRep === 12) {
             console.log('set 1 ended, starting set 2, resetting reps to 0');
