@@ -21,17 +21,23 @@ export class HolisticService {
   };
   interval: any;
   videoElm?: HTMLVideoElement;
+  numOfResults = 0;
   constructor(
     private store: Store<{ pose: Results }>,
     private calibrationScene: CalibrationScene,
   ) {}
 
-  async start(videoElm: HTMLVideoElement, fps = 25) {
+  async start(videoElm: HTMLVideoElement, fps = 25, config: 'cdn' | 'local' = 'cdn') {
+    const baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/holistic/';
+    // if (config === 'local') {
+    //   baseUrl = '/assets/mediapipe/holistic/0.5/';
+    // }
+    // baseUrl = '/assets/mediapipe/holistic/0.5/';
     this.holistic = new Holistic({
       locateFile: (file) => {
         console.log('loading holistic file:', file);
         // stick to v0.5 as to avoid breaking changes.
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/${file}`;
+        return baseUrl + file;
         // return `assets/mediapipe/holistic/0.5/${file}`;
       },
     });
@@ -68,6 +74,7 @@ export class HolisticService {
   private handleResults(results: Results) {
     // console.log(results)
     if (results) {
+      this.numOfResults += 1; // increment the number till 100 only
       this.store.dispatch(pose.send({ pose: results }));
     }
   }
