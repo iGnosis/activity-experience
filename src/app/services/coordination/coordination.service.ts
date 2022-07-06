@@ -36,6 +36,10 @@ export class CoordinationService {
   private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
   private genre: PreSessionGenre;
+  private runConfig = {
+    id: 1,
+    reps: 0,
+  };
 
   constructor(
     private store: Store<{
@@ -109,7 +113,7 @@ export class CoordinationService {
   previousPose!: Results;
   isWaitingForReaction = false;
 
-  successfulReps = 0;
+  // successfulReps = 0;
   activityCompleted = false;
   isRecalibrated = false;
   private welcomeStageComplete = false;
@@ -371,10 +375,15 @@ export class CoordinationService {
           console.log('resume sit2stand completed');
         }
 
+        // The following loop can be called many times based on the user calibration
+        // So we need a way to break the loop when the run id changes
+        const runId = this.runConfig.id;
+
         while (
-          this.successfulReps < this.totalReps &&
+          this.runConfig.reps < this.totalReps &&
           this.calibrationStatus !== 'error' &&
-          !this.isRecalibrated
+          !this.isRecalibrated &&
+          this.runConfig.id === runId
         ) {
           this.taskId = v4();
           this.attemptId = v4();
@@ -382,7 +391,7 @@ export class CoordinationService {
           this.previousDesiredClass = this.desiredClass;
 
           let num: number;
-          if (this.successfulReps === 0) {
+          if (this.runConfig.reps === 0) {
             if (this.promptsArr.length > 0) {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
@@ -499,7 +508,7 @@ export class CoordinationService {
           }
         }
 
-        if (this.successfulReps >= this.totalReps) {
+        if (this.runConfig.reps >= this.totalReps) {
           this.activityStage = 'postGame';
           this.sendSessionState(this.activityStage);
         }
@@ -763,7 +772,7 @@ export class CoordinationService {
 
     this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
     this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
-      this.successfulReps = res?.repsCompleted || 0;
+      this.runConfig.reps = res?.repsCompleted || 0;
     });
 
     this.observables$.session = this.store.select((state) => state.session.session);
@@ -1017,6 +1026,8 @@ export class CoordinationService {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.isRecalibrated = true;
+        this.runConfig.id += 1;
+        console.log('ID updated for the runConfig', this.runConfig.id);
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
         this.soundService.resumeActivityInstructionSound();
