@@ -618,7 +618,7 @@ export class SoundsService {
     if (environment.speedUpSession) return;
 
     const requestHeaders = new Headers();
-    requestHeaders.set('Authorization', this.jwtService.getToken()!);
+    requestHeaders.set('Authorization', `Bearer ${this.jwtService.getToken()!}`);
 
     const reqUrl = environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text);
     fetch(reqUrl, {
