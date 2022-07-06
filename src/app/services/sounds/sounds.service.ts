@@ -4,6 +4,7 @@ import { Howl } from 'howler';
 import { Observable, retry } from 'rxjs';
 import { PreSessionGenre, SessionState } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,7 @@ export class SoundsService {
     genre$: Observable<string | undefined>;
   };
   genre = 'Jazz';
-  constructor() {}
+  constructor(private jwtService: JwtService) {}
 
   constantDrumId?: number;
   currentChord = 1;
@@ -616,11 +617,26 @@ export class SoundsService {
   tts(text: string, speaker = 'mila') {
     if (environment.speedUpSession) return;
 
-    const sound = new Howl({
-      src: [environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text)],
-      autoplay: true,
-      html5: true,
-    });
-    sound.play();
+    const requestHeaders = new Headers();
+    requestHeaders.set('Authorization', `Bearer ${this.jwtService.getToken()!}`);
+
+    const reqUrl = environment.apiEndpoint + '/speech/generate?text=' + encodeURIComponent(text);
+    fetch(reqUrl, {
+      headers: requestHeaders,
+    })
+      .then((reqUrl) => reqUrl.blob())
+      .then((data) => {
+        // console.log('data:', data);
+        const blob = new Blob([data], { type: 'audio/mpeg' });
+        const objectUrl = URL.createObjectURL(blob);
+        // console.log('getAudio:objectUrl:', objectUrl);
+        const sound = new Howl({
+          src: objectUrl,
+          autoplay: true,
+          html5: true,
+          format: ['mpeg'],
+        });
+        sound.play();
+      });
   }
 }
