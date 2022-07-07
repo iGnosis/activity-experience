@@ -466,11 +466,12 @@ export class CoordinationService {
 
           // resolve has status property that can be used to send taskEnded events.
           await this.step('game', 'startTimer', { timeout: 6000 });
-          const res = await this.waitForClassOrTimeOut(
+          const res = await this.waitForClassChangeOrTimeOut(
             this.desiredClass,
             this.previousDesiredClass,
             6000,
           );
+          console.log('res of rep', res.result);
           this.isWaitingForReaction = false;
           await this.step('game', 'hideTimer');
 
@@ -905,6 +906,7 @@ export class CoordinationService {
       if (this.currentClass == className) resolve({});
       // set interval
       const interval = setInterval(() => {
+        // to check if user is uncalibrated when we are waiting for a certain pose.
         if (this.calibrationStatus === 'error') {
           reject({});
           clearInterval(interval);
@@ -914,6 +916,55 @@ export class CoordinationService {
           clearInterval(interval);
         }
       }, 300);
+    });
+  }
+
+  async waitForClassChangeOrTimeOut(
+    desiredClass: string,
+    previousDesiredClass: string,
+    timeout = 3000,
+  ): Promise<{ result: 'success' | 'failure' }> {
+    return new Promise((resolve, reject) => {
+      if (this.currentClass === desiredClass) {
+        const startTime = new Date().getTime();
+        const interval = setInterval(() => {
+          if (new Date().getTime() - startTime > timeout) {
+            if (this.currentClass === desiredClass) {
+              resolve({
+                result: 'success',
+              });
+              clearInterval(interval);
+            } else {
+              resolve({
+                result: 'failure',
+              });
+              clearInterval(interval);
+            }
+          }
+          if (this.currentClass !== desiredClass) {
+            resolve({
+              result: 'failure',
+            });
+            clearInterval(interval);
+          }
+        }, 300);
+      } else {
+        const startTime = new Date().getTime();
+        const interval = setInterval(() => {
+          if (new Date().getTime() - startTime > timeout) {
+            resolve({
+              result: 'failure',
+            });
+            clearInterval(interval);
+          }
+          if (this.currentClass == desiredClass) {
+            resolve({
+              result: 'success',
+            });
+            clearInterval(interval);
+          }
+        }, 300);
+      }
     });
   }
 
