@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-test',
@@ -59,6 +60,16 @@ export class TestComponent implements OnInit {
 
   hideSpotlight() {
     this.store.dispatch(guide.hideSpotlight());
+  }
+
+  sendSuccessPrompt() {
+    this.store.dispatch(
+      guide.sendPrompt({
+        promptType: 'success',
+        position: 'right',
+        className: 'round',
+      }),
+    );
   }
 
   sendPromptWithIcon() {

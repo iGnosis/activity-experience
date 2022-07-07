@@ -480,6 +480,15 @@ export class CoordinationService {
             this.currentPromptIdx += 1;
             this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
+            this.store.dispatch(
+              guide.sendPrompt({
+                promptType: 'success',
+                className: 'round',
+                position: 'right',
+              }),
+            );
+            await this.sleep(1000);
+            this.store.dispatch(guide.hidePrompt());
             console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,

@@ -14,6 +14,7 @@ import { GuideService } from 'src/app/services/guide/guide.service';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { environment } from 'src/environments/environment';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-guide',
@@ -31,6 +32,8 @@ export class GuideComponent implements AfterViewInit {
   avatarPosition = '';
   clearTimeOut: any;
   lastText = '';
+
+  faCheckIcon = faCheckCircle;
 
   constructor(
     private store: Store<{
@@ -192,7 +195,7 @@ export class GuideComponent implements AfterViewInit {
 
   handlePrompt(prompt: GuidePromptDTO) {
     this.state.prompt = Object.assign({}, prompt);
-    this.handleTextToSpeech(prompt.text);
+    prompt.text && this.handleTextToSpeech(prompt.text);
     this.state.prompt.className +=
       ' ' + this.guideService.getPromptClassNames(this.state.prompt.position);
   }
