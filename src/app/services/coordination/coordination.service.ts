@@ -9,7 +9,6 @@ import {
   AnnouncementState,
   GuideState,
   PreSessionGenre,
-  Results,
   SessionRow,
   SessionState,
 } from 'src/app/types/pointmotion';
@@ -23,6 +22,8 @@ import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { DebugService } from '../analytics/debug/debug.service';
 import { ActivatedRoute } from '@angular/router';
+import { PoseService } from '../pose/pose.service';
+import { Results } from '@mediapipe/pose';
 
 @Injectable({
   providedIn: 'root',
@@ -45,11 +46,8 @@ export class CoordinationService {
     private store: Store<{
       session: SessionState;
       guide: GuideState;
-      calibration: any;
-      pose: any;
       announcement: AnnouncementState;
     }>,
-    private injector: Injector,
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
     private soundService: SoundsService,
@@ -57,6 +55,7 @@ export class CoordinationService {
     private analyticsService: AnalyticsService,
     private debugService: DebugService,
     private route: ActivatedRoute,
+    private poseService: PoseService,
   ) {
     const prompts =
       this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
@@ -750,9 +749,12 @@ export class CoordinationService {
 
   subscribeToState() {
     this.observables$ = this.observables$ || {};
+
+    // this.observables$.pose = this.store.select((state) => state.pose);
+    // this.observables$.pose.subscribe((results: { pose: Results }) => {
+    // });
     // Subscribe to the pose
-    this.observables$.pose = this.store.select((state) => state.pose);
-    this.observables$.pose.subscribe((results: { pose: Results }) => {
+    this.poseService.getPose().subscribe((results) => {
       this.previousPose = this.currentPose;
       if (results) {
         this.handlePose(results);
@@ -801,8 +803,8 @@ export class CoordinationService {
     // TODO: unsubscribe from all the events
   }
 
-  handlePose(results: { pose: Results }) {
-    this.currentPose = results.pose;
+  handlePose(results: Results) {
+    this.currentPose = results;
     this.poseCount++;
     //   console.log('handlePose:results:', results)
     const calibrationResult = this.calibrationService.handlePose(results);
@@ -815,7 +817,7 @@ export class CoordinationService {
     if (this.isWaitingForReaction) {
       const poseHash = this.sit2standPoseHashGenerator(
         this.previousPose,
-        results.pose,
+        results,
         calibrationResult!.status,
       );
       // console.log('poseHash:', poseHash);
@@ -832,7 +834,7 @@ export class CoordinationService {
     }
 
     if (this.calibrationStatus !== 'error' && this.sit2standService.isEnabled()) {
-      const newClass = this.sit2standService.classify(results.pose).result;
+      const newClass = this.sit2standService.classify(results).result;
       this.handleClassChange(this.currentClass, newClass);
       this.currentClass = newClass;
     }
@@ -1043,7 +1045,14 @@ export class CoordinationService {
   }
 
   handleCalibrationWarning(oldStatus: string, newStatus: string) {
-    this.calibrationScene.drawCalibrationBox('warning');
+    // this.calibrationScene.drawCalibrationBox('warning');
+    if (oldStatus === 'error') {
+      this.calibrationScene.drawCalibrationBox('warning');
+    } else {
+      // Just treat it like success
+      this.calibrationScene.drawCalibrationBox('warning');
+      this.handleCalibrationSuccess(oldStatus, newStatus);
+    }
   }
 
   handleCalibrationError(oldStatus: string, newStatus: string) {
@@ -1075,79 +1084,6 @@ export class CoordinationService {
     this.sendSessionState(this.activityStage);
   }
 
-  async nextStep() {
-    this.index += 1;
-    if (this.sequence.length > this.index) {
-      const action = this.sequence[this.index];
-      switch (action.type) {
-        case 'action':
-          await this.handleAction(action);
-          break;
-        case 'timeout':
-          await this.handleTimeout(action);
-          break;
-        case 'method':
-          this.handleMethod(action);
-          break;
-
-        case 'service':
-          this.handleService(action);
-          break;
-
-        case 'startNewSequence':
-          // TODO: track where we left off in the older sequence?
-          this.sequence = this[action.name as keyof typeof this];
-          this.index = -1;
-      }
-
-      if (action.next != 'manual') {
-        // if the next action can be executed automatically
-        this.nextStep();
-      }
-    }
-  }
-
-  async runActivity() {}
-
-  async handleAction(action: any) {
-    if (action.action) {
-      this.store.dispatch(action.action.call(this, action.data));
-    }
-  }
-
-  async handleTimeout(action: any) {
-    if (action.data) {
-      await this.sleep(action.data);
-    }
-  }
-
-  async handleMethod(action: any) {
-    if (action.name == this.invokeComponentFunction) {
-      if (action.sync) {
-        await this.invokeComponentFunction(action.data.name, action.data.args); // TODO: support sending arguments
-      } else {
-        this.invokeComponentFunction(action.data.name, []);
-      }
-    } else if (action.name) {
-      if (action.sync) await action.name();
-      else action.name();
-    }
-  }
-
-  async handleService(action: any) {
-    const service = this.injector.get(action.name);
-    service[action.method]();
-  }
-
-  async invokeComponentFunction(methodName: string, params: Array<any>) {
-    if (this.component && typeof this.component[methodName] == 'function') {
-      if (params) {
-        await this.component[methodName](...params);
-      } else {
-        await this.component[methodName]();
-      }
-    }
-  }
   async sleep(timeout: number) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {

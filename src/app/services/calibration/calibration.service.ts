@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Results } from '@mediapipe/holistic';
+import { Results } from '@mediapipe/pose';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { calibration } from 'src/app/store/actions/calibration.actions';
+import { Observable, Subject } from 'rxjs';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CareplanService } from '../careplan/careplan.service';
 import { v4 } from 'uuid';
@@ -12,9 +11,6 @@ import { NormalizedLandmarkList } from 'src/app/types/pointmotion';
   providedIn: 'root',
 })
 export class CalibrationService {
-  pose$?: Observable<any>;
-  // eventDispatcher: any;
-  calibration$?: Observable<string>;
   isCalibrating = false;
   taskId = v4();
   attemptId = v4();
@@ -22,7 +18,7 @@ export class CalibrationService {
   status = 'error';
   activityId: string;
   isEnabled = false;
-  // configuration = 'hands' // full-body, upper-body, lower-body, hands
+  result = new Subject<'error' | 'warning' | 'success'>();
 
   constructor(
     private store: Store<{
@@ -41,71 +37,10 @@ export class CalibrationService {
     this.isEnabled = false;
   }
 
-  handlePose(results: { pose: Results }): { status: string } | undefined {
+  handlePose(results: Results): { status: string } | undefined {
     if (!results) return;
 
     return this.calibrateFullBody(results);
-    // // Can have multiple configurations.
-    // switch (this.careplanService.getCarePlan().calibration.type) {
-    //   case 'full_body':
-
-    //   case 'hands':
-    //     // return this.calibrateHands(results);
-    //     break
-    // }
-  }
-
-  calibrateHands(results: any) {
-    let numHandsVisible = 0;
-    results.pose.leftHandLandmarks ? (numHandsVisible += 1) : null;
-    results.pose.rightHandLandmarks ? (numHandsVisible += 1) : null;
-
-    switch (numHandsVisible) {
-      case 0:
-        this.store.dispatch(calibration.error({ pose: results.pose, reason: 'Cannot see hands' }));
-        // this.store.dispatch(
-        //   guide.sendMessages({
-        //     title: 'Calibration',
-        //     text: 'Show your hands!',
-        //     timeout: 20000,
-        //   })
-        // );
-        console.error({
-          title: 'Calibration',
-          text: 'Show your hands!',
-          timeout: 20000,
-        });
-
-        // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
-        break;
-      case 1:
-        this.store.dispatch(
-          calibration.warning({
-            pose: results.pose,
-            reason: 'Can only see one hand',
-          }),
-        );
-        console.error({
-          title: 'Calibration',
-          text: 'Both hands....',
-          timeout: 20000,
-        });
-
-        // this.store.dispatch(
-        //   guide.sendMessages({
-        //     title: 'Calibration',
-        //     text: 'Both hands....',
-        //     timeout: 20000,
-        //   })
-        // );
-        // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
-        break;
-      case 2:
-        this.store.dispatch(calibration.success({ pose: results.pose, reason: 'All well' }));
-        // this.store.dispatch(guide.hide())
-        // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
-        break;
-    }
   }
 
   calibrationBoxContains(x: number, y: number, point?: number): boolean {
@@ -117,10 +52,10 @@ export class CalibrationService {
     );
   }
 
-  calibrateFullBody(results: { pose: Results }) {
+  calibrateFullBody(results: Results) {
     if (!this.isEnabled) return;
 
-    const poseLandmarkArray = results.pose.poseLandmarks;
+    const poseLandmarkArray = results.poseLandmarks;
 
     const points = [12, 11, 24, 23, 26, 25];
 
@@ -167,7 +102,7 @@ export class CalibrationService {
         // if there is any point we can't see, we will send the status as error!
         if (invisiblePoint) {
           this.calibrationScene.drawCalibrationPoints(
-            results.pose,
+            results,
             calibratedPoints,
             unCalibratedPoints,
           );
@@ -178,7 +113,7 @@ export class CalibrationService {
         // else if all the points are visible, we will send the status as warning!
         else {
           this.calibrationScene.drawCalibrationPoints(
-            results.pose,
+            results,
             calibratedPoints,
             unCalibratedPoints,
           );

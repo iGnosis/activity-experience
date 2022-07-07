@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { guide } from 'src/app/store/actions/guide.actions';
 import { spotlight } from 'src/app/store/actions/spotlight.actions';
-import { Results, GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
+import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
 import { AnalyticsService } from '../../analytics/analytics.service';
 import { CareplanService } from '../../careplan/careplan.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { v4 } from 'uuid';
 import { environment } from 'src/environments/environment';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { Results } from '@mediapipe/pose';
 @Injectable({
   providedIn: 'root',
 })

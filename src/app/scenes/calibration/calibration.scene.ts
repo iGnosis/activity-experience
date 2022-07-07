@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Results } from '@mediapipe/holistic';
+import { Results } from '@mediapipe/pose';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 
