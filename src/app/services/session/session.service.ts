@@ -165,4 +165,19 @@ export class SessionService {
       },
     );
   }
+  async updateRewards() {
+    if (!this.sessionId) {
+      console.error('session id not defined. sessionService.get should be called first');
+      return;
+    }
+    return this.client.req(
+      gql`
+        mutation UpdateRewards {
+          updateRewards {
+            status
+          }
+        }
+      `,
+    );
+  }
 }

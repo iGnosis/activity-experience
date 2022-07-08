@@ -24,6 +24,7 @@ import { DebugService } from '../analytics/debug/debug.service';
 import { ActivatedRoute } from '@angular/router';
 import { PoseService } from '../pose/pose.service';
 import { Results } from '@mediapipe/pose';
+import { SessionService } from '../session/session.service';
 
 @Injectable({
   providedIn: 'root',
@@ -56,6 +57,7 @@ export class CoordinationService {
     private debugService: DebugService,
     private route: ActivatedRoute,
     private poseService: PoseService,
+    private sessionService: SessionService,
   ) {
     const prompts =
       this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
@@ -603,6 +605,7 @@ export class CoordinationService {
       activity: this.activityId,
       event_type: 'activityEnded',
     });
+    this.sessionService.updateRewards();
 
     console.log('event:sessionEnded:sent');
     this.analyticsService.sendSessionEvent({
