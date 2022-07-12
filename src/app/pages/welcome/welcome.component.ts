@@ -194,6 +194,10 @@ export class WelcomeComponent implements OnInit {
       },
       false,
     );
+
+    if (this.route.snapshot.queryParamMap.get('debug')) {
+      this.start();
+    }
   }
 
   async start() {
