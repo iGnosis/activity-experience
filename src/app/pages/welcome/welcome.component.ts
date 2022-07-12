@@ -16,8 +16,13 @@ import {
 import { UserService } from 'src/app/services/user/user.service';
 import { gql } from 'graphql-request';
 import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
+import { AnimationOptions } from 'ngx-lottie';
 
-type SessionDetails = { heading: string; checkList: string[]; text?: string };
+type SessionDetails = {
+  activity: { no: string | number; name: string };
+  checkList: { src: string; description: string }[];
+  text?: string;
+};
 type Message = {
   type:
     | 'session-start-confirmation'
@@ -92,14 +97,25 @@ export class WelcomeComponent implements OnInit {
   messages: Array<Message> = [
     {
       type: 'session-start-confirmation',
-      bg: '#000066',
+      bg: '#ffffff',
       sessionDetails: {
-        heading: 'Sit, Stand, Achieve',
+        activity: {
+          no: '1',
+          name: 'Sit to Stand',
+        },
         checkList: [
-          'For this session you will require a CHAIR to perform certain activities.',
-          'Make sure that only you are in front of the screen.',
-          'Take periodic rests if you feel tired.',
-          'Make sure you are in a space where you can move freely.',
+          {
+            src: 'assets/images/chair.png',
+            description: 'Have a chair ready',
+          },
+          {
+            src: 'assets/images/space-to-move.png',
+            description: 'Space to move',
+          },
+          {
+            src: 'assets/images/rest-if-tired.png',
+            description: 'Rest if you feel tired',
+          },
         ],
       },
     },
@@ -153,6 +169,9 @@ export class WelcomeComponent implements OnInit {
   intervalId: any;
   currentStep = -1;
   currentMessage: Message | undefined;
+  options: AnimationOptions = {
+    path: '/assets/images/animations/wave.json',
+  };
 
   constructor(
     private route: ActivatedRoute,

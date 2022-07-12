@@ -24,8 +24,6 @@ export class CalibrationService {
     private store: Store<{
       calibration: any;
     }>,
-    private careplanService: CareplanService,
-    private analyticsService: AnalyticsService,
     private calibrationScene: CalibrationScene,
   ) {}
 
@@ -39,7 +37,6 @@ export class CalibrationService {
 
   handlePose(results: Results): { status: string } | undefined {
     if (!results) return;
-
     return this.calibrateFullBody(results);
   }
 
@@ -54,11 +51,9 @@ export class CalibrationService {
 
   calibrateFullBody(results: Results) {
     if (!this.isEnabled) return;
-
     const poseLandmarkArray = results.poseLandmarks;
 
     const points = [12, 11, 24, 23, 26, 25];
-
     if (!Array.isArray(poseLandmarkArray)) {
       return {
         status: 'error',

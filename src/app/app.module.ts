@@ -22,6 +22,12 @@ import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { announcementReducer } from './store/reducers/annoucement.reducer';
 import { SafePipeModule } from 'safe-pipe';
+import { LottieModule } from 'ngx-lottie';
+
+export function playerFactory(): any {
+  return import('lottie-web');
+}
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -49,6 +55,7 @@ import { SafePipeModule } from 'safe-pipe';
     }),
     FontAwesomeModule,
     SafePipeModule,
+    LottieModule.forRoot({ player: playerFactory }),
   ],
   providers: [],
   bootstrap: [AppComponent],

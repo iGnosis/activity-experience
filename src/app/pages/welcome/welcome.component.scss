@@ -1,46 +1,138 @@
 @import '/src/app/variables';
 
 .welcome {
-    height: 100vh;
-    width: 100vw;
-    background-color: $primary;
-    transition: background-color 2s;
+  height: 100vh;
+  width: 100vw;
+  background-color: #ffffff;
+  transition: background-color 2s;
 }
 
-.message  {
-    width: 100vw;
-    height: 100vh;
+.message {
+  width: 100vw;
+  height: 100vh;
 }
 
 .app-announcement {
-    width: 100vw;
-    height: 100vh;
+  width: 100vw;
+  height: 100vh;
 }
 
 .app-pre-session-survey {
-    width: 100vw;
-    height: 100vh;
+  width: 100vw;
+  height: 100vh;
 }
 
-
-
 .tutorial {
-    // position: fixed;
-    // padding-bottom: 56.25%; /* 16:9 */
-    // height: 0;
+  // position: fixed;
+  // padding-bottom: 56.25%; /* 16:9 */
+  // height: 0;
 
-    iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 
-    button {
-        z-index: 3;
-        position: absolute;
-        bottom: 64px;
-        right: 32px;
+  button {
+    z-index: 3;
+    position: absolute;
+    bottom: 64px;
+    right: 32px;
+  }
+}
+
+.checklist-card {
+  box-shadow: 0px 2px 4px #000066, 0px 2px 4px #000066;
+  border-radius: 40px;
+  .display-6 {
+    font-size: 2rem;
+  }
+}
+
+@media screen and (max-width: 1400px) {
+  .container-lg {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  .activity-number{
+    padding-bottom: 8px;
+    font-weight: 500;
+  }
+  .checklist-div {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+  .display-6 {
+    font-size: 2rem;
+  }
+  .display-1 {
+    font-size: 4rem;
+  }
+  .checklist-card {
+    width: 100%;
+    height: 100%;
+    .checkList-img {
+      min-height: 320px;
     }
+    .display-6 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 3rem;
+    }
+  }
+  button {
+    font-size: 1.5rem;
+    border-radius: 16px;
+  }
+  .start-session-btn {
+    width: 550px;
+  }
+  .training-btn {
+    width: 400px;
+    background-color: #cbd5e0;
+  }
+}
+
+@media screen and (min-width: 1400px) {
+  .container-lg{
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  .activity-number{
+    font-weight: 500;
+  }
+  .checklist-div {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    .row {
+      width: 100%;
+      padding: 0 4rem;
+    }
+    .col-md-4{
+      padding: 0 1.25rem;
+    }
+  }
+  .checklist-card {
+    .checkList-img {
+      min-height: 320px;
+    }
+    .display-6 {
+      font-weight: 700;
+      line-height: 5rem;
+    }
+  }
+  button {
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-radius: 16px;
+  }
+  .start-session-btn {
+    width: 560px;
+  }
+  .training-btn {
+    width: 400px;
+    background-color: #cbd5e0;
+  }
 }
