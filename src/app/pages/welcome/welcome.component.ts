@@ -148,22 +148,22 @@ export class WelcomeComponent implements OnInit {
       timeout: 3000,
       bg: '#FFFFFF',
     },
-    {
-      type: 'select-genre',
-      text: 'What type of music do you want to play?',
-      bg: '#FFB000',
-    },
-    {
-      type: 'announcement',
-      text: `PERFECT`,
-      timeout: 3000,
-      bg: '#FFFFFF',
-    },
-    {
-      type: 'tutorial',
-      bg: '#000000',
-      timeout: 275000, // length of video + some extra time
-    },
+    // {
+    //   type: 'select-genre',
+    //   text: 'What type of music do you want to play?',
+    //   bg: '#FFB000',
+    // },
+    // {
+    //   type: 'announcement',
+    //   text: `PERFECT`,
+    //   timeout: 3000,
+    //   bg: '#FFFFFF',
+    // },
+    // {
+    //   type: 'tutorial',
+    //   bg: '#000000',
+    //   timeout: 275000, // length of video + some extra time
+    // },
   ];
   sessionId = 'bfce8d96-fd18-4fea-9097-cb3b01ee025a';
   intervalId: any;
