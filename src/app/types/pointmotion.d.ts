@@ -7,6 +7,13 @@ export type ActionHook = {
   onFailure?: Array<Action>;
 };
 
+export type BoundingBox = {
+  topLeft: { x: number; y: number };
+  topRight: { x: number; y: number };
+  bottomLeft: { x: number; y: number };
+  bottomRight: { x: number; y: number };
+};
+
 export type Action = {
   component: string;
   handler: string;

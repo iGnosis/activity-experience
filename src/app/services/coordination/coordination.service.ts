@@ -77,19 +77,23 @@ export class CoordinationService {
         repsCompleted: 0,
       }),
     );
+
+    this.calibrationService.subscribe((status) => {
+      alert(status);
+    });
   }
 
-  poseCount = 0;
+  poseCount = 100;
   calibrationStatus = 'error';
 
   session: SessionRow;
-  observables$: {
-    activityId: Observable<string | undefined>;
-    pose: Observable<any>;
-    currentActivity: Observable<ActivityState | undefined>;
-    session: Observable<SessionRow | undefined>;
-    genre?: Observable<PreSessionGenre | undefined>;
-  };
+  // observables$: {
+  //   activityId: Observable<string | undefined>;
+  //   pose: Observable<any>;
+  //   currentActivity: Observable<ActivityState | undefined>;
+  //   session: Observable<SessionRow | undefined>;
+  //   genre?: Observable<PreSessionGenre | undefined>;
+  // };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
   activityStage: ActivityStage = 'welcome';
@@ -643,7 +647,7 @@ export class CoordinationService {
 
     this.game = game;
     this.onComplete = onComplete;
-    this.subscribeToState();
+    // this.subscribeToState();
 
     this.welcomeUser();
   }
@@ -760,51 +764,51 @@ export class CoordinationService {
     });
   }
 
-  subscribeToState() {
-    this.observables$ = this.observables$ || {};
+  // subscribeToState() {
+  //   this.observables$ = this.observables$ || {};
 
-    // this.observables$.pose = this.store.select((state) => state.pose);
-    // this.observables$.pose.subscribe((results: { pose: Results }) => {
-    // });
-    // Subscribe to the pose
-    this.poseService.getPose().subscribe((results) => {
-      this.previousPose = this.currentPose;
-      if (results) {
-        this.handlePose(results);
-      }
-    });
+  //   // this.observables$.pose = this.store.select((state) => state.pose);
+  //   // this.observables$.pose.subscribe((results: { pose: Results }) => {
+  //   // });
+  //   // Subscribe to the pose
+  //   this.poseService.getPose().subscribe((results) => {
+  //     this.previousPose = this.currentPose;
+  //     if (results) {
+  //       this.handlePose(results);
+  //     }
+  //   });
 
-    this.observables$.genre = this.store.select((store) => store.session.session?.genre);
-    this.observables$.genre.subscribe((genreSelected) => {
-      if (genreSelected) {
-        this.genre = genreSelected;
-        this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
-      } else {
-        // fallback case
-        this.genre = 'Jazz';
-      }
-    });
+  //   this.observables$.genre = this.store.select((store) => store.session.session?.genre);
+  //   this.observables$.genre.subscribe((genreSelected) => {
+  //     if (genreSelected) {
+  //       this.genre = genreSelected;
+  //       this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
+  //     } else {
+  //       // fallback case
+  //       this.genre = 'Jazz';
+  //     }
+  //   });
 
-    this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
-    this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
-      this.runConfig.reps = res?.repsCompleted || 0;
-    });
+  //   this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
+  //   this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
+  //     this.runConfig.reps = res?.repsCompleted || 0;
+  //   });
 
-    this.observables$.session = this.store.select((state) => state.session.session);
-    this.session = this.getValue(this.observables$.session);
-    if (
-      this.session &&
-      this.session.state &&
-      this.session.state.stage &&
-      this.session.state.stage !== 'postGame'
-    ) {
-      this.activityStage = this.session.state.stage;
-    } else {
-      // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
-      this.activityStage = 'explain';
-    }
-    console.log(this.activityStage);
-  }
+  //   this.observables$.session = this.store.select((state) => state.session.session);
+  //   this.session = this.getValue(this.observables$.session);
+  //   if (
+  //     this.session &&
+  //     this.session.state &&
+  //     this.session.state.stage &&
+  //     this.session.state.stage !== 'postGame'
+  //   ) {
+  //     this.activityStage = this.session.state.stage;
+  //   } else {
+  //     // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
+  //     this.activityStage = 'explain';
+  //   }
+  //   console.log(this.activityStage);
+  // }
 
   getValue(obj: Observable<any>) {
     let value: any;
@@ -816,11 +820,12 @@ export class CoordinationService {
     // TODO: unsubscribe from all the events
   }
 
-  handlePose(results: Results) {
+  _handlePose(results: Results) {
     this.currentPose = results;
     this.poseCount++;
     //   console.log('handlePose:results:', results)
-    const calibrationResult = this.calibrationService.handlePose(results);
+    // const calibrationResult = this.calibrationService.handlePose(results);
+    const calibrationResult = { status: 'error' };
     // Call appropriate hook when status changes
     if (calibrationResult && this.calibrationStatus !== calibrationResult.status) {
       this.calibrationStatus = calibrationResult.status;

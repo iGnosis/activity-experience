@@ -36,14 +36,15 @@ export class PoseService {
     });
 
     this.pose.setOptions(this.options);
+
     this.pose.onResults((results) => {
       // as soon as we are getting the new results we are destroying the exisiting calibration pose and points to make it look more realtime!
       this.calibrationScene.destroyGraphics();
       this.handleResults(results);
     });
+
     this.videoElm = videoElm;
 
-    // await this.holistic.initialize();
     // We need to wait until Holistic is done loading the files, only then we set the interval.
     await this.pose?.send({ image: this.videoElm });
 
@@ -57,15 +58,27 @@ export class PoseService {
         this.pose?.send({ image: this.videoElm });
       }
     }, 200);
+
+    this.checkForFailure();
   }
 
   stop() {
     clearInterval(this.interval);
-    // throw new Error('not implemented')
   }
 
   getPose() {
     return this.results;
+  }
+
+  checkForFailure() {
+    setTimeout(() => {
+      if (this.numOfResults < 15) {
+        this.stop(); // stop sending the frames.
+        this.results.error({
+          status: 'error',
+        });
+      }
+    }, 15000); // 15 seconds
   }
 
   private handleResults(results: Results) {

@@ -1,49 +1,47 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Store } from '@ngrx/store';
-import { Observable, Subject } from 'rxjs';
-import { AnalyticsService } from '../analytics/analytics.service';
-import { CareplanService } from '../careplan/careplan.service';
-import { v4 } from 'uuid';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { NormalizedLandmarkList } from 'src/app/types/pointmotion';
+import { PoseService } from '../pose/pose.service';
 @Injectable({
   providedIn: 'root',
 })
 export class CalibrationService {
-  isCalibrating = false;
-  taskId = v4();
-  attemptId = v4();
-  previousAttemptId = this.attemptId;
-  status = 'error';
-  activityId: string;
+  status: 'error' | 'warning' | 'success' = 'error';
   isEnabled = false;
   result = new Subject<'error' | 'warning' | 'success'>();
+  subscription: Subscription;
+  mode: 'full' | 'fast' = 'full';
 
-  constructor(
-    private store: Store<{
-      calibration: any;
-    }>,
-    private careplanService: CareplanService,
-    private analyticsService: AnalyticsService,
-    private calibrationScene: CalibrationScene,
-  ) {}
+  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
+
+  subscribe(observer: (status: 'error' | 'warning' | 'success') => void) {
+    return this.result.asObservable().subscribe(observer);
+  }
 
   enable() {
-    this.isEnabled = true;
+    this.subscription = this.poseService.getPose().subscribe((results) => {
+      // TODO when the mode=full, we want the body points to be inside the box
+      // When mode=fast, we only care that the visibility of each point > 0.7
+      const newStatus = this._calibrateFullBody(results);
+      if (newStatus && newStatus.status !== this.status) {
+        this.result.next(this.status);
+      }
+    });
+  }
+
+  setMode(mode: 'full' | 'fast') {
+    this.mode = mode;
   }
 
   disable() {
-    this.isEnabled = false;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
-  handlePose(results: Results): { status: string } | undefined {
-    if (!results) return;
-
-    return this.calibrateFullBody(results);
-  }
-
-  calibrationBoxContains(x: number, y: number, point?: number): boolean {
+  _calibrationBoxContains(x: number, y: number, point?: number): boolean {
     return (
       this.calibrationScene.calibrationBox.x < x &&
       x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
@@ -52,7 +50,7 @@ export class CalibrationService {
     );
   }
 
-  calibrateFullBody(results: Results) {
+  _calibrateFullBody(results: Results) {
     if (!this.isEnabled) return;
 
     const poseLandmarkArray = results.poseLandmarks;
@@ -72,7 +70,7 @@ export class CalibrationService {
         pointsPoseLandmarkArray.push(poseLandmarkArray[point]);
         if (
           (poseLandmarkArray[point].visibility as number) < 0.7 ||
-          !this.calibrationBoxContains(
+          !this._calibrationBoxContains(
             poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width,
             poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height,
           )
@@ -124,6 +122,4 @@ export class CalibrationService {
       }
     }
   }
-
-  dispatchCalibration() {}
 }
