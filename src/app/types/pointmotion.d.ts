@@ -31,11 +31,21 @@ export declare class Calibration {
   details: CalibrationDetails;
 }
 
-export interface CalibrationStatusType {
-  SUCCESS: 'success';
-  WARNING: 'warning';
-  ERROR: 'error';
-}
+// export interface CalibrationStatusType {
+//   SUCCESS: 'success';
+//   WARNING: 'warning';
+//   ERROR: 'error';
+// }
+
+export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
+
+/**
+ * We support two modes: 'full' | 'fast'.
+ * 'full' mode is enabled by default.
+ * When 'full' mode is active, all the key body points must be visible, and user must be within the calibration box.
+ * When 'fast' mode is active, all the key body points must be visible.
+ */
+export type CalibrationMode = 'full' | 'fast';
 
 export declare enum CalibrationDetails {
   MULTIPLE_PEOPLE_DETECTED = '1',
