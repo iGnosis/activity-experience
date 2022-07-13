@@ -482,26 +482,31 @@ export class SoundsService {
     switch (genre) {
       case 'Classical':
         if (!this.classicalInstructionsSound.playing()) {
+          this.classicalInstructionsSound.volume(0.35);
           this.classicalInstructionsSound.play();
         }
         break;
       case 'Jazz':
         if (!this.jazzInstructionsSound.playing()) {
+          this.jazzInstructionsSound.volume(0.35);
           this.jazzInstructionsSound.play();
         }
         break;
       case 'Rock':
         if (!this.rockInstructionsSound.playing()) {
+          this.rockInstructionsSound.volume(0.35);
           this.rockInstructionsSound.play();
         }
         break;
       case 'Dance':
         if (!this.danceInstructionsSound.playing()) {
+          this.danceInstructionsSound.volume(0.35);
           this.danceInstructionsSound.play();
         }
         break;
       case 'Surprise Me!':
         if (!this.surpriseInstructionsSound.playing()) {
+          this.surpriseInstructionsSound.volume(0.35);
           this.surpriseInstructionsSound.play();
         }
         break;
