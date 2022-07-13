@@ -137,28 +137,28 @@ export class WelcomeComponent implements OnInit {
       timeout: 3000,
       bg: '#FFFFFF',
     },
-    {
-      type: 'pre-session-survey',
-      text: 'How are you feeling today?',
-      bg: '#FFB2B2',
-    },
-    {
-      type: 'announcement',
-      text: `Thanks`,
-      timeout: 3000,
-      bg: '#FFFFFF',
-    },
     // {
-    //   type: 'select-genre',
-    //   text: 'What type of music do you want to play?',
-    //   bg: '#FFB000',
+    //   type: 'pre-session-survey',
+    //   text: 'How are you feeling today?',
+    //   bg: '#FFB2B2',
     // },
     // {
     //   type: 'announcement',
-    //   text: `PERFECT`,
+    //   text: `Thanks`,
     //   timeout: 3000,
     //   bg: '#FFFFFF',
     // },
+    {
+      type: 'select-genre',
+      text: 'What type of music do you want to play?',
+      bg: '#FFB000',
+    },
+    {
+      type: 'announcement',
+      text: `PERFECT`,
+      timeout: 3000,
+      bg: '#FFFFFF',
+    },
     // {
     //   type: 'tutorial',
     //   bg: '#000000',

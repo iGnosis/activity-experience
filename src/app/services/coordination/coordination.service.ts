@@ -130,7 +130,7 @@ export class CoordinationService {
     });
   }
   async welcomeUser() {
-    this.soundService.playActivityInstructionSound();
+    this.soundService.playActivityInstructionSound(this.genre);
 
     await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
     await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
@@ -165,14 +165,14 @@ export class CoordinationService {
 
     // if by this time, poseCount is less than 10, then it means mediapipe has failed.
     // ask user to refresh the page
-    if (this.poseCount < 10) {
-      await this.step('welcome', 'sendMessage', {
-        text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
-        position: 'center',
-      });
-      await this.step('welcome', 'sleep', 10000);
-      window.location.reload();
-    }
+    // if (this.poseCount < 10) {
+    //   await this.step('welcome', 'sendMessage', {
+    //     text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
+    //     position: 'center',
+    //   });
+    //   await this.step('welcome', 'sleep', 10000);
+    //   window.location.reload();
+    // }
 
     await this.step('welcome', 'sendMessage', {
       text: 'Please move around such that you can see your whole body inside the red box.',
@@ -334,7 +334,7 @@ export class CoordinationService {
       await this.step(this.activityStage, 'sleep', 3000);
 
       this.sit2StandExplained = true;
-      this.soundService.pauseActivityInstructionSound();
+      this.soundService.pauseActivityInstructionSound(this.genre);
 
       this.activityStage = 'preGame';
       this.sendSessionState(this.activityStage);
@@ -682,7 +682,7 @@ export class CoordinationService {
       // check if the user is calibrated or not
       console.log(step, type, data);
       if (step === 'explain' && this.calibrationStatus === 'error') {
-        this.soundService.pauseActivityInstructionSound();
+        this.soundService.pauseActivityInstructionSound(this.genre);
         reject({});
         return;
       } else if (step === 'preGame' && this.calibrationStatus === 'error') {
@@ -1078,14 +1078,14 @@ export class CoordinationService {
       this.activityStage === 'explain'
     ) {
       if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
-        this.soundService.pauseActivityInstructionSound();
+        this.soundService.pauseActivityInstructionSound(this.genre);
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'game') {
-        this.soundService.pauseActivityInstructionSound();
+        this.soundService.pauseActivityInstructionSound(this.genre);
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
@@ -1095,7 +1095,7 @@ export class CoordinationService {
         console.log('ID updated for the runConfig', this.runConfig.id);
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
-        this.soundService.resumeActivityInstructionSound();
+        this.soundService.playActivityInstructionSound(this.genre);
         this.runSit2Stand();
       }
     }

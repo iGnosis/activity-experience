@@ -5,6 +5,7 @@ import { Observable, retry } from 'rxjs';
 import { PreSessionGenre, SessionState } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { JwtService } from '../jwt/jwt.service';
+import { soundSprites } from './sound_sprites';
 
 @Injectable({
   providedIn: 'root',
@@ -29,11 +30,6 @@ export class SoundsService {
   preSessionGenreDanceId: number;
   preSessionGenreSurpriseId: number;
 
-  activityInstructionSound: Howl = new Howl({
-    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
-    html5: true,
-    loop: true,
-  });
   activityErrorSound: Howl = new Howl({
     src: 'assets/sounds/soundscapes/Sound Health Soundscape_incorrect.mp3',
     html5: true,
@@ -113,156 +109,76 @@ export class SoundsService {
     },
   });
 
-  ambient: Howl;
+  surprise: Howl;
   dance: Howl;
   rock: Howl;
   jazz: Howl;
   classicalBacktrack: Howl;
   classicalTrigger: Howl;
+  classicalInstructionsSound: Howl;
+  rockInstructionsSound: Howl;
+  jazzInstructionsSound: Howl;
+  danceInstructionsSound: Howl;
+  surpriseInstructionsSound: Howl;
+
   loadMusicFiles(genre: PreSessionGenre) {
+    console.log('loading ', genre, ' files');
     switch (genre) {
       case 'Surprise Me!':
-        this.ambient = new Howl({
+        this.surpriseInstructionsSound = new Howl({
+          src: 'assets/sounds/genre_instructions/Surprise Me Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
+        this.surprise = new Howl({
           src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
-          sprite: {
-            'ambient 1': [0, 6295.510204081633],
-            'ambient 2': [8000, 6295.510204081634],
-            'ambient 3': [16000, 6295.510204081634],
-            'ambient 4': [24000, 6295.510204081634],
-            'ambient 5': [32000, 6295.51020408163],
-            'ambient 6': [40000, 6295.51020408163],
-            'ambient 7': [48000, 6295.51020408163],
-            'ambient 8': [56000, 6295.51020408163],
-            'ambient 9': [64000, 6295.510204081637],
-            'ambient 10': [72000, 6295.510204081637],
-            'ambient 11': [80000, 6295.510204081637],
-            'ambient 12': [88000, 6295.510204081637],
-            'ambient 13': [96000, 6295.510204081637],
-            'ambient 14': [104000, 6295.510204081637],
-            'ambient 15': [112000, 6295.510204081637],
-            'ambient 16': [120000, 11284.897959183667],
-          },
+          sprite: soundSprites['surpriseSprite'],
         });
         break;
       case 'Dance':
+        this.danceInstructionsSound = new Howl({
+          src: 'assets/sounds/genre_instructions/Dance Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.dance = new Howl({
           src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
-          sprite: {
-            trigger1: [0, 3448.1632653061224],
-            trigger2: [5000, 3448.163265306123],
-            trigger3: [10000, 3448.163265306123],
-            trigger4: [15000, 3448.163265306121],
-            trigger5: [20000, 3448.163265306121],
-            trigger6: [25000, 3448.163265306121],
-            trigger7: [30000, 3448.163265306121],
-            trigger8: [35000, 3448.163265306121],
-            trigger9: [40000, 3448.163265306121],
-            trigger10: [45000, 3448.163265306121],
-            trigger11: [50000, 3448.163265306121],
-            trigger12: [55000, 3448.163265306121],
-            trigger13: [60000, 3448.163265306121],
-            trigger14: [65000, 3448.163265306121],
-            trigger15: [70000, 3448.163265306121],
-            trigger16: [75000, 3448.163265306121],
-            trigger17: [80000, 3448.163265306121],
-            trigger18: [85000, 3448.163265306121],
-            trigger19: [90000, 3448.163265306121],
-            trigger20: [95000, 3448.163265306121],
-            trigger21: [100000, 3448.163265306121],
-            trigger22: [105000, 3448.163265306121],
-            trigger23: [110000, 3448.163265306121],
-            trigger24: [115000, 3448.163265306121],
-            trigger25: [120000, 3448.163265306121],
-            trigger26: [125000, 3448.163265306135],
-            trigger27: [130000, 3448.163265306135],
-            trigger28: [135000, 3448.163265306135],
-            trigger29: [140000, 3448.163265306135],
-            trigger30: [145000, 3448.163265306135],
-            trigger31: [150000, 3448.163265306135],
-            trigger32: [155000, 3448.163265306135],
-            backtrack: [160000, 108225.30612244895, true],
-          },
+          sprite: soundSprites['danceSprite'],
         });
         break;
       case 'Rock':
+        this.rockInstructionsSound = new Howl({
+          src: 'assets/sounds/genre_instructions/Rock Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.rock = new Howl({
           src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
-          sprite: {
-            rock1: [0, 3186.9387755102043],
-            rock2: [5000, 3186.9387755102034],
-            rock3: [10000, 3186.9387755102034],
-            rock4: [15000, 3186.9387755102034],
-            rock5: [20000, 3186.9387755102034],
-            rock6: [25000, 3186.9387755102034],
-            rock7: [30000, 3186.9387755102066],
-            rock8: [35000, 3186.9387755102066],
-            rock9: [40000, 3186.9387755102066],
-            rock10: [45000, 3186.9387755102066],
-            rock11: [50000, 3186.9387755102066],
-            rock12: [55000, 3186.9387755102066],
-            rock13: [60000, 3186.9387755102066],
-            rock14: [65000, 3186.9387755102],
-            rock15: [70000, 3186.9387755102],
-            rock16: [75000, 3186.9387755102],
-            backtrack: [80000, 56137.14285714286, true],
-          },
+          sprite: soundSprites['rockSprite'],
         });
         break;
       case 'Classical':
+        this.classicalInstructionsSound = new Howl({
+          src: 'assets/sounds/genre_instructions/Classical Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.classicalBacktrack = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: {
-            'backtrack set1': [64000, 62275.918367346945, true],
-            'backtrack set2': [128000, 53394.28571428573, true],
-            'backtrack set3': [0, 62275.91836734694, true],
-          },
+          sprite: soundSprites['classicalBacktrackSprite'],
         });
 
         this.classicalTrigger = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: {
-            set1rep1: [183000, 4519.183673469399, true],
-            set1rep2: [189000, 4519.183673469399, true],
-            set1rep3: [195000, 4519.183673469399, true],
-            set1rep4: [201000, 4519.183673469399, true],
-            set1rep5: [207000, 4519.183673469399, true],
-            set1rep6: [213000, 4519.183673469399, true],
-            set1rep7: [219000, 4519.183673469399, true],
-            set1rep8: [225000, 4519.183673469399, true],
-            set1rep9: [231000, 4519.183673469399, true],
-            set1rep10: [237000, 4519.183673469399, true],
-            set1rep11: [243000, 4519.183673469399, true],
-            set1rep12: [249000, 4519.183673469399, true],
-            set2rep1: [255000, 4519.183673469399, true],
-            set2rep2: [261000, 4519.183673469399, true],
-            set2rep3: [267000, 4519.183673469399, true],
-            set2rep4: [273000, 4519.183673469399, true],
-            set2rep5: [279000, 4519.183673469399, true],
-            set2rep6: [285000, 4519.183673469399, true],
-            set2rep7: [291000, 4519.183673469399, true],
-            set2rep8: [297000, 4519.183673469399, true],
-            set2rep9: [303000, 4519.183673469399, true],
-            set2rep10: [309000, 4519.183673469399, true],
-            set2rep11: [315000, 4519.183673469399, true],
-            set2rep12: [321000, 4519.183673469399, true],
-            set3rep1: [357000, 4519.183673469399, true],
-            set3rep2: [363000, 4519.183673469399, true],
-            set3rep3: [369000, 4519.183673469399, true],
-            set3rep4: [375000, 4519.183673469399, true],
-            set3rep5: [381000, 4519.183673469399, true],
-            set3rep6: [387000, 4519.183673469399, true],
-            set3rep7: [393000, 4519.183673469399, true],
-            set3rep8: [399000, 4519.183673469399, true],
-            set3rep9: [405000, 4519.183673469399, true],
-            set3rep10: [327000, 4519.183673469399, true],
-            set3rep11: [333000, 4519.183673469399, true],
-            set3rep12: [339000, 4519.183673469399, true],
-            set3rep13: [345000, 4519.183673469399, true],
-            set3rep14: [351000, 4519.183673469399, true],
-          },
+          sprite: soundSprites['classicalSprite'],
         });
         break;
       case 'Jazz':
+        this.jazzInstructionsSound = new Howl({
+          src: 'assets/sounds/genre_instructions/Jazz Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         break;
     }
   }
@@ -433,17 +349,17 @@ export class SoundsService {
         }
         break;
       case 'Surprise Me!':
-        if (!this.ambient) {
+        if (!this.surprise) {
           return;
         }
         if (type === 'backtrack') {
           console.log('No ambient backtrack');
           return;
         } else {
-          if (this.ambient.playing(this.ambientTriggerId)) {
-            this.ambient.stop(this.ambientTriggerId);
+          if (this.surprise.playing(this.ambientTriggerId)) {
+            this.surprise.stop(this.ambientTriggerId);
           }
-          this.ambientTriggerId = this.ambient.play(`ambient ${this.currentAmbientTrigger}`);
+          this.ambientTriggerId = this.surprise.play(`ambient ${this.currentAmbientTrigger}`);
           this.currentAmbientTrigger += 1;
           if (this.currentAmbientTrigger === 17) {
             this.currentAmbientTrigger = 1;
@@ -562,19 +478,63 @@ export class SoundsService {
     Howler.stop();
   }
 
-  playActivityInstructionSound() {
-    this.activityInstructionSound.play();
-  }
-
-  resumeActivityInstructionSound() {
-    if (!this.activityInstructionSound.playing()) {
-      this.activityInstructionSound.play();
+  playActivityInstructionSound(genre: PreSessionGenre) {
+    switch (genre) {
+      case 'Classical':
+        if (!this.classicalInstructionsSound.playing()) {
+          this.classicalInstructionsSound.play();
+        }
+        break;
+      case 'Jazz':
+        if (!this.jazzInstructionsSound.playing()) {
+          this.jazzInstructionsSound.play();
+        }
+        break;
+      case 'Rock':
+        if (!this.rockInstructionsSound.playing()) {
+          this.rockInstructionsSound.play();
+        }
+        break;
+      case 'Dance':
+        if (!this.danceInstructionsSound.playing()) {
+          this.danceInstructionsSound.play();
+        }
+        break;
+      case 'Surprise Me!':
+        if (!this.surpriseInstructionsSound.playing()) {
+          this.surpriseInstructionsSound.play();
+        }
+        break;
     }
   }
 
-  pauseActivityInstructionSound() {
-    if (this.activityInstructionSound.playing()) {
-      this.activityInstructionSound.pause();
+  pauseActivityInstructionSound(genre: string) {
+    switch (genre) {
+      case 'Classical':
+        if (this.classicalInstructionsSound.playing()) {
+          this.classicalInstructionsSound.pause();
+        }
+        break;
+      case 'Jazz':
+        if (this.jazzInstructionsSound.playing()) {
+          this.jazzInstructionsSound.pause();
+        }
+        break;
+      case 'Rock':
+        if (this.rockInstructionsSound.playing()) {
+          this.rockInstructionsSound.pause();
+        }
+        break;
+      case 'Dance':
+        if (this.danceInstructionsSound.playing()) {
+          this.danceInstructionsSound.pause();
+        }
+        break;
+      case 'Surprise Me!':
+        if (this.surpriseInstructionsSound.playing()) {
+          this.surpriseInstructionsSound.pause();
+        }
+        break;
     }
   }
 
