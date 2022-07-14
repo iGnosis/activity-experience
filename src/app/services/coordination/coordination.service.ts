@@ -160,7 +160,7 @@ export class CoordinationService {
 
     // if by this time, poseCount is less than 10, then it means mediapipe has failed.
     // ask user to refresh the page
-    if (this.poseCount < 10) {
+    if (environment.stageName !== 'local' && this.poseCount < 10) {
       await this.step('welcome', 'sendMessage', {
         text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
         position: 'center',
@@ -212,6 +212,10 @@ export class CoordinationService {
         await this.step(this.activityStage, 'sleep', 2000);
         await this.waitForCalibration('success');
       }
+
+      // after initial calibration is successful, switch to 'fast' mode.
+      this.calibrationService.setMode('fast');
+
       // if (this.welcomeStageComplete) {
       //   this.welcomeStageComplete = false;
       // }
