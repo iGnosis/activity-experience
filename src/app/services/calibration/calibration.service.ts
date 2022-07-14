@@ -21,11 +21,13 @@ export class CalibrationService {
     this.isEnabled = true;
     this.subscription = this.poseService.getPose().subscribe((results) => {
       const newStatus = this._calibrateBody(results, this.mode);
+      this.calibrationScene.destroyGraphics();
 
       if (!newStatus) return;
 
       if (newStatus.status !== this.status) {
         this.result.next(newStatus.status);
+        this.calibrationScene.drawCalibrationBox(newStatus.status);
         if (autoSwitchMode) {
           this.switchMode(newStatus.status);
         }

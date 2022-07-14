@@ -1,7 +1,36 @@
 <div class="elements">
     {{ state | json }}
-    <div class="reps" *ngIf="state.score && state.score.show">
+    <div class="score" *ngIf="state.score && state.score.show">
         <label>{{state.score.label}}</label>
         <span>{{state.score.value}}</span>
+    </div>
+
+    <div class="timer" *ngIf="state.timer && state.timer.show">
+        Show timer here.
+    </div>
+
+    <div class="prompt" *ngIf="state.prompt && state.prompt.show">
+        Show prompt here. Should support HTML tags
+    </div>
+
+    <div class="timeout" *ngIf="state.timeout && state.timeout.show">
+        Show timeout here.
+    </div>
+
+    <div class="video" *ngIf="state.video && state.video.show">
+        Show video here
+        Can be simple video or more
+    </div>
+
+    <div class="ribbon" *ngIf="state.ribbon && state.ribbon.show">
+        Show ribbon here
+    </div>
+
+    <div class="overlay" *ngIf="state.overlay && state.overlay.show">
+        Used for confetti and translucent overlay
+    </div>
+
+    <div class="banner" *ngIf="state.banner && state.banner.show">
+        Used for banner. Must support HTML values
     </div>
 </div>

@@ -44,9 +44,6 @@ export class GameService {
       label: 'Calibration Status: ',
       value: status,
     };
-    if (status === 'error') {
-      this.calibrationScene.drawCalibrationBox('error');
-    }
   }
 
   constructor(

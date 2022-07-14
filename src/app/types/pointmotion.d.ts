@@ -841,6 +841,18 @@ export type TimerElementState = {
   value?: string;
 };
 
+export type OverlayElementState = {
+  show?: boolean;
+  label?: string;
+  value?: string;
+};
+
+export type BannerElementState = {
+  show?: boolean;
+  label?: string;
+  value?: string;
+};
+
 export type PromptElementState = {
   show?: boolean;
   value?: string;
@@ -861,12 +873,21 @@ export type VideoElementState = {
   url?: string;
 };
 
+export type RibbonElementState = {
+  show?: boolean;
+  text?: string;
+  className?: string;
+};
+
 export type ElementsState = {
   score: ScoreElementState;
   timer: TimerElementState;
   prompt: PromptElementState;
   timeout: TimeoutElementState;
   video: VideoElementState;
+  ribbon: RibbonElementState;
+  overlay: OverlayElementState;
+  banner: BannerElementState;
 };
 
 export type ElementsObservables = {
@@ -875,4 +896,7 @@ export type ElementsObservables = {
   prompt: Observable<PromptElementState>;
   timeout: Observable<TimeoutElementState>;
   video: Observable<VideoElementState>;
+  ribbon: Observable<RibbonElementState>;
+  overlay: Observable<OverlayElementState>;
+  banner: Observable<BannerElementState>;
 };

@@ -3,6 +3,7 @@ import { Results } from '@mediapipe/pose';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
+import { CalibrationStatusType } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
@@ -341,7 +342,7 @@ export class CalibrationScene extends Scene {
     );
   }
 
-  drawCalibrationBox(type: string) {
+  drawCalibrationBox(type: CalibrationStatusType) {
     if (!this.sys.game || !this.showCalibration) return;
 
     const { width, height } = this.sys.game.canvas;
