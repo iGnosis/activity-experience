@@ -2,124 +2,128 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { NormalizedLandmarkList } from 'src/app/types/pointmotion';
+import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
 import { PoseService } from '../pose/pose.service';
 @Injectable({
   providedIn: 'root',
 })
 export class CalibrationService {
-  status: 'error' | 'warning' | 'success' = 'error';
+  status: CalibrationStatusType = 'error';
   isEnabled = false;
-  result = new Subject<'error' | 'warning' | 'success'>();
+  result = new Subject<CalibrationStatusType>();
   subscription: Subscription;
-  mode: 'full' | 'fast' = 'full';
+  mode: CalibrationMode = 'full';
+  visibilityThreshold = 0.7;
 
   constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
 
-  getObservable() {
-    return this.result;
-  }
-
-  enable() {
+  enable(autoSwitchMode = true) {
+    this.isEnabled = true;
     this.subscription = this.poseService.getPose().subscribe((results) => {
-      // TODO when the mode=full, we want the body points to be inside the box
-      // When mode=fast, we only care that the visibility of each point > 0.7
-      const newStatus = this._calibrateFullBody(results);
-      if (newStatus && newStatus.status !== this.status) {
-        this.result.next(this.status);
+      const newStatus = this._calibrateBody(results, this.mode);
+
+      if (!newStatus) return;
+
+      if (newStatus.status !== this.status) {
+        this.result.next(newStatus.status);
       }
+
+      this.status = newStatus.status;
     });
   }
 
-  setMode(mode: 'full' | 'fast') {
+  setMode(mode: CalibrationMode) {
+    console.log('calibrationService:setMode:mode', mode);
     this.mode = mode;
   }
 
   disable() {
+    this.isEnabled = false;
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
   }
 
-  _calibrationBoxContains(x: number, y: number, point?: number): boolean {
-    return (
+  _isPointWithinCalibrationBox(x: number, y: number, point?: number): boolean {
+    const isPointWithinCalibrationBox =
       this.calibrationScene.calibrationBox.x < x &&
       x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
       this.calibrationScene.calibrationBox.y < y &&
-      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height
-    );
+      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height;
+
+    return isPointWithinCalibrationBox;
   }
 
-  _calibrateFullBody(results: Results) {
-    if (!this.isEnabled) return;
+  _calibrateBody(
+    results: Results,
+    mode: CalibrationMode,
+  ): {
+    status: CalibrationStatusType;
+  } {
+    if (!this.isEnabled) {
+      return { status: 'disabled' };
+    }
 
     const poseLandmarkArray = results.poseLandmarks;
 
-    const points = [12, 11, 24, 23, 26, 25];
-
+    // just a sanity check.
     if (!Array.isArray(poseLandmarkArray)) {
-      return {
-        status: 'error',
-      };
-    } else {
-      // const points = [11, 13, 17, 21, 25, 31, 32, 26, 12, 14, 18, 22, 2, 5];
-      const unCalibratedPoints: number[] = [];
-      const calibratedPoints: number[] = [];
-      const pointsPoseLandmarkArray: NormalizedLandmarkList = [];
-      points.forEach((point) => {
-        pointsPoseLandmarkArray.push(poseLandmarkArray[point]);
-        if (
-          (poseLandmarkArray[point].visibility as number) < 0.7 ||
-          !this._calibrationBoxContains(
-            poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width,
-            poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height,
-          )
-        ) {
+      return { status: 'error' };
+    }
+
+    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
+    const unCalibratedPoints: number[] = [];
+    const calibratedPoints: number[] = [];
+
+    const points = [12, 11, 24, 23, 26, 25];
+    const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
+
+    const invisiblePoints = keyBodyPoints.filter((point) => {
+      if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
+        return true;
+      }
+      return false;
+    });
+
+    if (invisiblePoints.length > 0) {
+      console.log(`points not visible:`, invisiblePoints);
+      return { status: 'error' };
+    }
+
+    points.forEach((point) => {
+      const xPoint = poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width;
+      const yPoint = poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height;
+
+      // it's okay if user isn't within the box.
+      if (mode === 'fast') {
+        calibratedPoints.push(point);
+      }
+
+      // user must be within the box.
+      if (mode === 'full') {
+        if (!this._isPointWithinCalibrationBox(xPoint, yPoint)) {
           console.log(`point ${point} is out of calibration box`);
           unCalibratedPoints.push(point);
         } else {
           calibratedPoints.push(point);
         }
-      });
-
-      // if all the points are in the calibration box, we will send the status as success!
-      if (points.length === calibratedPoints.length) {
-        return {
-          status: 'success',
-        };
-      } else {
-        // See if there is any point we can't see
-        const invisiblePoint = pointsPoseLandmarkArray.find((x) => {
-          if (!x.visibility || x.visibility < 0.6) {
-            return true;
-          } else {
-            return false;
-          }
-        });
-
-        // if there is any point we can't see, we will send the status as error!
-        if (invisiblePoint) {
-          this.calibrationScene.drawCalibrationPoints(
-            results,
-            calibratedPoints,
-            unCalibratedPoints,
-          );
-          return {
-            status: 'error',
-          };
-        }
-        // else if all the points are visible, we will send the status as warning!
-        else {
-          this.calibrationScene.drawCalibrationPoints(
-            results,
-            calibratedPoints,
-            unCalibratedPoints,
-          );
-          return {
-            status: 'warning',
-          };
-        }
       }
+    });
+
+    // allow user to play the game.
+    if (points.length === calibratedPoints.length) {
+      console.log(`mode: ${mode} - calibration success`);
+      return { status: 'success' };
     }
+
+    // points are visible, but not within the box.
+    if (this.mode === 'full') {
+      // highlight points that aren't in the box.
+      this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
+      return { status: 'warning' };
+    }
+
+    // don't care, as long as points are visible.
+    return { status: 'success' };
   }
 }

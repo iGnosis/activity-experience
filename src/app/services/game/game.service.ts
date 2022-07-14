@@ -81,12 +81,10 @@ export class GameService {
   }
 
   setupSubscriptions() {
-    this.calibrationService.getObservable().subscribe((status: any) => {
-      console.log('calibration status ', status);
+    this.calibrationService.enable();
+    this.calibrationService.result.subscribe((status: any) => {
       this.calibrationStatus = status;
     });
-    console.log('enabling calibration');
-    this.calibrationService.enable();
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {

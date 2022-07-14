@@ -216,6 +216,9 @@ export class CoordinationService {
         this.calibrationScene.drawCalibrationBox('error');
         await this.step(this.activityStage, 'sleep', 2000);
         await this.waitForCalibration('success');
+
+        // enable 'fast' calibration mode.
+        this.calibrationService.setMode('fast');
       }
       // if (this.welcomeStageComplete) {
       //   this.welcomeStageComplete = false;
