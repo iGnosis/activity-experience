@@ -26,10 +26,22 @@ export class CalibrationService {
 
       if (newStatus.status !== this.status) {
         this.result.next(newStatus.status);
+        if (autoSwitchMode) {
+          this.switchMode(newStatus.status);
+        }
       }
-
       this.status = newStatus.status;
     });
+  }
+
+  switchMode(status: CalibrationStatusType) {
+    if (status === 'success') {
+      console.log('switching to fast mode calibration');
+      this.mode = 'fast';
+    } else if (status === 'error') {
+      console.log('switching to full mode calibration');
+      this.mode = 'full';
+    }
   }
 
   setMode(mode: CalibrationMode) {
