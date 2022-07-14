@@ -5,7 +5,7 @@ import { Observable, retry } from 'rxjs';
 import { PreSessionGenre, SessionState } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { JwtService } from '../jwt/jwt.service';
-import { soundSprites } from './sound_sprites';
+import { audioSprites } from './audio-sprites';
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +29,18 @@ export class SoundsService {
   preSessionGenreRockId: number;
   preSessionGenreDanceId: number;
   preSessionGenreSurpriseId: number;
+
+  surprise: Howl;
+  dance: Howl;
+  rock: Howl;
+  jazz: Howl;
+  classicalBacktrack: Howl;
+  classicalTrigger: Howl;
+  classicalInstructionsSound: Howl;
+  rockInstructionsSound: Howl;
+  jazzInstructionsSound: Howl;
+  danceInstructionsSound: Howl;
+  surpriseInstructionsSound: Howl;
 
   activityErrorSound: Howl = new Howl({
     src: 'assets/sounds/soundscapes/Sound Health Soundscape_incorrect.mp3',
@@ -109,18 +121,6 @@ export class SoundsService {
     },
   });
 
-  surprise: Howl;
-  dance: Howl;
-  rock: Howl;
-  jazz: Howl;
-  classicalBacktrack: Howl;
-  classicalTrigger: Howl;
-  classicalInstructionsSound: Howl;
-  rockInstructionsSound: Howl;
-  jazzInstructionsSound: Howl;
-  danceInstructionsSound: Howl;
-  surpriseInstructionsSound: Howl;
-
   loadMusicFiles(genre: PreSessionGenre) {
     console.log('loading ', genre, ' files');
     switch (genre) {
@@ -132,7 +132,7 @@ export class SoundsService {
         });
         this.surprise = new Howl({
           src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
-          sprite: soundSprites['surpriseSprite'],
+          sprite: audioSprites.surpriseSprite,
         });
         break;
       case 'Dance':
@@ -143,7 +143,7 @@ export class SoundsService {
         });
         this.dance = new Howl({
           src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
-          sprite: soundSprites['danceSprite'],
+          sprite: audioSprites.danceSprite,
         });
         break;
       case 'Rock':
@@ -154,7 +154,7 @@ export class SoundsService {
         });
         this.rock = new Howl({
           src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
-          sprite: soundSprites['rockSprite'],
+          sprite: audioSprites.rockSprite,
         });
         break;
       case 'Classical':
@@ -165,12 +165,12 @@ export class SoundsService {
         });
         this.classicalBacktrack = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: soundSprites['classicalBacktrackSprite'],
+          sprite: audioSprites.classicalBacktrackSprite,
         });
 
         this.classicalTrigger = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: soundSprites['classicalSprite'],
+          sprite: audioSprites.classicalSprite,
         });
         break;
       case 'Jazz':
@@ -482,31 +482,31 @@ export class SoundsService {
     switch (genre) {
       case 'Classical':
         if (!this.classicalInstructionsSound.playing()) {
-          this.classicalInstructionsSound.volume(0.35);
+          this.classicalInstructionsSound.volume(0.2);
           this.classicalInstructionsSound.play();
         }
         break;
       case 'Jazz':
         if (!this.jazzInstructionsSound.playing()) {
-          this.jazzInstructionsSound.volume(0.35);
+          this.jazzInstructionsSound.volume(0.2);
           this.jazzInstructionsSound.play();
         }
         break;
       case 'Rock':
         if (!this.rockInstructionsSound.playing()) {
-          this.rockInstructionsSound.volume(0.35);
+          this.rockInstructionsSound.volume(0.2);
           this.rockInstructionsSound.play();
         }
         break;
       case 'Dance':
         if (!this.danceInstructionsSound.playing()) {
-          this.danceInstructionsSound.volume(0.35);
+          this.danceInstructionsSound.volume(0.2);
           this.danceInstructionsSound.play();
         }
         break;
       case 'Surprise Me!':
         if (!this.surpriseInstructionsSound.playing()) {
-          this.surpriseInstructionsSound.volume(0.35);
+          this.surpriseInstructionsSound.volume(0.2);
           this.surpriseInstructionsSound.play();
         }
         break;

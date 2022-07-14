@@ -1,7 +1,13 @@
-export const soundSprites: {
-  [spriteName: string]: {
-    [audio: string]: [number, number] | [number, number, boolean];
-  };
+interface AudioSprite {
+  [audio: string]: [number, number] | [number, number, boolean];
+}
+
+export const audioSprites: {
+  surpriseSprite: AudioSprite;
+  danceSprite: AudioSprite;
+  rockSprite: AudioSprite;
+  classicalSprite: AudioSprite;
+  classicalBacktrackSprite: AudioSprite;
 } = {
   surpriseSprite: {
     'ambient 1': [0, 6295.510204081633],
