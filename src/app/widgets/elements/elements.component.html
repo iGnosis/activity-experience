@@ -1,0 +1,7 @@
+<div class="elements">
+    {{ state | json }}
+    <div class="reps" *ngIf="state.score && state.score.show">
+        <label>{{state.score.label}}</label>
+        <span>{{state.score.value}}</span>
+    </div>
+</div>

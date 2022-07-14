@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { Scene } from 'phaser';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CalibrationScene extends Phaser.Scene {
+export class CalibrationScene extends Scene {
   invalid = false;
   webcam: any;
   frame$?: Observable<any>;

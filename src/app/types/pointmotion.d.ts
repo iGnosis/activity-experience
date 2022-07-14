@@ -1,4 +1,5 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
+import { Observable, Subject } from 'rxjs';
 
 export type ActionHook = {
   beforeAction?: Array<Action>;
@@ -817,3 +818,51 @@ export type DebugTaskEvent = {
 };
 
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
+
+export type ScoreElementState = {
+  show?: boolean;
+  label?: string;
+  value?: string;
+};
+
+export type TimerElementState = {
+  show?: boolean;
+  label?: string;
+  value?: string;
+};
+
+export type PromptElementState = {
+  show?: boolean;
+  value?: string;
+  entryAnimation?: 'fadeIn' | 'slideIn';
+  exitAnimation?: 'fadeOut' | 'slideOut';
+  entryAnimationDuration?: number;
+  exitAnimationDuration?: number;
+};
+
+export type TimeoutElementState = {
+  show?: boolean;
+  timeout?: number;
+  className?: string;
+};
+
+export type VideoElementState = {
+  show?: boolean;
+  url?: string;
+};
+
+export type ElementsState = {
+  score: ScoreElementState;
+  timer: TimerElementState;
+  prompt: PromptElementState;
+  timeout: TimeoutElementState;
+  video: VideoElementState;
+};
+
+export type ElementsObservables = {
+  score: Observable<ScoreElementState>;
+  timer: Observable<TimerElementState>;
+  prompt: Observable<PromptElementState>;
+  timeout: Observable<TimeoutElementState>;
+  video: Observable<VideoElementState>;
+};

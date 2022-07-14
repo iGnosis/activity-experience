@@ -16,8 +16,8 @@ export class CalibrationService {
 
   constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
 
-  subscribe(observer: (status: 'error' | 'warning' | 'success') => void) {
-    return this.result.asObservable().subscribe(observer);
+  getObservable() {
+    return this.result;
   }
 
   enable() {

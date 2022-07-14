@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -22,6 +22,11 @@ import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { announcementReducer } from './store/reducers/annoucement.reducer';
 import { SafePipeModule } from 'safe-pipe';
+import { ElementsComponent } from './widgets/elements/elements.component';
+import { GameComponent } from './pages/game/game.component';
+
+export let AppInjector: Injector;
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -36,6 +41,8 @@ import { SafePipeModule } from 'safe-pipe';
     SelectGenreComponent,
     FinishedComponent,
     TestComponent,
+    ElementsComponent,
+    GameComponent,
   ],
   imports: [
     BrowserModule,
@@ -54,4 +61,8 @@ import { SafePipeModule } from 'safe-pipe';
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private injector: Injector) {
+    AppInjector = this.injector;
+  }
+}

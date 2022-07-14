@@ -77,10 +77,6 @@ export class CoordinationService {
         repsCompleted: 0,
       }),
     );
-
-    this.calibrationService.subscribe((status) => {
-      alert(status);
-    });
   }
 
   poseCount = 100;

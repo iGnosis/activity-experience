@@ -1,0 +1,15 @@
+.elements {
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+    // background-color: rgba(0, 0, 0, 0.5);
+
+    .reps {
+        height: 60px;
+        left: 60px;
+        top: 200px;
+        position: absolute;
+    }
+}

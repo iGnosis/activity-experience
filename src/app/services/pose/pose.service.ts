@@ -18,7 +18,7 @@ export class PoseService {
   pose: Pose;
   private results = new Subject<Results>();
 
-  constructor(private calibrationScene: CalibrationScene) {}
+  constructor() {}
 
   async start(videoElm: HTMLVideoElement, fps = 25, config: 'cdn' | 'local' = 'cdn') {
     const baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/';
@@ -39,7 +39,6 @@ export class PoseService {
 
     this.pose.onResults((results) => {
       // as soon as we are getting the new results we are destroying the exisiting calibration pose and points to make it look more realtime!
-      this.calibrationScene.destroyGraphics();
       this.handleResults(results);
     });
 
@@ -82,7 +81,6 @@ export class PoseService {
   }
 
   private handleResults(results: Results) {
-    // console.log(results)
     if (results) {
       this.numOfResults += 1; // increment the number till 100 only
       this.results.next(results);
