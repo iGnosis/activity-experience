@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AppInjector } from 'src/app/app.module';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
+import { CalibrationStatusType } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ElementsService } from '../elements/elements.service';
 import { PoseService } from '../pose/pose.service';
@@ -29,7 +30,24 @@ export class GameService {
       },
     },
   };
-  calibrationStatus: 'error' | 'warning' | 'success' = 'error';
+
+  _calibrationStatus: CalibrationStatusType;
+
+  get calibrationStatus() {
+    return this._calibrationStatus;
+  }
+
+  set calibrationStatus(status: CalibrationStatusType) {
+    this._calibrationStatus = status;
+    this.elements.score.state = {
+      show: true,
+      label: 'Calibration Status: ',
+      value: status,
+    };
+    if (status === 'error') {
+      this.calibrationScene.drawCalibrationBox('error');
+    }
+  }
 
   constructor(
     private elements: ElementsService,

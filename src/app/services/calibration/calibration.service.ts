@@ -98,7 +98,6 @@ export class CalibrationService {
     });
 
     if (invisiblePoints.length > 0) {
-      console.log(`points not visible:`, invisiblePoints);
       return { status: 'error' };
     }
 
@@ -128,7 +127,6 @@ export class CalibrationService {
       return { status: 'success' };
     }
 
-    // points are visible, but not within the box.
     if (this.mode === 'full') {
       // highlight points that aren't in the box.
       this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
