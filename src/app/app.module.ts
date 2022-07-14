@@ -24,6 +24,13 @@ import { announcementReducer } from './store/reducers/annoucement.reducer';
 import { SafePipeModule } from 'safe-pipe';
 import { ElementsComponent } from './widgets/elements/elements.component';
 import { GameComponent } from './pages/game/game.component';
+import { ScoreComponent } from './widgets/elements/score/score.component';
+import { TimerComponent } from './widgets/elements/timer/timer.component';
+import { PromptComponent } from './widgets/elements/prompt/prompt.component';
+import { TimeoutComponent } from './widgets/elements/timeout/timeout.component';
+import { RibbonComponent } from './widgets/elements/ribbon/ribbon.component';
+import { OverlayComponent } from './widgets/elements/overlay/overlay.component';
+import { BannerComponent } from './widgets/elements/banner/banner.component';
 
 export let AppInjector: Injector;
 
@@ -43,6 +50,13 @@ export let AppInjector: Injector;
     TestComponent,
     ElementsComponent,
     GameComponent,
+    ScoreComponent,
+    TimerComponent,
+    PromptComponent,
+    TimeoutComponent,
+    RibbonComponent,
+    OverlayComponent,
+    BannerComponent,
   ],
   imports: [
     BrowserModule,

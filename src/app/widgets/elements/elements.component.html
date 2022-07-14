@@ -3,34 +3,42 @@
     <div class="score" *ngIf="state.score && state.score.show">
         <label>{{state.score.label}}</label>
         <span>{{state.score.value}}</span>
+        <element-score></element-score>
     </div>
 
     <div class="timer" *ngIf="state.timer && state.timer.show">
         Show timer here.
+        <element-timer></element-timer>
     </div>
 
     <div class="prompt" *ngIf="state.prompt && state.prompt.show">
         Show prompt here. Should support HTML tags
+        <element-prompt></element-prompt>
     </div>
 
     <div class="timeout" *ngIf="state.timeout && state.timeout.show">
         Show timeout here.
+        <element-timeout></element-timeout>
     </div>
 
     <div class="video" *ngIf="state.video && state.video.show">
         Show video here
         Can be simple video or more
+        <element-video></element-video>
     </div>
 
     <div class="ribbon" *ngIf="state.ribbon && state.ribbon.show">
         Show ribbon here
+        <element-ribbon></element-ribbon>
     </div>
 
     <div class="overlay" *ngIf="state.overlay && state.overlay.show">
         Used for confetti and translucent overlay
+        <element-overlay></element-overlay>
     </div>
 
     <div class="banner" *ngIf="state.banner && state.banner.show">
         Used for banner. Must support HTML values
+        <element-banner></element-banner>
     </div>
 </div>
