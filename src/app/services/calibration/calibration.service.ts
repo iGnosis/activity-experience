@@ -12,11 +12,9 @@ export class CalibrationService {
   status = 'error';
   isEnabled = false;
   visibilityThreshold = 0.7;
-  mode: CalibrationMode = 'full'
+  mode: CalibrationMode = 'full';
 
-  constructor(
-    private calibrationScene: CalibrationScene,
-  ) {}
+  constructor(private calibrationScene: CalibrationScene) {}
 
   enable() {
     this.isEnabled = true;
@@ -47,7 +45,6 @@ export class CalibrationService {
   }
 
   calibrateFullBody(results: { pose: Results }) {
-
     if (!this.isEnabled) {
       return;
     }
@@ -105,7 +102,11 @@ export class CalibrationService {
 
     if (this.mode === 'full') {
       // highlight points that aren't in the box.
-      this.calibrationScene.drawCalibrationPoints(results.pose, calibratedPoints, unCalibratedPoints);
+      this.calibrationScene.drawCalibrationPoints(
+        results.pose,
+        calibratedPoints,
+        unCalibratedPoints,
+      );
       return { status: 'warning' };
     }
 

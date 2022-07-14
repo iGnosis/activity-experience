@@ -966,7 +966,9 @@ export class CoordinationService {
   handleCalibrationResult(oldStatus: string, newStatus: string) {
     switch (newStatus) {
       case 'warning':
-        this.handleCalibrationWarning(oldStatus, newStatus);
+        if (oldStatus == 'error') {
+          this.handleCalibrationWarning(oldStatus, newStatus);
+        }
         break;
       case 'success':
         this.handleCalibrationSuccess(oldStatus, newStatus);
