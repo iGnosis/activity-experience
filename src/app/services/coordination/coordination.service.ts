@@ -178,6 +178,7 @@ export class CoordinationService {
 
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
+    await this.sleep(4000);
     this.calibrationService.enable();
 
     this.welcomeStageComplete = true;
