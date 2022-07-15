@@ -869,6 +869,8 @@ export type VideoElementState = {
 export type RibbonElementState = {
   text?: string;
   className?: string;
+  titles?: string[];
+  transitionDuration?: number;
 };
 
 export type ElementsState = {
