@@ -13,7 +13,7 @@ export class PromptComponent implements OnInit, OnDestroy {
   state: PromptElementState;
   subscription: Subscription;
 
-  constructor(private promptService: PromptService) { }
+  constructor(private promptService: PromptService) {}
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();

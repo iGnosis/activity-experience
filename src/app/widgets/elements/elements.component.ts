@@ -42,10 +42,10 @@ export class ElementsComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.elements.prompt.setValue('21');
       this.elements.prompt.setPosition('center');
-    }, 1000)
+    }, 1000);
 
     setTimeout(() => {
-      this.elements.prompt.hide()
+      this.elements.prompt.hide();
     }, 1500);
   }
 }
