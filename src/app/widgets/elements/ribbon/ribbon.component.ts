@@ -29,9 +29,10 @@ export class RibbonComponent implements OnInit {
   bgAnimationState = 'enter';
   textAnimationState = 'enter';
   transitionDuration?: number;
-  constructor(private ribbonService: RibbonService) { }
+  constructor(private ribbonService: RibbonService) {}
 
   ngOnInit(): void {
+    this.ribbonService.hide();
     this.titles = this.ribbonService.state.titles;
     this.transitionDuration = this.ribbonService.state.transitionDuration;
     this.showTitles();

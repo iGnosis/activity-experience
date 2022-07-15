@@ -853,11 +853,11 @@ export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
   value?: string;
-  entryAnimation?: 'fadeIn' | 'slideIn';
-  exitAnimation?: 'fadeOut' | 'slideOut';
-  entryAnimationDuration?: number;
-  exitAnimationDuration?: number;
   position?: PromptPosition;
+  // entryAnimation?: 'fadeIn' | 'slideIn';
+  // exitAnimation?: 'fadeOut' | 'slideOut';
+  // entryAnimationDuration?: number;
+  // exitAnimationDuration?: number;
 };
 
 export type TimeoutElementState = {

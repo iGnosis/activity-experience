@@ -1,3 +1,3 @@
-<div [ngClass]="state.position === 'center' ? 'center prompt' : 'top-right prompt'">
+<div [@align-prompt]="{value: promptAnimationState }" class="prompt">
   {{ state.value }}
 </div>
