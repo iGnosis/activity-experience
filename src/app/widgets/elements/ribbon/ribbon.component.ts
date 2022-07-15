@@ -24,7 +24,7 @@ import { RibbonService } from 'src/app/services/elements/ribbon/ribbon.service';
   ],
 })
 export class RibbonComponent implements OnInit {
-  @Input() titles: string[];
+  titles!: string[];
   title: string;
   bgAnimationState = 'enter';
   textAnimationState = 'enter';
@@ -32,6 +32,7 @@ export class RibbonComponent implements OnInit {
   constructor(private ribbonService: RibbonService) {}
 
   ngOnInit(): void {
+    this.titles = this.ribbonService.state.titles;
     this.transitionDuration = this.ribbonService.state.transitionDuration;
     this.showTitles();
   }
