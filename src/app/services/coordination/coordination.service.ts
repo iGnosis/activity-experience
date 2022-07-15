@@ -95,7 +95,7 @@ export class CoordinationService {
   sequence: any = [];
   sit2StandExplained = false;
 
-  activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
+  activityId: string = this.analyticsService.getActivityId('Sit, Stand, Achieve') as string;
   attemptId = v4();
   taskId = v4();
   desiredClass: 'sit' | 'stand' | 'unknown';
@@ -133,6 +133,7 @@ export class CoordinationService {
   }
   async welcomeUser() {
     const activityState = 'welcome';
+    console.log('activityId:', this.activityId);
     const recalibrationCount = this.recalibrationCount;
 
     const run = async (type: StepTypes, data?: any) => {
