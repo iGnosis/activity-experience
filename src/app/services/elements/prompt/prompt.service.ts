@@ -12,7 +12,7 @@ export class PromptService extends GameElement<PromptElementState> {
     this.subject = new Subject<PromptElementState>();
     this._state = {
       show: false,
-      position: 'center'
+      position: 'center',
     };
   }
 

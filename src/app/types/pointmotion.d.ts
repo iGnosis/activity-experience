@@ -853,7 +853,7 @@ export type BannerElementState = {
   value?: string;
 };
 
-export type PromptPosition = 'center' | 'top-right'
+export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
   show?: boolean;
