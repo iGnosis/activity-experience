@@ -877,6 +877,8 @@ export type RibbonElementState = {
   show?: boolean;
   text?: string;
   className?: string;
+  titles: string[];
+  transitionDuration?: number;
 };
 
 export type ElementsState = {
