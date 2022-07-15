@@ -10,6 +10,8 @@ export class RibbonService extends GameElement<RibbonElementState> {
   constructor() {
     super();
     this._subject = new Subject<RibbonElementState>();
-    this._state = {};
+    this._state = {
+      titles: ['camera setup complete'],
+    };
   }
 }
