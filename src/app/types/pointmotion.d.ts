@@ -853,6 +853,8 @@ export type BannerElementState = {
   value?: string;
 };
 
+export type PromptPosition = 'center' | 'top-right'
+
 export type PromptElementState = {
   show?: boolean;
   value?: string;
@@ -860,6 +862,7 @@ export type PromptElementState = {
   exitAnimation?: 'fadeOut' | 'slideOut';
   entryAnimationDuration?: number;
   exitAnimationDuration?: number;
+  position: PromptPosition;
 };
 
 export type TimeoutElementState = {

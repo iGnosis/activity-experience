@@ -1,1 +1,3 @@
-<p>prompt works!</p>
+<div [ngClass]="state.position === 'center' ? 'center prompt' : 'top-right prompt'">
+  {{ state.value }}
+</div>

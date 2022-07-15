@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ElementsService } from 'src/app/services/elements/elements.service';
-import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
+import { ElementsObservables, ElementsState, PromptPosition } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-elements',
@@ -10,6 +10,7 @@ import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 export class ElementsComponent implements OnInit, OnDestroy {
   state: ElementsState;
   observables$: ElementsObservables;
+
   constructor(private elements: ElementsService) {
     this.state = elements.getElementsState();
     this.observables$ = elements.getElementsObservables();
@@ -33,5 +34,9 @@ export class ElementsComponent implements OnInit, OnDestroy {
         this.state[key] = value;
       });
     });
+
+    this.elements.prompt.setValue('50');
+    this.elements.prompt.setPosition('center');
+    this.elements.prompt.show();
   }
 }

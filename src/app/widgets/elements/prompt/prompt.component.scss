@@ -1,0 +1,25 @@
+.prompt {
+  height: 200px;
+  width: 200px;
+  background-color: #b5e2c6;
+  border-radius: 50%;
+  line-height: 175px;
+  border: 10px solid #ffffff;
+  font-size: 125px;
+  text-align: center;
+  color: #000066;
+}
+
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.top-right {
+  position: absolute;
+  left: 70%;
+  top: 25%;
+  transform: translate(-50%, -50%);
+}
