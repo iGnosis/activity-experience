@@ -10,7 +10,6 @@ export class TimerService extends GameElement<TimerElementState> {
   constructor() {
     super();
     this._state = {
-      show: false,
       label: '',
       value: '',
     };

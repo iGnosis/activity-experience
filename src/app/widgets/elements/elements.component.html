@@ -1,44 +1,45 @@
 <div class="elements">
     {{ state | json }}
-    <div class="score" *ngIf="state.score && state.score.show">
+    <div class="score">
         <label>{{state.score.label}}</label>
         <span>{{state.score.value}}</span>
         <element-score></element-score>
     </div>
 
-    <div class="timer" *ngIf="state.timer && state.timer.show">
+    <div class="timer">
         Show timer here.
         <element-timer></element-timer>
     </div>
 
-    <div class="prompt" *ngIf="state.prompt && state.prompt.show">
-        Show prompt here. Should support HTML tags
-        <element-prompt></element-prompt>
+    <div class="prompt">
+        <element-prompt [value]="state.prompt.value"></element-prompt>
     </div>
 
-    <div class="timeout" *ngIf="state.timeout && state.timeout.show">
+    <div class="timeout">
         Show timeout here.
         <element-timeout></element-timeout>
     </div>
 
-    <div class="video" *ngIf="state.video && state.video.show">
+    <div class="video">
         Show video here
         Can be simple video or more
         <element-video></element-video>
     </div>
 
-    <div class="ribbon" *ngIf="state.ribbon && state.ribbon.show">
+    <div class="ribbon">
         Show ribbon here
         <element-ribbon></element-ribbon>
     </div>
 
-    <div class="overlay" *ngIf="state.overlay && state.overlay.show">
+    <div class="overlay">
         Used for confetti and translucent overlay
         <element-overlay></element-overlay>
     </div>
 
-    <div class="banner" *ngIf="state.banner && state.banner.show">
+    <div class="banner">
         Used for banner. Must support HTML values
         <element-banner></element-banner>
     </div>
+
+    <button (click)="updateElement()">Update Element</button>
 </div>

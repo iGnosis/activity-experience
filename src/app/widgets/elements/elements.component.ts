@@ -39,4 +39,12 @@ export class ElementsComponent implements OnInit, OnDestroy {
     this.elements.prompt.setPosition('center');
     this.elements.prompt.show();
   }
+
+  updateElement() {
+    this.elements.prompt.state = {
+      value: '12',
+    };
+
+    this.elements.prompt.setValue('12');
+  }
 }

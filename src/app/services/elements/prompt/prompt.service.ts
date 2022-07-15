@@ -10,22 +10,12 @@ export class PromptService extends GameElement<PromptElementState> {
   constructor() {
     super();
     this.subject = new Subject<PromptElementState>();
-    this._state = {
-      show: false,
-      position: 'center',
-    };
-  }
-
-  show() {
-    this._state.show = true;
-  }
-
-  hide() {
-    this._state.show = false;
+    this._state = {};
   }
 
   setValue(value: string) {
-    this._state.value = value;
+    this.state.value = value;
+    this.subject.next(this.state);
   }
 
   getValue() {
@@ -34,9 +24,5 @@ export class PromptService extends GameElement<PromptElementState> {
 
   setPosition(position: PromptPosition) {
     this._state.position = position;
-  }
-
-  getPosition(): PromptPosition {
-    return this._state.position;
   }
 }
