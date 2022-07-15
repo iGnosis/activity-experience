@@ -115,7 +115,7 @@ export class CalibrationService {
       // user must be within the box.
       if (mode === 'full') {
         if (!this._isPointWithinCalibrationBox(xPoint, yPoint)) {
-          console.log(`point ${point} is out of calibration box`);
+          // console.log(`point ${point} is out of calibration box`);
           unCalibratedPoints.push(point);
         } else {
           calibratedPoints.push(point);
