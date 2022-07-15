@@ -831,7 +831,9 @@ export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTask
 
 export type ScoreElementState = {
   label?: string;
-  value?: string;
+  value?: number | string;
+  highScore?: number;
+  transitionDuration?: number;
 };
 
 export type TimerElementState = {
