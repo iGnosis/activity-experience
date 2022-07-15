@@ -830,31 +830,26 @@ export type DebugTaskEvent = {
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type ScoreElementState = {
-  show?: boolean;
   label?: string;
   value?: string;
 };
 
 export type TimerElementState = {
-  show?: boolean;
   label?: string;
   value?: string;
 };
 
 export type OverlayElementState = {
-  show?: boolean;
   label?: string;
   value?: string;
 };
 
 export type BannerElementState = {
-  show?: boolean;
   label?: string;
   value?: string;
 };
 
 export type PromptElementState = {
-  show?: boolean;
   value?: string;
   entryAnimation?: 'fadeIn' | 'slideIn';
   exitAnimation?: 'fadeOut' | 'slideOut';
@@ -863,18 +858,15 @@ export type PromptElementState = {
 };
 
 export type TimeoutElementState = {
-  show?: boolean;
   timeout?: number;
   className?: string;
 };
 
 export type VideoElementState = {
-  show?: boolean;
   url?: string;
 };
 
 export type RibbonElementState = {
-  show?: boolean;
   text?: string;
   className?: string;
 };

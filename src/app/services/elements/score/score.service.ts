@@ -11,7 +11,6 @@ export class ScoreService extends GameElement<ScoreElementState> {
     super();
     this._subject = new Subject();
     this._state = {
-      show: false,
       label: '',
       value: '',
     };

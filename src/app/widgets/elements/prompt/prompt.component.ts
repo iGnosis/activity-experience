@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
   selector: 'element-prompt',
@@ -6,6 +6,8 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./prompt.component.scss'],
 })
 export class PromptComponent implements OnInit {
+  @Input() value: string | undefined;
+
   constructor() {}
 
   ngOnInit(): void {}
