@@ -818,4 +818,19 @@ export type DebugTaskEvent = {
   reacted: boolean;
 };
 
+export type StepTypes =
+  | 'updateAvatar'
+  | 'sendMessage'
+  | 'sleep'
+  | 'hideAvatar'
+  | 'hideMessage'
+  | 'announcement'
+  | 'sendSpotlight'
+  | 'hideSpotlight'
+  | 'waitForClass'
+  | 'sendPrompt'
+  | 'hidePrompt'
+  | 'startTimer'
+  | 'hideTimer';
+
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
