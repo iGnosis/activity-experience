@@ -106,6 +106,11 @@ export class CoordinationService {
   } = undefined;
   previousRepClass: 'sit' | 'stand';
 
+  private runConfig = {
+    id: 1,
+    reps: 0,
+  };
+
   currentPose!: Results;
   previousPose!: Results;
   isWaitingForReaction = false;
@@ -397,11 +402,15 @@ export class CoordinationService {
           await this.resumeSit2Stand();
           console.log('resume sit2stand completed');
         }
+        // The following loop can be called many times based on the user calibration
+        // So we need a way to break the loop when the run id changes
+        const runId = this.runConfig.id;
 
         while (
-          this.successfulReps < this.totalReps &&
+          this.runConfig.reps < this.totalReps &&
           this.calibrationStatus !== 'error' &&
-          !this.isRecalibrated
+          !this.isRecalibrated &&
+          this.runConfig.id === runId
         ) {
           this.taskId = v4();
           this.attemptId = v4();
@@ -409,7 +418,7 @@ export class CoordinationService {
           this.previousDesiredClass = this.desiredClass;
 
           let num: number;
-          if (this.successfulReps === 0) {
+          if (this.runConfig.reps === 0) {
             if (this.promptsArr.length > 0) {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
@@ -421,29 +430,22 @@ export class CoordinationService {
             if (this.promptsArr.length >= 1) {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
-              if (this.previousRep && !this.previousRep.isSuccess) {
-                console.log('prevuios rep class', this.previousRepClass);
-                this.previousRep.class === 'stand'
-                  ? (num = Math.floor((Math.random() * 100) / 2) * 2)
-                  : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
-              } else {
-                if (this.repsArr.length >= 2) {
-                  if (
-                    this.repsArr[this.currentPromptIdx - 1] === 'even' &&
-                    this.repsArr[this.currentPromptIdx - 2] === 'even'
-                  ) {
-                    num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
-                  } else if (
-                    this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
-                    this.repsArr[this.currentPromptIdx - 2] === 'odd'
-                  ) {
-                    num = Math.floor((Math.random() * 100) / 2) * 2;
-                  } else {
-                    num = Math.floor(Math.random() * 100);
-                  }
+              if (this.repsArr.length >= 2) {
+                if (
+                  this.repsArr[this.currentPromptIdx - 1] === 'even' &&
+                  this.repsArr[this.currentPromptIdx - 2] === 'even'
+                ) {
+                  num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
+                } else if (
+                  this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
+                  this.repsArr[this.currentPromptIdx - 2] === 'odd'
+                ) {
+                  num = Math.floor((Math.random() * 100) / 2) * 2;
                 } else {
                   num = Math.floor(Math.random() * 100);
                 }
+              } else {
+                num = Math.floor(Math.random() * 100);
               }
             }
           }
@@ -484,7 +486,7 @@ export class CoordinationService {
 
           // resolve has status property that can be used to send taskEnded events.
           await run('startTimer', { timeout: 6000 });
-          const res = await this.waitForClassOrTimeOut(
+          const res = await this.waitForClassChangeOrTimeOut(
             this.desiredClass,
             this.previousDesiredClass,
             6000,
@@ -526,7 +528,7 @@ export class CoordinationService {
           }
         }
 
-        if (this.successfulReps >= this.totalReps) {
+        if (this.runConfig.reps >= this.totalReps) {
           this.activityStage = 'postGame';
           this.sendSessionState(this.activityStage);
         }
@@ -786,7 +788,7 @@ export class CoordinationService {
 
     this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
     this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
-      this.successfulReps = res?.repsCompleted || 0;
+      this.runConfig.reps = res?.repsCompleted || 0;
     });
 
     this.observables$.session = this.store.select((state) => state.session.session);
@@ -931,6 +933,55 @@ export class CoordinationService {
     });
   }
 
+  async waitForClassChangeOrTimeOut(
+    desiredClass: string,
+    previousDesiredClass: string,
+    timeout = 3000,
+  ): Promise<{ result: 'success' | 'failure' }> {
+    return new Promise((resolve, reject) => {
+      if (this.currentClass === desiredClass) {
+        const startTime = new Date().getTime();
+        const interval = setInterval(() => {
+          if (new Date().getTime() - startTime > timeout) {
+            if (this.currentClass === desiredClass) {
+              resolve({
+                result: 'success',
+              });
+              clearInterval(interval);
+            } else {
+              resolve({
+                result: 'failure',
+              });
+              clearInterval(interval);
+            }
+          }
+          if (this.currentClass !== desiredClass) {
+            resolve({
+              result: 'failure',
+            });
+            clearInterval(interval);
+          }
+        }, 300);
+      } else {
+        const startTime = new Date().getTime();
+        const interval = setInterval(() => {
+          if (new Date().getTime() - startTime > timeout) {
+            resolve({
+              result: 'failure',
+            });
+            clearInterval(interval);
+          }
+          if (this.currentClass == desiredClass) {
+            resolve({
+              result: 'success',
+            });
+            clearInterval(interval);
+          }
+        }, 300);
+      }
+    });
+  }
+
   async waitForClassOrTimeOut(
     desiredClass: string,
     previousDesiredClass: string,
@@ -1041,6 +1092,8 @@ export class CoordinationService {
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
+        this.runConfig.id += 1;
+        console.log('ID updated for the runConfig', this.runConfig.id);
         this.isRecalibrated = true;
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
