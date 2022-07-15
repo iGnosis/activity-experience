@@ -34,17 +34,18 @@ export class ElementsComponent implements OnInit, OnDestroy {
         this.state[key] = value;
       });
     });
-
-    this.elements.prompt.setValue('50');
-    this.elements.prompt.setPosition('center');
-    this.elements.prompt.show();
   }
 
   updateElement() {
-    this.elements.prompt.state = {
-      value: '12',
-    };
+    this.elements.prompt.setValue('17');
+    // demonstrate prompt change after some time...
+    setTimeout(() => {
+      this.elements.prompt.setValue('21');
+      this.elements.prompt.setPosition('center');
+    }, 1000)
 
-    this.elements.prompt.setValue('12');
+    setTimeout(() => {
+      this.elements.prompt.hide()
+    }, 1500);
   }
 }
