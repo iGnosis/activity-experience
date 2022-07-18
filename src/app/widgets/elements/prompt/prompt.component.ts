@@ -10,11 +10,14 @@ import { PromptElementState } from 'src/app/types/pointmotion';
   styleUrls: ['./prompt.component.scss'],
   animations: [
     trigger('align-prompt', [
-      state('start', style({ height: '250px', width: '250px', 'line-height': '250px' })),
-      state('open', style({ left: '50%', right: '50%' })),
+      state(
+        'start',
+        style({ height: '250px', width: '250px', 'line-height': '250px', opacity: '0' }),
+      ),
+      state('open', style({ left: '50%', right: '50%', opacity: '1' })),
       state('exit', style({ left: '85%' })),
       transition('start => open', animate('0.5s ease-in')),
-      transition('open => exit', animate('1s ease-in')),
+      transition('open => exit', animate('0.5s ease-in')),
     ]),
   ],
 })
@@ -37,7 +40,7 @@ export class PromptComponent implements OnInit, OnDestroy {
     });
 
     this.promptAnimationState = 'start';
-    this.promptAnimationTimeout = 100;
+    this.promptAnimationTimeout = 0;
 
     setTimeout(() => {
       this.promptAnimationState = 'open';

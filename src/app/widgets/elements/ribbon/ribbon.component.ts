@@ -32,10 +32,10 @@ export class RibbonComponent implements OnInit {
   constructor(private ribbonService: RibbonService) {}
 
   ngOnInit(): void {
-    this.ribbonService.hide();
-    this.titles = this.ribbonService.state.titles;
-    this.transitionDuration = this.ribbonService.state.transitionDuration;
-    this.showTitles();
+    // this.ribbonService.hide();
+    // this.titles = this.ribbonService.state.titles;
+    // this.transitionDuration = this.ribbonService.state.transitionDuration;
+    // this.showTitles();
   }
   showTitles() {
     let i = -1;
