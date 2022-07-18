@@ -1,18 +1,26 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { GameElement } from 'src/app/types/game-element';
-import { TimerElementState } from 'src/app/types/pointmotion';
+import { ElementAttributes, TimerElementState } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
-export class TimerService extends GameElement<TimerElementState> {
+export class TimerService extends GameElement<TimerElementState, object> {
   constructor() {
     super();
     this._state = {
-      label: '',
-      value: '',
+      data: {
+        label: '',
+        value: '',
+      },
+      attributes: {
+        visibility: 'visible',
+      },
     };
-    this._subject = new Subject<TimerElementState>();
+    this._subject = new Subject<{
+      data: TimerElementState;
+      attributes: ElementAttributes;
+    }>();
   }
 }

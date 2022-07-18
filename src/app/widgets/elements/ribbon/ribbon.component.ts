@@ -31,36 +31,37 @@ export class RibbonComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   bgAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
-  constructor(private ribbonService: RibbonService) {}
+  constructor(private ribbonService: RibbonService) { }
+
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
 
   ngOnInit(): void {
     this.ribbonService.subject.subscribe((value) => {
-      this.state = value;
-      this.showTitles();
+      this.state = value.data;
+      // this.showTitles();
     });
   }
-  showTitles() {
-    if (!Array.isArray(this.state.titles) || this.state.titles.length === 0) return;
+  // showTitles() {
+  //   if (!Array.isArray(this.state.titles) || this.state.titles.length === 0) return;
 
-    let i = 0;
-    this.bgAnimationState = 'open';
-    this.textAnimationState = 'enter';
-    const int = setInterval(async () => {
-      if (this.textAnimationState === 'open') {
-        this.textAnimationState = 'exit';
-      } else if (this.textAnimationState === 'exit') {
-        this.textAnimationState = 'enter';
-      } else {
-        if (i === this.state.titles.length) {
-          this.bgAnimationState = 'exit';
-          clearInterval(int);
-        }
-        this.title = this.state.titles[i++];
-        this.textAnimationState = 'open';
-      }
-    }, this.state.transitionDuration || 500);
-  }
+  //   let i = 0;
+  //   this.bgAnimationState = 'open';
+  //   this.textAnimationState = 'enter';
+  //   const int = setInterval(async () => {
+  //     if (this.textAnimationState === 'open') {
+  //       this.textAnimationState = 'exit';
+  //     } else if (this.textAnimationState === 'exit') {
+  //       this.textAnimationState = 'enter';
+  //     } else {
+  //       if (i === this.state.titles.length) {
+  //         this.bgAnimationState = 'exit';
+  //         clearInterval(int);
+  //       }
+  //       this.title = this.state.titles[i++];
+  //       this.textAnimationState = 'open';
+  //     }
+  //   }, this.state.transitionDuration || 500);
+  // }
 }

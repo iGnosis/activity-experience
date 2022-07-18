@@ -1,8 +1,8 @@
 <div class="elements">
     {{ state | json }}
     <div class="score">
-        <label>{{state.score.label}}</label>
-        <span>{{state.score.value}}</span>
+        <label>{{state.score.data.label}}</label>
+        <span>{{state.score.data.value}}</span>
         <element-score></element-score>
     </div>
 
@@ -41,5 +41,5 @@
         <element-banner></element-banner>
     </div>
 
-    <!-- <button (click)="updateElement()">Update Element</button> -->
+    <button style="width: 100px; height:50px;" (click)="updateElement()">Update Element</button>
 </div>
