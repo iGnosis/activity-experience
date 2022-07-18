@@ -842,6 +842,8 @@ export type TimerElementState = {
 export type OverlayElementState = {
   label?: string;
   value?: string;
+  cards: { message: string; icon: string }[];
+  transitionDuration?: number;
 };
 
 export type BannerElementState = {

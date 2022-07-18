@@ -1,1 +1,14 @@
-<p>overlay works!</p>
+<div
+    *ngIf="state && state.attributes.visibility === 'visible'"
+    class="position-fixed top-0 start-0 w-screen h-screen d-flex">
+    <div class="m-auto w-full row mx-16">
+        <div 
+            *ngFor="let item of state.data.cards; let i=index" 
+            class="col mx-5 rounded-5 bg-white d-flex flex-column justify-content-center align-items-center py-14"
+            [class.invisible]="i >= cardCount">
+            <img class="w-40" [src]="item.icon" alt="card icon">
+            <div>&nbsp;</div>
+            <h2 class="text-primary">{{item.message || ''}}</h2>
+        </div>
+    </div>
+</div>
