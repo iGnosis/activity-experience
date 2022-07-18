@@ -1,1 +1,17 @@
-<p>video works!</p>
+<div *ngIf="attributes && attributes.visibility === 'visible' && state"
+  class="video-element position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+  <img *ngIf="state && state.type === 'gif'" class="video rounded-3" [src]="state.src | safe: 'url'" />
+
+  <iframe *ngIf="state && state.type === 'youtube'" class="video rounded-3" [src]="state.src | safe: 'resourceUrl'"
+    allow="autoplay; encrypted-media; picture-in-picture" [frameBorder]="0" allowfullscreen></iframe>
+
+  <video *ngIf="state && state.type === 'video'" class="video rounded-3" controls [autoplay]="true">
+    <source [src]="state.src" type="video/mp4">
+  </video>
+
+  <div class="py-4">
+    <p class=" display-5 text-white">{{state.title}}</p>
+    <hr style="border: 2px solid #A0AEC0;">
+    <p class=" display-6 text-white">{{state.description}}</p>
+  </div>
+</div>

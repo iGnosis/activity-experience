@@ -1,7 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
@@ -31,6 +30,8 @@ import { TimeoutComponent } from './widgets/elements/timeout/timeout.component';
 import { RibbonComponent } from './widgets/elements/ribbon/ribbon.component';
 import { OverlayComponent } from './widgets/elements/overlay/overlay.component';
 import { BannerComponent } from './widgets/elements/banner/banner.component';
+import { VideoElementComponent } from './widgets/elements/video/video.component';
+import { SafePipe } from 'src/pipes/safe/safe.pipe';
 
 export let AppInjector: Injector;
 
@@ -41,6 +42,7 @@ export let AppInjector: Injector;
     SessionComponent,
     GuideComponent,
     SpotlightComponent,
+    VideoElementComponent,
     VideoComponent,
     CalibrationComponent,
     AnnouncementComponent,
@@ -57,6 +59,7 @@ export let AppInjector: Injector;
     RibbonComponent,
     OverlayComponent,
     BannerComponent,
+    SafePipe,
   ],
   imports: [
     BrowserModule,

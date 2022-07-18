@@ -869,7 +869,10 @@ export type ElementAttributes = {
 };
 
 export type VideoElementState = {
-  url?: string;
+  type: 'gif' | 'youtube' | 'video';
+  src: string;
+  title: string;
+  description: string;
 };
 
 export type RibbonElementState = {

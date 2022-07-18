@@ -1,6 +1,6 @@
 <div class="elements">
     {{ state | json }}
-    <div class="score">
+    <!-- <div class="score">
         <label>{{state.score.data.label}}</label>
         <span>{{state.score.data.value}}</span>
         <element-score></element-score>
@@ -18,14 +18,12 @@
     <div class="timeout">
         Show timeout here.
         <element-timeout></element-timeout>
-    </div>
+    </div> -->
 
     <div class="video">
-        Show video here
-        Can be simple video or more
         <element-video></element-video>
     </div>
-
+<!--
     <div class="ribbon">
         Show ribbon here
         <element-ribbon [titles]="state.ribbon.data.titles"></element-ribbon>
@@ -39,7 +37,7 @@
     <div class="banner">
         Used for banner. Must support HTML values
         <element-banner></element-banner>
-    </div>
+    </div> -->
 
     <button style="width: 100px; height:50px;" (click)="updateElement()">Update Element</button>
 </div>
