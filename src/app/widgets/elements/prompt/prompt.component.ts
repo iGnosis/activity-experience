@@ -35,8 +35,6 @@ export class PromptComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.promptService.show();
-
     this.subscription = this.promptService.subject.subscribe((results) => {
       console.log('PromptComponent:subscription:results:', results);
 
