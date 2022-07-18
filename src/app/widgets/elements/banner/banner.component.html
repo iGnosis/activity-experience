@@ -1,1 +1,8 @@
-<p>banner works!</p>
+<div *ngIf="attributes && attributes.visibility === 'visible'" class="banner">
+  <div class="pt-4" [innerHTML]="state.htmlStr | safeHtml"></div>
+  <div class="row pt-6">
+    <div class="col-12 pt-2" *ngFor="let button of state.buttons">
+      <button type="button" class="btn btn-primary btn-sm font-bold">{{ button.title}}</button>
+    </div>
+  </div>
+</div>

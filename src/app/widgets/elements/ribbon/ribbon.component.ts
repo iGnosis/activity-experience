@@ -31,7 +31,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   bgAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
-  constructor(private ribbonService: RibbonService) { }
+  constructor(private ribbonService: RibbonService) {}
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();

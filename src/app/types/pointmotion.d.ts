@@ -845,8 +845,12 @@ export type OverlayElementState = {
 };
 
 export type BannerElementState = {
-  label?: string;
-  value?: string;
+  htmlStr?: string;
+  buttons?: Array<{
+    title?: string;
+    color?: string;
+    countdown?: number;
+  }>;
 };
 
 export type PromptPosition = 'center' | 'top-right';
@@ -854,10 +858,6 @@ export type PromptPosition = 'center' | 'top-right';
 export type PromptElementState = {
   value?: string;
   position?: PromptPosition;
-  // entryAnimation?: 'fadeIn' | 'slideIn';
-  // exitAnimation?: 'fadeOut' | 'slideOut';
-  // entryAnimationDuration?: number;
-  // exitAnimationDuration?: number;
 };
 
 export type TimeoutElementState = {
