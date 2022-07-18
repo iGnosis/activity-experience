@@ -45,6 +45,5 @@ export class PromptComponent implements OnInit, OnDestroy {
         this.promptAnimationState = 'exit';
       }, 1000);
     }, this.promptAnimationTimeout);
-
   }
 }
