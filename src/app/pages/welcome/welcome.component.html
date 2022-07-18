@@ -21,7 +21,7 @@
 
         <div class="message display-1  text-center text-white d-flex justify-content-center align-items-center"
         [@panelInOut] *ngIf="currentMessage.type =='message'">{{currentMessage!.text}}</div>
-        
+
         <app-announcement *ngIf="currentMessage.type =='announcement'" [text]="currentMessage.text"></app-announcement>
 
         <app-pre-session-survey (selected)="preSessionMoodSelected($event)" *ngIf="currentMessage.type =='pre-session-survey'"></app-pre-session-survey>
@@ -29,7 +29,7 @@
         <app-select-genre (selected)="genreSelected($event)" *ngIf="currentMessage.type =='select-genre'"></app-select-genre>
 
         <div class="tutorial" *ngIf="currentMessage.type =='tutorial'">
-            <iframe src="https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1" title="Sit To Stand" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>        
+            <iframe src="https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1" title="Sit To Stand" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <button class="btn btn-primary" (click)="showNextStep()">Skip Video Introduction</button>
         </div>
     </div>

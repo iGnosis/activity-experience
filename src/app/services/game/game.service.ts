@@ -63,7 +63,7 @@ export class GameService {
       const box = this.uiHelperService.setBoundingBox(stream);
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
-      await this.startPoseDetection(video);
+      // await this.startPoseDetection(video);
       this.setupSubscriptions();
     } catch (err: any) {
       console.log(err);

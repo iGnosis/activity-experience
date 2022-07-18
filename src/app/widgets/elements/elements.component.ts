@@ -36,10 +36,24 @@ export class ElementsComponent implements OnInit, OnDestroy {
   }
 
   updateElement() {
-    this.elements.prompt.state = {
-      value: '12',
-    };
+    this.elements.timer.set({
+      mode: 'start',
+      duration: 10000,
+      onComplete: (elapsedTime) => {
+        console.log('total elapsed time', elapsedTime);
+      },
+    });
 
-    this.elements.prompt.setValue('12');
+    // setTimeout(() => {
+    //   this.elements.timer.set({
+    //     mode: 'stop',
+    //   });
+    // }, 6000);
+
+    // setTimeout(() => {
+    //   this.elements.timer.set({
+    //     mode: 'resume',
+    //   });
+    // }, 6000);
   }
 }

@@ -835,8 +835,9 @@ export type ScoreElementState = {
 };
 
 export type TimerElementState = {
-  label?: string;
-  value?: string;
+  mode: 'start' | 'stop' | 'pause' | 'resume';
+  duration?: number;
+  onComplete?: (elapsedTime: number) => void;
 };
 
 export type OverlayElementState = {
