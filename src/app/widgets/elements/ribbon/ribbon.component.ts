@@ -1,8 +1,8 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { trigger, transition, animate, style, state } from '@angular/animations';
 import { RibbonService } from 'src/app/services/elements/ribbon/ribbon.service';
-import { RibbonElementState } from 'src/app/types/pointmotion';
 import { Subscription } from 'rxjs';
+import { ElementAttributes, RibbonElementState } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'element-ribbon',
@@ -26,26 +26,26 @@ import { Subscription } from 'rxjs';
   ],
 })
 export class RibbonComponent implements OnInit, OnDestroy {
-  state: RibbonElementState;
+  state: { data: RibbonElementState; attributes: ElementAttributes };
   title: string;
+  bgAnimationState = 'enter';
+  textAnimationState = 'enter';
   subscription: Subscription;
-  bgAnimationState: 'open' | 'enter' | 'exit' = 'enter';
-  textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   constructor(private ribbonService: RibbonService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
 
   ngOnInit(): void {
-    this.ribbonService.subject.subscribe((value) => {
+    this.subscription = this.ribbonService.subject.subscribe((value) => {
       this.state = value;
       this.showTitles();
     });
   }
   showTitles() {
-    if (!Array.isArray(this.state.titles) || this.state.titles.length === 0) return;
-
-    let i = 0;
+    const { data } = this.state;
+    if (!Array.isArray(data.titles) || data.titles.length === 0) return;
+    let i = -1;
     this.bgAnimationState = 'open';
     this.textAnimationState = 'enter';
     const int = setInterval(async () => {
@@ -53,14 +53,14 @@ export class RibbonComponent implements OnInit, OnDestroy {
         this.textAnimationState = 'exit';
       } else if (this.textAnimationState === 'exit') {
         this.textAnimationState = 'enter';
-      } else {
-        if (i === this.state.titles.length) {
+      } else if (Array.isArray(data.titles)) {
+        if (data.titles && i === data.titles.length - 1) {
           this.bgAnimationState = 'exit';
           clearInterval(int);
         }
-        this.title = this.state.titles[i++];
+        this.title = data.titles[++i];
         this.textAnimationState = 'open';
       }
-    }, this.state.transitionDuration || 500);
+    }, data.transitionDuration || 500);
   }
 }

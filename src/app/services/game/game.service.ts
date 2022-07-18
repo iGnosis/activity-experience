@@ -39,8 +39,8 @@ export class GameService {
   set calibrationStatus(status: CalibrationStatusType) {
     this._calibrationStatus = status;
     this.elements.score.state = {
-      label: 'Calibration Status: ',
-      value: status,
+      data: { label: 'Calibration Status: ', value: status },
+      attributes: {},
     };
   }
 
