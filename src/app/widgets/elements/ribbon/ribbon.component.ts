@@ -39,7 +39,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscription = this.ribbonService.subject.subscribe((value) => {
-      this.state = value;
+      this.state = value.data;
       this.showTitles();
     });
     // this.transitionDuration = this.ribbonService.state.transitionDuration;

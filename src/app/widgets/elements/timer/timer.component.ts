@@ -28,11 +28,12 @@ export class TimerComponent implements OnInit, OnDestroy {
   totalSeconds = 0;
   ngOnInit(): void {
     this.subscription = this.timerService._subject.subscribe((state) => {
-      switch (state.mode) {
+      const { mode, duration, onComplete } = state.data;
+      switch (mode) {
         case 'start':
-          if (state.duration) {
-            this.duration = state.duration;
-            this.startTimer(state.duration);
+          if (duration) {
+            this.duration = duration;
+            this.startTimer(duration);
           }
           break;
         case 'pause':
@@ -45,8 +46,8 @@ export class TimerComponent implements OnInit, OnDestroy {
           this.stopTimer();
           break;
       }
-      if (state.onComplete) {
-        this.onComplete = state.onComplete;
+      if (onComplete) {
+        this.onComplete = onComplete;
       }
     });
   }
