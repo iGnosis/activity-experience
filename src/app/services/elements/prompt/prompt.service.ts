@@ -20,5 +20,6 @@ export class PromptService extends GameElement<PromptElementState> {
 
   setPosition(position: PromptPosition) {
     this._state.position = position;
+    this.subject.next(this.state);
   }
 }

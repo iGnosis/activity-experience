@@ -10,9 +10,11 @@ import { PromptElementState } from 'src/app/types/pointmotion';
   styleUrls: ['./prompt.component.scss'],
   animations: [
     trigger('align-prompt', [
-      state('start', style({ left: '50%', top: '50%' })),
-      state('end', style({ left: '75%', top: '85%' })),
-      transition('start => end', animate('0.5s')),
+      state('start', style({ height: '250px', width: '250px', 'line-height': '250px' })),
+      state('open', style({ left: '50%', right: '50%' })),
+      state('exit', style({ left: '85%' })),
+      transition('start => open', animate('0.5s ease-in')),
+      transition('open => exit', animate('1s ease-in')),
     ]),
   ],
 })
@@ -29,18 +31,20 @@ export class PromptComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.promptAnimationState = 'start';
-
-    // start animation after 1.5 second.
-    this.promptAnimationTimeout = 1200;
-
     this.subscription = this.promptService.subject.subscribe((results) => {
       console.log('PromptComponent:subscription:results:', results);
       this.state = results;
     });
 
+    this.promptAnimationState = 'start';
+    this.promptAnimationTimeout = 100;
+
     setTimeout(() => {
-      this.promptAnimationState = 'end';
+      this.promptAnimationState = 'open';
+      setTimeout(() => {
+        this.promptAnimationState = 'exit';
+      }, 1000);
     }, this.promptAnimationTimeout);
+
   }
 }
