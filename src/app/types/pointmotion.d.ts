@@ -880,23 +880,23 @@ export type RibbonElementState = {
 };
 
 export type ElementsState = {
-  score: ScoreElementState;
-  timer: TimerElementState;
-  prompt: PromptElementState;
-  timeout: TimeoutElementState;
-  video: VideoElementState;
-  ribbon: RibbonElementState;
-  overlay: OverlayElementState;
-  banner: BannerElementState;
+  score: { data: ScoreElementState; attributes: ElementAttributes };
+  timer: { data: TimerElementState; attributes: ElementAttributes };
+  prompt: { data: PromptElementState; attributes: ElementAttributes };
+  timeout: { data: TimeoutElementState; attributes: ElementAttributes };
+  video: { data: VideoElementState; attributes: ElementAttributes };
+  ribbon: { data: RibbonElementState; attributes: ElementAttributes };
+  overlay: { data: OverlayElementState; attributes: ElementAttributes };
+  banner: { data: BannerElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
-  score: Observable<ScoreElementState>;
-  timer: Observable<TimerElementState>;
-  prompt: Observable<PromptElementState>;
-  timeout: Observable<TimeoutElementState>;
-  video: Observable<VideoElementState>;
-  ribbon: Observable<RibbonElementState>;
-  overlay: Observable<OverlayElementState>;
-  banner: Observable<BannerElementState>;
+  score: Observable<{ data: ScoreElementState; attributes: ElementAttributes }>;
+  timer: Observable<{ data: TimerElementState; attributes: ElementAttributes }>;
+  prompt: Observable<{ data: PromptElementState; attributes: ElementAttributes }>;
+  timeout: Observable<{ data: TimeoutElementState; attributes: ElementAttributes }>;
+  video: Observable<{ data: VideoElementState; attributes: ElementAttributes }>;
+  ribbon: Observable<{ data: RibbonElementState; attributes: ElementAttributes }>;
+  overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
+  banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
 };
