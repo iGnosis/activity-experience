@@ -863,6 +863,12 @@ export type TimeoutElementState = {
   className?: string;
 };
 
+export type ElementAttributes = {
+  visibility?: 'visible' | 'hidden';
+  className?: string;
+  style?: any;
+};
+
 export type VideoElementState = {
   url?: string;
 };
@@ -870,6 +876,8 @@ export type VideoElementState = {
 export type RibbonElementState = {
   text?: string;
   className?: string;
+  titles?: string[];
+  transitionDuration?: number;
 };
 
 export type ElementsState = {

@@ -122,7 +122,7 @@ export class CalibrationScene extends Scene {
     calibratedPoints: number[],
     unCalibratedPoints: number[],
   ) {
-    console.log(poseResults);
+    // console.log(poseResults);
     // we can clear the exisiting pose and calibration points here, currently doing it in holistic.service!
     // this.destroyGraphics();
     const { width, height } = this.sys.game.canvas;
