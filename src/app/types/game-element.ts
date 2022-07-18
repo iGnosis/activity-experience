@@ -1,24 +1,33 @@
 import { Subject } from 'rxjs';
+import { ElementAttributes } from './pointmotion';
 
-export class GameElement<T> {
-  _state: T;
-  _subject: Subject<T>;
-  _show: boolean;
+export class GameElement<T, M> {
+  _state: { data: T; attributes: M & ElementAttributes };
+  _subject: Subject<{ data: T; attributes: M & ElementAttributes }>;
 
   hide() {
-    this._show = false;
+    this._state.attributes.visibility = 'hidden';
   }
 
   show() {
-    this._show = true;
+    this._state.attributes.visibility = 'visible';
   }
 
   get state() {
     return this._state;
   }
 
-  set state(state: T) {
+  set state(state: { data: T; attributes: M & ElementAttributes }) {
     this._state = state;
+    this._subject.next(this._state);
+  }
+
+  get attributes() {
+    return this._state.attributes;
+  }
+
+  set attributes(attr) {
+    this._state.attributes = attr;
     this._subject.next(this.state);
   }
 
@@ -26,7 +35,7 @@ export class GameElement<T> {
     return this._subject;
   }
 
-  set subject(subject: Subject<T>) {
+  set subject(subject: Subject<{ data: T; attributes: M & ElementAttributes }>) {
     this._subject = subject;
   }
 }
