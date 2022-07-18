@@ -41,7 +41,10 @@ export class ElementsComponent implements OnInit, OnDestroy {
     // demonstrate prompt change after some time...
     setTimeout(() => {
       this.elements.prompt.setValue('21');
-      this.elements.prompt.setPosition('center');
     }, 0);
+
+    setTimeout(() => {
+      this.elements.prompt.setValue('50');
+    }, 5000);
   }
 }

@@ -37,16 +37,17 @@ export class PromptComponent implements OnInit, OnDestroy {
     this.subscription = this.promptService.subject.subscribe((results) => {
       console.log('PromptComponent:subscription:results:', results);
       this.state = results;
-    });
 
-    this.promptAnimationState = 'start';
-    this.promptAnimationTimeout = 100;
+      // run animation
+      this.promptAnimationState = 'start';
+      this.promptAnimationTimeout = 100;
 
-    setTimeout(() => {
-      this.promptAnimationState = 'open';
       setTimeout(() => {
-        this.promptAnimationState = 'exit';
-      }, 1000);
-    }, this.promptAnimationTimeout);
+        this.promptAnimationState = 'open';
+        setTimeout(() => {
+          this.promptAnimationState = 'exit';
+        }, 1000);
+      }, this.promptAnimationTimeout);
+    });
   }
 }
