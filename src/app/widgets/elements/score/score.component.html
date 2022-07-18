@@ -1,5 +1,8 @@
-<p class="top-5 start-5 position-absolute p-3 rounded-3 border border-white bg-primary text-white h2 d-flex justify-content-center align-items-center">{{state.label}}:&nbsp;
+<p 
+    *ngIf="state && state.attributes.visibility === 'visible'"
+    class="top-5 start-5 position-absolute p-3 rounded-3 border border-white bg-primary text-white h2 d-flex justify-content-center align-items-center">
+    {{state.data.label}}:&nbsp;
     <span 
-        [@fadeTransition]="{ value: animationState, params: { duration: state.transitionDuration || '500' } }" 
-        class="display-6 font-bold">{{state.value}}</span>
+        [@fadeTransition]="{ value: animationState, params: { duration: state.data.transitionDuration || '500' } }" 
+        class="display-6 font-bold">{{state.data.value}}</span>
 </p>

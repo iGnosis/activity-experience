@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { trigger, transition, animate, style, state } from '@angular/animations';
 import { Subscription } from 'rxjs';
 import { ScoreService } from 'src/app/services/elements/score/score.service';
-import { ScoreElementState } from 'src/app/types/pointmotion';
+import { ElementAttributes, ScoreElementState } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'element-score',
@@ -18,7 +18,7 @@ import { ScoreElementState } from 'src/app/types/pointmotion';
   ],
 })
 export class ScoreComponent implements OnInit, OnDestroy {
-  state: ScoreElementState;
+  state: { data: ScoreElementState; attributes: ElementAttributes };
   subscription: Subscription;
   animationState: 'fadeIn' | 'fadeOut' = 'fadeIn';
 
@@ -34,11 +34,11 @@ export class ScoreComponent implements OnInit, OnDestroy {
       this.animateScore(value);
     });
   }
-  animateScore(value: ScoreElementState) {
+  animateScore(value: { data: ScoreElementState; attributes: ElementAttributes }) {
     this.animationState = 'fadeOut';
     setTimeout(() => {
       this.state = value;
       this.animationState = 'fadeIn';
-    }, this.state.transitionDuration || 500);
+    }, this.state.data.transitionDuration || 500);
   }
 }

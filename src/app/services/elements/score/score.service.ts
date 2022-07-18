@@ -1,24 +1,25 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { GameElement } from 'src/app/types/game-element';
-import { ScoreElementState } from 'src/app/types/pointmotion';
+import { ElementAttributes, ScoreElementState } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ScoreService extends GameElement<ScoreElementState> {
+export class ScoreService extends GameElement<ScoreElementState, object> {
   constructor() {
     super();
-    this._subject = new Subject<ScoreElementState>();
+    this._subject = new Subject<{ data: ScoreElementState; attributes: ElementAttributes }>();
     this._state = {
-      label: 'Score',
-      value: 0,
+      data: {
+        label: 'Score',
+        value: '0',
+      },
+      attributes: {},
     };
   }
-  incrementScore() {
-    if (typeof this._state.value === 'number') {
-      this._state = { ...this._state, value: this._state.value + 1 };
-      this._subject.next(this._state);
-    }
+  setValue(value: number) {
+    this._state.data.value = value;
+    this._subject.next(this._state);
   }
 }

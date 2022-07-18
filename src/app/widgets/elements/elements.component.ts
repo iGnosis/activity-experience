@@ -37,7 +37,10 @@ export class ElementsComponent implements OnInit, OnDestroy {
 
   updateElement() {
     this.elements.prompt.state = {
-      value: '12',
+      data: {
+        value: '12',
+      },
+      attributes: {},
     };
 
     this.elements.prompt.setValue('12');
