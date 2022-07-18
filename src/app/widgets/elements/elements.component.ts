@@ -34,4 +34,12 @@ export class ElementsComponent implements OnInit, OnDestroy {
       });
     });
   }
+
+  updateElement() {
+    this.elements.prompt.state = {
+      value: '12',
+    };
+
+    this.elements.prompt.setValue('12');
+  }
 }

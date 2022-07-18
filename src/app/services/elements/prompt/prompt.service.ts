@@ -10,8 +10,11 @@ export class PromptService extends GameElement<PromptElementState> {
   constructor() {
     super();
     this.subject = new Subject<PromptElementState>();
-    this._state = {
-      show: false,
-    };
+    this._state = {};
+  }
+
+  setValue(value: string) {
+    this.state.value = value;
+    this.subject.next(this.state);
   }
 }

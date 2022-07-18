@@ -3,13 +3,10 @@ import { Component, OnInit } from '@angular/core';
 @Component({
   selector: 'element-score',
   templateUrl: './score.component.html',
-  styleUrls: ['./score.component.scss']
+  styleUrls: ['./score.component.scss'],
 })
 export class ScoreComponent implements OnInit {
+  constructor() {}
 
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
+  ngOnInit(): void {}
 }
