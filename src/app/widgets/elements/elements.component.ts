@@ -88,16 +88,14 @@ export class ElementsComponent implements OnInit, OnDestroy {
     };
   }
   updateElement() {
-    this.elements.timer.state = {
-      data: {
-        mode: 'start',
-        duration: 10000,
-        onComplete: (elapsedTime) => {
-          console.log('total elapsed time', elapsedTime);
-          this.elements.timer.state.attributes = {
-            visibility: 'hidden',
-          };
-        },
+    this.elements.timer.data = {
+      mode: 'start',
+      duration: 10000,
+      onComplete: (elapsedTime) => {
+        console.log('total elapsed time', elapsedTime);
+        this.elements.timer.state.attributes = {
+          visibility: 'hidden',
+        };
       },
     };
     this.elements.video.state = {
