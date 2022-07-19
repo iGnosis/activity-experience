@@ -20,18 +20,4 @@ export class VideoService extends GameElement<VideoElementState, object> {
       attributes: {},
     };
   }
-
-  set(value: VideoElementState) {
-    this.state.data.type = value.type;
-    this.state.data.src = value.src;
-    this.state.data.title = value.title;
-    this.state.data.description = value.description;
-    this.state.attributes.visibility = 'visible';
-    this.subject.next(this.state);
-  }
-
-  stop() {
-    this.state.attributes.visibility = 'hidden';
-    this.subject.next(this.state);
-  }
 }
