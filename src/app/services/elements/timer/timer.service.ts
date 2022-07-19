@@ -16,7 +16,7 @@ export class TimerService extends GameElement<TimerElementState, object> {
         onComplete: () => {},
       },
       attributes: {
-        visibility: 'visible',
+        visibility: 'hidden',
       },
     };
     this._subject = new Subject<{
@@ -33,6 +33,13 @@ export class TimerService extends GameElement<TimerElementState, object> {
       this.state.data.duration = 30 * 60 * 1000;
     }
     this.state.data.onComplete = value.onComplete;
+    this.state.attributes.visibility = 'visible';
+    this.subject.next(this.state);
+  }
+
+  stop() {
+    this.state.data.mode = 'stop';
+    this.state.attributes.visibility = 'hidden';
     this.subject.next(this.state);
   }
 }

@@ -41,13 +41,12 @@ export class ElementsComponent implements OnInit, OnDestroy {
       duration: 10000,
       onComplete: (elapsedTime) => {
         console.log('total elapsed time', elapsedTime);
+        this.elements.timer.hide();
       },
     });
 
     // setTimeout(() => {
-    //   this.elements.timer.set({
-    //     mode: 'stop',
-    //   });
+    //   this.elements.timer.stop();
     // }, 6000);
 
     // setTimeout(() => {

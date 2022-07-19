@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription, timer } from 'rxjs';
 import { TimerService } from 'src/app/services/elements/timer/timer.service';
+import { ElementAttributes } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'element-timer',
@@ -17,6 +18,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   source: Observable<number>;
   timer: Subscription;
+  attributes: ElementAttributes;
   onComplete?: (elapsedTime: number) => void;
   constructor(private timerService: TimerService) {}
 
@@ -28,6 +30,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   totalSeconds = 0;
   ngOnInit(): void {
     this.subscription = this.timerService._subject.subscribe((state) => {
+      this.attributes = state.attributes;
       const { mode, duration, onComplete } = state.data;
       switch (mode) {
         case 'start':
@@ -105,7 +108,10 @@ export class TimerComponent implements OnInit, OnDestroy {
       totalSeconds -= 60 * minutes;
     }
     this.time = {
-      minutes: minutes.toString(),
+      minutes:
+        minutes < 10
+          ? (this.time.minutes = '0' + minutes.toString())
+          : (this.time.minutes = minutes.toString()),
       seconds:
         totalSeconds < 10
           ? (this.time.seconds = '0' + totalSeconds.toString())
