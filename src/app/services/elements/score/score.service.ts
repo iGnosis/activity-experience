@@ -12,8 +12,8 @@ export class ScoreService extends GameElement<ScoreElementState, object> {
     this._subject = new Subject<{ data: ScoreElementState; attributes: ElementAttributes }>();
     this._state = {
       data: {
-        label: '',
-        value: '',
+        label: 'Score',
+        value: '0',
       },
       attributes: {},
     };

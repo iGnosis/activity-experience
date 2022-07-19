@@ -830,8 +830,22 @@ export type DebugTaskEvent = {
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type ScoreElementState = {
+  /**
+   * Inputs a string that appears as label for the score element
+   */
   label?: string;
-  value?: string;
+  /**
+   * Inputs a number or string as the current score
+   */
+  value?: number | string;
+  /**
+   * Inputs a number as high score
+   */
+  highScore?: number;
+  /**
+   * Inputs a number as the amount of time between each score update
+   */
+  transitionDuration?: number;
 };
 
 export type TimerElementState = {
