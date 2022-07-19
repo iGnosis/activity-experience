@@ -11,7 +11,22 @@ export class OverlayService extends GameElement<OverlayElementState, object> {
     super();
     this._subject = new Subject<{ data: OverlayElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {},
+      data: {
+        cards: [
+          {
+            icon: '/assets/images/overlay_icons/Protect.jpg',
+            message: 'Safety above all',
+          },
+          {
+            icon: '/assets/images/overlay_icons/T_Pose.jpg',
+            message: 'Space to move',
+          },
+          {
+            icon: '/assets/images/overlay_icons/Waiting.jpg',
+            message: 'Rest if you feel tired',
+          },
+        ],
+      },
       attributes: {},
     };
   }
