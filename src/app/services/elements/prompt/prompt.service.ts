@@ -15,14 +15,4 @@ export class PromptService extends GameElement<PromptElementState, object> {
       attributes: {},
     };
   }
-
-  setValue(value: string) {
-    this.state.data.value = value;
-    this.subject.next(this.state);
-  }
-
-  setPosition(position: PromptPosition) {
-    this._state.data.position = position;
-    this.subject.next(this.state);
-  }
 }

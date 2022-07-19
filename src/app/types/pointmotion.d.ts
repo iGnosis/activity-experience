@@ -863,7 +863,7 @@ export type BannerElementState = {
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
-  value?: string;
+  value?: string | number;
   position?: PromptPosition;
 };
 
