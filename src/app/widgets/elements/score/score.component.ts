@@ -29,7 +29,7 @@ export class ScoreComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.state = this.scoreService.state;
+    this.state = { ...this.scoreService.state };
     this.subscription = this.scoreService.subject.subscribe((value) => {
       this.animateScore(value);
     });
@@ -37,7 +37,7 @@ export class ScoreComponent implements OnInit, OnDestroy {
   animateScore(value: { data: ScoreElementState; attributes: ElementAttributes }) {
     this.animationState = 'fadeOut';
     setTimeout(() => {
-      this.state = value;
+      this.state = { ...value };
       this.animationState = 'fadeIn';
     }, this.state.data.transitionDuration || 500);
   }

@@ -18,8 +18,4 @@ export class ScoreService extends GameElement<ScoreElementState, object> {
       attributes: {},
     };
   }
-  setValue(value: number) {
-    this.state = { ...this.state, data: { ...this.state.data, value } };
-    this.subject.next(this.state);
-  }
 }
