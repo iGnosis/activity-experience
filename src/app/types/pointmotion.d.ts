@@ -854,9 +854,13 @@ export type TimerElementState = {
 };
 
 export type OverlayElementState = {
-  label?: string;
-  value?: string;
+  /**
+   * Inputs an array of messages and icons which will be displayed in the overlay
+   */
   cards: { message: string; icon: string }[];
+  /**
+   * Inputs a number as the amount of time between each card appearance
+   */
   transitionDuration?: number;
 };
 
@@ -889,9 +893,13 @@ export type VideoElementState = {
 };
 
 export type RibbonElementState = {
-  text?: string;
-  className?: string;
+  /**
+   * Inputs an array of strings which will be displayed in the ribbon one after another
+   */
   titles?: string[];
+  /**
+   * Inputs a number as the amount of time between each ribbon title
+   */
   transitionDuration?: number;
 };
 
