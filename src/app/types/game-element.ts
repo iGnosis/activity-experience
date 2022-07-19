@@ -18,7 +18,7 @@ export class GameElement<T, M> {
   }
 
   set state(state: { data: T; attributes: M & ElementAttributes }) {
-    this._state = state;
+    this._state = Object.assign(this._state, state);
     this._subject.next(this._state);
   }
 
@@ -29,6 +29,15 @@ export class GameElement<T, M> {
   set attributes(attr) {
     this._state.attributes = attr;
     this._subject.next(this.state);
+  }
+
+  get data() {
+    return this._state.data;
+  }
+
+  set data(d: T) {
+    this._state.data = d;
+    this._subject.next(this._state);
   }
 
   get subject() {
