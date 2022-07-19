@@ -845,7 +845,14 @@ export type OverlayElementState = {
 };
 
 export type BannerElementState = {
+  /**
+   * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
+   */
   htmlStr?: string;
+
+  /**
+   * Inputs an array of objects to be rendered as Buttons.
+   */
   buttons?: Array<{
     title?: string;
     className?: string;
