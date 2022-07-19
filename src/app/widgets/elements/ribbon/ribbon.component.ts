@@ -28,8 +28,8 @@ import { ElementAttributes, RibbonElementState } from 'src/app/types/pointmotion
 export class RibbonComponent implements OnInit, OnDestroy {
   state: { data: RibbonElementState; attributes: ElementAttributes };
   title: string;
-  bgAnimationState = 'enter';
-  textAnimationState = 'enter';
+  bgAnimationState: 'open' | 'enter' | 'exit' = 'enter';
+  textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   subscription: Subscription;
   constructor(private ribbonService: RibbonService) {}
   ngOnDestroy(): void {

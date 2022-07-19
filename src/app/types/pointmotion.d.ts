@@ -864,17 +864,47 @@ export type OverlayElementState = {
   transitionDuration?: number;
 };
 
-export type BannerElementState = {
-  label?: string;
-  value?: string;
+export type BannerButton = {
+  /**
+   * Set button text to be shown in the UI.
+   */
+  title?: string;
+
+  /**
+   * Set a custom styling class.
+   */
+  className?: string;
+
+  /**
+   * To be implemented.
+   */
+  countdown?: number;
 };
 
+export type BannerElementState = {
+  /**
+   * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
+   */
+  htmlStr?: string;
+
+  /**
+   * Inputs an array of objects to be rendered as Buttons.
+   */
+  buttons?: BannerButton[];
+};
+
+export type PromptPosition = 'center' | 'top-right';
+
 export type PromptElementState = {
-  value?: string;
-  entryAnimation?: 'fadeIn' | 'slideIn';
-  exitAnimation?: 'fadeOut' | 'slideOut';
-  entryAnimationDuration?: number;
-  exitAnimationDuration?: number;
+  /**
+   * Set value to be displayed on the prompt.
+   */
+  value?: string | number;
+
+  /**
+   * Set element's position.
+   */
+  position?: PromptPosition;
 };
 
 export type TimeoutElementState = {

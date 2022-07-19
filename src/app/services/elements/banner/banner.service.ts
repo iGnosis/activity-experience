@@ -11,11 +11,14 @@ export class BannerService extends GameElement<BannerElementState, object> {
     super();
     this._subject = new Subject<{ data: BannerElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {
-        label: '',
-        value: '',
-      },
+      data: {},
       attributes: {},
     };
+  }
+
+  setState(input: BannerElementState) {
+    this.state.data.htmlStr = input.htmlStr;
+    this.state.data.buttons = input.buttons;
+    this.subject.next(this.state);
   }
 }
