@@ -11,7 +11,12 @@ export class VideoService extends GameElement<VideoElementState, object> {
     super();
     this._subject = new Subject<{ data: VideoElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {},
+      data: {
+        type: 'gif',
+        src: '',
+        title: '',
+        description: '',
+      },
       attributes: {},
     };
   }

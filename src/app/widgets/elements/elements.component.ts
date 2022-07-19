@@ -99,6 +99,14 @@ export class ElementsComponent implements OnInit, OnDestroy {
           };
         },
       },
+    };
+    this.elements.video.state = {
+      data: {
+        type: 'gif',
+        src: 'https://media.giphy.com/media/dZjllNOkjKPnofe34O/giphy-downsized.gif',
+        title: 'Did you hear that?',
+        description: 'You just created music by hitting the punching bag!',
+      },
       attributes: {
         visibility: 'visible',
       },
@@ -114,5 +122,8 @@ export class ElementsComponent implements OnInit, OnDestroy {
     //     },
     //   };
     // }, 6000);
+    setTimeout(() => {
+      this.elements.video.state.attributes.visibility = 'hidden';
+    }, 5000);
   }
 }

@@ -931,7 +931,24 @@ export type ElementAttributes = {
 };
 
 export type VideoElementState = {
-  url?: string;
+  /**
+   *  Set the type of the video file.
+   *  * Note: currently the supported videoformat for type 'video' is mp4.
+   */
+  type: 'gif' | 'youtube' | 'video';
+  /**
+   * Set the src of the file that you want to display.
+   * * Note: youtube videos src should have '/embed/' in them to work. (Should be an embed link)
+   */
+  src: string;
+  /**
+   * Set the title of the video element.
+   */
+  title: string;
+  /**
+   * Set the description of the video element.
+   */
+  description: string;
 };
 
 export type RibbonElementState = {
