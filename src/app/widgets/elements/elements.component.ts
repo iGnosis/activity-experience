@@ -36,18 +36,22 @@ export class ElementsComponent implements OnInit, OnDestroy {
   }
 
   updateElement() {
-    this.elements.video.set({
-      type: 'youtube',
-      src: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1',
-      title: 'Did you hear that?',
-      description: 'You just created music by hitting the punching bag!',
-    });
     // this.elements.video.set({
-    //   type: 'gif',
-    //   src: 'https://media.giphy.com/media/dZjllNOkjKPnofe34O/giphy-downsized.gif',
+    //   type: 'youtube',
+    //   src: 'https://www.youtube.com/embed/chw2oMUrh4U?autoplay=1',
     //   title: 'Did you hear that?',
     //   description: 'You just created music by hitting the punching bag!',
     // });
+    this.elements.video.set({
+      type: 'gif',
+      src: 'https://media.giphy.com/media/dZjllNOkjKPnofe34O/giphy-downsized.gif',
+      title: 'Did you hear that?',
+      description: 'You just created music by hitting the punching bag!',
+    });
+
+    setTimeout(() => {
+      this.elements.video.stop();
+    }, 5000);
     // this.elements.video.set({
     //   type: 'video',
     //   src: 'assets/sh-login.mkv',

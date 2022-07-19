@@ -1,4 +1,4 @@
-<div *ngIf="attributes && attributes.visibility === 'visible' && state"
+<div @zoomInOut *ngIf="attributes && attributes.visibility === 'visible' && state"
   class="video-element position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
   <img *ngIf="state && state.type === 'gif'" class="video rounded-3" [src]="state.src | safe: 'url'" />
 

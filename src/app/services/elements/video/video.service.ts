@@ -29,4 +29,9 @@ export class VideoService extends GameElement<VideoElementState, object> {
     this.state.attributes.visibility = 'visible';
     this.subject.next(this.state);
   }
+
+  stop() {
+    this.state.attributes.visibility = 'hidden';
+    this.subject.next(this.state);
+  }
 }
