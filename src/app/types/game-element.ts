@@ -36,7 +36,7 @@ export class GameElement<T, M> {
   }
 
   set data(d: T) {
-    this._state.data = d;
+    this._state.data = { ...this._state.data, ...d };
     this._subject.next(this._state);
   }
 
