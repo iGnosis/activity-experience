@@ -15,31 +15,11 @@ export class TimerService extends GameElement<TimerElementState, object> {
         duration: 0,
         onComplete: () => {},
       },
-      attributes: {
-        visibility: 'hidden',
-      },
+      attributes: {},
     };
     this._subject = new Subject<{
       data: TimerElementState;
       attributes: ElementAttributes;
     }>();
-  }
-
-  set(value: TimerElementState) {
-    this.state.data.mode = value.mode;
-    this.state.data.duration = value.duration;
-    // timer is set to 30 min, if the duration is not specified during start mode.
-    if (value.mode === 'start' && !value.duration) {
-      this.state.data.duration = 30 * 60 * 1000;
-    }
-    this.state.data.onComplete = value.onComplete;
-    this.state.attributes.visibility = 'visible';
-    this.subject.next(this.state);
-  }
-
-  stop() {
-    this.state.data.mode = 'stop';
-    this.state.attributes.visibility = 'hidden';
-    this.subject.next(this.state);
   }
 }
