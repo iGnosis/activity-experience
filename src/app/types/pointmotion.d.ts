@@ -844,6 +844,23 @@ export type OverlayElementState = {
   value?: string;
 };
 
+export type BannerButton = {
+  /**
+   * Set button text to be shown in the UI.
+   */
+  title?: string;
+
+  /**
+   * Set a custom styling class.
+   */
+  className?: string;
+
+  /**
+   * To be implemented.
+   */
+  countdown?: number;
+};
+
 export type BannerElementState = {
   /**
    * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
@@ -853,17 +870,20 @@ export type BannerElementState = {
   /**
    * Inputs an array of objects to be rendered as Buttons.
    */
-  buttons?: Array<{
-    title?: string;
-    className?: string;
-    countdown?: number;
-  }>;
+  buttons?: BannerButton[];
 };
 
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
+  /**
+   * Set value to be displayed on the prompt.
+   */
   value?: string | number;
+
+  /**
+   * Set element's position.
+   */
   position?: PromptPosition;
 };
 
