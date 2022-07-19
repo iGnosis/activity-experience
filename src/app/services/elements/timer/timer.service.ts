@@ -11,12 +11,11 @@ export class TimerService extends GameElement<TimerElementState, object> {
     super();
     this._state = {
       data: {
-        label: '',
-        value: '',
+        mode: 'start',
+        duration: 0,
+        onComplete: () => {},
       },
-      attributes: {
-        visibility: 'visible',
-      },
+      attributes: {},
     };
     this._subject = new Subject<{
       data: TimerElementState;

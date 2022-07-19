@@ -87,4 +87,32 @@ export class ElementsComponent implements OnInit, OnDestroy {
       ],
     };
   }
+  updateElement() {
+    this.elements.timer.state = {
+      data: {
+        mode: 'start',
+        duration: 10000,
+        onComplete: (elapsedTime) => {
+          console.log('total elapsed time', elapsedTime);
+          this.elements.timer.state.attributes = {
+            visibility: 'hidden',
+          };
+        },
+      },
+      attributes: {
+        visibility: 'visible',
+      },
+    };
+
+    // setTimeout(() => {
+    //   this.elements.timer.state = {
+    //     data: {
+    //       mode: 'stop',
+    //     },
+    //     attributes: {
+    //       visibility: 'hidden',
+    //     },
+    //   };
+    // }, 6000);
+  }
 }

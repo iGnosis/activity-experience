@@ -849,8 +849,20 @@ export type ScoreElementState = {
 };
 
 export type TimerElementState = {
-  label?: string;
-  value?: string;
+  /**
+   * Timer can be controlled using the modes.
+   * * Note: During 'start' mode the 'duration' has to be specified.
+   */
+  mode: 'start' | 'stop' | 'pause' | 'resume';
+  /**
+   * Sets the duration of the timer.
+   */
+  duration?: number;
+  /**
+   * Function triggers on completion of the timer.
+   * @param elapsedTime gives the time elapsed time since the start of the timer.
+   */
+  onComplete?: (elapsedTime: number) => void;
 };
 
 export type OverlayElementState = {
