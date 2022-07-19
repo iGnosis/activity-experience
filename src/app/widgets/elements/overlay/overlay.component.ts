@@ -19,7 +19,7 @@ export class OverlayComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.subscription = this.overlayService.subject.pipe(take(1)).subscribe((value) => {
+    this.subscription = this.overlayService.subject.subscribe((value) => {
       this.state = value;
 
       if (Array.isArray(this.state.data.cards) && this.state.data.cards.length > 0) {
@@ -31,7 +31,6 @@ export class OverlayComponent implements OnInit, OnDestroy {
     const interval = setInterval(() => {
       if (this.cardCount >= this.state.data.cards.length) {
         this.overlayService.hide();
-        this.overlayService.subject.next(this.state);
         this.cardCount = 0;
         clearInterval(interval);
         return;
