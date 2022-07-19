@@ -848,7 +848,7 @@ export type BannerElementState = {
   htmlStr?: string;
   buttons?: Array<{
     title?: string;
-    color?: string;
+    className?: string;
     countdown?: number;
   }>;
 };
