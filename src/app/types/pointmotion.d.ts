@@ -1,5 +1,6 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export type ActionHook = {
   beforeAction?: Array<Action>;
@@ -727,7 +728,7 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activties = 'sit.stand.achieve' | 'beat.boxer' | 'sound.slicer';
+export type Activities = 'sit-stand-achieve' | 'beat-boxer' | 'sound-slicer';
 export interface ActivityConfiguration {
   configuration: {
     /**
@@ -739,6 +740,7 @@ export interface ActivityConfiguration {
      */
     speed: number;
   };
+  handler?: any;
 }
 
 export interface Environment {
@@ -754,12 +756,12 @@ export interface Environment {
   /**
    * Defines the order in which activites are to be run.
    */
-  order: Activties[];
+  order: Activities[];
   /**
    * Defines configuration of activities.
    */
   settings: {
-    [key in Activties]?: ActivityConfiguration;
+    [key in Activities]: ActivityConfiguration;
   };
 }
 
@@ -997,3 +999,11 @@ export type ElementsObservables = {
   overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
 };
+
+export interface ActivityBase {
+  welcome(): Array<() => Promise<any>>;
+  tutorial(): (() => Promise<void>)[];
+  loop(): (() => Promise<void>)[];
+  preLoop(): (() => Promise<void>)[];
+  postLoop(): (() => Promise<void>)[];
+}

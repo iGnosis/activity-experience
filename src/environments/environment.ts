@@ -2,6 +2,7 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { SitToStandService } from 'src/app/services/game/sit-to-stand/sit-to-stand.service';
 import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
@@ -14,21 +15,21 @@ export const environment: Environment = {
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'http://localhost:4200',
-  order: ['sit.stand.achieve', 'beat.boxer', 'sound.slicer'],
+  order: ['sit-stand-achieve', 'beat-boxer', 'sound-slicer'],
   settings: {
-    'sit.stand.achieve': {
+    'sit-stand-achieve': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,
       },
     },
-    'beat.boxer': {
+    'beat-boxer': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,
       },
     },
-    'sound.slicer': {
+    'sound-slicer': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,

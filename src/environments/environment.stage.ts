@@ -14,21 +14,21 @@ export const environment: Environment = {
   endpoint: 'https://api.stage.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.stage.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.stage.pointmotioncontrol.com',
-  order: ['sit.stand.achieve', 'beat.boxer', 'sound.slicer'],
+  order: ['sit-stand-achieve', 'beat-boxer', 'sound-slicer'],
   settings: {
-    'sit.stand.achieve': {
+    'sit-stand-achieve': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,
       },
     },
-    'beat.boxer': {
+    'beat-boxer': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,
       },
     },
-    'sound.slicer': {
+    'sound-slicer': {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,

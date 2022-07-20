@@ -20,6 +20,6 @@ export class GameComponent implements AfterViewInit {
   ) {}
 
   async ngAfterViewInit() {
-    this.gameService.start(this.video.nativeElement, this.canvas.nativeElement);
+    this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
   }
 }

@@ -1,11 +1,18 @@
 import { Injectable } from '@angular/core';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
-import { CalibrationStatusType } from 'src/app/types/pointmotion';
+import {
+  Activities,
+  ActivityBase,
+  ActivityConfiguration,
+  CalibrationStatusType,
+} from 'src/app/types/pointmotion';
+import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ElementsService } from '../elements/elements.service';
 import { PoseService } from '../pose/pose.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
+import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 
 @Injectable({
   providedIn: 'root',
@@ -50,10 +57,11 @@ export class GameService {
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
+    private sitToStandService: SitToStandService,
     private poseService: PoseService,
   ) {}
 
-  async start(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -64,7 +72,7 @@ export class GameService {
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.setupSubscriptions();
+      this.startGame();
     } catch (err: any) {
       console.log(err);
     }
@@ -93,6 +101,14 @@ export class GameService {
     return [this.calibrationScene, this.sitToStandScene];
   }
 
+  getActivities(): { [key in Activities]?: ActivityBase } {
+    return {
+      'sit-stand-achieve': this.sitToStandService,
+      'beat-boxer': this.sitToStandService,
+      'sound-slicer': this.sitToStandService,
+    };
+  }
+
   setupSubscriptions() {
     this.calibrationService.enable();
     this.calibrationService.result.subscribe((status: any) => {
@@ -113,5 +129,50 @@ export class GameService {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
+  }
+
+  findNextGame(): { name: Activities; settings: ActivityConfiguration } {
+    // TODO: Through an API call find out which game needs to be started next.
+    // For now, always starting sit.stand.achieve
+    return {
+      name: 'sit-stand-achieve',
+      settings: environment.settings['sit-stand-achieve'],
+    };
+  }
+
+  async startGame() {
+    const nextGame = this.findNextGame();
+    const activity = this.getActivities()[nextGame.name];
+    if (activity) {
+      await this.executeBatch(activity.welcome());
+    }
+    // Load the welcome screen
+    // Calibration, if not already calibrated. calibration service should be managed from here.
+    // Check the tutorial conditions and start the tutorial if needed
+    // call the preLoop()
+    // call the loop()
+    // call the postLoop()
+    // Load the welcome screen of the next game
+
+    // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.
+    // There should be a global recalibration count and local recalibration count.
+    // Whenever the two are different, throw an error to break the function and the loop.
+
+    // const items = await this.sitToStandService.preLoop();
+  }
+
+  async executeBatch(batch: Array<() => Promise<any>>) {
+    // TODO: Handle recalibration
+    return new Promise((resolve, reject) => {
+      try {
+        console.log(batch);
+        batch.forEach(async (item) => {
+          await item();
+        });
+        resolve({});
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 }
