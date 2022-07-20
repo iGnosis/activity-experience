@@ -7,15 +7,34 @@ import { Environment } from 'src/app/types/pointmotion';
 export const environment: Environment = {
   stageName: 'local',
   production: false,
-  // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
-  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  speedUpSession: false,
   analytics: {
     calibration: true,
   },
+  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
-  musicExperience: 'music_experience_2',
-  speedUpSession: false,
   postSessionRedirectEndpoint: 'http://localhost:4200',
+  order: ['sit.stand.achieve', 'beat.boxer', 'sound.slicer'],
+  settings: {
+    'sit.stand.achieve': {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    'beat.boxer': {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    'sound.slicer': {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+  },
 };
 
 /*

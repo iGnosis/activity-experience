@@ -727,26 +727,40 @@ export type Patient = {
   onboardedBy: string;
 };
 
-// export type SessionConfig = {
-//   sessionId?: string,
-//   enableAnalytics: boolean,
-//   mood?: string,
-//   genre?: string
-// }
+export type Activties = 'sit.stand.achieve' | 'beat.boxer' | 'sound.slicer';
+export interface ActivityConfiguration {
+  configuration: {
+    /**
+     * Number of correct reps required for an activity to end.
+     */
+    minCorrectReps: number;
+    /**
+     * Defines speed in milliseconds at which the activity should be run.
+     */
+    speed: number;
+  };
+}
+
 export interface Environment {
   stageName: string;
   production: boolean;
-  // token: string;
-  endpoint: string;
+  speedUpSession?: boolean;
   analytics: {
     calibration: boolean;
   };
-  // patient: string;
-  // careplan: string;
+  endpoint: string;
   apiEndpoint: string;
-  musicExperience: 'music_experience_1' | 'music_experience_2';
-  speedUpSession?: boolean;
   postSessionRedirectEndpoint: string;
+  /**
+   * Defines the order in which activites are to be run.
+   */
+  order: Activties[];
+  /**
+   * Defines configuration of activities.
+   */
+  settings: {
+    [key in Activties]?: ActivityConfiguration;
+  };
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
