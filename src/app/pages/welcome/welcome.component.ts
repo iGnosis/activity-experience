@@ -89,66 +89,6 @@ interface FetchUserSessionsResponse {
 })
 export class WelcomeComponent implements OnInit {
   chevronRightIcon = faChevronRight;
-  messages: Array<Message> = [
-    {
-      type: 'session-start-confirmation',
-      bg: '#000066',
-      sessionDetails: {
-        heading: 'Sit, Stand, Achieve',
-        checkList: [
-          'For this session you will require a CHAIR to perform certain activities.',
-          'Make sure that only you are in front of the screen.',
-          'Take periodic rests if you feel tired.',
-          'Make sure you are in a space where you can move freely.',
-        ],
-      },
-    },
-    {
-      type: 'message',
-      text: 'Welcome back',
-      timeout: 2000,
-      bg: '#000066',
-    },
-    {
-      type: 'message',
-      text: 'Great to see you',
-      timeout: 2000,
-      bg: '#000066',
-    },
-    {
-      type: 'announcement',
-      text: `Let's Go`,
-      timeout: 3000,
-      bg: '#FFFFFF',
-    },
-    {
-      type: 'pre-session-survey',
-      text: 'How are you feeling today?',
-      bg: '#FFB2B2',
-    },
-    {
-      type: 'announcement',
-      text: `Thanks`,
-      timeout: 3000,
-      bg: '#FFFFFF',
-    },
-    {
-      type: 'select-genre',
-      text: 'What type of music do you want to play?',
-      bg: '#FFB000',
-    },
-    {
-      type: 'announcement',
-      text: `PERFECT`,
-      timeout: 3000,
-      bg: '#FFFFFF',
-    },
-    {
-      type: 'tutorial',
-      bg: '#000000',
-      timeout: 275000, // length of video + some extra time
-    },
-  ];
   sessionId = 'bfce8d96-fd18-4fea-9097-cb3b01ee025a';
   intervalId: any;
   currentStep = -1;
@@ -214,12 +154,6 @@ export class WelcomeComponent implements OnInit {
             futureDate,
           );
         console.log('existing session', response.session[0]);
-
-        // getting genre from the previous sessions, so that even if a session starts from middle, we can play the selected genre.
-        if (response.session[0] && response.session[0].genre) {
-          this.store.dispatch(session.setGenre({ genre: response.session[0].genre }));
-          this.sessionService.updateGenre(response.session[0].genre as PreSessionGenre);
-        }
         if (response.session[0] && response.session[0].state && response.session[0].state.stage) {
           this.analyticsService.sendSessionState(response.session[0].state.stage as ActivityStage);
           this.store.dispatch(
@@ -238,30 +172,15 @@ export class WelcomeComponent implements OnInit {
   }
 
   async showNextStep() {
-    this.currentStep += 1;
-    if (this.currentStep == this.messages.length) {
-      // Last step is also done :D
-      // Let the user play the game
-      this.router.navigate(['session']);
-    }
-    if (this.messages[this.currentStep]) {
-      this.currentMessage = this.messages[this.currentStep];
-      this.currentMessage.bg = this.currentMessage.bg || '#000066';
-      if (this.currentMessage.text) {
-        this.soundsService.tts(this.currentMessage.text);
-      }
-      if (this.currentMessage.timeout) {
-        // Blank out the page
-        setTimeout(() => {
-          this.currentMessage = undefined;
-        }, this.currentMessage.timeout - 400);
+    const userGenreAndMood = await this.sessionService.getUserGenreAndMood();
+    // updating the genre in the session state.
+    this.store.dispatch(
+      session.setGenre({
+        genre: userGenreAndMood.genre[0].value,
+      }),
+    );
 
-        // Set the next message
-        setTimeout(() => {
-          this.showNextStep();
-        }, this.currentMessage.timeout);
-      }
-    }
+    this.router.navigate(['session']);
   }
 
   async sleep(timeout: number) {

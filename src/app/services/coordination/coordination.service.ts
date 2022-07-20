@@ -800,7 +800,7 @@ export class CoordinationService {
         this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
       } else {
         // fallback case
-        this.genre = 'Jazz';
+        this.genre = 'jazz';
       }
     });
 

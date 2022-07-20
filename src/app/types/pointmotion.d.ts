@@ -577,7 +577,7 @@ export declare class Holistic implements HolisticInterface {
 }
 
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
-export type PreSessionGenre = 'Classical' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+export type PreSessionGenre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
 export interface CalibrationState {
   pose?: Results;

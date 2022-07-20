@@ -18,19 +18,19 @@ export class SelectGenreComponent implements OnInit {
 
   genres: Array<{ title: PreSessionGenre; selected?: boolean }> = [
     {
-      title: 'Classical',
+      title: 'classical',
     },
     {
-      title: 'Jazz',
+      title: 'jazz',
     },
     {
-      title: 'Rock',
+      title: 'rock',
     },
     {
-      title: 'Dance',
+      title: 'dance',
     },
     {
-      title: 'Surprise Me!',
+      title: 'surprise me!',
     },
   ];
 

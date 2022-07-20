@@ -146,6 +146,23 @@ export class SessionService {
     );
   }
 
+  async getUserGenreAndMood() {
+    return this.client.req(
+      gql`
+        query GetCheckinData {
+          genre: checkin(limit: 1, order_by: { createdAt: desc }, where: { type: { _eq: genre } }) {
+            type
+            value
+          }
+          mood: checkin(limit: 1, order_by: { createdAt: desc }, where: { type: { _eq: mood } }) {
+            type
+            value
+          }
+        }
+      `,
+    );
+  }
+
   async updateGenre(genre: PreSessionGenre) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');

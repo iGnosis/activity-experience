@@ -120,7 +120,7 @@ export class SoundsService {
   classicalTrigger: Howl;
   loadMusicFiles(genre: PreSessionGenre) {
     switch (genre) {
-      case 'Surprise Me!':
+      case 'surprise me!':
         this.ambient = new Howl({
           src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
           sprite: {
@@ -143,7 +143,7 @@ export class SoundsService {
           },
         });
         break;
-      case 'Dance':
+      case 'dance':
         this.dance = new Howl({
           src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
           sprite: {
@@ -183,7 +183,7 @@ export class SoundsService {
           },
         });
         break;
-      case 'Rock':
+      case 'rock':
         this.rock = new Howl({
           src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
           sprite: {
@@ -207,7 +207,7 @@ export class SoundsService {
           },
         });
         break;
-      case 'Classical':
+      case 'classical':
         this.classicalBacktrack = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
           sprite: {
@@ -261,7 +261,7 @@ export class SoundsService {
           },
         });
         break;
-      case 'Jazz':
+      case 'jazz':
         break;
     }
   }
@@ -269,24 +269,24 @@ export class SoundsService {
   classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
   isBacktrackPlaying(genre: PreSessionGenre) {
     switch (genre) {
-      case 'Classical':
+      case 'classical':
         if (this.currentClassicalBacktrackId) {
           return this.classicalBacktrack.playing(this.currentClassicalBacktrackId);
         }
         return false;
-      case 'Dance':
+      case 'dance':
         if (this.danceBacktrackId) {
           return this.dance.playing(this.danceBacktrackId);
         }
         return false;
-      case 'Rock':
+      case 'rock':
         if (this.rockBacktrackId) {
           return this.rock.playing(this.rockBacktrackId);
         }
         return false;
-      case 'Surprise Me!':
+      case 'surprise me!':
         return false;
-      case 'Jazz':
+      case 'jazz':
         return this.isConstantDrumPlaying();
       default:
         return false;
@@ -295,7 +295,7 @@ export class SoundsService {
 
   pauseBacktrack(genre: PreSessionGenre) {
     switch (genre) {
-      case 'Classical':
+      case 'classical':
         if (
           this.currentClassicalBacktrackId &&
           this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
@@ -303,19 +303,19 @@ export class SoundsService {
           this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
         }
         break;
-      case 'Dance':
+      case 'dance':
         if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
           this.dance.pause(this.danceBacktrackId);
         }
         break;
-      case 'Rock':
+      case 'rock':
         if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
           this.rock.pause(this.rockBacktrackId);
         }
         break;
-      case 'Surprise Me!':
+      case 'surprise me!':
         return;
-      case 'Jazz':
+      case 'jazz':
         this.pauseConstantDrum();
     }
   }
@@ -334,7 +334,7 @@ export class SoundsService {
   currentAmbientTrigger = 1;
   playMusic(genre: PreSessionGenre, type: 'backtrack' | 'trigger') {
     switch (genre) {
-      case 'Classical':
+      case 'classical':
         if (!this.classicalBacktrack || !this.classicalTrigger) {
           return;
         }
@@ -397,7 +397,7 @@ export class SoundsService {
           }
         }
         break;
-      case 'Dance':
+      case 'dance':
         if (!this.dance) {
           return;
         }
@@ -414,7 +414,7 @@ export class SoundsService {
           }
         }
         break;
-      case 'Rock':
+      case 'rock':
         if (!this.rock) {
           return;
         }
@@ -431,7 +431,7 @@ export class SoundsService {
           }
         }
         break;
-      case 'Surprise Me!':
+      case 'surprise me!':
         if (!this.ambient) {
           return;
         }
@@ -449,7 +449,7 @@ export class SoundsService {
           }
         }
         break;
-      case 'Jazz':
+      case 'jazz':
         if (type === 'backtrack') {
           this.playConstantDrum();
         } else {
@@ -527,29 +527,29 @@ export class SoundsService {
       this.preSessionMoodSound.stop();
     }
     switch (genre) {
-      case 'Classical':
+      case 'classical':
         if (!this.preSessionGenreClassic.playing(this.preSessionGenreClassicId)) {
           this.preSessionGenreClassicId = this.preSessionGenreClassic
             .fade(0, 80, 3000, this.preSessionGenreClassicId)
             .play();
         }
         break;
-      case 'Jazz':
+      case 'jazz':
         if (!this.preSessionGenreJazz.playing(this.preSessionGenreJazzId)) {
           this.preSessionGenreJazzId = this.preSessionGenreJazz.fade(0, 80, 3000).play();
         }
         break;
-      case 'Rock':
+      case 'rock':
         if (!this.preSessionGenreRock.playing(this.preSessionGenreRockId)) {
           this.preSessionGenreRockId = this.preSessionGenreRock.fade(0, 80, 3000).play();
         }
         break;
-      case 'Dance':
+      case 'dance':
         if (!this.preSessionGenreDance.playing(this.preSessionGenreDanceId)) {
           this.preSessionGenreDanceId = this.preSessionGenreDance.fade(0, 80, 3000).play();
         }
         break;
-      case 'Surprise Me!':
+      case 'surprise me!':
         if (!this.preSessionGenreSurprise.playing(this.preSessionGenreSurpriseId)) {
           this.preSessionGenreSurpriseId = this.preSessionGenreSurprise.fade(0, 80, 3000).play();
         }
