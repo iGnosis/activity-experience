@@ -829,6 +829,49 @@ export type DebugTaskEvent = {
 
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
+export type AnalyticsDTO = {
+  prompt: number;
+  class: string;
+  success: boolean;
+  score: number;
+  reactionTime: number;
+};
+
+export type GameState = {
+  /**
+   * UUID to identify the game.
+   */
+  id?: string;
+  /**
+   * Indicates when the game was created.
+   */
+  createdAt?: string;
+  /**
+   * Indicates when the game was last updated.
+   */
+  updatedAt?: string;
+  /**
+   * Indicates status of the game.
+   */
+  status?: string;
+  /**
+   * Array of strings of game names.
+   */
+  game?: string[];
+  /**
+   * Indicates the number of reps completed
+   */
+  repsCompleted?: number;
+  /**
+   * Indicates total duration of the game.
+   */
+  totalDuration?: number;
+  /**
+   * Analytics for the game.
+   */
+  analytics?: AnalyticsDTO[];
+};
+
 export type ScoreElementState = {
   /**
    * Inputs a string that appears as label for the score element
