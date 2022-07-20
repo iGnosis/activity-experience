@@ -500,6 +500,14 @@ export class CoordinationService {
             this.currentPromptIdx += 1;
             this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
+            this.store.dispatch(
+              guide.sendPrompt({
+                promptType: 'success',
+                className: 'round',
+                position: 'right',
+              }),
+            );
+            await this.sleep(1000);
             console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
@@ -514,6 +522,15 @@ export class CoordinationService {
             }
           } else {
             this.currentPromptIdx += 1;
+            this.store.dispatch(
+              guide.sendPrompt({
+                promptType: 'failure',
+                className: 'round',
+                position: 'right',
+              }),
+            );
+            this.soundService.playCalibrationSound('error');
+            await this.sleep(1000);
             console.log('event:taskEnded:sent:score', 0);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,

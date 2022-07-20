@@ -771,6 +771,7 @@ export type GuidePromptDTO = {
   text?: string;
   icon?: IconDefinition; // font-awesome icon only
   className?: string;
+  promptType?: string;
   position:
     | 'left'
     | 'right'

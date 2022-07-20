@@ -54,6 +54,7 @@ export class SessionComponent implements AfterViewInit {
   announcement = '';
   selectGenre = false;
   noVideoError: string;
+  videoAvailable = false;
 
   sessionEnded: boolean | undefined = false;
 
@@ -87,6 +88,7 @@ export class SessionComponent implements AfterViewInit {
         video: true,
         audio: false,
       });
+      this.videoAvailable = true;
       this.video.nativeElement.srcObject = stream;
       const box = this.uiHelperService.setBoundingBox(stream);
       console.log('setBoundingBox:box:', box);
