@@ -902,9 +902,9 @@ export type BannerButton = {
   className?: string;
 
   /**
-   * To be implemented.
+   * Set duration in ms for a progress bar.
    */
-  countdown?: number;
+  progressDurationMs?: number;
 };
 
 export type BannerElementState = {

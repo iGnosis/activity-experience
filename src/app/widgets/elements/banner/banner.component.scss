@@ -1,4 +1,4 @@
-@import "../../../variables";
+@import '../../../variables';
 
 .banner {
   height: 350px;
@@ -20,5 +20,21 @@
 
   button {
     width: 250px;
+  }
+
+  .progress {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 5px;
+    background-color: $primary;
+
+    span {
+      position: absolute;
+      text-align: center;
+      font-size: large;
+      font-weight: bold;
+      width: 100%;
+    }
   }
 }

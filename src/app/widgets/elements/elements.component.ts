@@ -64,6 +64,7 @@ export class ElementsComponent implements OnInit, OnDestroy {
       buttons: [
         {
           title: 'Starting Sit, Stand, Achieve',
+          progressDurationMs: 10000,
         },
       ],
     };
