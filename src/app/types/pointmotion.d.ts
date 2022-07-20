@@ -917,6 +917,13 @@ export type BannerElementState = {
    * Inputs an array of objects to be rendered as Buttons.
    */
   buttons?: BannerButton[];
+
+  /**
+   * Sets the type of banner.
+   * * intro are to be rendered before starting an activity.
+   * * outro are to be rendered after completion of an activity.
+   */
+  type?: 'intro' | 'outro';
 };
 
 export type PromptPosition = 'center' | 'top-right';

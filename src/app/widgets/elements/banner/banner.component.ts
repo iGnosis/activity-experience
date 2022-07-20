@@ -1,4 +1,3 @@
-import { animate } from '@angular/animations';
 import { ViewEncapsulation, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { BannerService } from 'src/app/services/elements/banner/banner.service';
