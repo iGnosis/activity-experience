@@ -55,6 +55,7 @@ export class ElementsComponent implements OnInit, OnDestroy {
   testIntroBannerElement() {
     this.elements.banner.show();
     this.elements.banner.data = {
+      type: 'intro',
       htmlStr: `
       <h2 class="pt-2">First Activity</h2>
       <h1 class="pt-3 display-5">Sit, Stand, Achieve</h1>
@@ -64,6 +65,7 @@ export class ElementsComponent implements OnInit, OnDestroy {
       buttons: [
         {
           title: 'Starting Sit, Stand, Achieve',
+          progressDurationMs: 5000,
         },
       ],
     };
@@ -72,6 +74,7 @@ export class ElementsComponent implements OnInit, OnDestroy {
   testOutroBannerElement() {
     this.elements.banner.show();
     this.elements.banner.data = {
+      type: 'outro',
       htmlStr: `
       <div class="pl-2" style="padding-left: 20px;">
         <h1 class="pt-3 display-4">Sit, Stand, Achieve</h1>

@@ -845,6 +845,49 @@ export type DebugTaskEvent = {
 
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
+export type AnalyticsDTO = {
+  prompt: number;
+  class: string;
+  success: boolean;
+  score: number;
+  reactionTime: number;
+};
+
+export type GameState = {
+  /**
+   * UUID to identify the game.
+   */
+  id?: string;
+  /**
+   * Indicates when the game was created.
+   */
+  createdAt?: string;
+  /**
+   * Indicates when the game was last updated.
+   */
+  updatedAt?: string;
+  /**
+   * Indicates status of the game.
+   */
+  status?: string;
+  /**
+   * Array of strings of game names.
+   */
+  game?: string[];
+  /**
+   * Indicates the number of reps completed
+   */
+  repsCompleted?: number;
+  /**
+   * Indicates total duration of the game.
+   */
+  totalDuration?: number;
+  /**
+   * Analytics for the game.
+   */
+  analytics?: AnalyticsDTO[];
+};
+
 export type ScoreElementState = {
   /**
    * Inputs a string that appears as label for the score element
@@ -904,9 +947,9 @@ export type BannerButton = {
   className?: string;
 
   /**
-   * To be implemented.
+   * Set duration in ms for a progress bar.
    */
-  countdown?: number;
+  progressDurationMs?: number;
 };
 
 export type BannerElementState = {
@@ -919,6 +962,13 @@ export type BannerElementState = {
    * Inputs an array of objects to be rendered as Buttons.
    */
   buttons?: BannerButton[];
+
+  /**
+   * Sets the type of banner.
+   * * intro are to be rendered before starting an activity.
+   * * outro are to be rendered after completion of an activity.
+   */
+  type?: 'intro' | 'outro';
 };
 
 export type PromptPosition = 'center' | 'top-right';

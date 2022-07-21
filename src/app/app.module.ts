@@ -10,6 +10,7 @@ import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
 import { VideoComponent } from './widgets/video/video.component';
 import { CalibrationComponent } from './widgets/calibration/calibration.component';
 import { StoreModule } from '@ngrx/store';
+import { gameReducer } from './store/reducers/game.reducer';
 import { guideReducer } from './store/reducers/guide.reducer';
 import { sessionReducer } from './store/reducers/session.reducer';
 import { spotlightReducer } from './store/reducers/spotlight.reducer';
@@ -68,6 +69,7 @@ export let AppInjector: Injector;
     AppRoutingModule,
     BrowserAnimationsModule,
     StoreModule.forRoot({
+      game: gameReducer, // Main game state
       guide: guideReducer, // Updating the guide
       session: sessionReducer, // Top level session
       spotlight: spotlightReducer, // spotlight component
