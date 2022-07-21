@@ -24,6 +24,14 @@ export class ElementsService {
     public banner: BannerService,
   ) {}
 
+  async sleep(timeout: number) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({});
+      }, timeout);
+    });
+  }
+
   getElementsObservables(): ElementsObservables {
     return {
       score: this.score.subject,

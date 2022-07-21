@@ -36,6 +36,7 @@ export class GameService {
       },
     },
   };
+  gameCount = 0;
 
   _calibrationStatus: CalibrationStatusType;
 
@@ -44,6 +45,7 @@ export class GameService {
   }
 
   set calibrationStatus(status: CalibrationStatusType) {
+    // TODO: Update the time the person stayed calibrated in the stage (and db)
     this._calibrationStatus = status;
     this.elements.score.state = {
       data: { label: 'Calibration Status: ', value: status },
@@ -131,28 +133,41 @@ export class GameService {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
-  findNextGame(): { name: Activities; settings: ActivityConfiguration } {
+  findNextGame(): { name: Activities; settings: ActivityConfiguration } | undefined {
     // TODO: Through an API call find out which game needs to be started next.
     // For now, always starting sit.stand.achieve
-    return {
-      name: 'sit-stand-achieve',
-      settings: environment.settings['sit-stand-achieve'],
-    };
+    this.gameCount += 1;
+    if (this.gameCount <= 1) {
+      return {
+        name: 'sit-stand-achieve',
+        settings: environment.settings['sit-stand-achieve'],
+      };
+    } else {
+      return;
+    }
   }
 
   async startGame() {
-    const nextGame = this.findNextGame();
+    let nextGame = this.findNextGame();
+    if (!nextGame) return;
     const activity = this.getActivities()[nextGame.name];
+    // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
+    // the game at the exact same stage.
     if (activity) {
       await this.executeBatch(activity.welcome());
+      // TODO, check if the tutorial needs to run
+      await this.executeBatch(activity.tutorial());
+      await this.executeBatch(activity.preLoop());
+      // TODO, run the loop function for the required number of reps (based on the settings)
+      // Store the number of reps completed in the game state (and server)
+      await this.executeBatch(activity.loop());
+      await this.executeBatch(activity.postLoop());
     }
-    // Load the welcome screen
-    // Calibration, if not already calibrated. calibration service should be managed from here.
-    // Check the tutorial conditions and start the tutorial if needed
-    // call the preLoop()
-    // call the loop()
-    // call the postLoop()
-    // Load the welcome screen of the next game
+    // If more games available, start the next game.
+    nextGame = this.findNextGame();
+    if (nextGame) {
+      this.startGame();
+    }
 
     // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.
     // There should be a global recalibration count and local recalibration count.
