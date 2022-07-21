@@ -19,8 +19,17 @@ const initialState: GameState = {};
 
 const _gameReducer = createReducer(
   initialState,
-  on(game.test, (state, data) => {
-    return {};
+  on(game.newGame, (state, data) => {
+    return {
+      ...state,
+      ...data,
+    };
+  }),
+  on(game.updateGame, (state, data) => {
+    return {
+      ...state,
+      ...data,
+    };
   }),
 );
 
