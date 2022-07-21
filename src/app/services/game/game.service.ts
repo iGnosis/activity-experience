@@ -46,11 +46,11 @@ export class GameService {
 
   set calibrationStatus(status: CalibrationStatusType) {
     // TODO: Update the time the person stayed calibrated in the stage (and db)
+    console.log(status);
     this._calibrationStatus = status;
-    this.elements.score.state = {
-      data: { label: 'Calibration Status: ', value: status },
-      attributes: {},
-    };
+    if (status === 'error') {
+      this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+    }
   }
 
   constructor(
@@ -75,6 +75,7 @@ export class GameService {
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
       this.startGame();
+      this.setupSubscriptions();
     } catch (err: any) {
       console.log(err);
     }
@@ -114,6 +115,7 @@ export class GameService {
   setupSubscriptions() {
     this.calibrationService.enable();
     this.calibrationService.result.subscribe((status: any) => {
+      console.log(status);
       this.calibrationStatus = status;
     });
   }

@@ -14,6 +14,8 @@ export class CalibrationService {
   subscription: Subscription;
   mode: CalibrationMode = 'full';
   visibilityThreshold = 0.7;
+  _reCalibrationCount = 0;
+  reCalibrationCount = new Subject<number>();
 
   constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
 
@@ -26,9 +28,19 @@ export class CalibrationService {
       if (!newStatus) return;
 
       if (newStatus.status !== this.status) {
+        // On successful recalibration, just increment the counter.
+        if (newStatus.status === 'success') {
+          this._reCalibrationCount += 1;
+          this.reCalibrationCount.next(this._reCalibrationCount);
+        }
+        // Update all the subscribers interested in calibration status
         this.result.next(newStatus.status);
+
+        // Draw the calibration box
         this.calibrationScene.drawCalibrationBox(newStatus.status);
+
         if (autoSwitchMode) {
+          // Move the calibration from full to fast mode.
           this.switchMode(newStatus.status);
         }
       }
@@ -55,6 +67,19 @@ export class CalibrationService {
     this.isEnabled = false;
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+  }
+
+  startCalibrationScene(game: Phaser.Game) {
+    if (!game) {
+      throw new Error('Invalid game object');
+    } else {
+      if (game.scene.isActive('sit2stand')) {
+        game.scene.stop('sit2stand');
+        game.scene.start('calibration');
+      } else {
+        console.log('calibration is already active');
+      }
     }
   }
 
@@ -125,7 +150,7 @@ export class CalibrationService {
 
     // allow user to play the game.
     if (points.length === calibratedPoints.length) {
-      console.log(`mode: ${mode} - calibration success`);
+      // console.log(`mode: ${mode} - calibration success`);
       return { status: 'success' };
     }
 
