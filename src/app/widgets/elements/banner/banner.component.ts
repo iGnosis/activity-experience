@@ -24,7 +24,7 @@ export class BannerComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   attributes: ElementAttributes;
   progressBarWidth = 0;
-  bannerAnimationState: string = 'start';
+  bannerAnimationState = 'start';
 
   constructor(private bannerService: BannerService) {}
 
