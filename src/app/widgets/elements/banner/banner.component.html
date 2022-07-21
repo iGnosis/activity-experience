@@ -1,4 +1,5 @@
-<div *ngIf="attributes && attributes.visibility === 'visible'" class="banner">
+<div [@animate-banner]="{value: bannerAnimationState}" *ngIf="attributes && attributes.visibility === 'visible'"
+  class="banner">
   <div class="pt-4" [innerHTML]="state.htmlStr | safeHtml"></div>
   <div class="row pt-6">
     <div class="col-12 pt-2" *ngFor="let button of state.buttons">
