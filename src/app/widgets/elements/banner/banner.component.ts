@@ -29,6 +29,7 @@ export class BannerComponent implements OnInit, OnDestroy {
   constructor(private bannerService: BannerService) {}
 
   ngOnDestroy(): void {
+    console.log('banner ngOnDestroy');
     this.subscription.unsubscribe();
   }
 
@@ -58,6 +59,11 @@ export class BannerComponent implements OnInit, OnDestroy {
     const animationInterval = setInterval(() => {
       if (this.progressBarWidth >= 100) {
         clearInterval(animationInterval);
+        setTimeout(() => {
+          this.bannerService.hide();
+          this.progressBarWidth = 0;
+          this.bannerAnimationState = 'start';
+        }, 500);
       } else {
         this.progressBarWidth += 1;
       }

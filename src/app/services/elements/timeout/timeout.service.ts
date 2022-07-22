@@ -12,7 +12,9 @@ export class TimeoutService extends GameElement<TimeoutElementState, object> {
     super(calibrationService);
     this._subject = new Subject<{ data: TimeoutElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {},
+      data: {
+        mode: 'start',
+      },
       attributes: {},
     };
   }
