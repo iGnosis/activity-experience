@@ -8,7 +8,7 @@
         {{ state.message?.text }}
     </div>
     <div #avatar class="avatar {{avatarPosition}}" *ngIf="state.avatar">
-        <img [src]="'assets/images/'+ state.avatar?.name+'.jpg'" alt="">
+        <img [src]="'assets/images/'+ state.avatar.name+'.jpg'" alt="">
     </div>
  </div>
 

@@ -11,7 +11,9 @@ export class TimeoutService extends GameElement<TimeoutElementState, object> {
     super();
     this._subject = new Subject<{ data: TimeoutElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {},
+      data: {
+        mode: 'start',
+      },
       attributes: {},
     };
   }

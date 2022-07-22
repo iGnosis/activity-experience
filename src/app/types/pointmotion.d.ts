@@ -1002,8 +1002,15 @@ export type PromptElementState = {
 };
 
 export type TimeoutElementState = {
+  /**
+   * Timeout can be controlled using the modes.
+   * * Note: During 'start' mode the 'duration' has to be specified.
+   */
+  mode: 'start' | 'stop';
+  /**
+   * Duration of the timeout in ms.
+   */
   timeout?: number;
-  className?: string;
 };
 
 export type ElementAttributes = {
