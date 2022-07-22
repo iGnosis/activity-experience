@@ -1055,9 +1055,36 @@ export type ElementsObservables = {
 };
 
 export interface ActivityBase {
+  /**
+   * The screen showing the name of the next activity and waiting for the user input
+   * such as raising one or two hands
+   */
   welcome(): Array<() => Promise<any>>;
+
+  /**
+   * The flow to teach the user how to complete the activity
+   * Will run the first time for each user and run later only on based on certain conditions
+   * such as:
+   * 1. User had achievement ratio of less than 60% in the last attempt
+   * 2. User has not done this activity in last one week
+   * 3. User explicitly asks to complete the activity
+   */
   tutorial(): (() => Promise<void>)[];
+
+  /**
+   * The game loop. Game Service will call this function as many times as it needs.
+   * The function is only supposed to take care of 1 iteration
+   */
   loop(): (() => Promise<void>)[];
+
+  /**
+   * Before the loop, if there is anything to let the user get ready
+   */
   preLoop(): (() => Promise<void>)[];
+
+  /**
+   * After the loop, if there is a score or something before sending the user on to the next
+   * activity
+   */
   postLoop(): (() => Promise<void>)[];
 }
