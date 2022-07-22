@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { SessionComponent } from './pages/session/session.component';
-import { GuideComponent } from './widgets/guide/guide.component';
+import { GuideComponent } from './widgets/elements/guide/guide.component';
 import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
 import { VideoComponent } from './widgets/video/video.component';
 import { CalibrationComponent } from './widgets/calibration/calibration.component';
