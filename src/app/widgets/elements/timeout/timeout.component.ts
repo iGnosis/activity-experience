@@ -11,7 +11,10 @@ import { ElementAttributes, TimeoutElementState } from 'src/app/types/pointmotio
   animations: [
     trigger('timeOut', [
       transition(':enter', [
-        animate('5000ms linear', keyframes([style({ width: '0vw' }), style({ width: '100vw' })])),
+        animate(
+          '{{duration}}ms linear',
+          keyframes([style({ width: '0vw' }), style({ width: '100vw' })]),
+        ),
       ]),
     ]),
   ],
@@ -57,6 +60,7 @@ export class TimeoutComponent implements OnInit, OnDestroy {
 
   handleStopTimer() {
     this.timer && this.timer.unsubscribe();
+    this.timeoutService.hide();
     console.log('timer stopped');
   }
 }
