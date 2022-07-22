@@ -998,6 +998,7 @@ export type ElementAttributes = {
   visibility?: 'visible' | 'hidden';
   className?: string;
   style?: any;
+  reCalibrationCount?: number;
 };
 
 export type VideoElementState = {
@@ -1059,7 +1060,7 @@ export interface ActivityBase {
    * The screen showing the name of the next activity and waiting for the user input
    * such as raising one or two hands
    */
-  welcome(): Array<() => Promise<any>>;
+  welcome(): Array<(reCalibrationCount: number) => Promise<any>>;
 
   /**
    * The flow to teach the user how to complete the activity
@@ -1069,22 +1070,22 @@ export interface ActivityBase {
    * 2. User has not done this activity in last one week
    * 3. User explicitly asks to complete the activity
    */
-  tutorial(): (() => Promise<void>)[];
+  tutorial(): ((reCalibrationCount: number) => Promise<void>)[];
 
   /**
    * The game loop. Game Service will call this function as many times as it needs.
    * The function is only supposed to take care of 1 iteration
    */
-  loop(): (() => Promise<void>)[];
+  loop(): ((reCalibrationCount: number) => Promise<void>)[];
 
   /**
    * Before the loop, if there is anything to let the user get ready
    */
-  preLoop(): (() => Promise<void>)[];
+  preLoop(): ((reCalibrationCount: number) => Promise<void>)[];
 
   /**
    * After the loop, if there is a score or something before sending the user on to the next
    * activity
    */
-  postLoop(): (() => Promise<void>)[];
+  postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
 }

@@ -45,6 +45,7 @@ export class GameService {
   _calibrationStatus: CalibrationStatusType;
   gameStatus = {
     stage: 'welcome',
+    breakpoint: 0,
   };
 
   get calibrationStatus() {
@@ -174,18 +175,45 @@ export class GameService {
 
     const activity = this.getActivities()[nextGame.name];
     const remainingStages = this.getRemainingStages();
+    console.log('remainingStages', remainingStages);
+
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
     // the game at the exact same stage.
     if (activity) {
-      const response = await this.gameStateService.newGame(nextGame.name);
-      if (response.data) {
-        this.store.dispatch(game.newGame(response.data.insert_game_one));
+      try {
+        const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+          console.log(err);
+        });
+        if (response && response.data) {
+          this.store.dispatch(game.newGame(response.data.insert_game_one));
+        }
+      } catch (err) {
+        console.log(err);
       }
+
       for (let i = 0; i < remainingStages.length; i++) {
-        this.gameStatus.stage = remainingStages[i];
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        await this.executeBatch(reCalibrationCount, activity[remainingStages[i]]());
+        if (reCalibrationCount !== this.reCalibrationCount) {
+          throw new Error('Re-calibration occurred');
+        }
+
+        if (remainingStages[i] === this.gameStatus.stage) {
+          this.gameStatus = {
+            stage: remainingStages[i],
+            breakpoint: this.gameStatus.breakpoint,
+          };
+        } else {
+          this.gameStatus = {
+            stage: remainingStages[i],
+            breakpoint: 0,
+          };
+        }
+
+        await this.executeBatch(
+          reCalibrationCount,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          activity[remainingStages[i]](reCalibrationCount),
+        );
       }
       // await this.executeBatch(reCalibrationCount, activity['welcome']());
       // // TODO, check if the tutorial needs to run
@@ -215,16 +243,27 @@ export class GameService {
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
   }
 
-  async executeBatch(reCalibrationCount: number, batch: Array<() => Promise<any>>) {
+  async executeBatch(
+    reCalibrationCount: number,
+    batch: Array<(reCalibrationCount: number) => Promise<any>>,
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
-        for (let i = 0; i < batch.length; i++) {
+        for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
             reject('Recalibration count changed');
-            return;
-            // throw new Error('Recalibration count changed');
+            throw new Error('Recalibration count changed');
+            // TODO save the index of the current item in the batch.
           }
-          await batch[i]();
+          this.gameStatus.breakpoint = i;
+          console.log(
+            'Updated breakpoint (reCalibrationCount)',
+            reCalibrationCount,
+            this.gameStatus.stage,
+            this.gameStatus.breakpoint,
+          );
+
+          await batch[i](this.reCalibrationCount);
         }
         resolve({});
       } catch (err) {
