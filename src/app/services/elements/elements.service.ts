@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 import { BannerService } from './banner/banner.service';
+import { GuideService } from './guide/guide.service';
 import { OverlayService } from './overlay/overlay.service';
 import { PromptService } from './prompt/prompt.service';
 import { RibbonService } from './ribbon/ribbon.service';
@@ -22,6 +23,7 @@ export class ElementsService {
     public ribbon: RibbonService,
     public overlay: OverlayService,
     public banner: BannerService,
+    public guide: GuideService,
   ) {}
 
   async sleep(timeout: number) {
@@ -42,6 +44,7 @@ export class ElementsService {
       ribbon: this.ribbon.subject,
       overlay: this.overlay.subject,
       banner: this.banner.subject,
+      guide: this.guide.subject,
     };
   }
 
@@ -55,6 +58,7 @@ export class ElementsService {
       ribbon: this.ribbon.state,
       overlay: this.overlay.state,
       banner: this.banner.state,
+      guide: this.guide.state,
     };
   }
 }
