@@ -7,6 +7,7 @@ import {
   ActivityBase,
   ActivityConfiguration,
   CalibrationStatusType,
+  HandTrackerStatus,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -16,6 +17,7 @@ import { PoseService } from '../pose/pose.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
+import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 
 @Injectable({
   providedIn: 'root',
@@ -66,6 +68,7 @@ export class GameService {
     private elements: ElementsService,
     private uiHelperService: UiHelperService,
     private calibrationService: CalibrationService,
+    private handTrackerService: HandTrackerService,
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private sitToStandService: SitToStandService,

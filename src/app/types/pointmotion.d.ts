@@ -41,6 +41,8 @@ export declare class Calibration {
 
 export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
 
+export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'both-hands' | undefined;
+
 /**
  * We support two modes: 'full' | 'fast'.
  * 'full' mode is enabled by default.

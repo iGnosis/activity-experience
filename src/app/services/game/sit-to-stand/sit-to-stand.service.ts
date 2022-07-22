@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { ActivityBase } from 'src/app/types/pointmotion';
+import { debounceTime } from 'rxjs';
+import { ActivityBase, HandTrackerStatus } from 'src/app/types/pointmotion';
+import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 
@@ -8,10 +10,13 @@ import { GameStateService } from '../../game-state/game-state.service';
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
+  _handTrackerStatus: HandTrackerStatus;
+
   constructor(
     private store: Store,
     private elements: ElementsService,
     private gameStateService: GameStateService,
+    private handTrackerService: HandTrackerService,
   ) {
     this.store
       .select((state: any) => state.game)
@@ -21,6 +26,15 @@ export class SitToStandService implements ActivityBase {
           this.gameStateService.updateGame(game.id, game);
         }
       });
+
+    this.handTrackerService.enable();
+    this.handTrackerService.result
+      .pipe(debounceTime(1500))
+      .subscribe((status: HandTrackerStatus) => {
+        this._handTrackerStatus = status;
+        console.log('SitToStandService:_handTrackerStatus:', this._handTrackerStatus);
+      });
+
     // Register this service with with something...
   }
 
@@ -73,6 +87,9 @@ export class SitToStandService implements ActivityBase {
           },
         };
         await this.elements.sleep(7000);
+      },
+      async () => {
+        // wait for hand raised movement
       },
     ];
   }
