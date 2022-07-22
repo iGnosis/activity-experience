@@ -305,21 +305,30 @@ export class SitToStandService implements ActivityBase {
         this.elements.banner.state = {
           data: {
             htmlStr: `
-            <h2 class="text-primary p-5">When consecutive even or odd numbers appear.</h2>
-            <h3 class="text-primary p-5">Continue sitting or standing until the timer below runs out.</h3>
-            `,
-            buttons: [
-              {
-                title: 'Starts in 3 seconds',
-                progressDurationMs: 3000,
-              },
-            ],
+              <div class="w-full h-100 position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                <div class='p-4 d-flex flex-row align-items-center justify-content-between w-full p-5'>
+                      <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>42</div>
+                </div>
+                <p class="display-6 text-white text-start px-5">When consecutive even or odd numbers appear.</p>
+                <div class="p-5 w-full">
+                  <hr style="border: 2px solid #A0AEC0;">
+                  <p class="h1 text-start text-white">Continue sitting or<br/>standing until the timer<br/>below runs out.</p>
+                </div>
+              </div>
+        `,
           },
           attributes: {
             visibility: 'visible',
           },
         };
-        await this.elements.sleep(5000);
+        await this.elements.sleep(3000);
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+          },
+        };
 
         const promptNums = [15, 20, 16];
         for (let i = 0; i < promptNums.length; i++) {
