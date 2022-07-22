@@ -25,33 +25,60 @@ export class SitToStandService implements ActivityBase {
   }
 
   welcome() {
+    console.log('running welcome');
     return [
       async () => {
         this.elements.ribbon.state = {
-          data: {
-            titles: ['Instructions'],
-            transitionDuration: 1000,
-          },
           attributes: {
             visibility: 'visible',
           },
+          data: {
+            titles: ['Next Activity', 'Sit, Stand, Achieve'],
+            transitionDuration: 1000,
+          },
         };
-        await this.elements.sleep(4000);
+        await this.elements.sleep(6000);
+      },
+      async () => {
         this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
           },
           data: {
             ...this.elements.overlay.state.data,
-            transitionDuration: 1000,
+            transitionDuration: 2000,
           },
         };
-        await this.elements.sleep(4000);
+        await this.elements.sleep(8000);
+      },
+      async () => {
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+          },
+          data: {
+            type: 'intro',
+            htmlStr: `
+            <h2 class="pt-2">First Activity</h2>
+            <h1 class="pt-3 display-5">Sit, Stand, Achieve</h1>
+            <h2 class="pt-6" style="font-weight: 200">Area of Focus</h2>
+            <h2 class="pt-2">Balance and Reaction Time</h2>
+            `,
+            buttons: [
+              {
+                title: 'Starting Sit, Stand, Achieve',
+                progressDurationMs: 5000,
+              },
+            ],
+          },
+        };
+        await this.elements.sleep(7000);
       },
     ];
   }
 
   tutorial() {
+    console.log('running tutorial');
     return [
       async () => {
         this.elements.ribbon.state = {
@@ -99,6 +126,10 @@ export class SitToStandService implements ActivityBase {
     ];
   }
 
+  preLoop() {
+    return [];
+  }
+
   loop() {
     return [
       // async () => {
@@ -118,11 +149,28 @@ export class SitToStandService implements ActivityBase {
     ];
   }
 
-  preLoop() {
-    return [];
-  }
-
   postLoop() {
-    return [];
+    return [
+      async () => {
+        this.elements.banner.show();
+        this.elements.banner.data = {
+          type: 'outro',
+          htmlStr: `
+          <div class="pl-2" style="padding-left: 20px;">
+            <h1 class="pt-3 display-4">Sit, Stand, Achieve</h1>
+            <h2 class="pt-2">Time: 1:17 minutes</h2>
+            <h2 class="pt-2">Fastest Time: 0:31 minutes</h2>
+            <h2 class="pt-2">Reps Completed: 10</h2>
+          <div>
+          `,
+          buttons: [
+            {
+              title: 'Next Activity',
+            },
+          ],
+        };
+        await this.elements.sleep(6000);
+      },
+    ];
   }
 }
