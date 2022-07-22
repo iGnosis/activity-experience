@@ -25,6 +25,7 @@ export class TimeoutComponent implements OnInit, OnDestroy {
   attributes: ElementAttributes;
   source: Observable<number>;
   timer: Subscription;
+  isTimeOutRunning = false;
   constructor(private timeoutService: TimeoutService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
@@ -49,8 +50,12 @@ export class TimeoutComponent implements OnInit, OnDestroy {
   }
 
   handleStartTimer(timeOutDuration: number) {
+    if (this.isTimeOutRunning) {
+      return;
+    }
     this.source = timer(0, 1000);
     console.log('timer Started');
+    this.isTimeOutRunning = true;
     this.timer = this.source.subscribe((val) => {
       if (val * 1000 >= timeOutDuration) {
         this.handleStopTimer();
@@ -59,7 +64,11 @@ export class TimeoutComponent implements OnInit, OnDestroy {
   }
 
   handleStopTimer() {
+    if (!this.isTimeOutRunning) {
+      return;
+    }
     this.timer && this.timer.unsubscribe();
+    this.isTimeOutRunning = false;
     this.timeoutService.hide();
     console.log('timer stopped');
   }
