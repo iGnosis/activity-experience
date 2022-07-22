@@ -37,8 +37,12 @@ export class GameService {
     },
   };
   gameCount = 0;
-
+  gamesCompleted: Array<Activities> = [];
+  reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
+  gameStatus = {
+    stage: 'welcome',
+  };
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -50,6 +54,8 @@ export class GameService {
     this._calibrationStatus = status;
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+    } else if (status === 'success') {
+      this.startGame();
     }
   }
 
@@ -74,8 +80,8 @@ export class GameService {
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.startGame();
       this.setupSubscriptions();
+      this.startCalibration();
     } catch (err: any) {
       console.log(err);
     }
@@ -115,8 +121,10 @@ export class GameService {
   setupSubscriptions() {
     this.calibrationService.enable();
     this.calibrationService.result.subscribe((status: any) => {
-      console.log(status);
       this.calibrationStatus = status;
+    });
+    this.calibrationService.reCalibrationCount.subscribe((count: number) => {
+      this.reCalibrationCount = count;
     });
   }
 
@@ -138,8 +146,8 @@ export class GameService {
   findNextGame(): { name: Activities; settings: ActivityConfiguration } | undefined {
     // TODO: Through an API call find out which game needs to be started next.
     // For now, always starting sit.stand.achieve
-    this.gameCount += 1;
-    if (this.gameCount <= 1) {
+    if (this.gamesCompleted.indexOf('sit-stand-achieve') === -1) {
+      // If the person has not played sit2stand yet.
       return {
         name: 'sit-stand-achieve',
         settings: environment.settings['sit-stand-achieve'],
@@ -149,21 +157,36 @@ export class GameService {
     }
   }
 
+  getRemainingStages() {
+    const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+    return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
+  }
+
   async startGame() {
+    const reCalibrationCount = this.reCalibrationCount;
     let nextGame = this.findNextGame();
     if (!nextGame) return;
+
     const activity = this.getActivities()[nextGame.name];
+    const remainingStages = this.getRemainingStages();
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
     // the game at the exact same stage.
     if (activity) {
-      await this.executeBatch(activity.welcome());
-      // TODO, check if the tutorial needs to run
-      await this.executeBatch(activity.tutorial());
-      await this.executeBatch(activity.preLoop());
-      // TODO, run the loop function for the required number of reps (based on the settings)
-      // Store the number of reps completed in the game state (and server)
-      await this.executeBatch(activity.loop());
-      await this.executeBatch(activity.postLoop());
+      for (let i = 0; i < remainingStages.length; i++) {
+        this.gameStatus.stage = remainingStages[i];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        await this.executeBatch(reCalibrationCount, activity[remainingStages[i]]());
+      }
+      // await this.executeBatch(reCalibrationCount, activity['welcome']());
+      // // TODO, check if the tutorial needs to run
+      // await this.executeBatch(reCalibrationCount, activity.tutorial());
+      // await this.executeBatch(reCalibrationCount, activity.preLoop());
+      // // TODO, run the loop function for the required number of reps (based on the settings)
+      // // Store the number of reps completed in the game state (and server)
+      // await this.executeBatch(reCalibrationCount, activity.loop());
+      // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.gamesCompleted.push(nextGame.name);
     }
     // If more games available, start the next game.
     nextGame = this.findNextGame();
@@ -178,14 +201,22 @@ export class GameService {
     // const items = await this.sitToStandService.preLoop();
   }
 
-  async executeBatch(batch: Array<() => Promise<any>>) {
-    // TODO: Handle recalibration
-    return new Promise((resolve, reject) => {
+  async startCalibration() {
+    // TODO: Start the calibration process.
+    this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+  }
+
+  async executeBatch(reCalibrationCount: number, batch: Array<() => Promise<any>>) {
+    return new Promise(async (resolve, reject) => {
       try {
-        console.log(batch);
-        batch.forEach(async (item) => {
-          await item();
-        });
+        for (let i = 0; i < batch.length; i++) {
+          if (this.reCalibrationCount !== reCalibrationCount) {
+            reject('Recalibration count changed');
+            return;
+            // throw new Error('Recalibration count changed');
+          }
+          await batch[i]();
+        }
         resolve({});
       } catch (err) {
         reject(err);

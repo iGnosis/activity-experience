@@ -74,12 +74,7 @@ export class CalibrationService {
     if (!game) {
       throw new Error('Invalid game object');
     } else {
-      if (game.scene.isActive('sit2stand')) {
-        game.scene.stop('sit2stand');
-        game.scene.start('calibration');
-      } else {
-        console.log('calibration is already active');
-      }
+      game.scene.start('calibration');
     }
   }
 
@@ -91,6 +86,10 @@ export class CalibrationService {
       y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height;
 
     return isPointWithinCalibrationBox;
+  }
+
+  facilitateCalibration(game: Phaser.Game) {
+    // TODO: Have the communication implemented here.
   }
 
   _calibrateBody(

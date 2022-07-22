@@ -61,7 +61,51 @@ export class SitToStandService implements ActivityBase {
   }
 
   tutorial() {
-    return [];
+    return [
+      async () => {
+        this.elements.ribbon.state = {
+          data: {
+            titles: ['Tutorial', 'Starting Now'],
+            transitionDuration: 1000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(4000);
+        this.elements.score.state = {
+          attributes: {
+            visibility: 'visible',
+          },
+          data: {
+            label: 'Score',
+            value: '0',
+          },
+        };
+      },
+      async () => {
+        await this.elements.sleep(8000);
+        this.elements.ribbon.state = {
+          data: {
+            titles: ['Tut, tut.', '1', '2', '3'],
+            transitionDuration: 1000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(4000);
+        this.elements.score.state = {
+          attributes: {
+            visibility: 'visible',
+          },
+          data: {
+            label: 'Score',
+            value: '100',
+          },
+        };
+      },
+    ];
   }
 
   loop() {
