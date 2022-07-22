@@ -1,0 +1,14 @@
+h2 {
+    &::after {
+        content: "";
+        display: block;
+        width: 1.5rem;
+        height: 1.5rem;
+        background-color: #fff;
+        position: absolute;
+        z-index: -1;
+        top: 50%;
+        left: 0;
+        transform: translate(-50%, -50%) rotate(45deg);
+    }
+}

@@ -91,40 +91,25 @@ export class ElementsComponent implements OnInit, OnDestroy {
     };
   }
   updateElement() {
-    this.elements.timer.data = {
-      mode: 'start',
-      duration: 10000,
-      onComplete: (elapsedTime) => {
-        console.log('total elapsed time', elapsedTime);
-        this.elements.timer.state.attributes = {
-          visibility: 'hidden',
-        };
-      },
-    };
-    this.elements.video.state = {
+    this.elements.timeout.state = {
       data: {
-        type: 'gif',
-        src: 'https://media.giphy.com/media/dZjllNOkjKPnofe34O/giphy-downsized.gif',
-        title: 'Did you hear that?',
-        description: 'You just created music by hitting the punching bag!',
+        mode: 'start',
+        timeout: 5000,
       },
       attributes: {
         visibility: 'visible',
       },
     };
 
-    // setTimeout(() => {
-    //   this.elements.timer.state = {
-    //     data: {
-    //       mode: 'stop',
-    //     },
-    //     attributes: {
-    //       visibility: 'hidden',
-    //     },
-    //   };
-    // }, 6000);
     setTimeout(() => {
-      this.elements.video.state.attributes.visibility = 'hidden';
-    }, 5000);
+      this.elements.timeout.state = {
+        data: {
+          mode: 'stop',
+        },
+        attributes: {
+          visibility: 'hidden',
+        },
+      };
+    }, 2000);
   }
 }

@@ -977,6 +977,18 @@ export type BannerElementState = {
   type?: 'intro' | 'outro';
 };
 
+export type GuideElementState = {
+  /**
+   * Inputs a string to be shown to guide the player.
+   */
+  title?: string;
+
+  /**
+   * Inputs a number indicating the total duration for which the title has to be shown.
+   */
+  titleDuration?: number;
+};
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -992,8 +1004,15 @@ export type PromptElementState = {
 };
 
 export type TimeoutElementState = {
+  /**
+   * Timeout can be controlled using the modes.
+   * * Note: During 'start' mode the 'duration' has to be specified.
+   */
+  mode: 'start' | 'stop';
+  /**
+   * Duration of the timeout in ms.
+   */
   timeout?: number;
-  className?: string;
 };
 
 export type ElementAttributes = {
@@ -1043,6 +1062,7 @@ export type ElementsState = {
   ribbon: { data: RibbonElementState; attributes: ElementAttributes };
   overlay: { data: OverlayElementState; attributes: ElementAttributes };
   banner: { data: BannerElementState; attributes: ElementAttributes };
+  guide: { data: GuideElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1054,6 +1074,7 @@ export type ElementsObservables = {
   ribbon: Observable<{ data: RibbonElementState; attributes: ElementAttributes }>;
   overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
+  guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
