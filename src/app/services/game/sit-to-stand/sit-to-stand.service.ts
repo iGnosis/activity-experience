@@ -123,6 +123,121 @@ export class SitToStandService implements ActivityBase {
           },
         };
       },
+      async () => {
+        this.elements.banner.state = {
+          data: {
+            htmlStr: `
+            <h2 class="text-primary p-5">When consecutive even or odd numbers appear.</h2>
+            <h3 class="text-primary p-5">Continue sitting or standing until the timer below runs out.</h3>
+            `,
+            buttons: [
+              {
+                title: 'Starts in 3 seconds',
+                progressDurationMs: 3000,
+              },
+            ],
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(5000);
+
+        const promptNums = [15, 20, 16];
+        for (let i = 0; i < promptNums.length; i++) {
+          this.elements.prompt.state = {
+            data: {
+              value: promptNums[i],
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          this.elements.timeout.state = {
+            data: {
+              mode: 'start',
+              timeout: 2000,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          await this.elements.sleep(2500);
+        }
+        this.elements.prompt.attributes = {
+          visibility: 'hidden',
+        };
+        this.elements.guide.state = {
+          data: {
+            title: "Great job, looks like you're getting the hang of it.",
+            titleDuration: 2000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(2000);
+      },
+      async () => {
+        this.elements.score.state = {
+          data: {
+            label: 'Reps',
+            value: 0,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        this.elements.ribbon.state = {
+          data: {
+            titles: ["Let's get 5 correct repetitions", '3', '2', '1', 'Go!'],
+            transitionDuration: 800,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(14000);
+
+        const promptNums = Array.from({ length: 5 }, () => Math.floor(Math.random() * 100));
+
+        for (let i = 0; i < promptNums.length; i++) {
+          this.elements.prompt.state = {
+            data: {
+              value: promptNums[i],
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          this.elements.timeout.state = {
+            data: {
+              mode: 'start',
+              timeout: 2000,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          await this.elements.sleep(2500);
+        }
+        this.elements.score.attributes = {
+          visibility: 'hidden',
+        };
+        this.elements.prompt.attributes = {
+          visibility: 'hidden',
+        };
+        this.elements.ribbon.state = {
+          data: {
+            titles: ['Guide completed'],
+            transitionDuration: 800,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+        await this.elements.sleep(3400);
+      },
     ];
   }
 
