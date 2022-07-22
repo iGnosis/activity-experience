@@ -1,14 +1,26 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { ActivityBase } from 'src/app/types/pointmotion';
 import { ElementsService } from '../../elements/elements.service';
+import { GameStateService } from '../../game-state/game-state.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
-  constructor(private elements: ElementsService) {
-    // Setup redux to have access to the game state all the time
-    // TODO... add code subscribe to the store
+  constructor(
+    private store: Store,
+    private elements: ElementsService,
+    private gameStateService: GameStateService,
+  ) {
+    this.store
+      .select((state: any) => state.game)
+      .subscribe((game) => {
+        if (game.id) {
+          //Update the game state whenever redux state changes
+          this.gameStateService.updateGame(game.id, game);
+        }
+      });
     // Register this service with with something...
   }
 
@@ -17,7 +29,7 @@ export class SitToStandService implements ActivityBase {
       async () => {
         this.elements.ribbon.state = {
           data: {
-            titles: ['Sit To Stand', 'Starting Now'],
+            titles: ['Instructions'],
             transitionDuration: 1000,
           },
           attributes: {
@@ -25,37 +37,16 @@ export class SitToStandService implements ActivityBase {
           },
         };
         await this.elements.sleep(4000);
-        this.elements.score.state = {
+        this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
           },
           data: {
-            label: 'Score',
-            value: '0',
-          },
-        };
-      },
-      async () => {
-        await this.elements.sleep(8000);
-        this.elements.ribbon.state = {
-          data: {
-            titles: ['Ok, starting now.', '1', '2', '3'],
+            ...this.elements.overlay.state.data,
             transitionDuration: 1000,
-          },
-          attributes: {
-            visibility: 'visible',
           },
         };
         await this.elements.sleep(4000);
-        this.elements.score.state = {
-          attributes: {
-            visibility: 'visible',
-          },
-          data: {
-            label: 'Score',
-            value: '100',
-          },
-        };
       },
     ];
   }

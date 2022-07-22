@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import {
@@ -10,9 +11,11 @@ import {
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ElementsService } from '../elements/elements.service';
+import { GameStateService } from '../game-state/game-state.service';
 import { PoseService } from '../pose/pose.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
+import { game } from '../../store/actions/game.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -67,6 +70,8 @@ export class GameService {
     private sitToStandScene: SitToStandScene,
     private sitToStandService: SitToStandService,
     private poseService: PoseService,
+    private store: Store,
+    private gameStateService: GameStateService,
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
@@ -112,9 +117,9 @@ export class GameService {
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
-      'sit-stand-achieve': this.sitToStandService,
-      'beat-boxer': this.sitToStandService,
-      'sound-slicer': this.sitToStandService,
+      sit_stand_achieve: this.sitToStandService,
+      beat_boxer: this.sitToStandService,
+      sound_slicer: this.sitToStandService,
     };
   }
 
@@ -146,11 +151,11 @@ export class GameService {
   findNextGame(): { name: Activities; settings: ActivityConfiguration } | undefined {
     // TODO: Through an API call find out which game needs to be started next.
     // For now, always starting sit.stand.achieve
-    if (this.gamesCompleted.indexOf('sit-stand-achieve') === -1) {
+    if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
       // If the person has not played sit2stand yet.
       return {
-        name: 'sit-stand-achieve',
-        settings: environment.settings['sit-stand-achieve'],
+        name: 'sit_stand_achieve',
+        settings: environment.settings['sit_stand_achieve'],
       };
     } else {
       return;
@@ -172,6 +177,10 @@ export class GameService {
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
     // the game at the exact same stage.
     if (activity) {
+      const response = await this.gameStateService.newGame(nextGame.name);
+      if (response.data) {
+        this.store.dispatch(game.newGame(response.data.insert_game_one));
+      }
       for (let i = 0; i < remainingStages.length; i++) {
         this.gameStatus.stage = remainingStages[i];
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment

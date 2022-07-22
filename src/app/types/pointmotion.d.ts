@@ -728,7 +728,7 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit-stand-achieve' | 'beat-boxer' | 'sound-slicer';
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_slicer';
 export interface ActivityConfiguration {
   configuration: {
     /**
@@ -867,13 +867,13 @@ export type GameState = {
    */
   updatedAt?: string;
   /**
-   * Indicates status of the game.
+   * Indicates when the game was ended.
    */
-  status?: string;
+  endedAt?: string;
   /**
    * Array of strings of game names.
    */
-  game?: string[];
+  game?: string;
   /**
    * Indicates the number of reps completed
    */
@@ -886,6 +886,10 @@ export type GameState = {
    * Analytics for the game.
    */
   analytics?: AnalyticsDTO[];
+  /**
+   * Patient ID of the patient playing the game.
+   */
+  patient?: string;
 };
 
 export type ScoreElementState = {
