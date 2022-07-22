@@ -150,6 +150,7 @@ export class SitToStandService implements ActivityBase {
   }
 
   postLoop() {
+    console.log('running postLoop');
     return [
       async () => {
         this.elements.banner.show();
