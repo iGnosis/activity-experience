@@ -1,7 +1,7 @@
 import { createAction, props } from '@ngrx/store';
-import { PreferenceState } from 'src/app/types/pointmotion';
+import { Genre, PreferenceState } from 'src/app/types/pointmotion';
 
 export const preference = {
-  updateGenre: createAction('[Preference] Update Genre', props<PreferenceState>()),
-  updateMood: createAction('[Preference] Update Mood', props<PreferenceState>()),
+  updateGenre: createAction('[Preference] Update Genre', props<{ genre: Genre }>()),
+  updateMood: createAction('[Preference] Update Mood', props<{ mood: string }>()),
 };

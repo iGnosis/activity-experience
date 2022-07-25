@@ -3,7 +3,7 @@ import { getTestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { session } from 'src/app/store/actions/session.actions';
-import { PreSessionGenre } from 'src/app/types/pointmotion';
+import { Genre } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-select-genre',
@@ -16,21 +16,21 @@ export class SelectGenreComponent implements OnInit {
 
   debouncedPlayMusic: (...args: any[]) => void;
 
-  genres: Array<{ title: PreSessionGenre; selected?: boolean }> = [
+  genres: Array<{ title: Genre; selected?: boolean }> = [
     {
-      title: 'Classical',
+      title: 'classical',
     },
     {
-      title: 'Jazz',
+      title: 'jazz',
     },
     {
-      title: 'Rock',
+      title: 'rock',
     },
     {
-      title: 'Dance',
+      title: 'dance',
     },
     {
-      title: 'Surprise Me!',
+      title: 'surprise me!',
     },
   ];
 
@@ -56,7 +56,7 @@ export class SelectGenreComponent implements OnInit {
 
   playMusic(genre: string) {
     this.playState = 'play';
-    this.soundsService.playGenreSound(genre as PreSessionGenre);
+    this.soundsService.playGenreSound(genre as Genre);
   }
 
   stopMusic(genre?: string) {
@@ -66,9 +66,9 @@ export class SelectGenreComponent implements OnInit {
   }
 
   selectGenre(mood: { title: string; selected?: boolean }) {
-    this.soundsService.stopGenreSound(mood.title as PreSessionGenre);
+    this.soundsService.stopGenreSound(mood.title as Genre);
     mood.selected = true;
-    this.store.dispatch(session.setGenre({ genre: mood.title as PreSessionGenre }));
+    this.store.dispatch(session.setGenre({ genre: mood.title as Genre }));
     setTimeout(() => {
       this.selected.emit(mood.title);
     }, 1000);

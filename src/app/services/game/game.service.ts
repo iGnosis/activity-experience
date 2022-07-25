@@ -7,6 +7,7 @@ import {
   ActivityBase,
   ActivityConfiguration,
   CalibrationStatusType,
+  Genre,
   HandTrackerStatus,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
@@ -18,6 +19,7 @@ import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
+import { CheckinService } from '../checkin/checkin.service';
 
 @Injectable({
   providedIn: 'root',
@@ -76,6 +78,7 @@ export class GameService {
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
+    private checkinService: CheckinService,
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
@@ -190,6 +193,8 @@ export class GameService {
         if (response && response.data) {
           this.store.dispatch(game.newGame(response.data.insert_game_one));
         }
+        // get genre
+        this.checkinService.getUserGenre();
       } catch (err) {
         console.log(err);
       }

@@ -14,16 +14,14 @@ const initialState: PreferenceState = {};
 const _preferenceReducer = createReducer(
   initialState,
   on(preference.updateGenre, (state, data) => {
-    return {
-      ...state,
-      ...data,
-    };
+    const newState = Object.assign({}, state);
+    newState.genre = data.genre;
+    return newState;
   }),
   on(preference.updateMood, (state, data) => {
-    return {
-      ...state,
-      ...data,
-    };
+    const newState = Object.assign({}, state);
+    newState.mood = data.mood;
+    return newState;
   }),
 );
 

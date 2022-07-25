@@ -1,31 +1,51 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { debounceTime } from 'rxjs';
-import { ActivityBase, HandTrackerStatus } from 'src/app/types/pointmotion';
+import {
+  ActivityBase,
+  GameState,
+  Genre,
+  HandTrackerStatus,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
+import { preference } from 'src/app/store/actions/preference.actions';
+import { SoundsService } from '../../sounds/sounds.service';
 @Injectable({
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
+  private genre: Genre;
 
   constructor(
-    private store: Store,
+    private store: Store<{
+      game: GameState;
+      preference: PreferenceState;
+    }>,
     private elements: ElementsService,
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
+    private soundsService: SoundsService,
   ) {
     this.store
-      .select((state: any) => state.game)
+      .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
           //Update the game state whenever redux state changes
           this.gameStateService.updateGame(game.id, game);
         }
+      });
+
+    this.store
+      .select((state) => state.preference)
+      .subscribe((preference) => {
+        this.genre = preference.genre || 'jazz';
+        this.soundsService.loadMusicFiles(this.genre);
       });
 
     this.handTrackerService.enable();

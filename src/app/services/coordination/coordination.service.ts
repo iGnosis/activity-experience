@@ -8,7 +8,7 @@ import {
   ActivityState,
   AnnouncementState,
   GuideState,
-  PreSessionGenre,
+  Genre,
   SessionRow,
   SessionState,
 } from 'src/app/types/pointmotion';
@@ -37,7 +37,7 @@ export class CoordinationService {
   private currentPromptIdx = 0;
   private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
-  private genre: PreSessionGenre;
+  private genre: Genre;
   private runConfig = {
     id: 1,
     reps: 0,
