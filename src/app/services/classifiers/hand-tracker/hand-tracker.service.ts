@@ -43,7 +43,7 @@ export class HandTrackerService {
   }
 
   classify(pose: Results): { status: HandTrackerStatus } {
-    if (!this.isEnabled) {
+    if (!this.isEnabled || !pose || !pose.poseLandmarks) {
       return { status: undefined };
     }
 
