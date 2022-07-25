@@ -32,6 +32,9 @@ export class CalibrationService {
         if (newStatus.status === 'success') {
           this._reCalibrationCount += 1;
           this.reCalibrationCount.next(this._reCalibrationCount);
+        } else if (newStatus.status === 'error') {
+          this._reCalibrationCount += 1;
+          this.reCalibrationCount.next(this._reCalibrationCount);
         }
         // Update all the subscribers interested in calibration status
         this.result.next(newStatus.status);
