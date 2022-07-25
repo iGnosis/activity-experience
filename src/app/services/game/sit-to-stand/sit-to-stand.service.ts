@@ -16,6 +16,7 @@ import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-
 import { preference } from 'src/app/store/actions/preference.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
+import { game } from 'src/app/store/actions/game.actions';
 @Injectable({
   providedIn: 'root',
 })
@@ -533,6 +534,7 @@ export class SitToStandService implements ActivityBase {
             });
             this.elements.prompt.state.data.value = '✓';
             this.successfulReps += 1;
+            this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
               data: {
                 label: 'Reps',
