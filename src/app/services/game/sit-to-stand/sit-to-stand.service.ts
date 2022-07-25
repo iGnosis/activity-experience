@@ -119,45 +119,206 @@ export class SitToStandService implements ActivityBase {
     console.log('running tutorial');
     return [
       async () => {
-        this.elements.ribbon.state = {
+        this.elements.guide.state = {
           data: {
-            titles: ['Tutorial', 'Starting Now'],
-            transitionDuration: 1000,
+            title: 'This activity is a simple play on the sit to stand exercise.',
+            titleDuration: 3000,
           },
           attributes: {
             visibility: 'visible',
           },
         };
-        await this.elements.sleep(4000);
-        this.elements.score.state = {
+        await this.elements.sleep(3000);
+
+        this.elements.banner.state = {
+          data: {
+            htmlStr: `
+              <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                <div class='p-4 d-flex flex-row align-items-center'>
+                      <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>1</div>
+                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>17</div>
+                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>23</div>
+                </div>
+                <div>
+                  <hr style="border: 2px solid #A0AEC0;">
+                  <p class=" display-6 text-white">Odd Number - Stand Up</p>
+                </div>
+              </div>
+        `,
+          },
           attributes: {
             visibility: 'visible',
           },
+        };
+
+        await this.elements.sleep(3000);
+
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+          },
+        };
+
+        await this.elements.sleep(500);
+
+        this.elements.banner.state = {
           data: {
-            label: 'Score',
-            value: '0',
+            htmlStr: `
+                <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                  <div class='p-4 d-flex flex-row align-items-center'>
+                        <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>2</div>
+                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>14</div>
+                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>38</div>
+                  </div>
+                  <div>
+                    <hr style="border: 2px solid #A0AEC0;">
+                    <p class=" display-6 text-white">Even Number - Sit Down</p>
+                  </div>
+                </div>
+
+            `,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        await this.elements.sleep(3000);
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+          },
+        };
+
+        this.elements.guide.state = {
+          data: {
+            title: 'Let’s try it out.',
+            titleDuration: 4000,
+          },
+          attributes: {
+            visibility: 'visible',
           },
         };
       },
       async () => {
-        await this.elements.sleep(8000);
-        this.elements.ribbon.state = {
+        this.elements.prompt.state = {
           data: {
-            titles: ['Tut, tut.', '1', '2', '3'],
-            transitionDuration: 1000,
+            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+            position: 'center',
           },
           attributes: {
             visibility: 'visible',
           },
         };
-        await this.elements.sleep(4000);
-        this.elements.score.state = {
+
+        this.elements.timeout.state = {
+          data: {
+            mode: 'start',
+            timeout: 5000,
+          },
           attributes: {
             visibility: 'visible',
           },
+        };
+
+        await this.elements.sleep(6000);
+
+        this.elements.prompt.state = {
           data: {
-            label: 'Score',
-            value: '100',
+            value: (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+            position: 'center',
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        this.elements.timeout.state = {
+          data: {
+            mode: 'start',
+            timeout: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        await this.elements.sleep(6000);
+
+        this.elements.prompt.state = {
+          data: {
+            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+            position: 'center',
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        this.elements.timeout.state = {
+          data: {
+            mode: 'start',
+            timeout: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        await this.elements.sleep(6000);
+
+        this.elements.prompt.state = {
+          data: {
+            value: (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+            position: 'center',
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        this.elements.timeout.state = {
+          data: {
+            mode: 'start',
+            timeout: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        await this.elements.sleep(6000);
+
+        this.elements.prompt.state = {
+          data: {
+            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+            position: 'center',
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        this.elements.timeout.state = {
+          data: {
+            mode: 'start',
+            timeout: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        await this.elements.sleep(6000);
+
+        this.elements.prompt.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
           },
         };
       },
@@ -165,21 +326,30 @@ export class SitToStandService implements ActivityBase {
         this.elements.banner.state = {
           data: {
             htmlStr: `
-            <h2 class="text-primary p-5">When consecutive even or odd numbers appear.</h2>
-            <h3 class="text-primary p-5">Continue sitting or standing until the timer below runs out.</h3>
-            `,
-            buttons: [
-              {
-                title: 'Starts in 3 seconds',
-                progressDurationMs: 3000,
-              },
-            ],
+              <div class="w-full h-100 position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                <div class='p-4 d-flex flex-row align-items-center justify-content-between w-full p-5'>
+                      <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>42</div>
+                </div>
+                <p class="display-6 text-white text-start px-5">When consecutive even or odd numbers appear.</p>
+                <div class="p-5 w-full">
+                  <hr style="border: 2px solid #A0AEC0;">
+                  <p class="h1 text-start text-white">Continue sitting or<br/>standing until the timer<br/>below runs out.</p>
+                </div>
+              </div>
+        `,
           },
           attributes: {
             visibility: 'visible',
           },
         };
-        await this.elements.sleep(5000);
+        await this.elements.sleep(3000);
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+          },
+        };
 
         const promptNums = [15, 20, 16];
         for (let i = 0; i < promptNums.length; i++) {
