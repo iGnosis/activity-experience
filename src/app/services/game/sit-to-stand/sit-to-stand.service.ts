@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { debounceTime } from 'rxjs';
+import { debounceTime, Subscription } from 'rxjs';
 import { ActivityBase, HandTrackerStatus } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
@@ -89,7 +89,28 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(7000);
       },
       async () => {
-        // wait for hand raised movement
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise your left hand to get started.',
+            titleDuration: 10000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
+        };
+
+        // maybe there's a better way...
+        const waitUntilHandRaised = async () => {
+          return new Promise((resolve, _) => {
+            const interval = setInterval(() => {
+              if (this._handTrackerStatus === 'left-hand') {
+                clearInterval(interval);
+                resolve({});
+              }
+            }, 300);
+          });
+        };
+        await waitUntilHandRaised();
       },
     ];
   }
