@@ -849,7 +849,7 @@ export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTask
 
 export type AnalyticsDTO = {
   prompt: number;
-  class: string;
+  class: 'sit' | 'stand';
   success: boolean;
   score: number;
   reactionTime: number;
