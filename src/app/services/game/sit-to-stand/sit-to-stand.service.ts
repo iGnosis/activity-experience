@@ -41,10 +41,11 @@ export class SitToStandService implements ActivityBase {
   welcome() {
     console.log('running welcome');
     return [
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
           data: {
             titles: ['Next Activity', 'Sit, Stand, Achieve'],
@@ -53,10 +54,11 @@ export class SitToStandService implements ActivityBase {
         };
         await this.elements.sleep(6000);
       },
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
           data: {
             ...this.elements.overlay.state.data,
@@ -65,10 +67,11 @@ export class SitToStandService implements ActivityBase {
         };
         await this.elements.sleep(8000);
       },
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
           data: {
             type: 'intro',
@@ -88,8 +91,30 @@ export class SitToStandService implements ActivityBase {
         };
         await this.elements.sleep(7000);
       },
-      async () => {
-        // wait for hand raised movement
+      async (reCalibrationCount: number) => {
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise your left hand to get started.',
+            titleDuration: 10000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        // maybe there's a better way...
+        const waitUntilHandRaised = async () => {
+          return new Promise((resolve, _) => {
+            const interval = setInterval(() => {
+              if (this._handTrackerStatus === 'left-hand') {
+                clearInterval(interval);
+                resolve({});
+              }
+            }, 300);
+          });
+        };
+        await waitUntilHandRaised();
       },
     ];
   }
@@ -97,7 +122,7 @@ export class SitToStandService implements ActivityBase {
   tutorial() {
     console.log('running tutorial');
     return [
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.guide.state = {
           data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
@@ -105,6 +130,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         await this.elements.sleep(3000);
@@ -128,6 +154,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -137,6 +164,7 @@ export class SitToStandService implements ActivityBase {
           data: {},
           attributes: {
             visibility: 'hidden',
+            reCalibrationCount,
           },
         };
 
@@ -162,6 +190,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -170,6 +199,7 @@ export class SitToStandService implements ActivityBase {
           data: {},
           attributes: {
             visibility: 'hidden',
+            reCalibrationCount,
           },
         };
 
@@ -180,10 +210,11 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
       },
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.prompt.state = {
           data: {
             value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
@@ -191,6 +222,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -201,6 +233,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -213,6 +246,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -223,6 +257,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -235,6 +270,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -245,6 +281,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -257,6 +294,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -267,6 +305,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -279,6 +318,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -289,6 +329,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
 
@@ -298,10 +339,11 @@ export class SitToStandService implements ActivityBase {
           data: {},
           attributes: {
             visibility: 'hidden',
+            reCalibrationCount,
           },
         };
       },
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.banner.state = {
           data: {
             htmlStr: `
@@ -320,6 +362,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         await this.elements.sleep(3000);
@@ -327,6 +370,7 @@ export class SitToStandService implements ActivityBase {
           data: {},
           attributes: {
             visibility: 'hidden',
+            reCalibrationCount,
           },
         };
 
@@ -338,6 +382,7 @@ export class SitToStandService implements ActivityBase {
             },
             attributes: {
               visibility: 'visible',
+              reCalibrationCount,
             },
           };
           this.elements.timeout.state = {
@@ -347,12 +392,14 @@ export class SitToStandService implements ActivityBase {
             },
             attributes: {
               visibility: 'visible',
+              reCalibrationCount,
             },
           };
           await this.elements.sleep(2500);
         }
         this.elements.prompt.attributes = {
           visibility: 'hidden',
+          reCalibrationCount,
         };
         this.elements.guide.state = {
           data: {
@@ -361,11 +408,12 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         await this.elements.sleep(2000);
       },
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.score.state = {
           data: {
             label: 'Reps',
@@ -373,6 +421,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         this.elements.ribbon.state = {
@@ -382,6 +431,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         await this.elements.sleep(14000);
@@ -395,6 +445,7 @@ export class SitToStandService implements ActivityBase {
             },
             attributes: {
               visibility: 'visible',
+              reCalibrationCount,
             },
           };
           this.elements.timeout.state = {
@@ -404,15 +455,18 @@ export class SitToStandService implements ActivityBase {
             },
             attributes: {
               visibility: 'visible',
+              reCalibrationCount,
             },
           };
           await this.elements.sleep(2500);
         }
         this.elements.score.attributes = {
           visibility: 'hidden',
+          reCalibrationCount,
         };
         this.elements.prompt.attributes = {
           visibility: 'hidden',
+          reCalibrationCount,
         };
         this.elements.ribbon.state = {
           data: {
@@ -421,6 +475,7 @@ export class SitToStandService implements ActivityBase {
           },
           attributes: {
             visibility: 'visible',
+            reCalibrationCount,
           },
         };
         await this.elements.sleep(3400);
@@ -454,7 +509,7 @@ export class SitToStandService implements ActivityBase {
   postLoop() {
     console.log('running postLoop');
     return [
-      async () => {
+      async (reCalibrationCount: number) => {
         this.elements.banner.show();
         this.elements.banner.data = {
           type: 'outro',
