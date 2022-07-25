@@ -855,6 +855,17 @@ export type AnalyticsDTO = {
   reactionTime: number;
 };
 
+export type PreferenceState = {
+  /**
+   * Genre preferred by the patient.
+   */
+  genre?: string;
+  /**
+   * Patient's current mood.
+   */
+  mood?: string;
+};
+
 export type GameState = {
   /**
    * UUID to identify the game.
