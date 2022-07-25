@@ -20,6 +20,7 @@ import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 import { CheckinService } from '../checkin/checkin.service';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable({
   providedIn: 'root',
@@ -79,9 +80,15 @@ export class GameService {
     private store: Store,
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
+    private jwtService: JwtService,
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+    if (!this.jwtService.getToken()) {
+      const parsedURL = new URL(window.location.href);
+      const baseURL = parsedURL.origin;
+      window.location.href = baseURL + '/public/login';
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
