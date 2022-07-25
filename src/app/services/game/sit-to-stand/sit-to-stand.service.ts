@@ -5,7 +5,7 @@ import { ActivityBase, HandTrackerStatus } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
-
+import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -17,6 +17,7 @@ export class SitToStandService implements ActivityBase {
     private elements: ElementsService,
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
+    private sit2StandService: Sit2StandService,
   ) {
     this.store
       .select((state: any) => state.game)
@@ -35,6 +36,7 @@ export class SitToStandService implements ActivityBase {
         console.log('SitToStandService:_handTrackerStatus:', this._handTrackerStatus);
       });
 
+    this.sit2StandService.enable();
     // Register this service with with something...
   }
 
@@ -215,125 +217,41 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        this.elements.prompt.state = {
-          data: {
-            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-            position: 'center',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        this.elements.timeout.state = {
-          data: {
-            mode: 'start',
-            timeout: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(6000);
-
-        this.elements.prompt.state = {
-          data: {
-            value: (Math.floor((Math.random() * 100) / 2) * 2).toString(),
-            position: 'center',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        this.elements.timeout.state = {
-          data: {
-            mode: 'start',
-            timeout: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(6000);
-
-        this.elements.prompt.state = {
-          data: {
-            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-            position: 'center',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        this.elements.timeout.state = {
-          data: {
-            mode: 'start',
-            timeout: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(6000);
-
-        this.elements.prompt.state = {
-          data: {
-            value: (Math.floor((Math.random() * 100) / 2) * 2).toString(),
-            position: 'center',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        this.elements.timeout.state = {
-          data: {
-            mode: 'start',
-            timeout: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(6000);
-
-        this.elements.prompt.state = {
-          data: {
-            value: (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-            position: 'center',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        this.elements.timeout.state = {
-          data: {
-            mode: 'start',
-            timeout: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(6000);
+        const promptNums = [
+          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+        ];
+        for (let i = 0; i < promptNums.length; i++) {
+          this.elements.prompt.state = {
+            data: {
+              value: promptNums[i],
+              position: 'center',
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.timeout.state = {
+            data: {
+              mode: 'start',
+              timeout: 5000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+            parseInt(promptNums[i]) % 2 === 0 ? 'sit' : 'stand',
+          );
+          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          if (res.result === 'failure') --i; //repeat current prompt if failure
+          await this.elements.sleep(6000);
+        }
 
         this.elements.prompt.state = {
           data: {},
@@ -374,7 +292,11 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        const promptNums = [15, 20, 16];
+        const promptNums = [
+          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+        ];
         for (let i = 0; i < promptNums.length; i++) {
           this.elements.prompt.state = {
             data: {
@@ -395,7 +317,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          await this.elements.sleep(2500);
+          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+            parseInt(promptNums[i]) % 2 === 0 ? 'sit' : 'stand',
+          );
+          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          if (res.result === 'failure') --i;
+          await this.elements.sleep(6000);
         }
         this.elements.prompt.attributes = {
           visibility: 'hidden',
@@ -458,7 +385,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          await this.elements.sleep(2500);
+          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+            promptNums[i] % 2 === 0 ? 'sit' : 'stand',
+          );
+          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          if (res.result === 'failure') --i;
+          await this.elements.sleep(6000);
         }
         this.elements.score.attributes = {
           visibility: 'hidden',
