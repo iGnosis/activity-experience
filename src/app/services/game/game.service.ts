@@ -197,8 +197,8 @@ export class GameService {
         const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
           console.log(err);
         });
-        if (response && response.data) {
-          this.store.dispatch(game.newGame(response.data.insert_game_one));
+        if (response && response.insert_game_one) {
+          this.store.dispatch(game.newGame(response.insert_game_one));
         }
         // get genre
         this.checkinService.getUserGenre();

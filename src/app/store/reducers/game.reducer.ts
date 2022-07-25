@@ -7,8 +7,8 @@ import { game } from '../actions/game.actions';
  *  id: '',
  *  createdAt: '',
  *  updatedAt: '',
- *  status: '',
- *  game: ["sit.stand.achieve", "beat.boxer", "sound.slicer"],
+ *  endedAt: '',
+ *  game: "sit_stand_achieve" | "beat_boxer" | "sound_slicer",
  *  repsCompleted: 5,
  *  totalDuration: 1000,
  *  analytics: [{prompt: 12, class: '', success: true, score: 10, reactionTime: 1000}]
@@ -22,13 +22,19 @@ const _gameReducer = createReducer(
   on(game.newGame, (state, data) => {
     return {
       ...state,
-      ...data,
+      id: data.id,
     };
   }),
   on(game.updateGame, (state, data) => {
     return {
       ...state,
       ...data,
+    };
+  }),
+  on(game.repCompleted, (state) => {
+    return {
+      ...state,
+      repsCompleted: (state.repsCompleted || 0) + 1,
     };
   }),
 );

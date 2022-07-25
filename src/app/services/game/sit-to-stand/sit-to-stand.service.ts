@@ -37,7 +37,8 @@ export class SitToStandService implements ActivityBase {
       .subscribe((game) => {
         if (game.id) {
           //Update the game state whenever redux state changes
-          this.gameStateService.updateGame(game.id, game);
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
         }
       });
 
