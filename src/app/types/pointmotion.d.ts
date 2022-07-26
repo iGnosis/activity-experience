@@ -1065,7 +1065,11 @@ export type RibbonElementState = {
    */
   titles?: string[];
   /**
-   * Inputs a number as the amount of time between each ribbon title
+   * Inputs a number as the amount of time the title is displayed on the screen
+   */
+  titleDuration?: number;
+  /**
+   * Inputs a number as the amount of time between each title
    */
   transitionDuration?: number;
 };

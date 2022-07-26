@@ -13,8 +13,8 @@ import { ElementAttributes, RibbonElementState } from 'src/app/types/pointmotion
       state('enter', style({ transform: 'translateX(-100vw)' })),
       state('open', style({ transform: 'translateX(0%)' })),
       state('exit', style({ transform: 'translateX(100vw)' })),
-      transition('enter => open', animate('0.4s ease-in')),
-      transition('* => exit', animate('0.4s ease-in')),
+      transition('enter => open', animate('{{duration}}ms ease-in')),
+      transition('* => exit', animate('{{duration}}ms ease-in')),
     ]),
     trigger('bgFadeIn', [
       state('enter', style({ transform: 'translateY(-50%) scale(0.3)', opacity: 0 })),
@@ -64,9 +64,11 @@ export class RibbonComponent implements OnInit, OnDestroy {
           }
           periodical();
         },
-        data.transitionDuration && this.textAnimationState === 'open'
+        this.textAnimationState === 'open'
+          ? data.titleDuration || 2000
+          : data.transitionDuration
           ? data.transitionDuration
-          : 500,
+          : 200,
       );
     };
     periodical();
