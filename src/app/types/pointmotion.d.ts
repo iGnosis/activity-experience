@@ -46,8 +46,8 @@ export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'both-hands' | unde
 /**
  * We support two modes: 'full' | 'fast'.
  * 'full' mode is enabled by default.
- * When 'full' mode is active, all the key body points must be visible, and user must be within the calibration box.
- * When 'fast' mode is active, all the key body points must be visible.
+ * * When 'full' mode is active, all the key body points must be visible, and user must be within the calibration box.
+ * * When 'fast' mode is active, all the key body points must be visible.
  */
 export type CalibrationMode = 'full' | 'fast';
 
