@@ -17,6 +17,7 @@ import { preference } from 'src/app/store/actions/preference.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
+import { TtsService } from '../../tts/tts.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -40,6 +41,7 @@ export class SitToStandService implements ActivityBase {
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
     private soundsService: SoundsService,
+    private ttsService: TtsService,
   ) {
     this.store
       .select((state) => state.game)
@@ -72,6 +74,7 @@ export class SitToStandService implements ActivityBase {
 
   welcome() {
     console.log('running welcome');
+    this.soundsService.playActivityInstructionSound();
     return [
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
@@ -122,13 +125,14 @@ export class SitToStandService implements ActivityBase {
             ],
           },
         };
+        this.ttsService.tts('Starting Sit, Stand, Achieve');
         await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
         this.elements.guide.state = {
           data: {
             title: 'Please raise your left hand to get started.',
-            titleDuration: 10000,
+            showIndefinitely: true,
           },
           attributes: {
             visibility: 'visible',
@@ -154,7 +158,8 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(3000);
+        this.ttsService.tts('This activity is a simple play on the sit to stand exercise');
+        await this.elements.sleep(5000);
 
         this.elements.banner.state = {
           data: {
@@ -179,7 +184,34 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        await this.elements.sleep(3000);
+        this.ttsService.tts(
+          'An Odd number is any number ending with 1 3 5 7 9. Stand up when you see an Odd Number.',
+        );
+
+        await this.elements.sleep(8000);
+
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise your left hand to move further',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        this.ttsService.tts('Please raise your left hand to move further');
+
+        await this.handTrackerService.waitUntilHandRaised('left-hand');
+
+        this.elements.guide.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
 
         this.elements.banner.state = {
           data: {},
@@ -188,8 +220,6 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-
-        await this.elements.sleep(500);
 
         this.elements.banner.state = {
           data: {
@@ -215,7 +245,32 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        await this.elements.sleep(3000);
+        this.ttsService.tts(
+          'An Even number is any number ending with 0 2 4 6 8. Sit down when you see an Even Number.',
+        );
+
+        await this.elements.sleep(8000);
+
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise your left hand to move further',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Please raise your left hand to move further');
+        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.elements.guide.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
         this.elements.banner.state = {
           data: {},
           attributes: {
@@ -254,10 +309,11 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          this.ttsService.tts(promptNums[i]);
           this.elements.timeout.state = {
             data: {
               mode: 'start',
-              timeout: 5000,
+              timeout: this.config.speed,
             },
             attributes: {
               visibility: 'visible',
@@ -266,10 +322,22 @@ export class SitToStandService implements ActivityBase {
           };
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             parseInt(promptNums[i]) % 2 === 0 ? 'sit' : 'stand',
+            this.config.speed,
           );
+
+          this.elements.timeout.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
           this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
           if (res.result === 'failure') --i; //repeat current prompt if failure
-          await this.elements.sleep(6000);
+
+          await this.elements.sleep(1000);
         }
 
         this.elements.prompt.state = {
@@ -302,7 +370,11 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(3000);
+
+        this.ttsService.tts(
+          'When consecutive even or odd numbers appear Continue sitting or standing until the timer below runs out',
+        );
+        await this.elements.sleep(10000);
         this.elements.banner.state = {
           data: {},
           attributes: {
@@ -326,10 +398,11 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          this.ttsService.tts(promptNums[i]);
           this.elements.timeout.state = {
             data: {
               mode: 'start',
-              timeout: 2000,
+              timeout: this.config.speed,
             },
             attributes: {
               visibility: 'visible',
@@ -338,10 +411,20 @@ export class SitToStandService implements ActivityBase {
           };
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             parseInt(promptNums[i]) % 2 === 0 ? 'sit' : 'stand',
+            this.config.speed,
           );
+          this.elements.timeout.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
           this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
           if (res.result === 'failure') --i;
-          await this.elements.sleep(6000);
+          await this.elements.sleep(1000);
         }
         this.elements.prompt.attributes = {
           visibility: 'hidden',
@@ -350,26 +433,17 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             title: "Great job, looks like you're getting the hang of it.",
-            titleDuration: 2000,
+            titleDuration: 8000,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(2000);
+        this.ttsService.tts("Great job, looks like you're getting the hang of it");
+        await this.elements.sleep(8000);
       },
       async (reCalibrationCount: number) => {
-        this.elements.score.state = {
-          data: {
-            label: 'Reps',
-            value: 0,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
         this.elements.ribbon.state = {
           data: {
             titles: ["Let's get 5 correct repetitions", '3', '2', '1', 'Go!'],
@@ -393,10 +467,11 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          this.ttsService.tts(promptNums[i].toString());
           this.elements.timeout.state = {
             data: {
               mode: 'start',
-              timeout: 2000,
+              timeout: this.config.speed,
             },
             attributes: {
               visibility: 'visible',
@@ -405,15 +480,21 @@ export class SitToStandService implements ActivityBase {
           };
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             promptNums[i] % 2 === 0 ? 'sit' : 'stand',
+            this.config.speed,
           );
+          this.elements.timeout.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
           this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
           if (res.result === 'failure') --i;
-          await this.elements.sleep(6000);
+          await this.elements.sleep(1000);
         }
-        this.elements.score.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
         this.elements.prompt.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -428,6 +509,8 @@ export class SitToStandService implements ActivityBase {
           },
         };
         await this.elements.sleep(3400);
+
+        this.soundsService.pauseActivityInstructionSound();
       },
     ];
   }
@@ -439,6 +522,7 @@ export class SitToStandService implements ActivityBase {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundsService.playMusic(this.genre, 'backtrack');
         this.elements.score.state = {
           data: {
             label: 'Reps',
@@ -454,6 +538,7 @@ export class SitToStandService implements ActivityBase {
             mode: 'start',
             duration: 60 * 60 * 1000,
             onComplete: (elapsedTime) => {
+              // TODO: use this elapsedTime for postLoop metrics..
               console.log('totalElapsedTime: ', elapsedTime);
             },
           },
@@ -488,6 +573,7 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          this.ttsService.tts(promptNum.toString());
           this.elements.timeout.state = {
             data: {
               mode: 'start',
@@ -512,6 +598,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
           if (res.result === 'success') {
+            this.soundsService.playMusic(this.genre, 'trigger');
             this.analytics.push({
               prompt: promptNum,
               class: promptClass,
@@ -533,6 +620,7 @@ export class SitToStandService implements ActivityBase {
               },
             };
           } else {
+            this.soundsService.playCalibrationSound('error');
             this.analytics.push({
               prompt: promptNum,
               class: promptClass,
@@ -542,7 +630,7 @@ export class SitToStandService implements ActivityBase {
             });
             this.elements.prompt.state.data.value = '✕';
           }
-          await this.elements.sleep(3000);
+          await this.elements.sleep(1000);
           this.elements.prompt.state = {
             data: {},
             attributes: {
@@ -550,24 +638,23 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-
-          this.elements.timer.state = {
-            data: {
-              mode: 'stop',
-            },
-            attributes: {
-              visibility: 'hidden',
-              reCalibrationCount,
-            },
-          };
-          this.elements.score.state = {
-            data: {},
-            attributes: {
-              visibility: 'hidden',
-              reCalibrationCount,
-            },
-          };
         }
+        this.elements.timer.state = {
+          data: {
+            mode: 'stop',
+          },
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+        this.elements.score.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
       },
     ];
   }
@@ -576,6 +663,7 @@ export class SitToStandService implements ActivityBase {
     console.log('running postLoop');
     return [
       async (reCalibrationCount: number) => {
+        this.soundsService.stopGenreSound();
         this.elements.banner.show();
         this.elements.banner.data = {
           type: 'outro',

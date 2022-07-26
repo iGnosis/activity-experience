@@ -76,39 +76,18 @@ export class HandTrackerService {
       return { status: undefined };
     }
 
-    // WRIST - NOSE
-    let rDistWristNose = this.calcDist(nose.x, nose.y, rightWrist.x, rightWrist.y);
-    rDistWristNose = parseFloat(rDistWristNose.toFixed(1));
-    let lDistWristNose = this.calcDist(nose.x, nose.y, leftWrist.x, leftWrist.y);
-    lDistWristNose = parseFloat(lDistWristNose.toFixed(1));
+    const yNoseLeftWristDiff = parseFloat((nose.y - leftWrist.y).toFixed(1));
+    const yNoseRightWristDiff = parseFloat((nose.y - rightWrist.y).toFixed(1));
 
-    if (lDistWristNose <= this.distanceThreshold && rDistWristNose <= this.distanceThreshold) {
+    if (yNoseLeftWristDiff >= 0 && yNoseRightWristDiff >= 0) {
       return { status: 'both-hands' };
     }
 
-    if (lDistWristNose <= this.distanceThreshold) {
+    if (yNoseLeftWristDiff >= 0) {
       return { status: 'left-hand' };
     }
 
-    if (rDistWristNose <= this.distanceThreshold) {
-      return { status: 'right-hand' };
-    }
-
-    // ELBOW - NOSE
-    let rDistElbowtNose = this.calcDist(nose.x, nose.y, rightElbow.x, rightElbow.y);
-    rDistElbowtNose = parseFloat(rDistElbowtNose.toFixed(1));
-    let lDistElbowtNose = this.calcDist(nose.x, nose.y, leftElbow.x, leftElbow.y);
-    lDistElbowtNose = parseFloat(lDistElbowtNose.toFixed(1));
-
-    if (lDistElbowtNose <= this.distanceThreshold && rDistElbowtNose <= this.distanceThreshold) {
-      return { status: 'both-hands' };
-    }
-
-    if (lDistElbowtNose <= this.distanceThreshold) {
-      return { status: 'left-hand' };
-    }
-
-    if (rDistElbowtNose <= this.distanceThreshold) {
+    if (yNoseRightWristDiff >= 0) {
       return { status: 'right-hand' };
     }
 
