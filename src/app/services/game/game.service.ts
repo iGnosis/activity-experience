@@ -89,7 +89,7 @@ export class GameService {
     if (!this.jwtService.getToken()) {
       const parsedURL = new URL(window.location.href);
       const baseURL = parsedURL.origin;
-      window.location.href = baseURL + '/public/login';
+      // window.location.href = baseURL + '/public/login';
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
