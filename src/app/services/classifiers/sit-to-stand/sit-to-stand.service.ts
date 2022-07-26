@@ -29,7 +29,7 @@ export class SitToStandService {
   classify(pose: Results): {
     result: 'unknown' | 'disabled' | 'sit' | 'stand';
   } {
-    if (this.enabled) {
+    if (this.enabled && pose && pose.poseLandmarks) {
       const postLandmarkArray = pose.poseLandmarks;
 
       const leftShoulder = postLandmarkArray[11];

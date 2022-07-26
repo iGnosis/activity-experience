@@ -23,11 +23,11 @@ export class CalibrationService {
     this.isEnabled = true;
     this.subscription = this.poseService.getPose().subscribe((results) => {
       const newStatus = this._calibrateBody(results, this.mode);
-      this.calibrationScene.destroyGraphics();
 
       if (!newStatus) return;
 
       if (newStatus.status !== this.status) {
+        this.calibrationScene.destroyGraphics();
         // On successful recalibration, just increment the counter.
         if (newStatus.status === 'success') {
           this._reCalibrationCount += 1;
