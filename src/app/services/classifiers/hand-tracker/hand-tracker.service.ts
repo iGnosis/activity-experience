@@ -42,6 +42,17 @@ export class HandTrackerService {
     return distance;
   }
 
+  async waitUntilHandRaised(hand: HandTrackerStatus) {
+    return new Promise((resolve, _) => {
+      const interval = setInterval(() => {
+        if (this.status === hand) {
+          clearInterval(interval);
+          resolve({});
+        }
+      }, 300);
+    });
+  }
+
   classify(pose: Results): { status: HandTrackerStatus } {
     if (!this.isEnabled || !pose || !pose.poseLandmarks) {
       return { status: undefined };

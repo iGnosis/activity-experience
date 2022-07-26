@@ -134,19 +134,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-
-        // maybe there's a better way...
-        const waitUntilHandRaised = async () => {
-          return new Promise((resolve, _) => {
-            const interval = setInterval(() => {
-              if (this._handTrackerStatus === 'left-hand') {
-                clearInterval(interval);
-                resolve({});
-              }
-            }, 300);
-          });
-        };
-        await waitUntilHandRaised();
+        await this.handTrackerService.waitUntilHandRaised('left-hand');
       },
     ];
   }
