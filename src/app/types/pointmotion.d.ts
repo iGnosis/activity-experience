@@ -998,6 +998,11 @@ export type GuideElementState = {
    * Inputs a number indicating the total duration for which the title has to be shown.
    */
   titleDuration?: number;
+
+  /**
+   * Bypasses titleDuration, and shows the widget indefinitely.
+   */
+  showIndefinitely?: boolean;
 };
 
 export type PromptPosition = 'center' | 'top-right';

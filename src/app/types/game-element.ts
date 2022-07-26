@@ -35,7 +35,8 @@ export class GameElement<T, M> {
       console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);
       console.error(this._state.data);
       console.error(this._state.attributes);
-      throw new Error('Recalibration count changed');
+      return;
+      // throw new Error('Recalibration count changed');
     }
     this._state = Object.assign(this._state, state);
     this._subject.next(this._state);
@@ -60,7 +61,7 @@ export class GameElement<T, M> {
       console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);
       console.error(this._state.data);
       console.error(this._state.attributes);
-      throw new Error('Recalibration count changed');
+      // throw new Error('Recalibration count changed');
     }
     this._state.data = { ...this._state.data, ...d };
     this._subject.next(this._state);

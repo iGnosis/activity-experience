@@ -131,6 +131,17 @@ export class GameService {
     this.calibrationService.enable();
     this.calibrationService.result.subscribe((status: any) => {
       this.calibrationStatus = status;
+      if (this.calibrationStatus === 'success') {
+        this.elements.guide.data = {
+          showIndefinitely: false,
+        };
+      }
+      if (this.calibrationStatus === 'error') {
+        this.elements.guide.data = {
+          title: 'To resume the game, please get yourself within the red box.',
+          showIndefinitely: true,
+        };
+      }
     });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
@@ -196,7 +207,8 @@ export class GameService {
 
       for (let i = 0; i < remainingStages.length; i++) {
         if (reCalibrationCount !== this.reCalibrationCount) {
-          throw new Error('Re-calibration occurred');
+          return;
+          // throw new Error('Re-calibration occurred');
         }
 
         if (remainingStages[i] === this.gameStatus.stage) {
@@ -243,6 +255,15 @@ export class GameService {
 
   async startCalibration() {
     // TODO: Start the calibration process.
+    this.elements.guide.state = {
+      attributes: {
+        visibility: 'visible',
+      },
+      data: {
+        title: 'To start, please get yourself within the red box.',
+        showIndefinitely: true,
+      },
+    };
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
   }
 
@@ -255,7 +276,8 @@ export class GameService {
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
             reject('Recalibration count changed');
-            throw new Error('Recalibration count changed');
+            return;
+            // throw new Error('Recalibration count changed');
             // TODO save the index of the current item in the batch.
           }
           this.gameStatus.breakpoint = i;
