@@ -6,7 +6,6 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
-import { CoordinationService } from '../../coordination/coordination.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -19,7 +18,6 @@ export class SitToStandService implements ActivityBase {
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
-    private coordinationService: CoordinationService,
   ) {
     this.store
       .select((state: any) => state.game)
