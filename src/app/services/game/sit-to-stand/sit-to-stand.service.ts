@@ -131,7 +131,7 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             title: 'Please raise your left hand to get started.',
-            titleDuration: 10000,
+            showIndefinitely: true,
           },
           attributes: {
             visibility: 'visible',
