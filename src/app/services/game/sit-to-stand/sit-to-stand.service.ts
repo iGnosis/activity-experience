@@ -107,10 +107,12 @@ export class SitToStandService implements ActivityBase {
           data: {
             type: 'intro',
             htmlStr: `
-            <h2 class="pt-2">First Activity</h2>
-            <h1 class="pt-3 display-5">Sit, Stand, Achieve</h1>
-            <h2 class="pt-6" style="font-weight: 200">Area of Focus</h2>
-            <h2 class="pt-2">Balance and Reaction Time</h2>
+            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+              <h1 class="pt-2">First Activity</h2>
+              <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
+              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+              <h1 class="py-2">Balance and Reaction Time</h2>
+            </div>
             `,
             buttons: [
               {
@@ -157,18 +159,18 @@ export class SitToStandService implements ActivityBase {
         this.elements.banner.state = {
           data: {
             htmlStr: `
-              <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
-                <div class='p-4 d-flex flex-row align-items-center'>
-                      <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Standing Man.png'/>
-                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>1</div>
-                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>17</div>
-                      <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>23</div>
-                </div>
-                <div>
-                  <hr style="border: 2px solid #A0AEC0;">
-                  <p class=" display-6 text-white">Odd Number - Stand Up</p>
-                </div>
+            <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+              <div class='p-4 d-flex flex-row align-items-center'>
+                    <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                    <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
+                    <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
+                    <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
               </div>
+              <div>
+                <hr style="border: 2px solid #A0AEC0;">
+                <p class=" display-5 text-white">Odd Number - Stand Up</p>
+              </div>
+            </div>
         `,
           },
           attributes: {
@@ -194,14 +196,14 @@ export class SitToStandService implements ActivityBase {
             htmlStr: `
                 <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
                   <div class='p-4 d-flex flex-row align-items-center'>
-                        <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
-                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>2</div>
-                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>14</div>
-                        <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>38</div>
+                        <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                        <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
+                        <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
+                        <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
                   </div>
                   <div>
                     <hr style="border: 2px solid #A0AEC0;">
-                    <p class=" display-6 text-white">Even Number - Sit Down</p>
+                    <p class=" display-5 text-white">Even Number - Sit Down</p>
                   </div>
                 </div>
 
@@ -283,12 +285,12 @@ export class SitToStandService implements ActivityBase {
           data: {
             htmlStr: `
               <div class="w-full h-100 position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
-                <div class='p-4 d-flex flex-row align-items-center justify-content-between w-full p-5'>
+                <div class='p-10 d-flex flex-row align-items-center justify-content-between w-full'>
                       <img style='width:150px;height:150px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
                       <div class='bg-success p-6 display-6 text-white rounded-3 mx-4'>42</div>
                 </div>
-                <p class="display-6 text-white text-start px-5">When consecutive even or odd numbers appear.</p>
-                <div class="p-5 w-full">
+                <p class="display-6 text-white text-start px-10">When consecutive even or odd numbers appear.</p>
+                <div class="p-10 w-full">
                   <hr style="border: 2px solid #A0AEC0;">
                   <p class="h1 text-start text-white">Continue sitting or<br/>standing until the timer<br/>below runs out.</p>
                 </div>
@@ -578,11 +580,11 @@ export class SitToStandService implements ActivityBase {
         this.elements.banner.data = {
           type: 'outro',
           htmlStr: `
-          <div class="pl-2" style="padding-left: 20px;">
-            <h1 class="pt-3 display-4">Sit, Stand, Achieve</h1>
-            <h2 class="pt-2">Time: 1:17 minutes</h2>
-            <h2 class="pt-2">Fastest Time: 0:31 minutes</h2>
-            <h2 class="pt-2">Reps Completed: 10</h2>
+          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
+            <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
+            <h2 class="pt-7">Time: 1:17 minutes</h2>
+            <h2 class="pt-5">Fastest Time: 0:31 minutes</h2>
+            <h2 class="py-5">Reps Completed: 10</h2>
           <div>
           `,
           buttons: [
