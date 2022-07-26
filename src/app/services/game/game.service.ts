@@ -21,6 +21,7 @@ import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 import { CheckinService } from '../checkin/checkin.service';
 import { JwtService } from '../jwt/jwt.service';
+import { TtsService } from '../tts/tts.service';
 
 @Injectable({
   providedIn: 'root',
@@ -81,6 +82,7 @@ export class GameService {
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
     private jwtService: JwtService,
+    private ttsService: TtsService,
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
@@ -147,6 +149,7 @@ export class GameService {
         };
       }
       if (this.calibrationStatus === 'error') {
+        this.ttsService.tts('To resume the game, please get yourself within the red box.');
         this.elements.guide.data = {
           title: 'To resume the game, please get yourself within the red box.',
           showIndefinitely: true,
@@ -267,6 +270,7 @@ export class GameService {
 
   async startCalibration() {
     // TODO: Start the calibration process.
+    this.ttsService.tts('To start, please get yourself within the red box.');
     this.elements.guide.state = {
       attributes: {
         visibility: 'visible',

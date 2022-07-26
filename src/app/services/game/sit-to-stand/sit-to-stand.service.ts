@@ -13,7 +13,6 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
-import { preference } from 'src/app/store/actions/preference.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
@@ -74,6 +73,7 @@ export class SitToStandService implements ActivityBase {
 
   welcome() {
     console.log('running welcome');
+
     this.soundsService.playActivityInstructionSound();
     return [
       async (reCalibrationCount: number) => {
@@ -128,6 +128,7 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
+        this.ttsService.tts('Please raise your left hand to get started.');
         this.elements.guide.state = {
           data: {
             title: 'Please raise your left hand to get started.',
@@ -235,7 +236,6 @@ export class SitToStandService implements ActivityBase {
                     <p class=" display-6 text-white">Even Number - Sit Down</p>
                   </div>
                 </div>
-
             `,
           },
           attributes: {
@@ -665,22 +665,29 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         this.soundsService.stopGenreSound();
-        this.elements.banner.show();
-        this.elements.banner.data = {
-          type: 'outro',
-          htmlStr: `
+
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'outro',
+            htmlStr: `
           <div class="pl-2" style="padding-left: 20px;">
             <h1 class="pt-3 display-4">Sit, Stand, Achieve</h1>
-            <h2 class="pt-2">Time: 1:17 minutes</h2>
-            <h2 class="pt-2">Fastest Time: 0:31 minutes</h2>
-            <h2 class="pt-2">Reps Completed: 10</h2>
+            <h2 class="pt-2">Time: 1:17 minutes (mock data)</h2>
+            <h2 class="pt-2">Fastest Time: 0:31 minutes (mock data)</h2>
+            <h2 class="pt-2">Reps Completed: ${this.successfulReps}</h2>
           <div>
           `,
-          buttons: [
-            {
-              title: 'Next Activity',
-            },
-          ],
+            buttons: [
+              {
+                title: 'Next Activity',
+                progressDurationMs: 15000,
+              },
+            ],
+          },
         };
         await this.elements.sleep(6000);
       },
