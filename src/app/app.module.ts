@@ -34,6 +34,7 @@ import { BannerComponent } from './widgets/elements/banner/banner.component';
 import { SafeHtmlPipe } from './pipes/safe-html.pipe';
 import { VideoElementComponent } from './widgets/elements/video/video.component';
 import { SafePipe } from 'src/pipes/safe/safe.pipe';
+import { preferenceReducer } from './store/reducers/preference.reducer';
 
 export let AppInjector: Injector;
 
@@ -74,6 +75,7 @@ export let AppInjector: Injector;
       session: sessionReducer, // Top level session
       spotlight: spotlightReducer, // spotlight component
       announcement: announcementReducer,
+      preference: preferenceReducer,
     }),
     FontAwesomeModule,
     SafePipeModule,

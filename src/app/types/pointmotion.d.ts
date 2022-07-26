@@ -588,7 +588,7 @@ export declare class Holistic implements HolisticInterface {
 }
 
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
-export type PreSessionGenre = 'Classical' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
 export interface CalibrationState {
   pose?: Results;
@@ -709,7 +709,7 @@ export type SessionRow = {
   careplan?: string;
   preSessionMood?: string;
   postSessionMood?: string;
-  genre?: PreSessionGenre;
+  genre?: Genre;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
   state?: {
@@ -849,7 +849,7 @@ export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTask
 
 export type AnalyticsDTO = {
   prompt: number;
-  class: string;
+  class: 'sit' | 'stand';
   success: boolean;
   score: number;
   reactionTime: number;
@@ -859,7 +859,7 @@ export type PreferenceState = {
   /**
    * Genre preferred by the patient.
    */
-  genre?: string;
+  genre?: Genre;
   /**
    * Patient's current mood.
    */

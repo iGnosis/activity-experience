@@ -1,31 +1,61 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { debounceTime } from 'rxjs';
-import { ActivityBase, HandTrackerStatus } from 'src/app/types/pointmotion';
+import {
+  ActivityBase,
+  AnalyticsDTO,
+  GameState,
+  Genre,
+  HandTrackerStatus,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
+import { preference } from 'src/app/store/actions/preference.actions';
+import { SoundsService } from '../../sounds/sounds.service';
+import { environment } from 'src/environments/environment';
+import { game } from 'src/app/store/actions/game.actions';
 @Injectable({
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
+  private genre: Genre;
+  private successfulReps = 0;
+  private config = {
+    minCorrectReps: environment.settings['sit_stand_achieve'].configuration.minCorrectReps,
+    speed: environment.settings['sit_stand_achieve'].configuration.speed,
+  };
+  private analytics: AnalyticsDTO[] = [];
 
   constructor(
-    private store: Store,
+    private store: Store<{
+      game: GameState;
+      preference: PreferenceState;
+    }>,
     private elements: ElementsService,
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
+    private soundsService: SoundsService,
   ) {
     this.store
-      .select((state: any) => state.game)
+      .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
-          // Update the game state whenever redux state changes
-          this.gameStateService.updateGame(game.id, game);
+          //Update the game state whenever redux state changes
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
         }
+      });
+
+    this.store
+      .select((state) => state.preference)
+      .subscribe((preference) => {
+        this.genre = preference.genre || 'jazz';
+        this.soundsService.loadMusicFiles(this.genre);
       });
 
     this.handTrackerService.enable();
@@ -421,20 +451,137 @@ export class SitToStandService implements ActivityBase {
 
   loop() {
     return [
-      // async () => {
-      //   // TODO... add code to update the game state
-      //   this.fun('hi my name is mila');
-      //   this.fun('I am thrilled to be working with you');
-      //   await this.fun('let me tell you how it works');
-      //   this.elements.banner.data = {
-      //     value: '0',
-      //   };
-      // },
-      // async () => {
-      //   this.fun('When you see an odd number, stand');
-      //   this.fun('When you see an even number, sit');
-      // },
-      // () => {},
+      async (reCalibrationCount: number) => {
+        this.elements.score.state = {
+          data: {
+            label: 'Reps',
+            value: 0,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.timer.state = {
+          data: {
+            mode: 'start',
+            duration: 60 * 60 * 1000,
+            onComplete: (elapsedTime) => {
+              console.log('totalElapsedTime: ', elapsedTime);
+            },
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+      },
+      async (reCalibrationCount: number) => {
+        while (this.successfulReps < this.config.minCorrectReps) {
+          // generating a prompt number
+          let promptNum = Math.floor(Math.random() * 100);
+          // checking if not more than two even or two odd in a row.
+          if (this.analytics && this.analytics.length >= 2) {
+            const prevReps = this.analytics.slice(-2);
+            if (prevReps[0].class === prevReps[1].class) {
+              // if two even or two odd in a row, we generate the opposite class number.
+              prevReps[0].class === 'sit'
+                ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
+                : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+            }
+          }
+          const promptClass = promptNum % 2 === 0 ? 'sit' : 'stand';
+
+          this.elements.prompt.state = {
+            data: {
+              value: promptNum,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.timeout.state = {
+            data: {
+              mode: 'start',
+              timeout: this.config.speed,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+            promptClass,
+            this.config.speed,
+          );
+          this.elements.timeout.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          if (res.result === 'success') {
+            this.analytics.push({
+              prompt: promptNum,
+              class: promptClass,
+              score: 0,
+              success: true,
+              reactionTime: 0,
+            });
+            this.elements.prompt.state.data.value = '✓';
+            this.successfulReps += 1;
+            this.store.dispatch(game.repCompleted());
+            this.elements.score.state = {
+              data: {
+                label: 'Reps',
+                value: this.successfulReps.toString(),
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          } else {
+            this.analytics.push({
+              prompt: promptNum,
+              class: promptClass,
+              score: 0,
+              success: false,
+              reactionTime: 0,
+            });
+            this.elements.prompt.state.data.value = '✕';
+          }
+          await this.elements.sleep(3000);
+          this.elements.prompt.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+
+          this.elements.timer.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          this.elements.score.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+        }
+      },
     ];
   }
 

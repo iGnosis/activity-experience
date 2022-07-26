@@ -7,6 +7,7 @@ import {
   ActivityBase,
   ActivityConfiguration,
   CalibrationStatusType,
+  Genre,
   HandTrackerStatus,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
@@ -18,6 +19,8 @@ import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
+import { CheckinService } from '../checkin/checkin.service';
+import { JwtService } from '../jwt/jwt.service';
 
 @Injectable({
   providedIn: 'root',
@@ -76,9 +79,16 @@ export class GameService {
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
+    private checkinService: CheckinService,
+    private jwtService: JwtService,
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+    if (!this.jwtService.getToken()) {
+      const parsedURL = new URL(window.location.href);
+      const baseURL = parsedURL.origin;
+      window.location.href = baseURL + '/public/login';
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -198,9 +208,11 @@ export class GameService {
         const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
           console.log(err);
         });
-        if (response && response.data) {
-          this.store.dispatch(game.newGame(response.data.insert_game_one));
+        if (response && response.insert_game_one) {
+          this.store.dispatch(game.newGame(response.insert_game_one));
         }
+        // get genre
+        this.checkinService.getUserGenre();
       } catch (err) {
         console.log(err);
       }
