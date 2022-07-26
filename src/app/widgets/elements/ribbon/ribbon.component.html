@@ -3,7 +3,7 @@
     *ngIf="state && state.attributes.visibility === 'visible'"
     class="w-screen h-1/3 top-1/2 position-relative d-flex">
     <h1
-        [@textSlideIn]="{value: textAnimationState }"
+        [@textSlideIn]="{value: textAnimationState, params: { duration: state.data.transitionDuration || '200' } }"
         class="display-1 text-nowrap text-center text-primary m-auto">{{ title }}
     </h1>
 </div>

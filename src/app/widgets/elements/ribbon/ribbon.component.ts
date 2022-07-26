@@ -13,8 +13,8 @@ import { ElementAttributes, RibbonElementState } from 'src/app/types/pointmotion
       state('enter', style({ transform: 'translateX(-100vw)' })),
       state('open', style({ transform: 'translateX(0%)' })),
       state('exit', style({ transform: 'translateX(100vw)' })),
-      transition('enter => open', animate('0.4s ease-in')),
-      transition('* => exit', animate('0.4s ease-in')),
+      transition('enter => open', animate('{{duration}}ms ease-in')),
+      transition('open => exit', animate('{{duration}}ms ease-in')),
     ]),
     trigger('bgFadeIn', [
       state('enter', style({ transform: 'translateY(-50%) scale(0.3)', opacity: 0 })),
@@ -31,6 +31,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
   bgAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   subscription: Subscription;
+  to: any;
   constructor(private ribbonService: RibbonService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
@@ -39,6 +40,9 @@ export class RibbonComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscription = this.ribbonService.subject.subscribe((value) => {
       this.state = value;
+      console.log('next periodical:');
+      this.textAnimationState = 'enter';
+      this.bgAnimationState = 'enter';
       this.showTitles();
     });
   }
@@ -48,7 +52,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
     let i = -1;
     this.bgAnimationState = 'open';
     const periodical = async () => {
-      const to = setTimeout(
+      this.to = setTimeout(
         () => {
           if (this.textAnimationState === 'open') {
             this.textAnimationState = 'exit';
@@ -57,16 +61,19 @@ export class RibbonComponent implements OnInit, OnDestroy {
           } else if (Array.isArray(data.titles)) {
             if (data.titles && i === data.titles.length - 1) {
               this.bgAnimationState = 'exit';
-              clearTimeout(to);
+              this.to = null;
+              return;
             }
             this.title = data.titles[++i];
             this.textAnimationState = 'open';
           }
           periodical();
         },
-        data.transitionDuration && this.textAnimationState === 'open'
+        this.textAnimationState === 'open'
+          ? data.titleDuration || 2000
+          : data.transitionDuration
           ? data.transitionDuration
-          : 500,
+          : 200,
       );
     };
     periodical();
