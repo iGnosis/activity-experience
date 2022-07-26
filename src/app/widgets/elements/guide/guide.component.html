@@ -1,10 +1,10 @@
 <div
     *ngIf="state && state.attributes.visibility === 'visible'"
     class="position-fixed top-0 start-0 w-screen h-screen d-flex">
-    <div class="w-32 h-24 bg-white rounded-3 start-3 bottom-5 position-absolute d-flex p-2">
+    <div class="w-32 h-24 bg-white rounded-3 start-10 bottom-10 position-absolute d-flex p-2">
         <img class="m-auto" src="/assets/images/sound_health_logo.jpg" alt="sound health">
     </div>
-    <div *ngIf="state && state.data.title" class="bg-white rounded-2 h-24 position-absolute start-40 bottom-5 d-flex p-2">
+    <div *ngIf="state && state.data.title" class="bg-white rounded-2 h-24 position-absolute start-48 bottom-10 d-flex p-2">
         <h1 class="text-primary my-auto px-5 display-6">{{state && state.data.title}}</h1>
     </div>
 </div>
