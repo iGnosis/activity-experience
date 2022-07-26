@@ -47,20 +47,28 @@ export class RibbonComponent implements OnInit, OnDestroy {
     if (!Array.isArray(data.titles) || data.titles.length === 0) return;
     let i = -1;
     this.bgAnimationState = 'open';
-    this.textAnimationState = 'enter';
-    const int = setInterval(async () => {
-      if (this.textAnimationState === 'open') {
-        this.textAnimationState = 'exit';
-      } else if (this.textAnimationState === 'exit') {
-        this.textAnimationState = 'enter';
-      } else if (Array.isArray(data.titles)) {
-        if (data.titles && i === data.titles.length - 1) {
-          this.bgAnimationState = 'exit';
-          clearInterval(int);
-        }
-        this.title = data.titles[++i];
-        this.textAnimationState = 'open';
-      }
-    }, data.transitionDuration || 500);
+    const periodical = async () => {
+      const to = setTimeout(
+        () => {
+          if (this.textAnimationState === 'open') {
+            this.textAnimationState = 'exit';
+          } else if (this.textAnimationState === 'exit') {
+            this.textAnimationState = 'enter';
+          } else if (Array.isArray(data.titles)) {
+            if (data.titles && i === data.titles.length - 1) {
+              this.bgAnimationState = 'exit';
+              clearTimeout(to);
+            }
+            this.title = data.titles[++i];
+            this.textAnimationState = 'open';
+          }
+          periodical();
+        },
+        data.transitionDuration && this.textAnimationState === 'open'
+          ? data.transitionDuration
+          : 500,
+      );
+    };
+    periodical();
   }
 }

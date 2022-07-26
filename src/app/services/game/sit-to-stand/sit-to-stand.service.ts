@@ -81,7 +81,7 @@ export class SitToStandService implements ActivityBase {
           },
           data: {
             titles: ['Next Activity', 'Sit, Stand, Achieve'],
-            transitionDuration: 1000,
+            transitionDuration: 2000,
           },
         };
         await this.elements.sleep(6000);
@@ -384,7 +384,7 @@ export class SitToStandService implements ActivityBase {
         this.elements.ribbon.state = {
           data: {
             titles: ["Let's get 5 correct repetitions", '3', '2', '1', 'Go!'],
-            transitionDuration: 800,
+            transitionDuration: 2000,
           },
           attributes: {
             visibility: 'visible',
@@ -433,7 +433,7 @@ export class SitToStandService implements ActivityBase {
         this.elements.ribbon.state = {
           data: {
             titles: ['Guide completed'],
-            transitionDuration: 800,
+            transitionDuration: 2000,
           },
           attributes: {
             visibility: 'visible',
