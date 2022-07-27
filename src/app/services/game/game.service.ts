@@ -86,11 +86,7 @@ export class GameService {
   ) {}
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
-    if (!this.jwtService.getToken()) {
-      const parsedURL = new URL(window.location.href);
-      const baseURL = parsedURL.origin;
-      // window.location.href = baseURL + '/public/login';
-    }
+    this.checkAuth();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -106,6 +102,16 @@ export class GameService {
     } catch (err: any) {
       console.log(err);
     }
+  }
+
+  checkAuth() {
+    window.parent.postMessage(
+      {
+        type: 'check-auth',
+        token: this.jwtService.getToken(),
+      },
+      '*',
+    );
   }
 
   setPhaserDimensions(canvas: HTMLCanvasElement) {
