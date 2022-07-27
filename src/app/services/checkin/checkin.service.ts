@@ -36,7 +36,7 @@ export class CheckinService {
 
   async getUserGenre() {
     try {
-      const userGenreAndMood = await this.client.req(
+      const userGenre = await this.client.req(
         gql`
           query GetCheckinData {
             genre: checkin(
@@ -51,7 +51,7 @@ export class CheckinService {
         `,
       );
 
-      const genre: Genre = userGenreAndMood.genre[0].value;
+      const genre: Genre = userGenre.genre[0].value;
       this.store.dispatch(
         preference.updateGenre({
           genre,

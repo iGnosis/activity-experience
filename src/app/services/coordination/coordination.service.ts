@@ -130,7 +130,7 @@ export class CoordinationService {
     });
   }
   async welcomeUser() {
-    this.soundService.playActivityInstructionSound();
+    // this.soundService.playActivityInstructionSound();
 
     await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
     await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
@@ -337,7 +337,7 @@ export class CoordinationService {
       await this.step(this.activityStage, 'sleep', 3000);
 
       this.sit2StandExplained = true;
-      this.soundService.pauseActivityInstructionSound();
+      // this.soundService.pauseActivityInstructionSound();
 
       this.activityStage = 'preGame';
       this.sendSessionState(this.activityStage);
@@ -685,7 +685,7 @@ export class CoordinationService {
       // check if the user is calibrated or not
       console.log(step, type, data);
       if (step === 'explain' && this.calibrationStatus === 'error') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
       } else if (step === 'preGame' && this.calibrationStatus === 'error') {
@@ -1082,14 +1082,14 @@ export class CoordinationService {
       this.activityStage === 'explain'
     ) {
       if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'game') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
@@ -1099,7 +1099,7 @@ export class CoordinationService {
         console.log('ID updated for the runConfig', this.runConfig.id);
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
-        this.soundService.resumeActivityInstructionSound();
+        // this.soundService.resumeActivityInstructionSound();
         this.runSit2Stand();
       }
     }

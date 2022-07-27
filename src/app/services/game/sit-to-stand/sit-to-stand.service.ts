@@ -74,7 +74,7 @@ export class SitToStandService implements ActivityBase {
   welcome() {
     console.log('running welcome');
 
-    this.soundsService.playActivityInstructionSound();
+    this.soundsService.playActivityInstructionSound(this.genre);
     return [
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
@@ -510,7 +510,7 @@ export class SitToStandService implements ActivityBase {
         };
         await this.elements.sleep(3400);
 
-        this.soundsService.pauseActivityInstructionSound();
+        this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];
   }

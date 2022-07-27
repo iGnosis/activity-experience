@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { Howl } from 'howler';
-import { Observable } from 'rxjs';
-import { Genre } from 'src/app/types/pointmotion';
+import { Observable, retry } from 'rxjs';
+import { Genre, SessionState } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { JwtService } from '../jwt/jwt.service';
 import { audioSprites } from './audio-sprites';
@@ -26,11 +27,18 @@ export class SoundsService {
   preSessionGenreDanceId: number;
   preSessionGenreSurpriseId: number;
 
-  activityInstructionSound: Howl = new Howl({
-    src: 'assets/sounds/soundscapes/Sound Health Soundscape_Activity Instructions.mp3',
-    html5: true,
-    loop: true,
-  });
+  surprise: Howl;
+  dance: Howl;
+  rock: Howl;
+  jazz: Howl;
+  classicalBacktrack: Howl;
+  classicalTrigger: Howl;
+  classicalInstructionsSound: Howl;
+  rockInstructionsSound: Howl;
+  jazzInstructionsSound: Howl;
+  danceInstructionsSound: Howl;
+  surpriseInstructionsSound: Howl;
+
   activityErrorSound: Howl = new Howl({
     src: 'assets/sounds/soundscapes/Sound Health Soundscape_incorrect.mp3',
     html5: true,
@@ -110,33 +118,48 @@ export class SoundsService {
     },
   });
 
-  ambient: Howl;
-  dance: Howl;
-  rock: Howl;
-  jazz: Howl;
-  classicalBacktrack: Howl;
-  classicalTrigger: Howl;
   loadMusicFiles(genre: Genre) {
+    console.log('loading ', genre, ' files');
     switch (genre) {
       case 'surprise me!':
-        this.ambient = new Howl({
+        this.surpriseInstructionsSound = new Howl({
+          src: 'assets/sounds/soundscapes/Surprise Me Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
+        this.surprise = new Howl({
           src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
           sprite: audioSprites.surpriseSprite,
         });
         break;
       case 'dance':
+        this.danceInstructionsSound = new Howl({
+          src: 'assets/sounds/soundscapes/Dance Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.dance = new Howl({
           src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
           sprite: audioSprites.danceSprite,
         });
         break;
       case 'rock':
+        this.rockInstructionsSound = new Howl({
+          src: 'assets/sounds/soundscapes/Rock Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.rock = new Howl({
           src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
           sprite: audioSprites.rockSprite,
         });
         break;
       case 'classical':
+        this.classicalInstructionsSound = new Howl({
+          src: 'assets/sounds/soundscapes/Classical Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         this.classicalBacktrack = new Howl({
           src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
           sprite: audioSprites.classicalBacktrackSprite,
@@ -148,6 +171,11 @@ export class SoundsService {
         });
         break;
       case 'jazz':
+        this.jazzInstructionsSound = new Howl({
+          src: 'assets/sounds/soundscapes/Jazz Instructions.mp3',
+          html5: true,
+          loop: true,
+        });
         break;
     }
   }
@@ -318,17 +346,17 @@ export class SoundsService {
         }
         break;
       case 'surprise me!':
-        if (!this.ambient) {
+        if (!this.surprise) {
           return;
         }
         if (type === 'backtrack') {
           console.log('No ambient backtrack');
           return;
         } else {
-          if (this.ambient.playing(this.ambientTriggerId)) {
-            this.ambient.stop(this.ambientTriggerId);
+          if (this.surprise.playing(this.ambientTriggerId)) {
+            this.surprise.stop(this.ambientTriggerId);
           }
-          this.ambientTriggerId = this.ambient.play(`ambient ${this.currentAmbientTrigger}`);
+          this.ambientTriggerId = this.surprise.play(`ambient ${this.currentAmbientTrigger}`);
           this.currentAmbientTrigger += 1;
           if (this.currentAmbientTrigger === 17) {
             this.currentAmbientTrigger = 1;
@@ -447,19 +475,68 @@ export class SoundsService {
     Howler.stop();
   }
 
-  playActivityInstructionSound() {
-    this.activityInstructionSound.play();
-  }
-
-  resumeActivityInstructionSound() {
-    if (!this.activityInstructionSound.playing()) {
-      this.activityInstructionSound.play();
+  playActivityInstructionSound(genre: Genre) {
+    switch (genre) {
+      case 'classical':
+        if (!this.classicalInstructionsSound.playing()) {
+          this.classicalInstructionsSound.volume(0.15);
+          this.classicalInstructionsSound.play();
+        }
+        break;
+      case 'jazz':
+        if (!this.jazzInstructionsSound.playing()) {
+          this.jazzInstructionsSound.volume(0.15);
+          this.jazzInstructionsSound.play();
+        }
+        break;
+      case 'rock':
+        if (!this.rockInstructionsSound.playing()) {
+          this.rockInstructionsSound.volume(0.15);
+          this.rockInstructionsSound.play();
+        }
+        break;
+      case 'dance':
+        if (!this.danceInstructionsSound.playing()) {
+          this.danceInstructionsSound.volume(0.15);
+          this.danceInstructionsSound.play();
+        }
+        break;
+      case 'surprise me!':
+        if (!this.surpriseInstructionsSound.playing()) {
+          this.surpriseInstructionsSound.volume(0.15);
+          this.surpriseInstructionsSound.play();
+        }
+        break;
     }
   }
 
-  pauseActivityInstructionSound() {
-    if (this.activityInstructionSound.playing()) {
-      this.activityInstructionSound.pause();
+  pauseActivityInstructionSound(genre: Genre) {
+    switch (genre) {
+      case 'classical':
+        if (this.classicalInstructionsSound.playing()) {
+          this.classicalInstructionsSound.pause();
+        }
+        break;
+      case 'jazz':
+        if (this.jazzInstructionsSound.playing()) {
+          this.jazzInstructionsSound.pause();
+        }
+        break;
+      case 'rock':
+        if (this.rockInstructionsSound.playing()) {
+          this.rockInstructionsSound.pause();
+        }
+        break;
+      case 'dance':
+        if (this.danceInstructionsSound.playing()) {
+          this.danceInstructionsSound.pause();
+        }
+        break;
+      case 'surprise me!':
+        if (this.surpriseInstructionsSound.playing()) {
+          this.surpriseInstructionsSound.pause();
+        }
+        break;
     }
   }
 
