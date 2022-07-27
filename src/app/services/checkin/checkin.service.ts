@@ -61,4 +61,23 @@ export class CheckinService {
       throw new Error('Unable to fetch genre');
     }
   }
+
+  async getLastGame() {
+    try {
+      const lastGame = await this.client.req(
+        gql`
+          query GetLastGame {
+            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _is_null: false } }) {
+              id
+              game
+            }
+          }
+        `,
+      );
+
+      return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

@@ -37,6 +37,12 @@ const _gameReducer = createReducer(
       repsCompleted: (state.repsCompleted || 0) + 1,
     };
   }),
+  on(game.gameCompleted, (state) => {
+    return {
+      ...state,
+      endedAt: 'now()',
+    };
+  }),
 );
 
 export function gameReducer(state: any, action: any) {

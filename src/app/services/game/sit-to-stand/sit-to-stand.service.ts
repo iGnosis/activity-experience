@@ -665,6 +665,8 @@ export class SitToStandService implements ActivityBase {
       async (reCalibrationCount: number) => {
         this.soundsService.stopGenreSound();
 
+        this.store.dispatch(game.gameCompleted());
+
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',

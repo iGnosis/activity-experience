@@ -182,17 +182,39 @@ export class GameService {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
-  findNextGame(): { name: Activities; settings: ActivityConfiguration } | undefined {
-    // TODO: Through an API call find out which game needs to be started next.
-    // For now, always starting sit.stand.achieve
-    if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
-      // If the person has not played sit2stand yet.
-      return {
-        name: 'sit_stand_achieve',
-        settings: environment.settings['sit_stand_achieve'],
-      };
+  async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
+    const lastGame = await this.checkinService.getLastGame();
+
+    if (!lastGame) {
+      if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
+        // If the person has not played sit2stand yet.
+        return {
+          name: 'sit_stand_achieve',
+          settings: environment.settings['sit_stand_achieve'],
+        };
+      } else {
+        return;
+      }
     } else {
-      return;
+      const idxOfLastGame = environment.order.indexOf(lastGame[0].game);
+
+      let nextGame;
+      if (idxOfLastGame === environment.order.length - 1) {
+        nextGame = environment.order[0];
+      } else {
+        nextGame = environment.order[idxOfLastGame + 1];
+      }
+
+      //reset the game status to welcome screen
+      this.gameStatus = {
+        stage: 'welcome',
+        breakpoint: 0,
+      };
+
+      return {
+        name: nextGame,
+        settings: environment.settings[nextGame],
+      };
     }
   }
 
@@ -203,7 +225,7 @@ export class GameService {
 
   async startGame() {
     const reCalibrationCount = this.reCalibrationCount;
-    let nextGame = this.findNextGame();
+    let nextGame = await this.findNextGame();
     if (!nextGame) return;
 
     const activity = this.getActivities()[nextGame.name];
@@ -262,7 +284,7 @@ export class GameService {
       this.gamesCompleted.push(nextGame.name);
     }
     // If more games available, start the next game.
-    nextGame = this.findNextGame();
+    nextGame = await this.findNextGame();
     if (nextGame) {
       this.startGame();
     }
