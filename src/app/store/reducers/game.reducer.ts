@@ -37,6 +37,12 @@ const _gameReducer = createReducer(
       repsCompleted: (state.repsCompleted || 0) + 1,
     };
   }),
+  on(game.setTotalElapsedTime, (state, data) => {
+    return {
+      ...state,
+      totalDuration: data.totalDuration,
+    };
+  }),
   on(game.gameCompleted, (state) => {
     return {
       ...state,

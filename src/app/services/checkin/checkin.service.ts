@@ -80,4 +80,27 @@ export class CheckinService {
       console.log(err);
     }
   }
+
+  async getFastestTime() {
+    try {
+      const fastestTime = await this.client.req(
+        gql`
+          query GetFastestTime {
+            game(
+              limit: 1
+              order_by: { totalDuration: asc_nulls_last }
+              where: { endedAt: { _is_null: false } }
+            ) {
+              id
+              totalDuration
+            }
+          }
+        `,
+      );
+
+      return fastestTime.game[0].totalDuration;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { debounceTime } from 'rxjs';
+import { debounceTime, take } from 'rxjs';
 import {
   ActivityBase,
   AnalyticsDTO,
@@ -17,6 +17,7 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
+import { CheckinService } from '../../checkin/checkin.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -41,6 +42,7 @@ export class SitToStandService implements ActivityBase {
     private sit2StandService: Sit2StandService,
     private soundsService: SoundsService,
     private ttsService: TtsService,
+    private checkinService: CheckinService,
   ) {
     this.store
       .select((state) => state.game)
@@ -538,8 +540,7 @@ export class SitToStandService implements ActivityBase {
             mode: 'start',
             duration: 60 * 60 * 1000,
             onComplete: (elapsedTime) => {
-              // TODO: use this elapsedTime for postLoop metrics..
-              console.log('totalElapsedTime: ', elapsedTime);
+              this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
             },
           },
           attributes: {
@@ -666,31 +667,42 @@ export class SitToStandService implements ActivityBase {
         this.soundsService.stopGenreSound();
 
         this.store.dispatch(game.gameCompleted());
-
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'outro',
-            htmlStr: `
-          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-            <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
-            <h2 class="pt-7">Time: 1:17 minutes (mock data)</h2>
-            <h2 class="pt-5">Fastest Time: 0:31 minutes (mock data)</h2>
-            <h2 class="pt-5">Reps Completed: ${this.successfulReps}</h2>
-          <div>
-          `,
-            buttons: [
-              {
-                title: 'Next Activity',
-                progressDurationMs: 15000,
-              },
-            ],
-          },
+        let totalDuration: {
+          minutes: string;
+          seconds: string;
         };
-        await this.elements.sleep(6000);
+        this.store.pipe(take(1)).subscribe(async (state) => {
+          totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
+          const fastestTimeInSecs = await this.checkinService.getFastestTime();
+          console.log('fastest: ', fastestTimeInSecs);
+          const fastestTime = this.sit2StandService.updateTimer(
+            fastestTimeInSecs || state.game.totalDuration || 0,
+          );
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'outro',
+              htmlStr: `
+            <div class="pl-10 text-start px-14" style="padding-left: 20px;">
+              <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
+              <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
+              <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
+              <h2 class="pt-5">Reps Completed: ${this.successfulReps}</h2>
+            <div>
+            `,
+              buttons: [
+                {
+                  title: 'Next Activity',
+                  progressDurationMs: 15000,
+                },
+              ],
+            },
+          };
+        });
+        await this.elements.sleep(17000);
       },
     ];
   }
