@@ -185,7 +185,7 @@ export class GameService {
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
     const lastGame = await this.checkinService.getLastGame();
 
-    if (!lastGame) {
+    if (!lastGame || !lastGame.length) {
       if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
         // If the person has not played sit2stand yet.
         return {
