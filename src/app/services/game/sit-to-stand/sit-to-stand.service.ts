@@ -535,13 +535,15 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
+        const updateElapsedTime = (elapsedTime: number) => {
+          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+        };
         this.elements.timer.state = {
           data: {
             mode: 'start',
             duration: 60 * 60 * 1000,
-            onComplete: (elapsedTime) => {
-              this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-            },
+            onPause: updateElapsedTime,
+            onComplete: updateElapsedTime,
           },
           attributes: {
             visibility: 'visible',

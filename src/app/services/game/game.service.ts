@@ -150,11 +150,19 @@ export class GameService {
     this.calibrationService.result.subscribe((status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
+        if (this.elements.timer.data.mode === 'pause') {
+          this.elements.timer.data = {
+            mode: 'resume',
+          };
+        }
         this.elements.guide.data = {
           showIndefinitely: false,
         };
       }
       if (this.calibrationStatus === 'error') {
+        this.elements.timer.data = {
+          mode: 'pause',
+        };
         this.ttsService.tts('To resume the game, please get yourself within the red box.');
         this.elements.guide.data = {
           title: 'To resume the game, please get yourself within the red box.',

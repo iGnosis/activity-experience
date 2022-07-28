@@ -939,6 +939,11 @@ export type TimerElementState = {
    * @param elapsedTime gives the time elapsed time since the start of the timer.
    */
   onComplete?: (elapsedTime: number) => void;
+  /**
+   * Function triggers when timer is paused
+   * @param elapsedTime gives the time elapsed time since the start of the timer.
+   */
+  onPause?: (elapsedTime: number) => void;
 };
 
 export type OverlayElementState = {
