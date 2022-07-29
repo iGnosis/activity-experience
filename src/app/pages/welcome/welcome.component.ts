@@ -190,6 +190,12 @@ export class WelcomeComponent implements OnInit {
       false,
     );
 
+    // TODO:
+    // ask for a valid token a minute before a token expires
+    // read the token expire in minutes
+    // set interval to run every (tokenExpiresAt-0.5) minutes
+    // interval code should send a postMessage 'request-access-token' to its parent window
+
     if (this.route.snapshot.queryParamMap.get('debug')) {
       this.start();
     }
