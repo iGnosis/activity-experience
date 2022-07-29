@@ -1,8 +1,7 @@
-<p 
-    *ngIf="state && state.attributes.visibility === 'visible'"
-    class="top-5 start-5 position-absolute p-3 rounded-3 bg-primary text-white h2 d-flex justify-content-center align-items-center">
-    {{state.data.label}}:&nbsp;
-    <span 
-        [@fadeTransition]="{ value: animationState, params: { duration: state.data.transitionDuration || '500' } }" 
-        class="display-6 font-bold">{{state.data.value}}</span>
+<p *ngIf="state && state.attributes.visibility === 'visible'"
+  class="top-5 start-5 position-absolute p-3 rounded-3 bg-primary text-white h2 d-flex justify-content-center align-items-center">
+  {{state.data.label}}:&nbsp;
+  <span [@fadeTransition]="{ value: animationState, params: { duration: state.data.transitionDuration || '500' } }"
+    class="display-6 font-bold">{{state.data.value}}</span>
+  <span [@fadeTransition]="{ value: animationState, params: { duration: state.data.transitionDuration || '500' } }" *ngIf="state.data && state.data.goal" class="display-6 font-bold">/{{state.data.goal}}</span>
 </p>
