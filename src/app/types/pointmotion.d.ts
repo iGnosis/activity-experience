@@ -1022,6 +1022,11 @@ export type PromptElementState = {
    * Set element's position.
    */
   position?: PromptPosition;
+
+  /**
+   * Set repetition status
+   */
+  repStatus?: 'success' | 'failure';
 };
 
 export type TimeoutElementState = {

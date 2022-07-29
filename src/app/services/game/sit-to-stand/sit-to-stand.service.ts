@@ -336,7 +336,15 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          this.elements.prompt.state = {
+            data: {
+              repStatus: res.result,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
           if (res.result === 'failure') --i; //repeat current prompt if failure
 
           await this.elements.sleep(1000);
@@ -424,7 +432,15 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          this.elements.prompt.state = {
+            data: {
+              repStatus: res.result,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
           if (res.result === 'failure') --i;
           await this.elements.sleep(1000);
         }
@@ -493,7 +509,15 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          this.elements.prompt.state.data.value = res.result === 'failure' ? '✕' : '✓';
+          this.elements.prompt.state = {
+            data: {
+              repStatus: res.result,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
           if (res.result === 'failure') --i;
           await this.elements.sleep(1000);
         }
@@ -609,7 +633,15 @@ export class SitToStandService implements ActivityBase {
               success: true,
               reactionTime: 0,
             });
-            this.elements.prompt.state.data.value = '✓';
+            this.elements.prompt.state = {
+              data: {
+                repStatus: res.result,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
             this.successfulReps += 1;
             this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
@@ -631,7 +663,15 @@ export class SitToStandService implements ActivityBase {
               success: false,
               reactionTime: 0,
             });
-            this.elements.prompt.state.data.value = '✕';
+            this.elements.prompt.state = {
+              data: {
+                repStatus: res.result,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
           }
           await this.elements.sleep(1000);
           this.elements.prompt.state = {
