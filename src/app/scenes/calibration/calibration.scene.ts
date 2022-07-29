@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Results } from '@mediapipe/holistic';
+import { Results } from '@mediapipe/pose';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { Scene } from 'phaser';
+import { CalibrationStatusType } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CalibrationScene extends Phaser.Scene {
+export class CalibrationScene extends Scene {
   invalid = false;
   webcam: any;
   frame$?: Observable<any>;
@@ -36,7 +38,6 @@ export class CalibrationScene extends Phaser.Scene {
 
   constructor(private store: Store<{ calibration: any }>) {
     super({ key: 'calibration' });
-    console.log('in calibration scene');
   }
 
   preload() {
@@ -45,7 +46,7 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('draw box');
+    console.log('create: in calibration scene');
     const { width, height } = this.game.canvas;
     console.log(`Width ${width}, Height ${height}`);
     this.checkImage = new Phaser.GameObjects.Image(this, width / 2, height / 2, 'check').setScale(
@@ -56,6 +57,12 @@ export class CalibrationScene extends Phaser.Scene {
     );
 
     this.createCalibrationBox(40, 98);
+
+    // TODO: Put this in Calibration Service.
+    // This is just a workaround (can't get it to work from Calibration Service)...
+    setTimeout(() => {
+      this.drawCalibrationBox('error');
+    }, 0);
   }
 
   createCalibrationBox(percentageWidth: number, percentageHeight: number) {
@@ -120,7 +127,7 @@ export class CalibrationScene extends Phaser.Scene {
     calibratedPoints: number[],
     unCalibratedPoints: number[],
   ) {
-    console.log(poseResults);
+    // console.log(poseResults);
     // we can clear the exisiting pose and calibration points here, currently doing it in holistic.service!
     // this.destroyGraphics();
     const { width, height } = this.sys.game.canvas;
@@ -340,17 +347,18 @@ export class CalibrationScene extends Phaser.Scene {
     );
   }
 
-  drawCalibrationBox(type: string) {
+  drawCalibrationBox(type: CalibrationStatusType) {
     if (!this.sys.game || !this.showCalibration) return;
 
     const { width, height } = this.sys.game.canvas;
-    console.log(`${width} X ${height}`);
 
     this.add.existing(this.calibrationRectangle.left as Phaser.GameObjects.Rectangle);
     this.add.existing(this.calibrationRectangle.right as Phaser.GameObjects.Rectangle);
     this.add.existing(this.calibrationRectangle.top as Phaser.GameObjects.Rectangle);
     this.add.existing(this.calibrationRectangle.bottom as Phaser.GameObjects.Rectangle);
     this.add.existing(this.calibrationRectangle.center as Phaser.GameObjects.Rectangle);
+
+    console.log(`drawCalibrationBox: ${width} X ${height}`);
 
     let fillColor = 0x000066;
 

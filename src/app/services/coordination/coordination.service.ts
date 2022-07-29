@@ -8,11 +8,9 @@ import {
   ActivityState,
   AnnouncementState,
   GuideState,
-  PreSessionGenre,
-  Results,
+  Genre,
   SessionRow,
   SessionState,
-  StepTypes,
 } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../calibration/calibration.service';
 import { SitToStandService } from '../classifiers/sit-to-stand/sit-to-stand.service';
@@ -24,6 +22,9 @@ import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { DebugService } from '../analytics/debug/debug.service';
 import { ActivatedRoute } from '@angular/router';
+import { PoseService } from '../pose/pose.service';
+import { Results } from '@mediapipe/pose';
+import { SessionService } from '../session/session.service';
 
 @Injectable({
   providedIn: 'root',
@@ -36,17 +37,18 @@ export class CoordinationService {
   private currentPromptIdx = 0;
   private totalReps = 10;
   private repsArr: ('odd' | 'even')[] = [];
-  private genre: PreSessionGenre;
+  private genre: Genre;
+  private runConfig = {
+    id: 1,
+    reps: 0,
+  };
 
   constructor(
     private store: Store<{
       session: SessionState;
       guide: GuideState;
-      calibration: any;
-      pose: any;
       announcement: AnnouncementState;
     }>,
-    private injector: Injector,
     private calibrationService: CalibrationService,
     private calibrationScene: CalibrationScene,
     private soundService: SoundsService,
@@ -54,6 +56,8 @@ export class CoordinationService {
     private analyticsService: AnalyticsService,
     private debugService: DebugService,
     private route: ActivatedRoute,
+    private poseService: PoseService,
+    private sessionService: SessionService,
   ) {
     const prompts =
       this.route.snapshot.queryParamMap.get('prompts')?.split(',') ||
@@ -75,17 +79,17 @@ export class CoordinationService {
     );
   }
 
-  poseCount = 0;
+  poseCount = 100;
   calibrationStatus = 'error';
 
   session: SessionRow;
-  observables$: {
-    activityId: Observable<string | undefined>;
-    pose: Observable<any>;
-    currentActivity: Observable<ActivityState | undefined>;
-    session: Observable<SessionRow | undefined>;
-    genre?: Observable<PreSessionGenre | undefined>;
-  };
+  // observables$: {
+  //   activityId: Observable<string | undefined>;
+  //   pose: Observable<any>;
+  //   currentActivity: Observable<ActivityState | undefined>;
+  //   session: Observable<SessionRow | undefined>;
+  //   genre?: Observable<PreSessionGenre | undefined>;
+  // };
 
   currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
   activityStage: ActivityStage = 'welcome';
@@ -95,7 +99,7 @@ export class CoordinationService {
   sequence: any = [];
   sit2StandExplained = false;
 
-  activityId: string = this.analyticsService.getActivityId('Sit, Stand, Achieve') as string;
+  activityId: string = this.analyticsService.getActivityId('Sit to Stand') as string;
   attemptId = v4();
   taskId = v4();
   desiredClass: 'sit' | 'stand' | 'unknown';
@@ -106,20 +110,14 @@ export class CoordinationService {
   } = undefined;
   previousRepClass: 'sit' | 'stand';
 
-  private runConfig = {
-    id: 1,
-    reps: 0,
-  };
-
   currentPose!: Results;
   previousPose!: Results;
   isWaitingForReaction = false;
 
-  successfulReps = 0;
+  // successfulReps = 0;
   activityCompleted = false;
   isRecalibrated = false;
   private welcomeStageComplete = false;
-  private recalibrationCount = 0;
 
   async sendMessage(text: string, position: 'center' | 'bottom', skipWait = false) {
     return new Promise(async (resolve) => {
@@ -132,68 +130,59 @@ export class CoordinationService {
     });
   }
   async welcomeUser() {
-    const activityState = 'welcome';
-    console.log('activityId:', this.activityId);
-    const recalibrationCount = this.recalibrationCount;
+    // this.soundService.playActivityInstructionSound();
 
-    const run = async (type: StepTypes, data?: any) => {
-      return await this.step(activityState, recalibrationCount, type, data);
-    };
+    await this.step('welcome', 'sendSpotlight', { text: 'Starting Next Activity' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+    await this.step('welcome', 'sendSpotlight', { text: 'SIT TO STAND' });
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
+    await this.step('welcome', 'hideSpotlight');
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
 
-    this.soundService.playActivityInstructionSound();
-
-    await run('sendSpotlight', { text: 'Starting Next Activity' });
-    await run('sleep', environment.speedUpSession ? 300 : 2000);
-    await run('sendSpotlight', { text: 'SIT TO STAND' });
-    await run('sleep', environment.speedUpSession ? 300 : 2000);
-    await run('hideSpotlight');
-    await run('sleep', environment.speedUpSession ? 300 : 2000);
-
-    await run('updateAvatar', { name: 'mila' });
-    await run('sendMessage', { text: 'Hi!', position: 'center' });
+    await this.step('welcome', 'updateAvatar', { name: 'mila' });
+    await this.step('welcome', 'sendMessage', { text: 'Hi!', position: 'center' });
     // await this.sendMessage('Hi!', 'center');
 
-    await run('sleep', environment.speedUpSession ? 300 : 1000);
-    await run('sendMessage', {
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 1000);
+    await this.step('welcome', 'sendMessage', {
       text: 'My name is Mila. I am thrilled to be working with you today.',
       position: 'center',
     });
 
-    await run('sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: "I am here to guide you through today's session.",
       position: 'center',
     });
 
-    await run('sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Before we start, we need to ensure a few things.',
       position: 'bottom',
     });
-    await run('sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Firstly, we need to see you on the screen.',
       position: 'bottom',
     });
 
     // if by this time, poseCount is less than 10, then it means mediapipe has failed.
     // ask user to refresh the page
-    if (environment.stageName !== 'local' && this.poseCount < 10) {
-      await run('sendMessage', {
-        text: 'Failed to load AI. Please refresh your page to re-start the session.',
+    if (this.poseCount < 10) {
+      await this.step('welcome', 'sendMessage', {
+        text: 'Failed to load Mediapipe. Please refresh your page to re-start the session.',
         position: 'center',
       });
-      await run('sleep', 10000);
+      await this.step('welcome', 'sleep', 10000);
       window.location.reload();
     }
 
-    await run('sendMessage', {
+    await this.step('welcome', 'sendMessage', {
       text: 'Please move around such that you can see your whole body inside the red box.',
       position: 'bottom',
       skipWait: true,
     });
-    await run('sleep', environment.speedUpSession ? 300 : 2000);
+    await this.step('welcome', 'sleep', environment.speedUpSession ? 300 : 2000);
 
     // Start with the red box and enable the calibration service
     this.calibrationScene.drawCalibrationBox('error');
-    await this.sleep(4000);
     this.calibrationService.enable();
 
     this.welcomeStageComplete = true;
@@ -215,38 +204,29 @@ export class CoordinationService {
 
   async explainSit2Stand() {
     this.activityStage = 'explain';
-    const recalibrationCount = this.recalibrationCount;
-    const run = async (type: StepTypes, data?: any) => {
-      return await this.step('explain', recalibrationCount, type, data);
-    };
 
     try {
       if (this.calibrationStatus === 'error' || this.calibrationStatus === 'warning') {
-        await run('sendMessage', {
+        await this.step(this.activityStage, 'sendMessage', {
           text: 'Please move around such that you can see your whole body inside the red box.',
           position: 'bottom',
           skipWait: true,
         });
-        await run('sleep', environment.speedUpSession ? 300 : 2000);
+        await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
         this.calibrationScene.drawCalibrationBox('error');
-        await run('sleep', 2000);
+        await this.step(this.activityStage, 'sleep', 2000);
         await this.waitForCalibration('success');
+
+        // enable 'fast' calibration mode.
+        this.calibrationService.setMode('fast');
       }
-
-      // after initial calibration is successful, switch to 'fast' mode.
-      this.calibrationService.setMode('fast');
-
       // if (this.welcomeStageComplete) {
       //   this.welcomeStageComplete = false;
       // }
-      await run('hideAvatar');
-      await run('hideMessage');
-      await run('hidePrompt');
-      await run('hideSpotlight');
-      await run('hideTimer');
-
-      await run('announcement', { message: 'Excellent', timeout: 3000 });
-      await run('sleep', environment.speedUpSession ? 300 : 3500);
+      await this.step(this.activityStage, 'hideAvatar');
+      await this.step(this.activityStage, 'hideMessage');
+      await this.step(this.activityStage, 'announcement', { message: 'Excellent', timeout: 3000 });
+      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3500);
 
       // activity started
       console.log('event:activityStarted:sent');
@@ -260,104 +240,104 @@ export class CoordinationService {
       // Enable sit2stand service
       this.sit2standService.enable();
       // await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 2000);
-      await run('updateAvatar', { name: 'mila' });
+      await this.step(this.activityStage, 'updateAvatar', { name: 'mila' });
 
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Before we start the exercise, please sit down on a chair',
         position: 'center',
       });
 
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: `Grab a chair if you don't have one and please sit down.`,
         position: 'bottom',
         skipWait: true,
       });
 
-      await run('sleep', 500);
+      await this.step(this.activityStage, 'sleep', 500);
 
-      await run('waitForClass', 'sit');
+      await this.step(this.activityStage, 'waitForClass', 'sit');
 
-      await run('announcement', { message: 'Perfect', timeout: 3000 });
+      await this.step(this.activityStage, 'announcement', { message: 'Perfect', timeout: 3000 });
       this.soundService.playActivitySound('success');
-      await run('sleep', 3500);
+      await this.step(this.activityStage, 'sleep', 3500);
 
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Now lets make this exercise interesting',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'When you see an ODD number you STAND',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Let us try it out...',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Let us try it out...',
         position: 'bottom',
         skipWait: true,
       });
 
-      await run('sendPrompt', {
+      await this.step(this.activityStage, 'sendPrompt', {
         className: 'round',
         text: '1',
         position: 'center',
       });
-      await run('sleep', environment.speedUpSession ? 300 : 3000);
-      await run('waitForClass', 'stand');
+      await this.step(this.activityStage, 'sleep', environment.speedUpSession ? 300 : 3000);
+      await this.step(this.activityStage, 'waitForClass', 'stand');
       this.soundService.playActivitySound('success');
 
-      await run('hidePrompt');
-      await run('announcement', { message: 'Awesome!', timeout: 3000 });
+      await this.step(this.activityStage, 'hidePrompt');
+      await this.step(this.activityStage, 'announcement', { message: 'Awesome!', timeout: 3000 });
 
-      await run('sleep', 3500);
+      await this.step(this.activityStage, 'sleep', 3500);
 
-      await run('updateAvatar', { name: 'mila', position: 'center' });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'That was great!',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Now when you see an EVEN number you can SIT',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Let us give it a try?',
         position: 'center',
       });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Let us give it a try?',
         position: 'bottom',
         skipWait: true,
       });
 
-      await run('sendPrompt', {
+      await this.step(this.activityStage, 'sendPrompt', {
         className: 'round',
         text: '12',
         position: 'center',
       });
 
-      await run('waitForClass', 'sit');
+      await this.step(this.activityStage, 'waitForClass', 'sit');
       this.soundService.playActivitySound('success');
 
-      await run('hideAvatar');
-      await run('hidePrompt');
-      await run('hideMessage');
-      await run('sleep', 100);
-      await run('announcement', { message: 'Amazing!', timeout: 3000 });
-      await run('sleep', 3500);
+      await this.step(this.activityStage, 'hideAvatar');
+      await this.step(this.activityStage, 'hidePrompt');
+      await this.step(this.activityStage, 'hideMessage');
+      await this.step(this.activityStage, 'sleep', 100);
+      await this.step(this.activityStage, 'announcement', { message: 'Amazing!', timeout: 3000 });
+      await this.step(this.activityStage, 'sleep', 3500);
 
       // this.store.dispatch(guide.sendMessage({ text: 'Now we are all set...', position: 'center' }));
-      await run('updateAvatar', { name: 'mila', position: 'center' });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'Now we are all set...',
         position: 'center',
       });
-      await run('sleep', 3000);
+      await this.step(this.activityStage, 'sleep', 3000);
 
       this.sit2StandExplained = true;
-      this.soundService.pauseActivityInstructionSound();
+      // this.soundService.pauseActivityInstructionSound();
 
       this.activityStage = 'preGame';
       this.sendSessionState(this.activityStage);
@@ -386,11 +366,6 @@ export class CoordinationService {
       await this.prePlaySit2Stand();
     }
 
-    const recalibrationCount = this.recalibrationCount;
-    const run = async (type: StepTypes, data?: any) => {
-      return await this.step('game', recalibrationCount, type, data);
-    };
-
     try {
       // await this.waitForCalibration('success');
       console.log('activity stage, calibstatus:', this.activityStage, this.calibrationStatus);
@@ -403,8 +378,9 @@ export class CoordinationService {
           await this.resumeSit2Stand();
           console.log('resume sit2stand completed');
         }
+
         // The following loop can be called many times based on the user calibration
-        // So we need a way to break the loop when the run id changes
+        // So we need ax` way to break the loop when the run id changes
         const runId = this.runConfig.id;
 
         while (
@@ -431,22 +407,29 @@ export class CoordinationService {
             if (this.promptsArr.length >= 1) {
               num = this.promptsArr[this.currentPromptIdx];
             } else {
-              if (this.repsArr.length >= 2) {
-                if (
-                  this.repsArr[this.currentPromptIdx - 1] === 'even' &&
-                  this.repsArr[this.currentPromptIdx - 2] === 'even'
-                ) {
-                  num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
-                } else if (
-                  this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
-                  this.repsArr[this.currentPromptIdx - 2] === 'odd'
-                ) {
-                  num = Math.floor((Math.random() * 100) / 2) * 2;
+              if (this.previousRep && !this.previousRep.isSuccess) {
+                console.log('prevuios rep class', this.previousRepClass);
+                this.previousRep.class === 'stand'
+                  ? (num = Math.floor((Math.random() * 100) / 2) * 2)
+                  : (num = Math.floor((Math.random() * 100) / 2) * 2 + 1);
+              } else {
+                if (this.repsArr.length >= 2) {
+                  if (
+                    this.repsArr[this.currentPromptIdx - 1] === 'even' &&
+                    this.repsArr[this.currentPromptIdx - 2] === 'even'
+                  ) {
+                    num = Math.floor((Math.random() * 100) / 2) * 2 + 1;
+                  } else if (
+                    this.repsArr[this.currentPromptIdx - 1] === 'odd' &&
+                    this.repsArr[this.currentPromptIdx - 2] === 'odd'
+                  ) {
+                    num = Math.floor((Math.random() * 100) / 2) * 2;
+                  } else {
+                    num = Math.floor(Math.random() * 100);
+                  }
                 } else {
                   num = Math.floor(Math.random() * 100);
                 }
-              } else {
-                num = Math.floor(Math.random() * 100);
               }
             }
           }
@@ -478,7 +461,7 @@ export class CoordinationService {
             task_name: this.desiredClass,
           });
 
-          await run('sendPrompt', {
+          await this.step('game', 'sendPrompt', {
             text: num.toString(),
             className: 'round',
             position: 'right',
@@ -486,20 +469,30 @@ export class CoordinationService {
           this.isWaitingForReaction = true;
 
           // resolve has status property that can be used to send taskEnded events.
-          await run('startTimer', { timeout: 6000 });
+          await this.step('game', 'startTimer', { timeout: 6000 });
           const res = await this.waitForClassChangeOrTimeOut(
             this.desiredClass,
             this.previousDesiredClass,
             6000,
           );
+          console.log('res of rep', res.result);
           this.isWaitingForReaction = false;
-          await run('hideTimer');
+          await this.step('game', 'hideTimer');
 
           // playing chord
           if (res.result === 'success') {
             this.currentPromptIdx += 1;
             this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
+            this.store.dispatch(
+              guide.sendPrompt({
+                promptType: 'success',
+                className: 'round',
+                position: 'right',
+              }),
+            );
+            await this.sleep(1000);
+            this.store.dispatch(guide.hidePrompt());
             console.log('event:taskEnded:sent:score', 1);
             this.analyticsService.sendTaskEvent({
               activity: this.activityId,
@@ -547,30 +540,25 @@ export class CoordinationService {
   async prePlaySit2Stand() {
     try {
       this.activityStage = 'preGame';
-      const recalibrationCount = this.recalibrationCount;
-      const run = async (type: StepTypes, data?: any) => {
-        return await this.step('preGame', recalibrationCount, type, data);
-      };
-
       if (!this.soundService.isBacktrackPlaying(this.genre)) {
         this.soundService.playMusic(this.genre, 'backtrack');
       }
-      await run('updateAvatar', { name: 'mila', position: 'center' });
-      await run('sendMessage', {
+      await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
+      await this.step(this.activityStage, 'sendMessage', {
         text: 'STAND up when you are ready to start...',
         position: 'center',
       });
-      await run('waitForClass', 'stand');
-      await run('hideAvatar');
-      await run('hidePrompt');
-      await run('hideMessage');
-      await run('sendSpotlight', { text: 'READY' });
-      await run('sleep', 1000);
-      await run('sendSpotlight', { text: 'GET-SET' });
-      await run('sleep', 1000);
-      await run('sendSpotlight', { text: 'GO' });
-      await run('sleep', 1000);
-      await run('hideSpotlight');
+      await this.step(this.activityStage, 'waitForClass', 'stand');
+      await this.step(this.activityStage, 'hideAvatar');
+      await this.step(this.activityStage, 'hidePrompt');
+      await this.step(this.activityStage, 'hideMessage');
+      await this.step(this.activityStage, 'sendSpotlight', { text: 'READY' });
+      await this.step(this.activityStage, 'sleep', 1000);
+      await this.step(this.activityStage, 'sendSpotlight', { text: 'GET-SET' });
+      await this.step(this.activityStage, 'sleep', 1000);
+      await this.step(this.activityStage, 'sendSpotlight', { text: 'GO' });
+      await this.step(this.activityStage, 'sleep', 1000);
+      await this.step(this.activityStage, 'hideSpotlight');
       this.activityStage = 'game';
       this.sendSessionState(this.activityStage);
     } catch (err) {
@@ -615,17 +603,12 @@ export class CoordinationService {
 
   async postPlaySit2Stand() {
     // activity ended
-
-    const recalibrationCount = this.recalibrationCount;
-    const run = async (type: StepTypes, data?: any) => {
-      return await this.step('postGame', recalibrationCount, type, data);
-    };
-
     console.log('event:activityEnded:sent');
     this.analyticsService.sendActivityEvent({
       activity: this.activityId,
       event_type: 'activityEnded',
     });
+    this.sessionService.updateRewards();
 
     console.log('event:sessionEnded:sent');
     this.analyticsService.sendSessionEvent({
@@ -637,14 +620,14 @@ export class CoordinationService {
     this.activityCompleted = true;
     this.calibrationService.disable();
 
-    await run('hidePrompt');
-    await run('updateAvatar', { name: 'mila' });
+    await this.step('postGame', 'hidePrompt');
+    await this.step('postGame', 'updateAvatar', { name: 'mila' });
     // this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }));
-    await run('sendMessage', { text: 'YOU WERE AMAZING!!!', position: 'center' });
+    await this.step('postGame', 'sendMessage', { text: 'YOU WERE AMAZING!!!', position: 'center' });
     // ending constantDrum here
     // this.soundService.endConstantDrum();
-    await run('sleep', 3000);
-    await run('sendMessage', {
+    await this.step('postGame', 'sleep', 3000);
+    await this.step('postGame', 'sendMessage', {
       text: 'Thank you for playing!',
       position: 'center',
     });
@@ -652,7 +635,7 @@ export class CoordinationService {
     this.soundService.pauseBacktrack(this.genre);
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
-    await run('sleep', 5000);
+    await this.step('postGame', 'sleep', 5000);
   }
 
   async start(game: Phaser.Game, onComplete: any) {
@@ -663,7 +646,7 @@ export class CoordinationService {
 
     this.game = game;
     this.onComplete = onComplete;
-    this.subscribeToState();
+    // this.subscribeToState();
 
     this.welcomeUser();
   }
@@ -679,15 +662,30 @@ export class CoordinationService {
     }
   }
 
-  async step(step: ActivityStage, recalibrationCount: number, type: StepTypes, data?: any) {
+  async step(
+    step: ActivityStage,
+    type:
+      | 'updateAvatar'
+      | 'sendMessage'
+      | 'sleep'
+      | 'hideAvatar'
+      | 'hideMessage'
+      | 'announcement'
+      | 'sendSpotlight'
+      | 'hideSpotlight'
+      | 'waitForClass'
+      | 'sendPrompt'
+      | 'hidePrompt'
+      | 'startTimer'
+      | 'hideTimer',
+    data?: any,
+    stepNumber?: number,
+  ) {
     return new Promise(async (resolve, reject) => {
       // check if the user is calibrated or not
-      console.log(step, type, data, recalibrationCount);
-      if (recalibrationCount !== this.recalibrationCount) {
-        reject('recalibrationCount mismatch');
-      }
+      console.log(step, type, data);
       if (step === 'explain' && this.calibrationStatus === 'error') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
       } else if (step === 'preGame' && this.calibrationStatus === 'error') {
@@ -765,48 +763,51 @@ export class CoordinationService {
     });
   }
 
-  subscribeToState() {
-    this.observables$ = this.observables$ || {};
-    // Subscribe to the pose
-    this.observables$.pose = this.store.select((state) => state.pose);
-    this.observables$.pose.subscribe((results: { pose: Results }) => {
-      this.previousPose = this.currentPose;
-      if (results) {
-        this.handlePose(results);
-      }
-    });
+  // subscribeToState() {
+  //   this.observables$ = this.observables$ || {};
 
-    this.observables$.genre = this.store.select((store) => store.session.session?.genre);
-    this.observables$.genre.subscribe((genreSelected) => {
-      if (genreSelected) {
-        this.genre = genreSelected;
-        this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
-      } else {
-        // fallback case
-        this.genre = 'Jazz';
-      }
-    });
+  //   // this.observables$.pose = this.store.select((state) => state.pose);
+  //   // this.observables$.pose.subscribe((results: { pose: Results }) => {
+  //   // });
+  //   // Subscribe to the pose
+  //   this.poseService.getPose().subscribe((results) => {
+  //     this.previousPose = this.currentPose;
+  //     if (results) {
+  //       this.handlePose(results);
+  //     }
+  //   });
 
-    this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
-    this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
-      this.runConfig.reps = res?.repsCompleted || 0;
-    });
+  //   this.observables$.genre = this.store.select((store) => store.session.session?.genre);
+  //   this.observables$.genre.subscribe((genreSelected) => {
+  //     if (genreSelected) {
+  //       this.genre = genreSelected;
+  //       this.soundService.loadMusicFiles(this.genre as PreSessionGenre);
+  //     } else {
+  //       // fallback case
+  //       this.genre = 'Jazz';
+  //     }
+  //   });
 
-    this.observables$.session = this.store.select((state) => state.session.session);
-    this.session = this.getValue(this.observables$.session);
-    if (
-      this.session &&
-      this.session.state &&
-      this.session.state.stage &&
-      this.session.state.stage !== 'postGame'
-    ) {
-      this.activityStage = this.session.state.stage;
-    } else {
-      // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
-      this.activityStage = 'explain';
-    }
-    console.log(this.activityStage);
-  }
+  //   this.observables$.currentActivity = this.store.select((state) => state.session.currentActivity);
+  //   this.observables$.currentActivity.subscribe((res: ActivityState | undefined) => {
+  //     this.runConfig.reps = res?.repsCompleted || 0;
+  //   });
+
+  //   this.observables$.session = this.store.select((state) => state.session.session);
+  //   this.session = this.getValue(this.observables$.session);
+  //   if (
+  //     this.session &&
+  //     this.session.state &&
+  //     this.session.state.stage &&
+  //     this.session.state.stage !== 'postGame'
+  //   ) {
+  //     this.activityStage = this.session.state.stage;
+  //   } else {
+  //     // if the stage doesn't exist i.e. it's a new session! so we start from explain stage.
+  //     this.activityStage = 'explain';
+  //   }
+  //   console.log(this.activityStage);
+  // }
 
   getValue(obj: Observable<any>) {
     let value: any;
@@ -818,11 +819,12 @@ export class CoordinationService {
     // TODO: unsubscribe from all the events
   }
 
-  handlePose(results: { pose: Results }) {
-    this.currentPose = results.pose;
+  _handlePose(results: Results) {
+    this.currentPose = results;
     this.poseCount++;
     //   console.log('handlePose:results:', results)
-    const calibrationResult = this.calibrationService.handlePose(results);
+    // const calibrationResult = this.calibrationService.handlePose(results);
+    const calibrationResult = { status: 'error' };
     // Call appropriate hook when status changes
     if (calibrationResult && this.calibrationStatus !== calibrationResult.status) {
       this.calibrationStatus = calibrationResult.status;
@@ -832,7 +834,7 @@ export class CoordinationService {
     if (this.isWaitingForReaction) {
       const poseHash = this.sit2standPoseHashGenerator(
         this.previousPose,
-        results.pose,
+        results,
         calibrationResult!.status,
       );
       // console.log('poseHash:', poseHash);
@@ -849,7 +851,7 @@ export class CoordinationService {
     }
 
     if (this.calibrationStatus !== 'error' && this.sit2standService.isEnabled()) {
-      const newClass = this.sit2standService.classify(results.pose).result;
+      const newClass = this.sit2standService.classify(results).result;
       this.handleClassChange(this.currentClass, newClass);
       this.currentClass = newClass;
     }
@@ -922,6 +924,7 @@ export class CoordinationService {
       if (this.currentClass == className) resolve({});
       // set interval
       const interval = setInterval(() => {
+        // to check if user is uncalibrated when we are waiting for a certain pose.
         if (this.calibrationStatus === 'error') {
           reject({});
           clearInterval(interval);
@@ -1037,9 +1040,7 @@ export class CoordinationService {
   handleCalibrationResult(oldStatus: string, newStatus: string) {
     switch (newStatus) {
       case 'warning':
-        if (oldStatus == 'error') {
-          this.handleCalibrationWarning(oldStatus, newStatus);
-        }
+        this.handleCalibrationWarning(oldStatus, newStatus);
         break;
       case 'success':
         this.handleCalibrationSuccess(oldStatus, newStatus);
@@ -1081,142 +1082,75 @@ export class CoordinationService {
       this.activityStage === 'explain'
     ) {
       if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'game') {
-        this.soundService.pauseActivityInstructionSound();
+        // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
+        this.isRecalibrated = true;
         this.runConfig.id += 1;
         console.log('ID updated for the runConfig', this.runConfig.id);
-        this.isRecalibrated = true;
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'explain') {
-        this.soundService.resumeActivityInstructionSound();
+        // this.soundService.resumeActivityInstructionSound();
         this.runSit2Stand();
       }
     }
   }
 
   handleCalibrationSuccess(oldStatus: string, newStatus: string) {
-    this.recalibrationCount += 1;
     this.calibrationScene.drawCalibrationBox('success');
     this.soundService.playCalibrationSound('success');
     this.startSit2StandScene();
   }
 
   handleCalibrationWarning(oldStatus: string, newStatus: string) {
-    this.calibrationScene.drawCalibrationBox('warning');
+    // this.calibrationScene.drawCalibrationBox('warning');
+    if (oldStatus === 'error') {
+      this.calibrationScene.drawCalibrationBox('warning');
+    } else {
+      // Just treat it like success
+      this.calibrationScene.drawCalibrationBox('warning');
+      this.handleCalibrationSuccess(oldStatus, newStatus);
+    }
   }
 
   handleCalibrationError(oldStatus: string, newStatus: string) {
     this.startCalibrationScene();
     this.soundService.playCalibrationSound('error');
     this.calibrationScene.drawCalibrationBox('error');
-    // this.pauseActivity();
+    this.pauseActivity();
   }
 
-  // async pauseActivity() {
-  //   if (
-  //     this.activityStage === 'preGame' ||
-  //     this.activityStage === 'game' ||
-  //     this.activityStage === 'postGame'
-  //   ) {
-  //     this.soundService.pauseBacktrack(this.genre);
-  //   }
-
-  //   this.clearPrompts();
-  //   this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
-
-  //   this.store.dispatch(
-  //     guide.sendMessage({
-  //       text: "The game is now paused as we can't see you",
-  //       position: 'center',
-  //     }),
-  //   );
-
-  //   this.sendSessionState(this.activityStage);
-  // }
-
-  async nextStep() {
-    this.index += 1;
-    if (this.sequence.length > this.index) {
-      const action = this.sequence[this.index];
-      switch (action.type) {
-        case 'action':
-          await this.handleAction(action);
-          break;
-        case 'timeout':
-          await this.handleTimeout(action);
-          break;
-        case 'method':
-          this.handleMethod(action);
-          break;
-
-        case 'service':
-          this.handleService(action);
-          break;
-
-        case 'startNewSequence':
-          // TODO: track where we left off in the older sequence?
-          this.sequence = this[action.name as keyof typeof this];
-          this.index = -1;
-      }
-
-      if (action.next != 'manual') {
-        // if the next action can be executed automatically
-        this.nextStep();
-      }
+  async pauseActivity() {
+    if (
+      this.activityStage === 'preGame' ||
+      this.activityStage === 'game' ||
+      this.activityStage === 'postGame'
+    ) {
+      this.soundService.pauseBacktrack(this.genre);
     }
+
+    this.clearPrompts();
+    this.store.dispatch(guide.updateAvatar({ name: 'mila' }));
+
+    this.store.dispatch(
+      guide.sendMessage({
+        text: "The game is now paused as we can't see you",
+        position: 'center',
+      }),
+    );
+
+    this.sendSessionState(this.activityStage);
   }
 
-  async runActivity() {}
-
-  async handleAction(action: any) {
-    if (action.action) {
-      this.store.dispatch(action.action.call(this, action.data));
-    }
-  }
-
-  async handleTimeout(action: any) {
-    if (action.data) {
-      await this.sleep(action.data);
-    }
-  }
-
-  async handleMethod(action: any) {
-    if (action.name == this.invokeComponentFunction) {
-      if (action.sync) {
-        await this.invokeComponentFunction(action.data.name, action.data.args); // TODO: support sending arguments
-      } else {
-        this.invokeComponentFunction(action.data.name, []);
-      }
-    } else if (action.name) {
-      if (action.sync) await action.name();
-      else action.name();
-    }
-  }
-
-  async handleService(action: any) {
-    const service = this.injector.get(action.name);
-    service[action.method]();
-  }
-
-  async invokeComponentFunction(methodName: string, params: Array<any>) {
-    if (this.component && typeof this.component[methodName] == 'function') {
-      if (params) {
-        await this.component[methodName](...params);
-      } else {
-        await this.component[methodName]();
-      }
-    }
-  }
   async sleep(timeout: number) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {

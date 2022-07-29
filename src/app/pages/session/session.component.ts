@@ -8,13 +8,13 @@ import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
 import { CoordinationService } from 'src/app/services/coordination/coordination.service';
-import { HolisticService } from 'src/app/services/holistic/holistic.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { SessionRow, SessionState } from 'src/app/types/pointmotion';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { session } from 'src/app/store/actions/session.actions';
+import { PoseService } from 'src/app/services/pose/pose.service';
 
 @Component({
   selector: 'app-session',
@@ -63,7 +63,7 @@ export class SessionComponent implements AfterViewInit {
     private analyticsService: AnalyticsService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
-    private mpHolisticService: HolisticService,
+    private poseService: PoseService,
     private sit2standService: SitToStandService,
     private sessionService: SessionService,
     private calibrationScene: CalibrationScene,
@@ -136,7 +136,7 @@ export class SessionComponent implements AfterViewInit {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
     setTimeout(() => {
-      this.mpHolisticService.start(this.video.nativeElement);
+      this.poseService.start(this.video.nativeElement);
     }, 2000); // gives time for things to settle down
   }
 

@@ -2,13 +2,12 @@ import { Injectable } from '@angular/core';
 import { Holistic, Options } from '@mediapipe/holistic';
 import { Store } from '@ngrx/store';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { pose } from 'src/app/store/actions/pose.actions';
 import { Results } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
-export class HolisticService {
+export class HolisticServiceOld {
   holistic?: Holistic;
   options: Options = {
     modelComplexity: 1,

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'graphql-request';
-import { PreSessionGenre, PreSessionMood } from 'src/app/types/pointmotion';
+import { Genre, PreSessionMood } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { JwtService } from '../jwt/jwt.service';
@@ -146,7 +146,7 @@ export class SessionService {
     );
   }
 
-  async updateGenre(genre: PreSessionGenre) {
+  async updateGenre(genre: Genre) {
     if (!this.sessionId) {
       console.error('session id not defined. sessionService.get should be called first');
       return;
@@ -163,6 +163,21 @@ export class SessionService {
         genre,
         id: this.sessionId,
       },
+    );
+  }
+  async updateRewards() {
+    if (!this.sessionId) {
+      console.error('session id not defined. sessionService.get should be called first');
+      return;
+    }
+    return this.client.req(
+      gql`
+        mutation UpdateRewards {
+          updateRewards {
+            status
+          }
+        }
+      `,
     );
   }
 }

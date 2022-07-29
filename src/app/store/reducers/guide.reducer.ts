@@ -35,8 +35,11 @@ const _guideReducer = createReducer(
   }),
 
   on(guide.sendPrompt, (state, data) => {
+    console.log(data);
     const newState = Object.assign({}, state);
     newState.prompt = data;
+    // newState.prompt ? (newState.prompt.type = data.type) : null;
+    console.log(newState.prompt);
     return newState;
   }),
 

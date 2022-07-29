@@ -1,10 +1,19 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
+import { Observable, Subject } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export type ActionHook = {
   beforeAction?: Array<Action>;
   afterAction?: Array<Action>;
   onSuccess?: Array<Action>;
   onFailure?: Array<Action>;
+};
+
+export type BoundingBox = {
+  topLeft: { x: number; y: number };
+  topRight: { x: number; y: number };
+  bottomLeft: { x: number; y: number };
+  bottomRight: { x: number; y: number };
 };
 
 export type Action = {
@@ -32,11 +41,13 @@ export declare class Calibration {
 
 export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
 
+export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'both-hands' | undefined;
+
 /**
  * We support two modes: 'full' | 'fast'.
  * 'full' mode is enabled by default.
- * When 'full' mode is active, all the key body points must be visible, and user must be within the calibration box.
- * When 'fast' mode is active, all the key body points must be visible.
+ * * When 'full' mode is active, all the key body points must be visible, and user must be within the calibration box.
+ * * When 'fast' mode is active, all the key body points must be visible.
  */
 export type CalibrationMode = 'full' | 'fast';
 
@@ -577,7 +588,7 @@ export declare class Holistic implements HolisticInterface {
 }
 
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
-export type PreSessionGenre = 'Classical' | 'Jazz' | 'Rock' | 'Dance' | 'Surprise Me!';
+export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
 export interface CalibrationState {
   pose?: Results;
@@ -698,7 +709,7 @@ export type SessionRow = {
   careplan?: string;
   preSessionMood?: string;
   postSessionMood?: string;
-  genre?: PreSessionGenre;
+  genre?: Genre;
   patientByPatient?: Patient;
   careplanByCareplan?: CarePlan;
   state?: {
@@ -719,26 +730,41 @@ export type Patient = {
   onboardedBy: string;
 };
 
-// export type SessionConfig = {
-//   sessionId?: string,
-//   enableAnalytics: boolean,
-//   mood?: string,
-//   genre?: string
-// }
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_slicer';
+export interface ActivityConfiguration {
+  configuration: {
+    /**
+     * Number of correct reps required for an activity to end.
+     */
+    minCorrectReps: number;
+    /**
+     * Defines speed in milliseconds at which the activity should be run.
+     */
+    speed: number;
+  };
+  handler?: any;
+}
+
 export interface Environment {
   stageName: string;
   production: boolean;
-  // token: string;
-  endpoint: string;
+  speedUpSession?: boolean;
   analytics: {
     calibration: boolean;
   };
-  // patient: string;
-  // careplan: string;
+  endpoint: string;
   apiEndpoint: string;
-  musicExperience: 'music_experience_1' | 'music_experience_2';
-  speedUpSession?: boolean;
   postSessionRedirectEndpoint: string;
+  /**
+   * Defines the order in which activites are to be run.
+   */
+  order: Activities[];
+  /**
+   * Defines configuration of activities.
+   */
+  settings: {
+    [key in Activities]: ActivityConfiguration;
+  };
 }
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
@@ -771,6 +797,7 @@ export type GuidePromptDTO = {
   text?: string;
   icon?: IconDefinition; // font-awesome icon only
   className?: string;
+  promptType?: string;
   position:
     | 'left'
     | 'right'
@@ -818,19 +845,295 @@ export type DebugTaskEvent = {
   reacted: boolean;
 };
 
-export type StepTypes =
-  | 'updateAvatar'
-  | 'sendMessage'
-  | 'sleep'
-  | 'hideAvatar'
-  | 'hideMessage'
-  | 'announcement'
-  | 'sendSpotlight'
-  | 'hideSpotlight'
-  | 'waitForClass'
-  | 'sendPrompt'
-  | 'hidePrompt'
-  | 'startTimer'
-  | 'hideTimer';
-
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
+
+export type AnalyticsDTO = {
+  prompt: number;
+  class: 'sit' | 'stand';
+  success: boolean;
+  score: number;
+  reactionTime: number;
+};
+
+export type PreferenceState = {
+  /**
+   * Genre preferred by the patient.
+   */
+  genre?: Genre;
+  /**
+   * Patient's current mood.
+   */
+  mood?: string;
+};
+
+export type GameState = {
+  /**
+   * UUID to identify the game.
+   */
+  id?: string;
+  /**
+   * Indicates when the game was created.
+   */
+  createdAt?: string;
+  /**
+   * Indicates when the game was last updated.
+   */
+  updatedAt?: string;
+  /**
+   * Indicates when the game was ended.
+   */
+  endedAt?: string;
+  /**
+   * Array of strings of game names.
+   */
+  game?: string;
+  /**
+   * Indicates the number of reps completed
+   */
+  repsCompleted?: number;
+  /**
+   * Indicates total duration of the game.
+   */
+  totalDuration?: number;
+  /**
+   * Analytics for the game.
+   */
+  analytics?: AnalyticsDTO[];
+  /**
+   * Patient ID of the patient playing the game.
+   */
+  patient?: string;
+};
+
+export type ScoreElementState = {
+  /**
+   * Inputs a string that appears as label for the score element
+   */
+  label?: string;
+  /**
+   * Inputs a number or string as the current score
+   */
+  value?: number | string;
+  /**
+   * Inputs a number as high score
+   */
+  highScore?: number;
+  /**
+   * Inputs a number as the amount of time between each score update
+   */
+  transitionDuration?: number;
+};
+
+export type TimerElementState = {
+  /**
+   * Timer can be controlled using the modes.
+   * * Note: During 'start' mode the 'duration' has to be specified.
+   */
+  mode: 'start' | 'stop' | 'pause' | 'resume';
+  /**
+   * Sets the duration of the timer.
+   */
+  duration?: number;
+  /**
+   * Function triggers on completion of the timer.
+   * @param elapsedTime gives the time elapsed time since the start of the timer.
+   */
+  onComplete?: (elapsedTime: number) => void;
+  /**
+   * Function triggers when timer is paused
+   * @param elapsedTime gives the time elapsed time since the start of the timer.
+   */
+  onPause?: (elapsedTime: number) => void;
+};
+
+export type OverlayElementState = {
+  /**
+   * Inputs an array of messages and icons which will be displayed in the overlay
+   */
+  cards: { message: string; icon: string }[];
+  /**
+   * Inputs a number as the amount of time between each card appearance
+   */
+  transitionDuration?: number;
+};
+
+export type BannerButton = {
+  /**
+   * Set button text to be shown in the UI.
+   */
+  title?: string;
+
+  /**
+   * Set a custom styling class.
+   */
+  className?: string;
+
+  /**
+   * Set duration in ms for a progress bar.
+   */
+  progressDurationMs?: number;
+};
+
+export type BannerElementState = {
+  /**
+   * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
+   */
+  htmlStr?: string;
+
+  /**
+   * Inputs an array of objects to be rendered as Buttons.
+   */
+  buttons?: BannerButton[];
+
+  /**
+   * Sets the type of banner.
+   * * intro are to be rendered before starting an activity.
+   * * outro are to be rendered after completion of an activity.
+   */
+  type?: 'intro' | 'outro';
+};
+
+export type GuideElementState = {
+  /**
+   * Inputs a string to be shown to guide the player.
+   */
+  title?: string;
+
+  /**
+   * Inputs a number indicating the total duration for which the title has to be shown.
+   */
+  titleDuration?: number;
+
+  /**
+   * Bypasses titleDuration, and shows the widget indefinitely.
+   */
+  showIndefinitely?: boolean;
+};
+
+export type PromptPosition = 'center' | 'top-right';
+
+export type PromptElementState = {
+  /**
+   * Set value to be displayed on the prompt.
+   */
+  value?: string | number;
+
+  /**
+   * Set element's position.
+   */
+  position?: PromptPosition;
+};
+
+export type TimeoutElementState = {
+  /**
+   * Timeout can be controlled using the modes.
+   * * Note: During 'start' mode the 'duration' has to be specified.
+   */
+  mode: 'start' | 'stop';
+  /**
+   * Duration of the timeout in ms.
+   */
+  timeout?: number;
+};
+
+export type ElementAttributes = {
+  visibility?: 'visible' | 'hidden';
+  className?: string;
+  style?: any;
+  reCalibrationCount?: number;
+};
+
+export type VideoElementState = {
+  /**
+   *  Set the type of the video file.
+   *  * Note: currently the supported videoformat for type 'video' is mp4.
+   */
+  type: 'gif' | 'youtube' | 'video';
+  /**
+   * Set the src of the file that you want to display.
+   * * Note: youtube videos src should have '/embed/' in them to work. (Should be an embed link)
+   */
+  src: string;
+  /**
+   * Set the title of the video element.
+   */
+  title: string;
+  /**
+   * Set the description of the video element.
+   */
+  description: string;
+};
+
+export type RibbonElementState = {
+  /**
+   * Inputs an array of strings which will be displayed in the ribbon one after another
+   */
+  titles?: string[];
+  /**
+   * Inputs a number as the amount of time the title is displayed on the screen
+   */
+  titleDuration?: number;
+  /**
+   * Inputs a number as the amount of time between each title
+   */
+  transitionDuration?: number;
+};
+
+export type ElementsState = {
+  score: { data: ScoreElementState; attributes: ElementAttributes };
+  timer: { data: TimerElementState; attributes: ElementAttributes };
+  prompt: { data: PromptElementState; attributes: ElementAttributes };
+  timeout: { data: TimeoutElementState; attributes: ElementAttributes };
+  video: { data: VideoElementState; attributes: ElementAttributes };
+  ribbon: { data: RibbonElementState; attributes: ElementAttributes };
+  overlay: { data: OverlayElementState; attributes: ElementAttributes };
+  banner: { data: BannerElementState; attributes: ElementAttributes };
+  guide: { data: GuideElementState; attributes: ElementAttributes };
+};
+
+export type ElementsObservables = {
+  score: Observable<{ data: ScoreElementState; attributes: ElementAttributes }>;
+  timer: Observable<{ data: TimerElementState; attributes: ElementAttributes }>;
+  prompt: Observable<{ data: PromptElementState; attributes: ElementAttributes }>;
+  timeout: Observable<{ data: TimeoutElementState; attributes: ElementAttributes }>;
+  video: Observable<{ data: VideoElementState; attributes: ElementAttributes }>;
+  ribbon: Observable<{ data: RibbonElementState; attributes: ElementAttributes }>;
+  overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
+  banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
+  guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
+};
+
+export interface ActivityBase {
+  /**
+   * The screen showing the name of the next activity and waiting for the user input
+   * such as raising one or two hands
+   */
+  welcome(): Array<(reCalibrationCount: number) => Promise<any>>;
+
+  /**
+   * The flow to teach the user how to complete the activity
+   * Will run the first time for each user and run later only on based on certain conditions
+   * such as:
+   * 1. User had achievement ratio of less than 60% in the last attempt
+   * 2. User has not done this activity in last one week
+   * 3. User explicitly asks to complete the activity
+   */
+  tutorial(): ((reCalibrationCount: number) => Promise<void>)[];
+
+  /**
+   * The game loop. Game Service will call this function as many times as it needs.
+   * The function is only supposed to take care of 1 iteration
+   */
+  loop(): ((reCalibrationCount: number) => Promise<void>)[];
+
+  /**
+   * Before the loop, if there is anything to let the user get ready
+   */
+  preLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+
+  /**
+   * After the loop, if there is a score or something before sending the user on to the next
+   * activity
+   */
+  postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+}

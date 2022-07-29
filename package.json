@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "auto-format": "lint-staged --allow-empty",
     "test": "ng test",
     "prepare": "husky install"
   },
@@ -26,6 +27,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.0",
     "@lottiefiles/lottie-player": "^1.5.6",
     "@mediapipe/holistic": "^0.5.1635989137",
+    "@mediapipe/pose": "^0.5.1635988162",
     "@ng-bootstrap/ng-bootstrap": "^12.1.2",
     "@ngrx/store": "^13.0.2",
     "@popperjs/core": "^2.11.5",
@@ -36,6 +38,7 @@
     "graphql-request": "^4.2.0",
     "howler": "^2.2.3",
     "jwt-decode": "^3.1.2",
+    "lint-staged": "^13.0.3",
     "phaser": "^3.55.2",
     "rxjs": "~7.4.0",
     "safe-pipe": "^2.0.2",

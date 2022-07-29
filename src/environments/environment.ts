@@ -2,19 +2,40 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { SitToStandService } from 'src/app/services/game/sit-to-stand/sit-to-stand.service';
 import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
   stageName: 'default',
   production: false,
-  // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
-  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  speedUpSession: false,
   analytics: {
     calibration: true,
   },
-  musicExperience: 'music_experience_2',
-  apiEndpoint: 'https://services.dev.pointmotioncontrol.com/',
-  speedUpSession: true,
+  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
+  postSessionRedirectEndpoint: 'http://localhost:4200',
+  order: ['sit_stand_achieve'],
+  settings: {
+    sit_stand_achieve: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    beat_boxer: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    sound_slicer: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+  },
 };
 
 /*

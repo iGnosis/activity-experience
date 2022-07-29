@@ -1,27 +1,64 @@
 import { Injectable } from '@angular/core';
-import { Results } from '@mediapipe/holistic';
-import { Observable } from 'rxjs';
+import { Results } from '@mediapipe/pose';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { CalibrationMode } from 'src/app/types/pointmotion';
+import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
+import { PoseService } from '../pose/pose.service';
 @Injectable({
   providedIn: 'root',
 })
 export class CalibrationService {
-  pose$?: Observable<any>;
-  calibration$?: Observable<string>;
-  status = 'error';
+  status: CalibrationStatusType = 'error';
   isEnabled = false;
-  visibilityThreshold = 0.7;
+  result = new Subject<CalibrationStatusType>();
+  subscription: Subscription;
   mode: CalibrationMode = 'full';
+  visibilityThreshold = 0.7;
+  _reCalibrationCount = 0;
+  reCalibrationCount = new Subject<number>();
 
-  constructor(private calibrationScene: CalibrationScene) {}
+  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
 
-  enable() {
+  enable(autoSwitchMode = true) {
     this.isEnabled = true;
+    this.subscription = this.poseService.getPose().subscribe((results) => {
+      const newStatus = this._calibrateBody(results, this.mode);
+
+      if (!newStatus) return;
+
+      if (newStatus.status !== this.status) {
+        this.calibrationScene.destroyGraphics();
+        // On successful recalibration, just increment the counter.
+        if (newStatus.status === 'success') {
+          this._reCalibrationCount += 1;
+          this.reCalibrationCount.next(this._reCalibrationCount);
+        } else if (newStatus.status === 'error') {
+          this._reCalibrationCount += 1;
+          this.reCalibrationCount.next(this._reCalibrationCount);
+        }
+        // Update all the subscribers interested in calibration status
+        this.result.next(newStatus.status);
+
+        // Draw the calibration box
+        this.calibrationScene.drawCalibrationBox(newStatus.status);
+
+        if (autoSwitchMode) {
+          // Move the calibration from full to fast mode.
+          this.switchMode(newStatus.status);
+        }
+      }
+      this.status = newStatus.status;
+    });
   }
 
-  disable() {
-    this.isEnabled = false;
+  switchMode(status: CalibrationStatusType) {
+    if (status === 'success') {
+      console.log('switching to fast mode calibration');
+      this.mode = 'fast';
+    } else if (status === 'error') {
+      console.log('switching to full mode calibration');
+      this.mode = 'full';
+    }
   }
 
   setMode(mode: CalibrationMode) {
@@ -29,27 +66,46 @@ export class CalibrationService {
     this.mode = mode;
   }
 
-  handlePose(results: { pose: Results }): { status: string } | undefined {
-    if (!results) return;
+  disable() {
+    this.isEnabled = false;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 
-    return this.calibrateFullBody(results);
+  startCalibrationScene(game: Phaser.Game) {
+    if (!game) {
+      throw new Error('Invalid game object');
+    } else {
+      game.scene.start('calibration');
+    }
   }
 
   _isPointWithinCalibrationBox(x: number, y: number, point?: number): boolean {
-    return (
+    const isPointWithinCalibrationBox =
       this.calibrationScene.calibrationBox.x < x &&
       x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
       this.calibrationScene.calibrationBox.y < y &&
-      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height
-    );
+      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height;
+
+    return isPointWithinCalibrationBox;
   }
 
-  calibrateFullBody(results: { pose: Results }) {
+  facilitateCalibration(game: Phaser.Game) {
+    // TODO: Have the communication implemented here.
+  }
+
+  _calibrateBody(
+    results: Results,
+    mode: CalibrationMode,
+  ): {
+    status: CalibrationStatusType;
+  } {
     if (!this.isEnabled) {
-      return;
+      return { status: 'disabled' };
     }
 
-    const poseLandmarkArray = results.pose.poseLandmarks;
+    const poseLandmarkArray = results.poseLandmarks;
 
     // just a sanity check.
     if (!Array.isArray(poseLandmarkArray)) {
@@ -79,14 +135,14 @@ export class CalibrationService {
       const yPoint = poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height;
 
       // it's okay if user isn't within the box.
-      if (this.mode === 'fast') {
+      if (mode === 'fast') {
         calibratedPoints.push(point);
       }
 
       // user must be within the box.
-      if (this.mode === 'full') {
+      if (mode === 'full') {
         if (!this._isPointWithinCalibrationBox(xPoint, yPoint)) {
-          console.log(`point ${point} is out of calibration box`);
+          // console.log(`point ${point} is out of calibration box`);
           unCalibratedPoints.push(point);
         } else {
           calibratedPoints.push(point);
@@ -96,17 +152,13 @@ export class CalibrationService {
 
     // allow user to play the game.
     if (points.length === calibratedPoints.length) {
-      console.log(`mode: ${this.mode} - calibration success`);
+      // console.log(`mode: ${mode} - calibration success`);
       return { status: 'success' };
     }
 
     if (this.mode === 'full') {
       // highlight points that aren't in the box.
-      this.calibrationScene.drawCalibrationPoints(
-        results.pose,
-        calibratedPoints,
-        unCalibratedPoints,
-      );
+      this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
       return { status: 'warning' };
     }
 
