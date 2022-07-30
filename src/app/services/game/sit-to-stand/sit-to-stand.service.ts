@@ -535,7 +535,9 @@ export class SitToStandService implements ActivityBase {
           },
         };
         await this.elements.sleep(3400);
-
+        await this.checkinService.updateOnboardingStatus({
+          sit_stand_achieve: true,
+        });
         this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];

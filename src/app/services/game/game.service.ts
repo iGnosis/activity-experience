@@ -226,8 +226,16 @@ export class GameService {
     }
   }
 
-  getRemainingStages() {
+  async getRemainingStages(nextGame: string) {
     const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+    const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    if (
+      onboardingStatus &&
+      onboardingStatus.length &&
+      onboardingStatus[0].onboardingStatus[nextGame]
+    ) {
+      allStages.splice(1, 1);
+    }
     return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
@@ -237,7 +245,7 @@ export class GameService {
     if (!nextGame) return;
 
     const activity = this.getActivities()[nextGame.name];
-    const remainingStages = this.getRemainingStages();
+    const remainingStages = await this.getRemainingStages(nextGame.name);
     console.log('remainingStages', remainingStages);
 
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
