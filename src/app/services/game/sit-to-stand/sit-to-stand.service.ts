@@ -67,13 +67,6 @@ export class SitToStandService implements ActivityBase {
       });
 
     this.handTrackerService.enable();
-    this.handTrackerService.result
-      .pipe(debounceTime(1500))
-      .subscribe((status: HandTrackerStatus) => {
-        this._handTrackerStatus = status;
-        console.log('SitToStandService:_handTrackerStatus:', this._handTrackerStatus);
-      });
-
     this.sit2StandService.enable();
     // Register this service with with something...
 
