@@ -17,7 +17,7 @@ export class HandTrackerService {
   debouncedStatus: HandTrackerStatus = undefined;
 
   constructor(private poseService: PoseService) {
-    this.result.pipe(debounceTime(2000)).subscribe((status: HandTrackerStatus) => {
+    this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
       this.debouncedStatus = status;
       console.log('HandTrackerService:debouncedStatus:', this.status);
     });
