@@ -57,8 +57,10 @@ export class SitToStandService implements ActivityBase {
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
-        this.genre = preference.genre || 'jazz';
-        this.soundsService.loadMusicFiles(this.genre);
+        if (preference.genre && this.genre !== preference.genre) {
+          this.genre = preference.genre;
+          this.soundsService.loadMusicFiles(this.genre);
+        }
       });
 
     this.handTrackerService.enable();
@@ -76,7 +78,6 @@ export class SitToStandService implements ActivityBase {
   welcome() {
     console.log('running welcome');
 
-    this.soundsService.playActivityInstructionSound(this.genre);
     return [
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
@@ -151,6 +152,7 @@ export class SitToStandService implements ActivityBase {
     console.log('running tutorial');
     return [
       async (reCalibrationCount: number) => {
+        this.soundsService.playActivityInstructionSound(this.genre);
         this.elements.guide.state = {
           data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
