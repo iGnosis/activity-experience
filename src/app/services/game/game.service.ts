@@ -235,8 +235,8 @@ export class GameService {
     if (
       onboardingStatus &&
       onboardingStatus.length > 0 &&
-      onboardingStatus[0] &&
-      onboardingStatus[0].onboardingStatus[nextGame]
+      onboardingStatus[0].onboardingStatus &&
+      nextGame in onboardingStatus[0].onboardingStatus
     ) {
       allStages.splice(1, 1);
     }
