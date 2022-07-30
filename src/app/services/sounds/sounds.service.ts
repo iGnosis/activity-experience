@@ -601,4 +601,8 @@ export class SoundsService {
         sound.play();
       });
   }
+
+  stopAllAudio() {
+    // Howler.stop();
+  }
 }

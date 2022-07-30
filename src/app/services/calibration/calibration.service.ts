@@ -157,6 +157,8 @@ export class CalibrationService {
     }
 
     if (this.mode === 'full') {
+      // to remove if calibration points are already drawn.
+      this.calibrationScene.destroyGraphics();
       // highlight points that aren't in the box.
       this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
       return { status: 'warning' };

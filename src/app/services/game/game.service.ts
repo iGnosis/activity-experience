@@ -22,6 +22,7 @@ import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.ser
 import { CheckinService } from '../checkin/checkin.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
+import { SoundsService } from '../sounds/sounds.service';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +50,7 @@ export class GameService {
   gamesCompleted: Array<Activities> = [];
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
-  gameStatus = {
+  private gameStatus = {
     stage: 'welcome',
     breakpoint: 0,
   };
@@ -60,10 +61,11 @@ export class GameService {
 
   set calibrationStatus(status: CalibrationStatusType) {
     // TODO: Update the time the person stayed calibrated in the stage (and db)
-    console.log(status);
+    this.setReclibrationCountForElements();
     this._calibrationStatus = status;
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+      this.soundsService.stopAllAudio();
     } else if (status === 'success') {
       this.startGame();
     }
@@ -77,6 +79,7 @@ export class GameService {
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private sitToStandService: SitToStandService,
+    private soundsService: SoundsService,
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
@@ -213,11 +216,11 @@ export class GameService {
         nextGame = environment.order[idxOfLastGame + 1];
       }
 
-      //reset the game status to welcome screen
-      this.gameStatus = {
-        stage: 'welcome',
-        breakpoint: 0,
-      };
+      // //reset the game status to welcome screen
+      // this.gameStatus = {
+      //   stage: 'welcome',
+      //   breakpoint: 0,
+      // };
 
       return {
         name: nextGame,
@@ -333,11 +336,13 @@ export class GameService {
   ) {
     return new Promise(async (resolve, reject) => {
       try {
+        console.log('breakpoint', this.gameStatus);
+
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
             reject('Recalibration count changed');
-            return;
-            // throw new Error('Recalibration count changed');
+            // return;
+            throw new Error('Recalibration count changed');
             // TODO save the index of the current item in the batch.
           }
           this.gameStatus.breakpoint = i;
@@ -353,6 +358,24 @@ export class GameService {
         resolve({});
       } catch (err) {
         reject(err);
+      }
+    });
+  }
+
+  async setReclibrationCountForElements() {
+    Object.keys(this.elements).forEach((key) => {
+      if (
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key] &&
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key].attributes
+      ) {
+        // alert(this.reCalibrationCount);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key].attributes.reCalibrationCount = this.reCalibrationCount;
       }
     });
   }

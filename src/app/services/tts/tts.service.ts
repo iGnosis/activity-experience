@@ -15,7 +15,7 @@ export class TtsService {
     if (environment.speedUpSession) return;
     console.log('isTtsPlaying ', this.isTtsPlaying);
     if (this.isTtsPlaying) {
-      console.log("Couldn't play tts ", text);
+      console.log("Couldn't play tts (because another tts is playing: ) ", text);
       return;
     }
     this.isTtsPlaying = true;
