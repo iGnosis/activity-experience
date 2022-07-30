@@ -18,6 +18,7 @@ import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
+import { CalibrationService } from '../../calibration/calibration.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -25,6 +26,7 @@ export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
   private genre: Genre;
   private successfulReps = 0;
+  private globalReCalibrationCount: number;
   private config = {
     minCorrectReps: environment.settings['sit_stand_achieve'].configuration.minCorrectReps,
     speed: environment.settings['sit_stand_achieve'].configuration.speed,
@@ -42,6 +44,7 @@ export class SitToStandService implements ActivityBase {
     private sit2StandService: Sit2StandService,
     private soundsService: SoundsService,
     private ttsService: TtsService,
+    private calibrationService: CalibrationService,
     private checkinService: CheckinService,
   ) {
     this.store
@@ -73,6 +76,10 @@ export class SitToStandService implements ActivityBase {
 
     this.sit2StandService.enable();
     // Register this service with with something...
+
+    calibrationService.reCalibrationCount.subscribe((count) => {
+      this.globalReCalibrationCount = count;
+    });
   }
 
   welcome() {
@@ -283,6 +290,9 @@ export class SitToStandService implements ActivityBase {
           (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
         ];
         for (let i = 0; i < promptNums.length; i++) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           this.elements.prompt.state = {
             data: {
               value: promptNums[i],
@@ -364,6 +374,9 @@ export class SitToStandService implements ActivityBase {
           (Math.floor((Math.random() * 100) / 2) * 2).toString(),
         ];
         for (let i = 0; i < promptNums.length; i++) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           this.elements.prompt.state = {
             data: {
               value: promptNums[i],
@@ -447,6 +460,9 @@ export class SitToStandService implements ActivityBase {
         let successfulReps = 0;
         const prevPrompts: { class: 'sit' | 'stand' }[] = [];
         while (successfulReps < repsToComplete) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           let promptNum = Math.floor(Math.random() * 100);
           if (prevPrompts && prevPrompts.length >= 2) {
             const prevReps = prevPrompts.slice(-2);
@@ -598,6 +614,9 @@ export class SitToStandService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         while (this.successfulReps < this.config.minCorrectReps) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           // generating a prompt number
           let promptNum = Math.floor(Math.random() * 100);
           // checking if not more than two even or two odd in a row.
