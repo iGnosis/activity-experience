@@ -151,6 +151,7 @@ export class SitToStandService implements ActivityBase {
           },
         };
         await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.soundsService.playCalibrationSound('success');
       },
     ];
   }
@@ -206,6 +207,7 @@ export class SitToStandService implements ActivityBase {
         this.ttsService.tts('Please raise your left hand to move further');
 
         await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.soundsService.playCalibrationSound('success');
 
         this.elements.guide.state = {
           data: {},
@@ -256,6 +258,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Please raise your left hand to move further');
         await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
           attributes: {
@@ -600,6 +603,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Raise your left hand to move further');
         await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
           attributes: {
