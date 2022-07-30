@@ -234,7 +234,8 @@ export class GameService {
     const onboardingStatus = await this.checkinService.getOnboardingStatus();
     if (
       onboardingStatus &&
-      onboardingStatus.length &&
+      onboardingStatus.length > 0 &&
+      onboardingStatus[0] &&
       onboardingStatus[0].onboardingStatus[nextGame]
     ) {
       allStages.splice(1, 1);
