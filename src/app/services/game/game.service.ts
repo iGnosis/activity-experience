@@ -23,6 +23,7 @@ import { CheckinService } from '../checkin/checkin.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
+import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 
 @Injectable({
   providedIn: 'root',
@@ -80,6 +81,7 @@ export class GameService {
     private sitToStandScene: SitToStandScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
+    private beatBoxerService: BeatBoxerService,
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
@@ -143,7 +145,7 @@ export class GameService {
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
-      beat_boxer: this.sitToStandService,
+      beat_boxer: this.beatBoxerService,
       sound_slicer: this.sitToStandService,
     };
   }
