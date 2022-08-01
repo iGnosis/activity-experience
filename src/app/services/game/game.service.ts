@@ -260,6 +260,7 @@ export class GameService {
           console.log(err);
         });
         if (response && response.insert_game_one) {
+          console.log('newGame:response.insert_game_one:', response.insert_game_one);
           this.store.dispatch(game.newGame(response.insert_game_one));
         }
         // get genre

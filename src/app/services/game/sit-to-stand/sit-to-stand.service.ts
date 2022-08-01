@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { debounceTime, take } from 'rxjs';
+import { take } from 'rxjs';
 import {
   ActivityBase,
   AnalyticsDTO,
@@ -51,7 +51,7 @@ export class SitToStandService implements ActivityBase {
       .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
-          //Update the game state whenever redux state changes
+          // Update the game state whenever redux state changes
           const { id, ...gameState } = game;
           this.gameStateService.updateGame(id, gameState);
         }
@@ -77,7 +77,6 @@ export class SitToStandService implements ActivityBase {
 
   welcome() {
     console.log('running welcome');
-
     return [
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
@@ -443,7 +442,6 @@ export class SitToStandService implements ActivityBase {
         this.ttsService.tts("Great job, looks like you're getting the hang of it");
         await this.elements.sleep(8000);
       },
-
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
           data: {
@@ -690,7 +688,7 @@ export class SitToStandService implements ActivityBase {
             this.analytics.push({
               prompt: promptNum,
               class: promptClass,
-              score: 0,
+              score: 1,
               success: true,
               reactionTime: 0,
             });
@@ -766,6 +764,11 @@ export class SitToStandService implements ActivityBase {
   postLoop() {
     console.log('running postLoop');
     return [
+      async () => {
+        // push analytics to the server.
+        // TODO: This won't support resuming games.
+        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+      },
       async (reCalibrationCount: number) => {
         this.soundsService.stopGenreSound();
 

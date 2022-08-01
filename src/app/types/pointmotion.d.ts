@@ -848,7 +848,7 @@ export type DebugTaskEvent = {
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type AnalyticsDTO = {
-  prompt: number;
+  prompt: number | string;
   class: 'sit' | 'stand';
   success: boolean;
   score: number;
@@ -868,7 +868,7 @@ export type PreferenceState = {
 
 export type GameState = {
   /**
-   * UUID to identify the game.
+   * A random UUID to identify the game (created server-side on insertion).
    */
   id?: string;
   /**
@@ -884,7 +884,7 @@ export type GameState = {
    */
   endedAt?: string;
   /**
-   * Array of strings of game names.
+   * Name of the game (eg. sit_stand_achieve, beat_boxer)
    */
   game?: string;
   /**
