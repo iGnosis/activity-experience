@@ -765,7 +765,7 @@ export class SitToStandService implements ActivityBase {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async () => {
-        this.gameStateService.updateRewards();
+        await this.gameStateService.postLoopHook();
 
         // push analytics to the server.
         // TODO: This won't support resuming games.

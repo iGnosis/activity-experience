@@ -454,7 +454,7 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
-        this.gameStateService.updateRewards();
+        this.gameStateService.postLoopHook();
 
         // this.soundsService.stopGenreSound();
         this.elements.score.attributes = {
