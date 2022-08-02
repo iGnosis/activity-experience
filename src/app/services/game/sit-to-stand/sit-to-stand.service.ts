@@ -762,9 +762,11 @@ export class SitToStandService implements ActivityBase {
   }
 
   postLoop() {
-    console.log('running postLoop');
+    console.log('running Sit,Stand,Achieve postLoop');
     return [
       async () => {
+        this.gameStateService.updateRewards();
+
         // push analytics to the server.
         // TODO: This won't support resuming games.
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));

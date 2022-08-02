@@ -39,4 +39,24 @@ export class GameStateService {
       },
     );
   }
+
+  // called after completion of a game.
+  async updateRewards() {
+    const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(24, 0, 0, 0);
+
+    // unlocks rewards based on recent user activity.
+    this.client.req(
+      `mutation UpdateRewards($startDate: String!, $endDate: String!, $userTimezone: String!) {
+      updateRewards(startDate: $startDate, endDate: $endDate, userTimezone: $userTimezone) {
+        status
+      }
+    }`,
+      { startDate, endDate, userTimezone },
+    );
+  }
 }
