@@ -14,7 +14,7 @@ import { GameStateService } from '../../game-state/game-state.service';
   providedIn: 'root',
 })
 export class BeatBoxerService {
-  // private genre: Genre;
+  private genre: Genre;
   private globalReCalibrationCount: number;
 
   constructor(
@@ -40,14 +40,14 @@ export class BeatBoxerService {
           this.gameStateService.updateGame(id, gameState);
         }
       });
-    // this.store
-    //   .select((state) => state.preference)
-    //   .subscribe((preference) => {
-    //     if (preference.genre && this.genre !== preference.genre) {
-    //       this.genre = preference.genre;
-    //       this.soundsService.loadMusicFiles(this.genre);
-    //     }
-    //   });
+    this.store
+      .select((state) => state.preference)
+      .subscribe((preference) => {
+        if (preference.genre && this.genre !== preference.genre) {
+          this.genre = preference.genre;
+          this.soundsService.loadMusicFiles(this.genre);
+        }
+      });
     calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
@@ -95,10 +95,10 @@ export class BeatBoxerService {
           },
           data: {
             ...this.elements.overlay.state.data,
-            transitionDuration: 2000,
+            transitionDuration: 4000,
           },
         };
-        await this.elements.sleep(8000);
+        await this.elements.sleep(18000);
       },
     ];
   }
@@ -106,7 +106,7 @@ export class BeatBoxerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
-        // this.soundsService.playActivityInstructionSound(this.genre);
+        this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts("First, let's begin with a guide to beat boxer");
         this.elements.ribbon.state = {
           attributes: {
@@ -301,7 +301,8 @@ export class BeatBoxerService {
           },
           data: {
             titles: ['3', '2', '1', 'Go!'],
-            titleDuration: 1000,
+            titleDuration: 1200,
+            tts: true,
           },
         };
         // Todo: 5 reps
@@ -331,7 +332,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(3000);
-        // this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.pauseActivityInstructionSound(this.genre);
         await this.checkinService.updateOnboardingStatus({
           beat_boxer: true,
         });
@@ -397,7 +398,7 @@ export class BeatBoxerService {
             titleDuration: 2000,
           },
         };
-        await this.elements.sleep(2500);
+        await this.elements.sleep(3000);
       },
     ];
   }
@@ -412,9 +413,11 @@ export class BeatBoxerService {
           },
           data: {
             titles: ['3', '2', '1', 'Go!'],
-            titleDuration: 1000,
+            titleDuration: 1200,
+            tts: true,
           },
         };
+        await this.elements.sleep(7000);
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -443,7 +446,7 @@ export class BeatBoxerService {
         await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
-        // this.soundsService.playMusic(this.genre, 'backtrack');
+        this.soundsService.playMusic(this.genre, 'backtrack');
         //Todo: reps
         //Todo: confetti animation
       },
@@ -455,8 +458,7 @@ export class BeatBoxerService {
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
         this.gameStateService.postLoopHook();
-
-        // this.soundsService.stopGenreSound();
+        this.soundsService.stopGenreSound();
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,

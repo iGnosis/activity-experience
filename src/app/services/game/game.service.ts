@@ -304,6 +304,7 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.store.dispatch(game.gameCompleted());
       this.gamesCompleted.push(nextGame.name);
     }
     // If more games available, start the next game.

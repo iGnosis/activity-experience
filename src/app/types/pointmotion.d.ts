@@ -951,7 +951,7 @@ export type OverlayElementState = {
   /**
    * Inputs an array of messages and icons which will be displayed in the overlay
    */
-  cards: { message: string; icon: string }[];
+  cards: { message: string; icon: string; tts?: string }[];
   /**
    * Inputs a number as the amount of time between each card appearance
    */
@@ -1083,6 +1083,10 @@ export type RibbonElementState = {
    * Inputs a number as the amount of time between each title
    */
   transitionDuration?: number;
+  /**
+   * Indicates whether TTS should be enabled for each title
+   */
+  tts?: boolean;
 };
 
 export type ElementsState = {
