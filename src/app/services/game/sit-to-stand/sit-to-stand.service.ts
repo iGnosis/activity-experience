@@ -26,6 +26,8 @@ export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
   private genre: Genre;
   private successfulReps = 0;
+  private failedReps = 0;
+  private totalReps = 0;
   private globalReCalibrationCount: number;
   private config = {
     minCorrectReps: environment.settings['sit_stand_achieve'].configuration.minCorrectReps,
@@ -98,10 +100,10 @@ export class SitToStandService implements ActivityBase {
           },
           data: {
             ...this.elements.overlay.state.data,
-            transitionDuration: 2000,
+            transitionDuration: 4000,
           },
         };
-        await this.elements.sleep(8000);
+        await this.elements.sleep(18000);
       },
       async (reCalibrationCount: number) => {
         this.elements.banner.state = {
@@ -456,7 +458,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.score.state = {
           data: {
-            label: 'Reps',
+            label: 'Motion',
             value: '0',
             goal: '5',
           },
@@ -533,7 +535,7 @@ export class SitToStandService implements ActivityBase {
             successfulReps += 1;
             this.elements.score.state = {
               data: {
-                label: 'Reps',
+                label: 'Motion',
                 value: successfulReps,
                 goal: repsToComplete,
               },
@@ -607,7 +609,7 @@ export class SitToStandService implements ActivityBase {
         this.soundsService.playMusic(this.genre, 'backtrack');
         this.elements.score.state = {
           data: {
-            label: 'Reps',
+            label: 'Motion',
             value: 0,
           },
           attributes: {
@@ -674,6 +676,7 @@ export class SitToStandService implements ActivityBase {
             promptClass,
             this.config.speed,
           );
+          this.totalReps += 1;
           this.elements.timeout.state = {
             data: {
               mode: 'stop',
@@ -702,10 +705,11 @@ export class SitToStandService implements ActivityBase {
               },
             };
             this.successfulReps += 1;
+            this.failedReps = 0;
             this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
               data: {
-                label: 'Reps',
+                label: 'Motion',
                 value: this.successfulReps.toString(),
               },
               attributes: {
@@ -731,6 +735,89 @@ export class SitToStandService implements ActivityBase {
                 reCalibrationCount,
               },
             };
+            this.failedReps += 1;
+            if (this.failedReps >= 3) {
+              this.elements.timer.state = {
+                data: {
+                  mode: 'pause',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              this.elements.prompt.attributes = {
+                visibility: 'hidden',
+                reCalibrationCount,
+              };
+              await this.elements.sleep(2000);
+              // walkthrough
+              this.elements.banner.state = {
+                data: {
+                  htmlStr: `
+                  <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                    <div class='p-4 d-flex flex-row align-items-center'>
+                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
+                    </div>
+                    <div>
+                      <hr style="border: 2px solid #A0AEC0;">
+                      <p class=" display-5 text-white">Odd Number - Stand Up</p>
+                    </div>
+                  </div>
+              `,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              await this.elements.sleep(5000);
+              this.elements.banner.attributes = {
+                visibility: 'hidden',
+                reCalibrationCount,
+              };
+              await this.elements.sleep(2000);
+              this.elements.banner.state = {
+                data: {
+                  htmlStr: `
+                      <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                        <div class='p-4 d-flex flex-row align-items-center'>
+                              <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
+                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
+                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
+                        </div>
+                        <div>
+                          <hr style="border: 2px solid #A0AEC0;">
+                          <p class=" display-5 text-white">Even Number - Sit Down</p>
+                        </div>
+                      </div>
+                  `,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              await this.elements.sleep(5000);
+              this.elements.banner.attributes = {
+                visibility: 'hidden',
+                reCalibrationCount,
+              };
+              await this.elements.sleep(2000);
+              this.elements.timer.state = {
+                data: {
+                  mode: 'resume',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
           }
           await this.elements.sleep(1000);
           this.elements.prompt.state = {
@@ -774,7 +861,13 @@ export class SitToStandService implements ActivityBase {
       async (reCalibrationCount: number) => {
         this.soundsService.stopGenreSound();
 
-        this.store.dispatch(game.gameCompleted());
+        const achievementRatio = this.successfulReps / this.totalReps;
+        if (achievementRatio < 0.6) {
+          await this.checkinService.updateOnboardingStatus({
+            sit_stand_achieve: false,
+          });
+        }
+
         let totalDuration: {
           minutes: string;
           seconds: string;
@@ -798,7 +891,7 @@ export class SitToStandService implements ActivityBase {
               <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
               <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
               <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
-              <h2 class="pt-5">Reps Completed: ${this.successfulReps}</h2>
+              <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
             <div>
             `,
               buttons: [
