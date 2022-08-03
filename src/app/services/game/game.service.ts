@@ -196,7 +196,9 @@ export class GameService {
   }
 
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
-    const lastGame = await this.checkinService.getLastGame();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastGame = await this.checkinService.getLastGame(today.toISOString());
 
     if (!lastGame || !lastGame.length) {
       if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {

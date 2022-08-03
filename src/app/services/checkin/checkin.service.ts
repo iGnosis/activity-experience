@@ -109,17 +109,18 @@ export class CheckinService {
     }
   }
 
-  async getLastGame() {
+  async getLastGame(today: string) {
     try {
       const lastGame = await this.client.req(
         gql`
-          query GetLastGame {
-            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _is_null: false } }) {
+          query GetLastGame($today: timestamptz = "") {
+            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _gte: $today } }) {
               id
               game
             }
           }
         `,
+        { today },
       );
 
       return lastGame.game;
