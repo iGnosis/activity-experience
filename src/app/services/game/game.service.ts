@@ -23,6 +23,8 @@ import { CheckinService } from '../checkin/checkin.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 
 @Injectable({
   providedIn: 'root',
@@ -43,6 +45,9 @@ export class GameService {
       default: 'arcade',
       arcade: {
         gravity: { y: 200 },
+        debug: true,
+        debugShowBody: true,
+        debugShowStaticBody: true,
       },
     },
   };
@@ -78,6 +83,8 @@ export class GameService {
     private handTrackerService: HandTrackerService,
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
+    private beatBoxerScene: BeatBoxerScene,
+    private beatBoxerService: BeatBoxerService,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private poseService: PoseService,
@@ -137,13 +144,13 @@ export class GameService {
   }
 
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene];
+    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
-      beat_boxer: this.sitToStandService,
+      beat_boxer: this.beatBoxerService,
       sound_slicer: this.sitToStandService,
     };
   }
@@ -195,13 +202,14 @@ export class GameService {
 
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
     const lastGame = await this.checkinService.getLastGame();
+    console.log('lastGame::', lastGame);
 
     if (!lastGame || !lastGame.length) {
-      if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
+      if (this.gamesCompleted.indexOf('beat_boxer') === -1) {
         // If the person has not played sit2stand yet.
         return {
-          name: 'sit_stand_achieve',
-          settings: environment.settings['sit_stand_achieve'],
+          name: 'beat_boxer',
+          settings: environment.settings['beat_boxer'],
         };
       } else {
         return;

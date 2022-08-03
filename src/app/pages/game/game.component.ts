@@ -10,7 +10,7 @@ import { UserService } from 'src/app/services/user/user.service';
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
 })
-export class GameComponent implements OnInit {
+export class GameComponent implements OnInit, AfterViewInit {
   @ViewChild('videoElm') video!: ElementRef;
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('gameElm') gameElm!: ElementRef;
@@ -22,6 +22,9 @@ export class GameComponent implements OnInit {
     private userService: UserService,
     private route: ActivatedRoute,
   ) {}
+  ngAfterViewInit(): void {
+    this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
+  }
   ngOnInit(): void {
     // Ask the parent window to send a token... we're ready, well almost.
     window.parent.postMessage(
