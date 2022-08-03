@@ -102,7 +102,6 @@ export class GameService {
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.setupSubscriptions();
       this.startCalibration();
     } catch (err: any) {
       console.log(err);
@@ -335,6 +334,16 @@ export class GameService {
       },
     };
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+    // Adding 5 seconds delay to allow the person to see the calibration box
+    // Even if they are already calibrated.
+    await this.sleep(5000);
+    this.setupSubscriptions();
+  }
+
+  async sleep(timeout: number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, timeout);
+    });
   }
 
   async executeBatch(
