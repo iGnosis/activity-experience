@@ -9,6 +9,12 @@ import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
+import {
+  BagPosition,
+  BagType,
+  BeatBoxerScene,
+  ObstacleType,
+} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +22,9 @@ import { GameStateService } from '../../game-state/game-state.service';
 export class BeatBoxerService {
   private genre: Genre;
   private globalReCalibrationCount: number;
+  private bagPositions: BagPosition[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
+  private obstacleTypes: ObstacleType[] = ['obstacle-top', 'obstacle-bottom'];
 
   constructor(
     private store: Store<{
@@ -29,6 +38,7 @@ export class BeatBoxerService {
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private gameStateService: GameStateService,
+    private beatBoxerScene: BeatBoxerScene,
   ) {
     this.handTrackerService.enable();
     this.store
@@ -51,11 +61,16 @@ export class BeatBoxerService {
     calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+    this.beatBoxerScene.enable();
+    this.beatBoxerScene.enableLeftHand();
+    this.beatBoxerScene.enableRightHand();
+    this.beatBoxerScene.enableCollisionDetection();
   }
 
   welcome() {
     return [
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.scene.start('beatBoxer');
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
@@ -144,6 +159,8 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
+        this.beatBoxerScene.showBag('top-left', 'speed-blue');
+        const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
         this.ttsService.tts(
           'Did you hear that? You just created music by punching the punching bag.',
         );
@@ -189,6 +206,37 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+        let successfulReps = 0;
+        const repsToComplete = 4;
+        for (let i = 0; i < 4; i++) {
+          // Todo: change the * 2 to randomPosition length
+          const randomPosition: BagPosition = this.bagPositions[
+            Math.floor(Math.random() * 2)
+          ] as BagPosition;
+          const randomRedBag: BagType = this.bagTypes[Math.floor(Math.random() * 2)] as BagType;
+
+          this.beatBoxerScene.showBag(randomPosition, randomRedBag);
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          if (rep.result === 'success') {
+            successfulReps += 1;
+            this.elements.score.state = {
+              data: {
+                label: '',
+                value: successfulReps,
+                goal: repsToComplete,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        }
+        await this.elements.sleep(2000);
+        this.elements.score.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         this.ttsService.tts('Good job.');
         this.elements.guide.state = {
           data: {
@@ -214,7 +262,46 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
+        let successfulReps = 0;
+        const repsToComplete = 4;
+        this.elements.score.state = {
+          data: {
+            label: '',
+            value: successfulReps,
+            goal: repsToComplete,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         await this.elements.sleep(5000);
+        for (let i = 0; i < 4; i++) {
+          // Todo: change the * 2 to randomPosition length
+          const randomPosition: BagPosition = this.bagPositions[
+            Math.floor(Math.random() * 2)
+          ] as BagPosition;
+          const randomBlueBag: BagType = this.bagTypes[
+            Math.floor(Math.random() * 2) + 2
+          ] as BagType;
+
+          this.beatBoxerScene.showBag(randomPosition, randomBlueBag);
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          if (rep.result === 'success') {
+            successfulReps += 1;
+            this.elements.score.state = {
+              data: {
+                label: '',
+                value: successfulReps,
+                goal: repsToComplete,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        }
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -245,18 +332,41 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        //Todo: if user punches the caution sign, show the following
-        this.ttsService.tts("I knew you couldn't resist it.");
-        this.elements.guide.state = {
-          data: {
-            title: "I knew you couldn't resist it.",
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
+        const randomPosition: BagPosition = this.bagPositions[
+          Math.floor(Math.random() * 2)
+        ] as BagPosition;
+        const randomObstacle: ObstacleType = this.obstacleTypes[
+          Math.floor(Math.random() * 2)
+        ] as ObstacleType;
+
+        this.beatBoxerScene.showBag('top-left', 'speed-blue');
+        this.beatBoxerScene.showObstacle(randomPosition, randomObstacle);
+        const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+        if (rep.result === 'failure') {
+          this.ttsService.tts("I knew you couldn't resist it.");
+          this.elements.guide.state = {
+            data: {
+              title: "I knew you couldn't resist it.",
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(5000);
+        } else {
+          this.ttsService.tts('Good job!');
+          this.elements.guide.state = {
+            data: {
+              title: 'Good job!',
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(4000);
+        }
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts(
@@ -305,9 +415,34 @@ export class BeatBoxerService {
             tts: true,
           },
         };
-        // Todo: 5 reps
-        // Todo: confetti animation
         await this.elements.sleep(8000);
+        // Todo: 5 reps
+
+        for (let i = 0; i < 6; i++) {
+          // Todo: change the * 2 to randomPosition length
+          const randomPosition: BagPosition = this.bagPositions[
+            Math.floor(Math.random() * 2)
+          ] as BagPosition;
+          const randomBag: BagType = this.bagTypes[
+            Math.floor(Math.random() * this.bagTypes.length)
+          ] as BagType;
+          const shouldShowObstacle = Math.random() > 0.5;
+          const obstacleType = this.obstacleTypes[
+            Math.floor(Math.random() * this.obstacleTypes.length)
+          ] as ObstacleType;
+          // show obstacle where the bag doesn't show up
+          const obstaclePosition = this.bagPositions.filter((pos) => {
+            return pos !== randomPosition;
+          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
+
+          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          if (shouldShowObstacle) {
+            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+          }
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+        }
+        // Todo: confetti animation
+        await this.elements.sleep(3000);
         this.ttsService.tts("Great job! looks like you're getting the hang of it.");
         this.elements.guide.state = {
           data: {

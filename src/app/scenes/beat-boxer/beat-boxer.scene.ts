@@ -3,9 +3,9 @@ import { Results } from '@mediapipe/pose';
 import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 
-type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
-type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
+export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 
 @Injectable({
   providedIn: 'root',
