@@ -2,6 +2,13 @@ import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+declare global {
+  interface Window {
+    dataLayer: any;
+    gtag: any;
+  }
+}
+
 export type ActionHook = {
   beforeAction?: Array<Action>;
   afterAction?: Array<Action>;
@@ -754,6 +761,7 @@ export interface Environment {
   };
   endpoint: string;
   apiEndpoint: string;
+  googleAnalyticsTrackingID: string;
   postSessionRedirectEndpoint: string;
   /**
    * Defines the order in which activites are to be run.
