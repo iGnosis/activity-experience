@@ -9,12 +9,7 @@ import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
-import {
-  BagPosition,
-  BagType,
-  BeatBoxerScene,
-  ObstacleType,
-} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { BagPosition, BagType, BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -22,9 +17,9 @@ import {
 export class BeatBoxerService {
   private genre: Genre;
   private globalReCalibrationCount: number;
-  private bagPositions: BagPosition[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  private bagPositions: BagPosition[] = ['left', 'right'];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
-  private obstacleTypes: ObstacleType[] = ['obstacle-top', 'obstacle-bottom'];
+  private obstacleTypes = ['obstacle'];
 
   constructor(
     private store: Store<{
@@ -159,7 +154,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
         this.ttsService.tts(
           'Did you hear that? You just created music by punching the punching bag.',
@@ -215,7 +210,7 @@ export class BeatBoxerService {
           ] as BagPosition;
           const randomRedBag: BagType = this.bagTypes[Math.floor(Math.random() * 2)] as BagType;
 
-          this.beatBoxerScene.showBag(randomPosition, randomRedBag);
+          this.beatBoxerScene.showBag(randomPosition, randomRedBag, 1.5);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             successfulReps += 1;
@@ -285,7 +280,7 @@ export class BeatBoxerService {
             Math.floor(Math.random() * 2) + 2
           ] as BagType;
 
-          this.beatBoxerScene.showBag(randomPosition, randomBlueBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBlueBag, 1.5);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             successfulReps += 1;
@@ -335,12 +330,9 @@ export class BeatBoxerService {
         const randomPosition: BagPosition = this.bagPositions[
           Math.floor(Math.random() * 2)
         ] as BagPosition;
-        const randomObstacle: ObstacleType = this.obstacleTypes[
-          Math.floor(Math.random() * 2)
-        ] as ObstacleType;
 
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
-        this.beatBoxerScene.showObstacle(randomPosition, randomObstacle);
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
+        this.beatBoxerScene.showObstacle(randomPosition, 1.5);
         const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
         if (rep.result === 'failure') {
           this.ttsService.tts("I knew you couldn't resist it.");
@@ -427,17 +419,15 @@ export class BeatBoxerService {
             Math.floor(Math.random() * this.bagTypes.length)
           ] as BagType;
           const shouldShowObstacle = Math.random() > 0.5;
-          const obstacleType = this.obstacleTypes[
-            Math.floor(Math.random() * this.obstacleTypes.length)
-          ] as ObstacleType;
+
           // show obstacle where the bag doesn't show up
           const obstaclePosition = this.bagPositions.filter((pos) => {
             return pos !== randomPosition;
           })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, 1.5);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+            this.beatBoxerScene.showObstacle(obstaclePosition, 1.5);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
         }
