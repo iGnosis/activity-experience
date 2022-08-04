@@ -1155,3 +1155,7 @@ export interface ActivityBase {
    */
   postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
 }
+
+export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';

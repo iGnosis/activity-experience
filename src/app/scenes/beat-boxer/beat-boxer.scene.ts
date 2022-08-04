@@ -2,10 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
-
-export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
-export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
+import { BagPosition, BagType, ObstacleType } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
@@ -585,8 +582,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           to: -20,
           duration: 400,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -595,8 +594,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 400,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -605,8 +606,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 600,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -615,8 +618,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 800,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         break;
@@ -626,8 +631,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           to: 20,
           duration: 400,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -636,8 +643,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 400,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -646,8 +655,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 600,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -656,8 +667,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 800,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         break;
@@ -667,8 +680,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           to: 200,
           duration: 400,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -677,8 +692,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 400,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -687,8 +704,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 600,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -697,8 +716,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 800,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         break;

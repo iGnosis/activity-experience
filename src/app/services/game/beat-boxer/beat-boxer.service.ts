@@ -4,17 +4,19 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { Store } from '@ngrx/store';
-import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  BagPosition,
+  BagType,
+  GameState,
+  Genre,
+  ObstacleType,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
-import {
-  BagPosition,
-  BagType,
-  BeatBoxerScene,
-  ObstacleType,
-} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 
 @Injectable({
   providedIn: 'root',
