@@ -237,15 +237,15 @@ export class GameService {
   async getRemainingStages(nextGame: string) {
     const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     // Todo: uncomment this to enable the tutorial
-    // const onboardingStatus = await this.checkinService.getOnboardingStatus();
-    // if (
-    //   onboardingStatus &&
-    //   onboardingStatus.length > 0 &&
-    //   onboardingStatus[0].onboardingStatus &&
-    //   nextGame in onboardingStatus[0].onboardingStatus
-    // ) {
-    //   allStages.splice(1, 1);
-    // }
+    const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    if (
+      onboardingStatus &&
+      onboardingStatus.length > 0 &&
+      onboardingStatus[0].onboardingStatus &&
+      nextGame in onboardingStatus[0].onboardingStatus
+    ) {
+      allStages.splice(1, 1);
+    }
     return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
