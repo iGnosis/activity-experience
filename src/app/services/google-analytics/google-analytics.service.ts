@@ -36,11 +36,13 @@ export class GoogleAnalyticsService {
   }
 
   trackPageView(event: NavigationEnd) {
-    window.gtag('event', 'page_view', {
-      page_title: event.id,
-      page_location: event.url,
-      page_path: event.url,
-      send_to: environment.googleAnalyticsTrackingID,
-    });
+    if (window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_title: event.id,
+        page_location: event.url,
+        page_path: event.url,
+        send_to: environment.googleAnalyticsTrackingID,
+      });
+    }
   }
 }
