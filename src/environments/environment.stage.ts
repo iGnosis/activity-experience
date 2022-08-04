@@ -11,6 +11,7 @@ export const environment: Environment = {
   analytics: {
     calibration: true,
   },
+  googleAnalyticsTrackingID: 'G-MTGG72G6ND',
   endpoint: 'https://api.stage.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.stage.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.stage.pointmotioncontrol.com',
