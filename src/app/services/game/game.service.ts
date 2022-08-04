@@ -24,6 +24,7 @@ import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -79,6 +80,7 @@ export class GameService {
     private handTrackerService: HandTrackerService,
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
+    private beatBoxerScene: BeatBoxerScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
@@ -138,7 +140,7 @@ export class GameService {
   }
 
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene];
+    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
@@ -234,15 +236,16 @@ export class GameService {
 
   async getRemainingStages(nextGame: string) {
     const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    const onboardingStatus = await this.checkinService.getOnboardingStatus();
-    if (
-      onboardingStatus &&
-      onboardingStatus.length > 0 &&
-      onboardingStatus[0].onboardingStatus &&
-      nextGame in onboardingStatus[0].onboardingStatus
-    ) {
-      allStages.splice(1, 1);
-    }
+    // Todo: uncomment this to enable the tutorial
+    // const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    // if (
+    //   onboardingStatus &&
+    //   onboardingStatus.length > 0 &&
+    //   onboardingStatus[0].onboardingStatus &&
+    //   nextGame in onboardingStatus[0].onboardingStatus
+    // ) {
+    //   allStages.splice(1, 1);
+    // }
     return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
