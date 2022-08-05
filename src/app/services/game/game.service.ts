@@ -90,7 +90,17 @@ export class GameService {
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
-  ) {}
+  ) {
+    this.store
+      .select((state: any) => state.game)
+      .subscribe((game) => {
+        if (game.id) {
+          // Update the game state whenever redux state changes
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
+        }
+      });
+  }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     this.checkAuth();
@@ -222,10 +232,10 @@ export class GameService {
       }
 
       // //reset the game status to welcome screen
-      // this.gameStatus = {
-      //   stage: 'welcome',
-      //   breakpoint: 0,
-      // };
+      this.gameStatus = {
+        stage: 'welcome',
+        breakpoint: 0,
+      };
 
       return {
         name: nextGame,
