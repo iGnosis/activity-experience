@@ -299,37 +299,51 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
     switch (type) {
       case 'heavy-blue':
-        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(1, 0.1);
-        if (centerOfMotion === 'right') {
-          this.heavyBlue && this.heavyBlue.setOrigin(0, 0.1);
-        }
+        this.heavyBlue && this.heavyBlue.destroy(true);
+        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue');
+        this.heavyBlue && this.setBagOrigin(this.heavyBlue, centerOfMotion, level);
         this.heavyBlue && this.heavyBlue.refreshBody();
         this.heavyBlue && this.animateEntry(centerOfMotion, this.heavyBlue);
         break;
       case 'heavy-red':
-        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(1, 0.1);
-        if (centerOfMotion === 'right') {
-          this.heavyRed && this.heavyRed.setOrigin(0, 0.1);
-        }
+        this.heavyRed && this.heavyRed.destroy(true);
+        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red');
+        this.heavyRed && this.setBagOrigin(this.heavyRed, centerOfMotion, level);
         this.heavyRed && this.heavyRed.refreshBody();
         this.heavyRed && this.animateEntry(centerOfMotion, this.heavyRed);
         break;
       case 'speed-red':
-        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(1, 0.2);
-        if (centerOfMotion === 'right') {
-          this.speedRed && this.speedRed.setOrigin(0, 0.1);
-        }
+        this.speedRed && this.speedRed.destroy(true);
+        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red');
+        this.speedRed && this.setBagOrigin(this.speedRed, centerOfMotion, level);
         this.speedRed && this.speedRed.refreshBody();
         this.speedRed && this.animateEntry(centerOfMotion, this.speedRed);
         break;
       case 'speed-blue':
-        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(1, 0.2);
-        if (centerOfMotion === 'right') {
-          this.speedBlue && this.speedBlue.setOrigin(0, 0.1);
-        }
+        this.speedBlue && this.speedBlue.destroy(true);
+        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue');
+        this.speedBlue && this.setBagOrigin(this.speedBlue, centerOfMotion, level);
         this.speedBlue && this.speedBlue.refreshBody();
         this.speedBlue && this.animateEntry(centerOfMotion, this.speedBlue);
         break;
+    }
+  }
+
+  setBagOrigin(
+    bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    centerOfMotion: CenterOfMotion,
+    level: number,
+  ) {
+    if (centerOfMotion === 'right' && level < 0) {
+      bag && bag.setOrigin(1, 0.1);
+    } else if (centerOfMotion === 'right' && level > 0) {
+      bag && bag.setOrigin(0, 0.1);
+    } else if (centerOfMotion === 'left' && level < 0) {
+      bag && bag.setOrigin(1, 0.1);
+    } else if (centerOfMotion === 'left' && level > 0) {
+      bag && bag.setOrigin(0, 0.1);
+    } else {
+      bag && bag.setOrigin(0.5, 0.1);
     }
   }
 
@@ -345,11 +359,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
       x = shoulderX + level * maxReach;
     }
-
+    this.obstacle && this.obstacle.destroy(true);
     this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
-    if (centerOfMotion === 'right') {
-      this.obstacle && this.obstacle.setOrigin(0, 0.1);
-    }
+    this.obstacle && this.setBagOrigin(this.obstacle, centerOfMotion, level);
     this.obstacle && this.obstacle.refreshBody();
     this.obstacle && this.animateEntry(centerOfMotion, this.obstacle);
   }
