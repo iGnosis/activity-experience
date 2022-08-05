@@ -9,7 +9,11 @@ import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
-import { BagPosition, BagType, BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import {
+  CenterOfMotion,
+  BagType,
+  BeatBoxerScene,
+} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -17,9 +21,13 @@ import { BagPosition, BagType, BeatBoxerScene } from 'src/app/scenes/beat-boxer/
 export class BeatBoxerService {
   private genre: Genre;
   private globalReCalibrationCount: number;
-  private bagPositions: BagPosition[] = ['left', 'right'];
+  private bagPositions: CenterOfMotion[] = ['left', 'right'];
+  private level: number[] = [1, 1.5, -1, -1.5];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private obstacleTypes = ['obstacle'];
+  private getRandomItemFromArray = (array: any[]) => {
+    return array[Math.floor(Math.random() * array.length)];
+  };
 
   constructor(
     private store: Store<{
@@ -83,8 +91,6 @@ export class BeatBoxerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        // Todo: remove this
-        await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Some instructions before we start');
@@ -204,13 +210,11 @@ export class BeatBoxerService {
         let successfulReps = 0;
         const repsToComplete = 4;
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomRedBag: BagType = this.bagTypes[Math.floor(Math.random() * 2)] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomRedBag, 1.5);
+          this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             successfulReps += 1;
@@ -272,15 +276,11 @@ export class BeatBoxerService {
         };
         await this.elements.sleep(5000);
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBlueBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * 2) + 2
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomBlueBag, 1.5);
+          this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             successfulReps += 1;
@@ -327,9 +327,9 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition: BagPosition = this.bagPositions[
+        const randomPosition: CenterOfMotion = this.bagPositions[
           Math.floor(Math.random() * 2)
-        ] as BagPosition;
+        ] as CenterOfMotion;
 
         this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         this.beatBoxerScene.showObstacle(randomPosition, 1.5);
@@ -408,26 +408,20 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
-        // Todo: 5 reps
-
         for (let i = 0; i < 6; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * this.bagTypes.length)
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
+          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
+          // show obstacle where the bag doesn't show up
+          const randomObstacleLevel: number = this.getRandomItemFromArray(
+            this.level.filter((lvl) => lvl !== randomLevel),
+          );
           const shouldShowObstacle = Math.random() > 0.5;
 
-          // show obstacle where the bag doesn't show up
-          const obstaclePosition = this.bagPositions.filter((pos) => {
-            return pos !== randomPosition;
-          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
-
-          this.beatBoxerScene.showBag(randomPosition, randomBag, 1.5);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, 1.5);
+            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
         }
@@ -510,8 +504,6 @@ export class BeatBoxerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        // Todo: remove this
-        await this.elements.sleep(5000);
         this.ttsService.tts('Get ready to start.');
         this.elements.ribbon.state = {
           attributes: {
