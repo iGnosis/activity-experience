@@ -21,7 +21,6 @@ const _gameReducer = createReducer(
   initialState,
   on(game.newGame, (state, data) => {
     return {
-      ...state,
       id: data.id,
     };
   }),
@@ -52,7 +51,7 @@ const _gameReducer = createReducer(
   on(game.gameCompleted, (state) => {
     return {
       ...state,
-      endedAt: 'now()',
+      endedAt: new Date().toISOString(),
     };
   }),
 );
