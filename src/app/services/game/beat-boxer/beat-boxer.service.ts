@@ -419,8 +419,12 @@ export class BeatBoxerService {
         };
         await this.elements.sleep(8000);
         // Todo: 5 reps
-
+      },
+      async (reCalibrationCount: number) => {
         for (let i = 0; i < 6; i++) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           // Todo: change the * 2 to randomPosition length
           const randomPosition: BagPosition = this.bagPositions[
             Math.floor(Math.random() * 2)
@@ -456,7 +460,9 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(5000);
+        await this.elements.sleep(3000);
+      },
+      async (reCalibrationCount: number) => {
         this.ttsService.tts('Guide complete.');
         this.elements.ribbon.state = {
           attributes: {
