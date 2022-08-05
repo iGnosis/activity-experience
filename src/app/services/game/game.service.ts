@@ -233,10 +233,10 @@ export class GameService {
       }
 
       // //reset the game status to welcome screen
-      this.gameStatus = {
-        stage: 'welcome',
-        breakpoint: 0,
-      };
+      // this.gameStatus = {
+      //   stage: 'welcome',
+      //   breakpoint: 0,
+      // };
 
       return {
         name: nextGame,
