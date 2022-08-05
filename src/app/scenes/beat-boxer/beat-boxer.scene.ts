@@ -4,7 +4,7 @@ import { left } from '@popperjs/core';
 import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 
-export type BagPosition = 'left' | 'right';
+export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
 
 @Injectable({
@@ -33,8 +33,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   heavyRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   speedRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   speedBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacleTop: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacleBottom: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  obstacle: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
 
   nopeSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   confettiAnim?: Phaser.GameObjects.Sprite;
@@ -169,7 +168,10 @@ export class BeatBoxerScene extends Phaser.Scene {
     return distance;
   }
 
-  calculateReach(results: Results, position: BagPosition): { shoulderX: number; maxReach: number } {
+  calculateReach(
+    results: Results,
+    position: CenterOfMotion,
+  ): { shoulderX: number; maxReach: number } {
     const { width, height } = this.game.canvas;
     if (
       position === 'left' &&
@@ -246,11 +248,8 @@ export class BeatBoxerScene extends Phaser.Scene {
     if (this.speedRed) {
       this.speedRed.destroy(true);
     }
-    if (this.obstacleTop) {
-      this.obstacleTop.destroy(true);
-    }
-    if (this.obstacleBottom) {
-      this.obstacleBottom.destroy(true);
+    if (this.obstacle) {
+      this.obstacle.destroy(true);
     }
     if (this.nopeSign) {
       this.nopeSign.destroy(true);
@@ -284,63 +283,75 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  // TODO: customize the position based on level param..
   /**
-   *
-   * @param position position of the bag i.e. `left` or `right`
-   * @param type type of the bag
-   * @param level Number from -1.5 to 1.5, that deteremines the position of the bag. -1.5 being the farmost left and 1.5 being farmost right.
+   * @param centerOfMotion Center of motion i.e. `left` or `right`.
+   * @param type type of the bag.. `heavy-blue` | `speed-blue` | `heavy-red` | `speed-red`.
+   * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
-  showBag(position: BagPosition, type: BagType, level: number) {
-    console.log(`position: ${position}, type: ${type}`);
+  showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
+    console.log(`position: ${centerOfMotion}, type: ${type}`);
     const { width, height } = this.game.canvas;
     let x = width - (30 / 100) * width;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX } = this.calculateReach(this.results, position);
+      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
       x = shoulderX + level * maxReach;
     }
     switch (type) {
       case 'heavy-blue':
-        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(0.5, 0.1);
-        console.log('width of the bag, ', this.heavyBlue.body.right - this.heavyBlue.body.left);
+        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(1, 0.1);
+        if (centerOfMotion === 'right') {
+          this.heavyBlue && this.heavyBlue.setOrigin(0, 0.1);
+        }
         this.heavyBlue && this.heavyBlue.refreshBody();
-        this.animateEntry(position, this.heavyBlue);
+        this.heavyBlue && this.animateEntry(centerOfMotion, this.heavyBlue);
         break;
       case 'heavy-red':
-        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(0.5, 0.1);
+        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(1, 0.1);
+        if (centerOfMotion === 'right') {
+          this.heavyRed && this.heavyRed.setOrigin(0, 0.1);
+        }
         this.heavyRed && this.heavyRed.refreshBody();
-        this.animateEntry(position, this.heavyRed);
+        this.heavyRed && this.animateEntry(centerOfMotion, this.heavyRed);
         break;
       case 'speed-red':
-        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(0.5, 0.2);
+        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(1, 0.2);
+        if (centerOfMotion === 'right') {
+          this.speedRed && this.speedRed.setOrigin(0, 0.1);
+        }
         this.speedRed && this.speedRed.refreshBody();
-        this.animateEntry(position, this.speedRed);
+        this.speedRed && this.animateEntry(centerOfMotion, this.speedRed);
         break;
       case 'speed-blue':
-        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(0.5, 0.2);
+        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(1, 0.2);
+        if (centerOfMotion === 'right') {
+          this.speedBlue && this.speedBlue.setOrigin(0, 0.1);
+        }
         this.speedBlue && this.speedBlue.refreshBody();
-        this.animateEntry(position, this.speedBlue);
+        this.speedBlue && this.animateEntry(centerOfMotion, this.speedBlue);
         break;
     }
   }
 
   /**
-   * @param position Position of the obstacle `top-right` | `top-left`
-   * @param level Number from -1.5 to 1.5, that deteremines the position of the bag. -1.5 being the farmost left and 1.5 being farmost right.
+   * @param centerOfMotion Center of motion i.e. `left` or `right`.
+   * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
-  showObstacle(position: BagPosition, level: number) {
+  showObstacle(centerOfMotion: CenterOfMotion, level: number) {
     const { width, height } = this.game.canvas;
     let x = width - (30 / 100) * width;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX } = this.calculateReach(this.results, position);
+      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
       x = shoulderX + level * maxReach;
     }
 
-    this.obstacleTop = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(0.5, 0.1);
-    this.obstacleTop && this.obstacleTop.refreshBody();
-    this.animateEntry(position, this.obstacleTop);
+    this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
+    if (centerOfMotion === 'right') {
+      this.obstacle && this.obstacle.setOrigin(0, 0.1);
+    }
+    this.obstacle && this.obstacle.refreshBody();
+    this.obstacle && this.animateEntry(centerOfMotion, this.obstacle);
   }
 
   override update(time: number, delta: number): void {
@@ -410,8 +421,8 @@ export class BeatBoxerScene extends Phaser.Scene {
         });
       }
 
-      if (this.redGlove && this.obstacleTop) {
-        this.physics.overlap(this.redGlove, this.obstacleTop, (_redGlove, _obstacleTop) => {
+      if (this.redGlove && this.obstacle) {
+        this.physics.overlap(this.redGlove, this.obstacle, (_redGlove, _obstacleTop) => {
           this.showWrongSign(_obstacleTop);
           _obstacleTop.destroy();
           this.collisionDetected = {
@@ -427,8 +438,8 @@ export class BeatBoxerScene extends Phaser.Scene {
         });
       }
 
-      if (this.blueGlove && this.obstacleTop) {
-        this.physics.overlap(this.blueGlove, this.obstacleTop, (_blueGlove, _obstacleTop) => {
+      if (this.blueGlove && this.obstacle) {
+        this.physics.overlap(this.blueGlove, this.obstacle, (_blueGlove, _obstacleTop) => {
           this.showWrongSign(_obstacleTop);
           _obstacleTop.destroy();
           this.collisionDetected = {
@@ -558,7 +569,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param position position of the bag.
    * @param bag bag object to tween.
    */
-  animateEntry(position: BagPosition, bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+  animateEntry(position: CenterOfMotion, bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     switch (position) {
       case 'left':
         this.tweens.addCounter({
@@ -567,7 +578,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 400,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -577,7 +587,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -587,7 +596,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -597,7 +605,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         break;
@@ -608,7 +615,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 400,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -618,7 +624,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -628,7 +633,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         this.tweens.addCounter({
@@ -638,7 +642,6 @@ export class BeatBoxerScene extends Phaser.Scene {
           duration: 200,
           onUpdate: (tween) => {
             bag.setAngle(tween.getValue());
-            bag.refreshBody();
           },
         });
         break;
