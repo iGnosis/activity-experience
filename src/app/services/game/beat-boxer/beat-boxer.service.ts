@@ -4,19 +4,16 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { Store } from '@ngrx/store';
-import {
-  BagPosition,
-  BagType,
-  GameState,
-  Genre,
-  ObstacleType,
-  PreferenceState,
-} from 'src/app/types/pointmotion';
+import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
-import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import {
+  CenterOfMotion,
+  BagType,
+  BeatBoxerScene,
+} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -25,9 +22,12 @@ import { environment } from 'src/environments/environment';
 export class BeatBoxerService {
   private genre: Genre;
   private globalReCalibrationCount: number;
-  private bagPositions: BagPosition[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  private bagPositions: CenterOfMotion[] = ['left', 'right'];
+  private level: number[] = [1, 1.5, -1, -1.5];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
-  private obstacleTypes: ObstacleType[] = ['obstacle-top', 'obstacle-bottom'];
+  private getRandomItemFromArray = (array: any[]) => {
+    return array[Math.floor(Math.random() * array.length)];
+  };
   private config = {
     minCorrectReps: environment.settings['beat_boxer'].configuration.minCorrectReps,
     speed: environment.settings['beat_boxer'].configuration.speed,
@@ -96,8 +96,6 @@ export class BeatBoxerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        // Todo: remove this
-        await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Some instructions before we start');
@@ -167,7 +165,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
         this.soundsService.playMusic(this.genre, 'trigger');
         this.ttsService.tts(
@@ -218,13 +216,11 @@ export class BeatBoxerService {
         let successfulReps = 0;
         const repsToComplete = 4;
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomRedBag: BagType = this.bagTypes[Math.floor(Math.random() * 2)] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomRedBag);
+          this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
@@ -289,15 +285,11 @@ export class BeatBoxerService {
         };
         await this.elements.sleep(5000);
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBlueBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * 2) + 2
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomBlueBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
@@ -347,15 +339,12 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition: BagPosition = this.bagPositions[
+        const randomPosition: CenterOfMotion = this.bagPositions[
           Math.floor(Math.random() * 2)
-        ] as BagPosition;
-        const randomObstacle: ObstacleType = this.obstacleTypes[
-          Math.floor(Math.random() * 2)
-        ] as ObstacleType;
+        ] as CenterOfMotion;
 
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
-        this.beatBoxerScene.showObstacle(randomPosition, randomObstacle);
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
+        this.beatBoxerScene.showObstacle(randomPosition, 1.5);
         const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
         if (rep.result === 'failure') {
           this.soundsService.playCalibrationSound('error');
@@ -371,6 +360,7 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
+          this.beatBoxerScene.destroyExistingBags();
           this.soundsService.playMusic(this.genre, 'trigger');
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
@@ -433,36 +423,29 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
-        // Todo: 5 reps
       },
       async (reCalibrationCount: number) => {
         for (let i = 0; i < 6; i++) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * this.bagTypes.length)
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
+          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
           const shouldShowObstacle = Math.random() > 0.5;
-          const obstacleType = this.obstacleTypes[
-            Math.floor(Math.random() * this.obstacleTypes.length)
-          ] as ObstacleType;
           // show obstacle where the bag doesn't show up
-          const obstaclePosition = this.bagPositions.filter((pos) => {
-            return pos !== randomPosition;
-          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
+          const randomObstacleLevel: number = this.getRandomItemFromArray(
+            this.level.filter((lvl) => lvl !== randomLevel),
+          );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
           } else {
             this.soundsService.playCalibrationSound('error');
@@ -545,6 +528,7 @@ export class BeatBoxerService {
         };
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
+        this.ttsService.tts('Get ready to start.');
         await this.elements.sleep(2000);
         this.elements.ribbon.state = {
           attributes: {
@@ -611,29 +595,23 @@ export class BeatBoxerService {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * this.bagTypes.length)
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
+          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
           const shouldShowObstacle = Math.random() > 0.5;
-          const obstacleType = this.obstacleTypes[
-            Math.floor(Math.random() * this.obstacleTypes.length)
-          ] as ObstacleType;
           // show obstacle where the bag doesn't show up
-          const obstaclePosition = this.bagPositions.filter((pos) => {
-            return pos !== randomPosition;
-          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
+          const randomObstacleLevel: number = this.getRandomItemFromArray(
+            this.level.filter((lvl) => lvl !== randomLevel),
+          );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
             this.successfulReps++;
           } else {
