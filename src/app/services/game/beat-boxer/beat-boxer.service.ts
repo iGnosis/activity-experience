@@ -101,10 +101,10 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
-        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
+        this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your hand when you're ready to start.",
+            title: "Raise your left hand when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -540,7 +540,7 @@ export class BeatBoxerService {
         this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your hand when you're ready to start.",
+            title: "Raise your left hand when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
