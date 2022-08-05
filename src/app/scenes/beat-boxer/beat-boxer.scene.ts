@@ -235,7 +235,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   /**
    * function to destroy existing bags on the screen/ scene.
    */
-  BagPosition() {
+  destroyExistingBags() {
     if (this.heavyBlue) {
       this.heavyBlue.destroy(true);
     }

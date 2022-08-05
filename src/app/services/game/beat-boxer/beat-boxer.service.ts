@@ -360,6 +360,7 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
+          this.beatBoxerScene.destroyExistingBags();
           this.soundsService.playMusic(this.genre, 'trigger');
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
@@ -444,7 +445,7 @@ export class BeatBoxerService {
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
           } else {
             this.soundsService.playCalibrationSound('error');
@@ -610,7 +611,7 @@ export class BeatBoxerService {
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
             this.successfulReps++;
           } else {
