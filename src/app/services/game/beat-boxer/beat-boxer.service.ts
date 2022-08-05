@@ -261,6 +261,7 @@ export class BeatBoxerService {
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
@@ -330,6 +331,7 @@ export class BeatBoxerService {
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         this.elements.score.attributes = {
           visibility: 'hidden',
@@ -472,6 +474,7 @@ export class BeatBoxerService {
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         // Todo: confetti animation
         await this.elements.sleep(3000);
@@ -637,6 +640,16 @@ export class BeatBoxerService {
             this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
             this.successfulReps++;
+            this.elements.score.state = {
+              data: {
+                label: 'Punches',
+                value: this.successfulReps,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
             this.failedReps = 0;
           } else {
             this.soundsService.playCalibrationSound('error');
@@ -669,6 +682,15 @@ export class BeatBoxerService {
               );
               await this.elements.sleep(8000);
               this.elements.video.state = {
+                data: {},
+                attributes: {
+                  visibility: 'hidden',
+                  reCalibrationCount,
+                },
+              };
+
+              await this.elements.sleep(3000);
+              this.elements.video.state = {
                 data: {
                   type: 'video',
                   title: 'Left hand for blue',
@@ -684,8 +706,18 @@ export class BeatBoxerService {
                 'And when you see a blue punching bag on the screen, use your left hand.',
               );
               await this.elements.sleep(8000);
+              this.elements.video.state = {
+                data: {},
+                attributes: {
+                  visibility: 'hidden',
+                  reCalibrationCount,
+                },
+              };
+
+              await this.elements.sleep(3000);
             }
           }
+          await this.elements.sleep(2000);
         }
         //Todo: confetti animation
       },
