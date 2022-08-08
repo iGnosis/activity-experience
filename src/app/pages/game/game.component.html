@@ -3,3 +3,7 @@
   <div id="phaser-canvas" #canvasElm></div>
   <app-elements></app-elements>
 </div>
+
+<div *ngIf="!videoAvailable" class="position-absolute translate-middle start-1/2 top-1/2">
+  <h1 class="display-4 text-white">Loading...</h1>
+</div>

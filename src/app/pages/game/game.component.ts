@@ -14,6 +14,7 @@ export class GameComponent implements OnInit {
   @ViewChild('videoElm') video!: ElementRef;
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('gameElm') gameElm!: ElementRef;
+  videoAvailable = false;
 
   constructor(
     private elements: ElementsService,
@@ -37,10 +38,11 @@ export class GameComponent implements OnInit {
     // Handle the incoming token
     window.addEventListener(
       'message',
-      (data) => {
+      async (data) => {
         const tokenHandled = this.userService.handleToken(data);
         if (tokenHandled) {
-          this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
+          await this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
+          this.videoAvailable = true;
         }
       },
       false,
