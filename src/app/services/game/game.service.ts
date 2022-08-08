@@ -25,6 +25,7 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { debounceTime } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -90,7 +91,17 @@ export class GameService {
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
-  ) {}
+  ) {
+    this.store
+      .select((state: any) => state.game)
+      .subscribe((game) => {
+        if (game.id) {
+          // Update the game state whenever redux state changes
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
+        }
+      });
+  }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     this.checkAuth();
@@ -153,7 +164,7 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.subscribe((status: any) => {
+    this.calibrationService.result.pipe(debounceTime(2000)).subscribe((status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
         if (this.elements.timer.data.mode === 'pause') {

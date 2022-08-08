@@ -9,13 +9,13 @@ import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { GameStateService } from '../../game-state/game-state.service';
-import { environment } from 'src/environments/environment';
 import {
-  BagPosition,
+  CenterOfMotion,
   BagType,
   BeatBoxerScene,
-  ObstacleType,
 } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { environment } from 'src/environments/environment';
+import { take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -23,14 +23,38 @@ import {
 export class BeatBoxerService {
   private genre: Genre;
   private globalReCalibrationCount: number;
-  private bagPositions: BagPosition[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  private bagPositions: CenterOfMotion[] = ['left', 'right'];
+  private level: number[] = [1, 1.5, -1, -1.5];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
-  private obstacleTypes: ObstacleType[] = ['obstacle-top', 'obstacle-bottom'];
+  private getRandomItemFromArray = (array: any[]) => {
+    return array[Math.floor(Math.random() * array.length)];
+  };
+  private updateTimer(totalSeconds: number) {
+    let minutes = 0;
+    if (totalSeconds >= 60) {
+      minutes = Math.floor(totalSeconds / 60);
+      totalSeconds -= 60 * minutes;
+    }
+    let time = { minutes: '0', seconds: '00' };
+    time = {
+      minutes:
+        minutes < 10
+          ? (time.minutes = '0' + minutes.toString())
+          : (time.minutes = minutes.toString()),
+      seconds:
+        totalSeconds < 10
+          ? (time.seconds = '0' + totalSeconds.toString())
+          : (time.seconds = totalSeconds.toString()),
+    };
+    return time;
+  }
   private config = {
     minCorrectReps: environment.settings['beat_boxer'].configuration.minCorrectReps,
     speed: environment.settings['beat_boxer'].configuration.speed,
   };
   private successfulReps = 0;
+  private failedReps = 0;
+  private totalReps = 0;
 
   constructor(
     private store: Store<{
@@ -77,10 +101,10 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
-        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
+        this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your hand when you're ready to start.",
+            title: "Raise your left hand when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -94,8 +118,6 @@ export class BeatBoxerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        // Todo: remove this
-        await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Some instructions before we start');
@@ -165,7 +187,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
         this.soundsService.playMusic(this.genre, 'trigger');
         this.ttsService.tts(
@@ -216,13 +238,11 @@ export class BeatBoxerService {
         let successfulReps = 0;
         const repsToComplete = 4;
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomRedBag: BagType = this.bagTypes[Math.floor(Math.random() * 2)] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomRedBag);
+          this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
@@ -241,6 +261,7 @@ export class BeatBoxerService {
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
@@ -287,15 +308,11 @@ export class BeatBoxerService {
         };
         await this.elements.sleep(5000);
         for (let i = 0; i < 4; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBlueBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * 2) + 2
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
-          this.beatBoxerScene.showBag(randomPosition, randomBlueBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
@@ -314,6 +331,7 @@ export class BeatBoxerService {
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         this.elements.score.attributes = {
           visibility: 'hidden',
@@ -345,15 +363,12 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition: BagPosition = this.bagPositions[
+        const randomPosition: CenterOfMotion = this.bagPositions[
           Math.floor(Math.random() * 2)
-        ] as BagPosition;
-        const randomObstacle: ObstacleType = this.obstacleTypes[
-          Math.floor(Math.random() * 2)
-        ] as ObstacleType;
+        ] as CenterOfMotion;
 
-        this.beatBoxerScene.showBag('top-left', 'speed-blue');
-        this.beatBoxerScene.showObstacle(randomPosition, randomObstacle);
+        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
+        this.beatBoxerScene.showObstacle(randomPosition, 1.5);
         const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
         if (rep.result === 'failure') {
           this.soundsService.playCalibrationSound('error');
@@ -369,6 +384,7 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
+          this.beatBoxerScene.destroyExistingBags();
           this.soundsService.playMusic(this.genre, 'trigger');
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
@@ -431,35 +447,34 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
-
+      },
+      async (reCalibrationCount: number) => {
         for (let i = 0; i < 6; i++) {
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * this.bagTypes.length)
-          ] as BagType;
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
+          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
           const shouldShowObstacle = Math.random() > 0.5;
-          const obstacleType = this.obstacleTypes[
-            Math.floor(Math.random() * this.obstacleTypes.length)
-          ] as ObstacleType;
           // show obstacle where the bag doesn't show up
-          const obstaclePosition = this.bagPositions.filter((pos) => {
-            return pos !== randomPosition;
-          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
+          const randomObstacleLevel: number = this.getRandomItemFromArray(
+            this.level.filter((lvl) => lvl !== randomLevel),
+          );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
           } else {
             this.soundsService.playCalibrationSound('error');
           }
+          await this.elements.sleep(2000);
         }
         // Todo: confetti animation
         await this.elements.sleep(3000);
@@ -474,8 +489,10 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(5000);
-        this.ttsService.tts('The guide is complete.');
+        await this.elements.sleep(3000);
+      },
+      async (reCalibrationCount: number) => {
+        this.ttsService.tts('Guide complete.');
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
@@ -526,7 +543,7 @@ export class BeatBoxerService {
         this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your hand when you're ready to start.",
+            title: "Raise your left hand when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -536,6 +553,7 @@ export class BeatBoxerService {
         };
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
+        this.ttsService.tts('Get ready to start.');
         await this.elements.sleep(2000);
         this.elements.ribbon.state = {
           attributes: {
@@ -602,34 +620,104 @@ export class BeatBoxerService {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          // Todo: change the * 2 to randomPosition length
-          const randomPosition: BagPosition = this.bagPositions[
-            Math.floor(Math.random() * 2)
-          ] as BagPosition;
-          const randomBag: BagType = this.bagTypes[
-            Math.floor(Math.random() * this.bagTypes.length)
-          ] as BagType;
+          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
+          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
+          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
+          const randomLevel: number = this.getRandomItemFromArray(this.level);
           const shouldShowObstacle = Math.random() > 0.5;
-          const obstacleType = this.obstacleTypes[
-            Math.floor(Math.random() * this.obstacleTypes.length)
-          ] as ObstacleType;
           // show obstacle where the bag doesn't show up
-          const obstaclePosition = this.bagPositions.filter((pos) => {
-            return pos !== randomPosition;
-          })[Math.floor(Math.random() * (this.bagPositions.length - 1))];
+          const randomObstacleLevel: number = this.getRandomItemFromArray(
+            this.level.filter((lvl) => lvl !== randomLevel),
+          );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag);
+          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
           if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, obstacleType);
+            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          this.totalReps++;
           if (rep.result === 'success') {
-            // Todo: replace with music notes
+            this.beatBoxerScene.destroyExistingBags();
             this.soundsService.playMusic(this.genre, 'trigger');
             this.successfulReps++;
+            this.elements.score.state = {
+              data: {
+                label: 'Punches',
+                value: this.successfulReps,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            this.failedReps = 0;
           } else {
             this.soundsService.playCalibrationSound('error');
+            this.failedReps++;
+            if (this.failedReps >= 3) {
+              this.elements.timer.state = {
+                data: {
+                  mode: 'pause',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              await this.elements.sleep(2000);
+              this.elements.video.state = {
+                data: {
+                  type: 'video',
+                  title: 'Right hand for red',
+                  description: 'Use your right hand to punch the red punching bags.',
+                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              this.ttsService.tts(
+                'Remember to use your right hand when you see a red punching bag on the screen.',
+              );
+              await this.elements.sleep(8000);
+              this.elements.video.state = {
+                data: {},
+                attributes: {
+                  visibility: 'hidden',
+                  reCalibrationCount,
+                },
+              };
+
+              await this.elements.sleep(3000);
+              this.elements.video.state = {
+                data: {
+                  type: 'video',
+                  title: 'Left hand for blue',
+                  description: 'Use your left hand to punch the blue punching bags.',
+                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              this.ttsService.tts(
+                'And when you see a blue punching bag on the screen, use your left hand.',
+              );
+              await this.elements.sleep(8000);
+              this.elements.video.state = {
+                data: {},
+                attributes: {
+                  visibility: 'hidden',
+                  reCalibrationCount,
+                },
+              };
+
+              await this.elements.sleep(3000);
+            }
           }
+          await this.elements.sleep(2000);
         }
         //Todo: confetti animation
       },
@@ -642,6 +730,12 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
+        const achievementRatio = this.successfulReps / this.totalReps;
+        if (achievementRatio < 0.6) {
+          await this.checkinService.updateOnboardingStatus({
+            beat_boxer: false,
+          });
+        }
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -660,31 +754,36 @@ export class BeatBoxerService {
           minutes: string;
           seconds: string;
         };
-        //Todo: Add TTS for the banner text
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'outro',
-            htmlStr: `
-          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-            <h1 class="pt-8 display-3">Beat Boxer</h1>
-            <h2 class="pt-7">Time: 1:24 minutes (Hardcoded)</h2>
-            <h2 class="pt-5">Fastest Time: 1:24 minutes (Hardcoded)</h2>
-            <h2 class="pt-5">Reps Completed: 10 (Hardcoded)</h2>
-          <div>
-          `,
-            buttons: [
-              {
-                title: 'Next Activity',
-                progressDurationMs: 15000,
-              },
-            ],
-          },
-        };
-        await this.elements.sleep(17000);
+
+        this.store.pipe(take(1)).subscribe(async (state) => {
+          totalDuration = this.updateTimer(state.game.totalDuration || 0);
+          const fastestTimeInSecs = await this.checkinService.getFastestTime();
+          const fastestTime = this.updateTimer(fastestTimeInSecs || state.game.totalDuration || 0);
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'outro',
+              htmlStr: `
+            <div class="pl-10 text-start px-14" style="padding-left: 20px;">
+              <h1 class="pt-8 display-3">Beat Boxer</h1>
+              <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
+              <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
+              <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
+            <div>
+            `,
+              buttons: [
+                {
+                  title: 'Next Activity',
+                  progressDurationMs: 15000,
+                },
+              ],
+            },
+          };
+        });
+        await this.elements.sleep(20000);
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -708,7 +807,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        await this.elements.sleep(7000);
+        await this.elements.sleep(10000);
       },
     ];
   }

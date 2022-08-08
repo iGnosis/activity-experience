@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Subscription } from 'rxjs';
+import { left } from '@popperjs/core';
+import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 
-export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
-export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +14,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   enabled = false;
   collisions = false;
   collisionDetected?: {
-    bagType: BagType | ObstacleType;
+    bagType: BagType | 'obstacle';
     gloveColor: string;
     result: 'success' | 'failure';
   };
@@ -33,8 +33,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   heavyRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   speedRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   speedBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacleTop: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacleBottom: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  obstacle: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
 
   nopeSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   confettiAnim?: Phaser.GameObjects.Sprite;
@@ -169,75 +168,67 @@ export class BeatBoxerScene extends Phaser.Scene {
     return distance;
   }
 
-  // TODO: modify this function
-  calculateReach(results: Results, position: BagPosition): { x: number; y: number } {
+  calculateReach(
+    results: Results,
+    position: CenterOfMotion,
+  ): { shoulderX: number; maxReach: number } {
     const { width, height } = this.game.canvas;
     if (
-      position === 'top-left' &&
+      position === 'left' &&
       results.poseLandmarks[11] &&
       results.poseLandmarks[13] &&
-      results.poseLandmarks[15] &&
-      results.poseLandmarks[19]
+      results.poseLandmarks[15]
     ) {
+      const leftShoulder = results.poseLandmarks[11];
+      const leftElbow = results.poseLandmarks[13];
+      const leftWrist = results.poseLandmarks[15];
       const maxReach =
         this.calcDist(
-          width - results.poseLandmarks[11].x * width,
-          results.poseLandmarks[11].y * height,
-          width - results.poseLandmarks[13].x * width,
-          results.poseLandmarks[13].y * height,
+          width - leftShoulder.x * width,
+          leftShoulder.y * height,
+          width - leftElbow.x * width,
+          leftElbow.y * height,
         ) +
         this.calcDist(
-          width - results.poseLandmarks[13].x * width,
-          results.poseLandmarks[13].y * height,
-          width - results.poseLandmarks[15].x * width,
-          results.poseLandmarks[15].y * height,
-        ) +
-        this.calcDist(
-          width - results.poseLandmarks[15].x * width,
-          results.poseLandmarks[15].y * height,
-          width - results.poseLandmarks[19].x * width,
-          results.poseLandmarks[19].y * height,
+          width - leftElbow.x * width,
+          leftElbow.y * height,
+          width - leftWrist.x * width,
+          leftWrist.y * height,
         );
-      const nosePosX = width - results.poseLandmarks[0].x * width;
       return {
-        x: nosePosX - maxReach - 200,
-        y: 0,
+        shoulderX: width - leftShoulder.x * width,
+        maxReach,
       };
     } else if (
-      position === 'top-right' &&
+      position === 'right' &&
       results.poseLandmarks[12] &&
       results.poseLandmarks[14] &&
-      results.poseLandmarks[16] &&
-      results.poseLandmarks[20]
+      results.poseLandmarks[16]
     ) {
+      const rightShoulder = results.poseLandmarks[12];
+      const rightElbow = results.poseLandmarks[14];
+      const rightWrist = results.poseLandmarks[16];
       const maxReach =
         this.calcDist(
-          width - results.poseLandmarks[12].x * width,
-          results.poseLandmarks[12].y * height,
-          width - results.poseLandmarks[14].x * width,
-          results.poseLandmarks[14].y * height,
+          width - rightShoulder.x * width,
+          rightShoulder.y * height,
+          width - rightElbow.x * width,
+          rightElbow.y * height,
         ) +
         this.calcDist(
-          width - results.poseLandmarks[14].x * width,
-          results.poseLandmarks[14].y * height,
-          width - results.poseLandmarks[16].x * width,
-          results.poseLandmarks[16].y * height,
-        ) +
-        this.calcDist(
-          width - results.poseLandmarks[16].x * width,
-          results.poseLandmarks[16].y * height,
-          width - results.poseLandmarks[20].x * width,
-          results.poseLandmarks[20].y * height,
+          width - rightElbow.x * width,
+          rightElbow.y * height,
+          width - rightWrist.x * width,
+          rightWrist.y * height,
         );
-      const nosePosX = width - results.poseLandmarks[0].x * width;
       return {
-        x: nosePosX + maxReach,
-        y: 0,
+        shoulderX: width - rightShoulder.x * width,
+        maxReach,
       };
     }
     return {
-      x: width - (30 / 100) * width,
-      y: 0,
+      shoulderX: width / 2,
+      maxReach: 200,
     };
   }
 
@@ -246,22 +237,22 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   destroyExistingBags() {
     if (this.heavyBlue) {
-      this.heavyBlue.destroy(false);
+      this.heavyBlue.destroy(true);
     }
     if (this.speedBlue) {
-      this.speedBlue.destroy(false);
+      this.speedBlue.destroy(true);
     }
     if (this.heavyRed) {
-      this.heavyRed.destroy(false);
+      this.heavyRed.destroy(true);
     }
     if (this.speedRed) {
-      this.speedRed.destroy(false);
+      this.speedRed.destroy(true);
     }
-    if (this.obstacleTop) {
-      this.obstacleTop.destroy(false);
+    if (this.obstacle) {
+      this.obstacle.destroy(true);
     }
-    if (this.obstacleBottom) {
-      this.obstacleBottom.destroy(false);
+    if (this.nopeSign) {
+      this.nopeSign.destroy(true);
     }
   }
 
@@ -292,73 +283,156 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  // TODO: customize the position based on difficulty param..
-  showBag(position: BagPosition, type: BagType, difficulty: 'easy' | 'hard' = 'hard') {
-    console.log(`position: ${position}, type: ${type}`);
+  /**
+   * @param gameObjectWithBody the gameObject to calculate width
+   * @returns width of the gameObject
+   */
+  getWidth(gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody): number {
+    return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
+  }
+
+  /**
+   * @param bag the bag that has to be checked
+   * @param point the x coordination of the bag position
+   * @param level level of the bag
+   * @returns it will return `newX` position if it is out of bounds.
+   */
+  isInBounds(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody, point: number, level: number) {
+    const { width } = this.game.canvas;
+    console.log('point ', point, ' width ', width);
+    console.log('bag x & y', bag.body.x, bag.body.y);
+    const bagWidth = this.getWidth(bag);
+
+    if (point > width || point + bagWidth > width) {
+      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
+      return {
+        isInBounds: false,
+        newX: width - bagWidth - 16,
+      };
+    } else if (point < 0 || point - bagWidth < 0) {
+      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
+      return {
+        isInBounds: false,
+        newX: bagWidth + 16,
+      };
+    }
+
+    return {
+      isInBounds: true,
+    };
+  }
+
+  /**
+   * @param centerOfMotion Center of motion i.e. `left` or `right`.
+   * @param type type of the bag.. `heavy-blue` | `speed-blue` | `heavy-red` | `speed-red`.
+   * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
+   */
+  showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
+    console.log(`position: ${centerOfMotion}, type: ${type}`);
     const { width, height } = this.game.canvas;
     let x = width - (30 / 100) * width;
-    let y = 0;
+    const y = 0;
     if (this.results) {
-      const pos = this.calculateReach(this.results, position);
-      x = pos.x;
-      y = pos.y;
+      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
+      x = shoulderX + level * maxReach;
     }
+
     switch (type) {
       case 'heavy-blue':
-        console.log('pos:', x, y);
-        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(0, 0.1);
-        console.log('width of the bag, ', this.heavyBlue.body.right - this.heavyBlue.body.left);
-        this.heavyBlue.refreshBody();
-        this.animateEntry(position, this.heavyBlue);
+        this.heavyBlue && this.heavyBlue.destroy(true);
+        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue');
+        const isHeavyBlueInBounds = this.isInBounds(this.heavyBlue, x, level);
+        if (isHeavyBlueInBounds.isInBounds) {
+          this.heavyBlue && this.setBagOrigin(this.heavyBlue, centerOfMotion, level);
+        } else {
+          this.heavyBlue &&
+            this.heavyBlue.setPosition(isHeavyBlueInBounds.newX, y).setOrigin(0.5, 0.1);
+        }
+        this.heavyBlue && this.heavyBlue.refreshBody();
+        this.heavyBlue && this.animateEntry(centerOfMotion, this.heavyBlue);
         break;
       case 'heavy-red':
-        console.log('pos:', x, y);
-        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(0, 0.1);
-        this.heavyRed.refreshBody();
-        this.animateEntry(position, this.heavyRed);
+        this.heavyRed && this.heavyRed.destroy(true);
+        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red');
+        const isHeavyRedInBounds = this.isInBounds(this.heavyBlue, x, level);
+        if (isHeavyRedInBounds.isInBounds) {
+          this.heavyRed && this.setBagOrigin(this.heavyRed, centerOfMotion, level);
+        } else {
+          this.heavyRed &&
+            this.heavyRed.setPosition(isHeavyRedInBounds.newX, y).setOrigin(0.5, 0.1);
+        }
+        this.heavyRed && this.heavyRed.refreshBody();
+        this.heavyRed && this.animateEntry(centerOfMotion, this.heavyRed);
         break;
       case 'speed-red':
-        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(0, 0.2);
-        this.speedRed.refreshBody();
-        this.animateEntry(position, this.speedRed);
+        this.speedRed && this.speedRed.destroy(true);
+        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red');
+        const isSpeedRedInBounds = this.isInBounds(this.heavyBlue, x, level);
+        if (isSpeedRedInBounds.isInBounds) {
+          this.speedRed && this.setBagOrigin(this.speedRed, centerOfMotion, level);
+        } else {
+          this.speedRed &&
+            this.speedRed.setPosition(isSpeedRedInBounds.newX, y).setOrigin(0.5, 0.1);
+        }
+        this.speedRed && this.speedRed.refreshBody();
+        this.speedRed && this.animateEntry(centerOfMotion, this.speedRed);
         break;
       case 'speed-blue':
-        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(0, 0.2);
-        this.speedBlue.refreshBody();
-        this.animateEntry(position, this.speedBlue);
+        this.speedBlue && this.speedBlue.destroy(true);
+        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue');
+        const isSpeedBlueInBounds = this.isInBounds(this.heavyBlue, x, level);
+        if (isSpeedBlueInBounds.isInBounds) {
+          this.speedBlue && this.setBagOrigin(this.speedBlue, centerOfMotion, level);
+        } else {
+          this.speedBlue &&
+            this.speedBlue.setPosition(isSpeedBlueInBounds.newX, y).setOrigin(0.5, 0.1);
+        }
+        this.speedBlue && this.speedBlue.refreshBody();
+        this.speedBlue && this.animateEntry(centerOfMotion, this.speedBlue);
         break;
     }
   }
 
+  setBagOrigin(
+    bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    centerOfMotion: CenterOfMotion,
+    level: number,
+  ) {
+    if (centerOfMotion === 'right' && level < 0) {
+      bag && bag.setOrigin(1, 0.1);
+    } else if (centerOfMotion === 'right' && level > 0) {
+      bag && bag.setOrigin(0, 0.1);
+    } else if (centerOfMotion === 'left' && level < 0) {
+      bag && bag.setOrigin(1, 0.1);
+    } else if (centerOfMotion === 'left' && level > 0) {
+      bag && bag.setOrigin(0, 0.1);
+    } else {
+      bag && bag.setOrigin(0.5, 0.1);
+    }
+  }
+
   /**
-   * @param position Position of the obstacle `top-right` | `top-left`
-   * @param type obstacle type
+   * @param centerOfMotion Center of motion i.e. `left` or `right`.
+   * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
-  showObstacle(position: BagPosition, type: ObstacleType) {
-    console.log(`position: ${position}, type: ${type}`);
+  showObstacle(centerOfMotion: CenterOfMotion, level: number) {
     const { width, height } = this.game.canvas;
     let x = width - (30 / 100) * width;
-    let y = 0;
+    const y = 0;
     if (this.results) {
-      const pos = this.calculateReach(this.results, position);
-      x = pos.x;
-      y = pos.y;
+      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
+      x = shoulderX + level * maxReach;
     }
-    switch (type) {
-      case 'obstacle-top':
-        this.obstacleTop = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(0, 0.1);
-        this.obstacleTop.refreshBody();
-        this.animateEntry(position, this.obstacleTop);
-        break;
-      case 'obstacle-bottom':
-        this.obstacleBottom = this.physics.add
-          .staticImage(x, y, 'obstacle_top')
-          .setOrigin(0, 0)
-          .setRotation(3.14159);
-        this.obstacleBottom.refreshBody();
-        this.animateEntry(position, this.obstacleBottom);
-        break;
+    this.obstacle && this.obstacle.destroy(true);
+    this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
+    const isObstacleInBounds = this.isInBounds(this.heavyBlue, x, level);
+    if (isObstacleInBounds.isInBounds) {
+      this.obstacle && this.setBagOrigin(this.obstacle, centerOfMotion, level);
+    } else {
+      this.obstacle && this.obstacle.setPosition(isObstacleInBounds.newX, y).setOrigin(0.5, 0.1);
     }
+    this.obstacle && this.obstacle.refreshBody();
+    this.obstacle && this.animateEntry(centerOfMotion, this.obstacle);
   }
 
   override update(time: number, delta: number): void {
@@ -428,12 +502,12 @@ export class BeatBoxerScene extends Phaser.Scene {
         });
       }
 
-      if (this.redGlove && this.obstacleTop) {
-        this.physics.overlap(this.redGlove, this.obstacleTop, (_redGlove, _obstacleTop) => {
+      if (this.redGlove && this.obstacle) {
+        this.physics.overlap(this.redGlove, this.obstacle, (_redGlove, _obstacleTop) => {
           this.showWrongSign(_obstacleTop);
           _obstacleTop.destroy();
           this.collisionDetected = {
-            bagType: 'obstacle-top',
+            bagType: 'obstacle',
             gloveColor: 'red',
             result: 'failure',
           };
@@ -445,12 +519,12 @@ export class BeatBoxerScene extends Phaser.Scene {
         });
       }
 
-      if (this.blueGlove && this.obstacleTop) {
-        this.physics.overlap(this.blueGlove, this.obstacleTop, (_blueGlove, _obstacleTop) => {
+      if (this.blueGlove && this.obstacle) {
+        this.physics.overlap(this.blueGlove, this.obstacle, (_blueGlove, _obstacleTop) => {
           this.showWrongSign(_obstacleTop);
           _obstacleTop.destroy();
           this.collisionDetected = {
-            bagType: 'obstacle-top',
+            bagType: 'obstacle',
             gloveColor: 'blue',
             result: 'failure',
           };
@@ -537,7 +611,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   playConfettiAnim(bag: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
     // stopping the exisiting confetti..
     if (this.confettiAnim || this.musicAnim) {
-      console.log('error here');
       this.confettiAnim && this.confettiAnim.destroy(true);
       this.musicAnim && this.musicAnim.destroy(true);
     }
@@ -577,16 +650,18 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param position position of the bag.
    * @param bag bag object to tween.
    */
-  animateEntry(position: BagPosition, bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+  animateEntry(position: CenterOfMotion, bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     switch (position) {
-      case 'top-left':
+      case 'left':
         this.tweens.addCounter({
           from: 120,
           to: -20,
           duration: 400,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -595,8 +670,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 400,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -605,8 +682,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 600,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -615,19 +694,23 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 800,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         break;
-      case 'top-right':
+      case 'right':
         this.tweens.addCounter({
           from: -120,
           to: 20,
           duration: 400,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -636,8 +719,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 400,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -646,8 +731,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 600,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         this.tweens.addCounter({
@@ -656,49 +743,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           delay: 800,
           duration: 200,
           onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
-          },
-        });
-        break;
-      case 'bottom-left' || 'bottom-right':
-        this.tweens.addCounter({
-          from: -20,
-          to: 200,
-          duration: 400,
-          onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
-          },
-        });
-        this.tweens.addCounter({
-          from: 200,
-          to: 170,
-          delay: 400,
-          duration: 200,
-          onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
-          },
-        });
-        this.tweens.addCounter({
-          from: 170,
-          to: 185,
-          delay: 600,
-          duration: 200,
-          onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
-          },
-        });
-        this.tweens.addCounter({
-          from: 185,
-          to: 180,
-          delay: 800,
-          duration: 200,
-          onUpdate: (tween) => {
-            bag.setAngle(tween.getValue());
-            bag.refreshBody();
+            if (bag.body) {
+              bag.setAngle(tween.getValue());
+              bag.refreshBody();
+            }
           },
         });
         break;
