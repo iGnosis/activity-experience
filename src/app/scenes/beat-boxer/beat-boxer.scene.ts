@@ -256,6 +256,9 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
+  midPoint(x1: number, y1: number, x2: number, y2: number) {
+    return [(x1 + x2) / 2, (y1 + y2) / 2];
+  }
   /**
    * Function to draw hand overlays.
    * @param results pose results
@@ -265,19 +268,25 @@ export class BeatBoxerScene extends Phaser.Scene {
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
     }
-    if (results.poseLandmarks[15] && this.enableLeft) {
+    if (results.poseLandmarks[15] && results.poseLandmarks[19] && this.enableLeft) {
       const leftWrist = results.poseLandmarks[15];
+      const leftIndex = results.poseLandmarks[19];
+      const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
+
       this.blueGlove = this.physics.add.staticImage(
-        width - leftWrist.x * width,
-        leftWrist.y * height,
+        width - x * width,
+        y * height,
         'left_hand_overlay',
       );
     }
-    if (results.poseLandmarks[16] && this.enableRight) {
+    if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
+      const rightIndex = results.poseLandmarks[20];
+      const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
+
       this.redGlove = this.physics.add.staticImage(
-        width - rightWrist.x * width,
-        rightWrist.y * height,
+        width - x * width,
+        y * height,
         'right_hand_overlay',
       );
     }
@@ -295,7 +304,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param bag the bag that has to be checked
    * @param point the x coordination of the bag position
    * @param level level of the bag
-   * @returns it will return `newX` position if it is out of bounds.
+   * @returns it will return `newX` if it is out of bounds.
    */
   isInBounds(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody, point: number, level: number) {
     const { width } = this.game.canvas;
