@@ -1,0 +1,6 @@
+@import '/src/app/variables';
+
+body {
+    margin: 0;
+    background-color: darken($primary, 10%);
+}

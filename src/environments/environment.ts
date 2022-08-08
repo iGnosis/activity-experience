@@ -2,16 +2,41 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
-export const environment = {
+import { SitToStandService } from 'src/app/services/game/sit-to-stand/sit-to-stand.service';
+import { Environment } from 'src/app/types/pointmotion';
+
+export const environment: Environment = {
+  stageName: 'default',
   production: false,
-  // harmless dev environment token, TODO: pick up token from localStorage when end to end flow is implemented
-  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJBbWFuIiwibGFzdE5hbWUiOiJHYXV0YW0iLCJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsicGF0aWVudCIsInRoZXJhcGlzdCIsImFkbWluIl0sIngtaGFzdXJhLWRlZmF1bHQtcm9sZSI6InRoZXJhcGlzdCIsIngtaGFzdXJhLXVzZXItaWQiOiJkODVlMjMxNS0yNGQyLTQ1OTMtODZmZi1mOTcwMGMyZTZhYzQiLCJ4LWhhc3VyYS1wcm92aWRlci1pZCI6IjIwZTY2MTMyLWQ1YjQtNGE3My1iNDU4LWRkMTkyNjVkNmRiYSJ9LCJpYXQiOjE2NDM5NzYyODF9.Tlzven_qWYRS4bLXwjvAi1_BefRYl3Pr8qd3cUPrX5Q',
-  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  speedUpSession: false,
   analytics: {
-    calibration: true
+    calibration: true,
   },
-  patient: '3e0339fd-79f6-4559-a94c-788c8891710e',
-  careplan: '4e2aa726-b07f-4f44-a4fd-fc228c93bfc7'
+  googleAnalyticsTrackingID: 'G-MTGG72G6ND',
+  endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
+  apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
+  postSessionRedirectEndpoint: 'http://localhost:4200',
+  order: ['sit_stand_achieve', 'beat_boxer'],
+  settings: {
+    sit_stand_achieve: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    beat_boxer: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+    sound_slicer: {
+      configuration: {
+        minCorrectReps: 10,
+        speed: 5000,
+      },
+    },
+  },
 };
 
 /*

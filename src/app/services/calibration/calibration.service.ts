@@ -1,180 +1,184 @@
 import { Injectable } from '@angular/core';
-import { Results } from '@mediapipe/holistic';
-import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { calibration } from 'src/app/store/actions/calibration.actions';
-import { AnalyticsService } from '../analytics/analytics.service';
-import { CareplanService } from '../careplan/careplan.service';
-import { EventsService } from '../events/events.service';
-import { v4 } from 'uuid';
-import { environment } from 'src/environments/environment';
-import { GuideActionShowMessagesDTO } from 'src/app/types/pointmotion';
-import { guide } from 'src/app/store/actions/guide.actions';
+import { Results } from '@mediapipe/pose';
+import { debounceTime, Observable, Subject, Subscription } from 'rxjs';
+import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
+import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
+import { PoseService } from '../pose/pose.service';
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CalibrationService {
+  status: CalibrationStatusType = 'error';
+  isEnabled = false;
+  result = new Subject<CalibrationStatusType>();
+  subscription: Subscription;
+  subscriptionReCalibration: Subscription;
+  mode: CalibrationMode = 'full';
+  visibilityThreshold = 0.7;
+  _reCalibrationCount = 0;
+  reCalibrationCount = new Subject<number>();
 
-  pose$?: Observable<any>
-  eventDispatcher: any
-  calibration$?: Observable<string>
-  isCalibrating = false
-  taskId = v4()
-  attemptId = v4()
-  previousAttemptId = this.attemptId
-  status = 'error'
-  // configuration = 'hands' // full-body, upper-body, lower-body, hands
-  constructor(
-    private store: Store<{ pose: Results, calibration: any, guide: GuideActionShowMessagesDTO }>,
-    private eventService: EventsService,
-    private careplanService: CareplanService,
-    private analyticsService: AnalyticsService,
-  ) {
-    this.pose$ = store.select('pose')
-    this.pose$.subscribe((results) => {
-      this.handlePose(results)
-    })
+  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {
+    this.result.pipe(debounceTime(2000)).subscribe((status) => {
+      // this.calculateCalibrationCount(status);
+    });
+  }
 
-    setTimeout(() => {
-      this.eventDispatcher = this.eventService.addContext('calibration.service', this)
-      this.calibration$ = this.store.select((state) => state.calibration.status)
-      this.calibration$.subscribe(status => {
-        this.eventDispatcher.dispatchEventName(status)
+  enable(autoSwitchMode = true) {
+    this.isEnabled = true;
+    this.subscription = this.poseService.getPose().subscribe((results) => {
+      const newStatus = this._calibrateBody(results, this.mode);
 
+      if (!newStatus) return;
 
-        if (!environment.analytics.calibration) {
-          return
+      if (newStatus.status !== this.status) {
+        this.calibrationScene.destroyGraphics();
+        // On successful recalibration, just increment the counter.
+        // if (newStatus.status === 'success') {
+        //   // this._reCalibrationCount += 1;
+        //   this.reCalibrationCount.next(this._reCalibrationCount);
+        // } else if (newStatus.status === 'error') {
+        //   // this._reCalibrationCount += 1;
+        //   // this.reCalibrationCount.next(this._reCalibrationCount);
+        // }
+        // Update all the subscribers interested in calibration status
+        this.result.next(newStatus.status);
+
+        // Draw the calibration box
+        this.calibrationScene.drawCalibrationBox(newStatus.status);
+
+        if (autoSwitchMode) {
+          // Move the calibration from full to fast mode.
+          this.switchMode(newStatus.status);
         }
-
-        // calibration score
-        let score = 0 // 0 means error
-        switch (status) {
-          case 'warning':
-            score = 0.5; break;
-          case 'success':
-            score = 1; break;
-          default:
-            score = 0
-        }
-
-        const activity = analyticsService.getActivityId('Calibration')
-
-        // renew attemptId
-        this.attemptId = v4()
-        this.taskId = v4()
-
-        // start a task since it'd a retry
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskStarted',
-          task_id: this.taskId,
-          score: 0,
-          task_name: 'calibration'
-        })
-
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskReacted',
-          task_id: this.taskId,
-          score: 0,
-          task_name: 'calibration'
-        })
-
-        this.analyticsService.sendEvent({
-          activity,
-          attempt_id: this.attemptId,
-          event_type: 'taskEnded',
-          task_id: this.taskId,
-          score,
-          task_name: 'calibration'
-        })
-      })
-    }, 500)
-  }
-
-  handlePose(results: { pose: Results }) {
-    if (!results) return
-
-    // Can have multiple configurations.
-    switch (this.careplanService.getCarePlan().calibration.type) {
-      case 'full_body':
-        this.calibrateFullBody(results)
-        break
-      case 'hands':
-        this.calibrateHands(results)
-        break
-    }
-  }
-
-  calibrateHands(results: any) {
-    let numHandsVisible = 0
-    results.pose.leftHandLandmarks ? numHandsVisible += 1 : null
-    results.pose.rightHandLandmarks ? numHandsVisible += 1 : null
-
-    switch (numHandsVisible) {
-      case 0:
-        this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see hands'}))
-        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Show your hands!', timeout: 20000}))
-        // this.eventService.dispatchEventName('calibration.service', 'error', {message: 'Cannot see hands'})
-        break;
-      case 1:
-        this.store.dispatch(calibration.warning({pose: results.pose, reason: 'Can only see one hand'}))
-        this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Both hands....', timeout: 20000}))
-        // this.eventService.dispatchEventName('calibration.service', 'warning', {message: 'Can only see one hand'})
-        break;
-      case 2:
-        this.store.dispatch(calibration.success({pose: results.pose, reason: 'All well'}))
-        // this.store.dispatch(guide.hide())
-        // this.eventService.dispatchEventName('calibration', 'success', {message: 'Can only see one hand'})
-        break;
-    }
-  }
-
-  calibrateFullBody(results: { pose: Results }) {
-    // console.log('calibrateFullBody', results);
-
-    const sendError = () => {
-      this.store.dispatch(calibration.error({pose: results.pose, reason: 'Cannot see required points'}))
-      this.store.dispatch(guide.sendMessages({title: 'Calibration', text: 'Move into the frame, please', timeout: 20000}))
-    }
-
-    const sendSuccess = () => {
-      this.store.dispatch(calibration.success({ pose: results.pose, reason: 'All well' }))
-    }
-
-    let poseLandmarkArray = results.pose.poseLandmarks
-
-    if (!Array.isArray(poseLandmarkArray)) {
-
-      return sendError()
-    } else {
-      let leftHip = poseLandmarkArray[23]
-      let leftKnee = poseLandmarkArray[25]
-      let rightHip = poseLandmarkArray[24]
-      let rightKnee = poseLandmarkArray[26]
-      if ((leftHip.visibility && leftHip.visibility < 0.6) ||
-        (leftKnee.visibility && leftKnee.visibility < 0.6) ||
-        (rightHip.visibility && rightHip.visibility < 0.6) ||
-        (rightKnee.visibility && rightKnee.visibility < 0.6)) {
-        sendError()
-      } else {
-        sendSuccess()
       }
+      this.status = newStatus.status;
+    });
+    this.subscriptionReCalibration = this.result.pipe(debounceTime(2000)).subscribe((status) => {
+      this._reCalibrationCount += 1;
+      this.reCalibrationCount.next(this._reCalibrationCount);
+    });
+  }
+
+  // calculateCalibrationCount(status: CalibrationStatusType) {
+  //   this._reCalibrationCount += 1;
+  //   this.reCalibrationCount.next(this._reCalibrationCount);
+  // }
+
+  switchMode(status: CalibrationStatusType) {
+    if (status === 'success') {
+      console.log('switching to fast mode calibration');
+      this.mode = 'fast';
+    } else if (status === 'error') {
+      console.log('switching to full mode calibration');
+      this.mode = 'full';
+    }
+  }
+
+  setMode(mode: CalibrationMode) {
+    console.log('calibrationService:setMode:mode', mode);
+    this.mode = mode;
+  }
+
+  disable() {
+    this.isEnabled = false;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
+
+  startCalibrationScene(game: Phaser.Game) {
+    if (!game) {
+      throw new Error('Invalid game object');
+    } else {
+      game.scene.start('calibration');
+    }
+  }
+
+  _isPointWithinCalibrationBox(x: number, y: number, point?: number): boolean {
+    const isPointWithinCalibrationBox =
+      this.calibrationScene.calibrationBox.x < x &&
+      x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
+      this.calibrationScene.calibrationBox.y < y &&
+      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height;
+
+    return isPointWithinCalibrationBox;
+  }
+
+  facilitateCalibration(game: Phaser.Game) {
+    // TODO: Have the communication implemented here.
+  }
+
+  _calibrateBody(
+    results: Results,
+    mode: CalibrationMode,
+  ): {
+    status: CalibrationStatusType;
+  } {
+    if (!this.isEnabled) {
+      return { status: 'disabled' };
     }
 
+    const poseLandmarkArray = results.poseLandmarks;
 
+    // just a sanity check.
+    if (!Array.isArray(poseLandmarkArray)) {
+      return { status: 'error' };
+    }
 
-    // console.log(leftHip, rightHip)
-    // console.log(rightKnee, rightKnee)
+    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
+    const unCalibratedPoints: number[] = [];
+    const calibratedPoints: number[] = [];
 
-    // make sure that body parts are visible
+    const points = [12, 11, 24, 23, 26, 25];
+    const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
 
+    const invisiblePoints = keyBodyPoints.filter((point) => {
+      if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
+        return true;
+      }
+      return false;
+    });
+
+    if (invisiblePoints.length > 0) {
+      return { status: 'error' };
+    }
+
+    points.forEach((point) => {
+      const xPoint = poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width;
+      const yPoint = poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height;
+
+      // it's okay if user isn't within the box.
+      if (mode === 'fast') {
+        calibratedPoints.push(point);
+      }
+
+      // user must be within the box.
+      if (mode === 'full') {
+        if (!this._isPointWithinCalibrationBox(xPoint, yPoint)) {
+          // console.log(`point ${point} is out of calibration box`);
+          unCalibratedPoints.push(point);
+        } else {
+          calibratedPoints.push(point);
+        }
+      }
+    });
+
+    // allow user to play the game.
+    if (points.length === calibratedPoints.length) {
+      // console.log(`mode: ${mode} - calibration success`);
+      return { status: 'success' };
+    }
+
+    if (this.mode === 'full') {
+      // to remove if calibration points are already drawn.
+      this.calibrationScene.destroyGraphics();
+      // highlight points that aren't in the box.
+      this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
+      return { status: 'warning' };
+    }
+
+    // don't care, as long as points are visible.
+    return { status: 'success' };
   }
-
-  dispatchCalibration() {
-
-  }
-
 }

@@ -1,31 +1,103 @@
-import { createReducer, on } from "@ngrx/store";
-import { GuideActionShowMessageDTO } from "src/app/types/pointmotion";
-import { guide } from "../actions/guide.actions";
+import { createReducer, on } from '@ngrx/store';
+import { GuideActionShowMessageDTO, GuideState } from 'src/app/types/pointmotion';
+import { guide } from '../actions/guide.actions';
 
-const initialState = {}
+/**
+ * {
+ *      avatar: '',
+ *      visibility: maximized, minimized, hidden,
+ *      title: '',
+ *      text: '', //support html?
+ *      prompt: '',
+ *      entryAnimation: '',
+ *      exitAnimation: ''
+ * }
+ */
+const initialState: GuideState = {};
 
+const _guideReducer = createReducer(
+  initialState,
 
-const _guideReducer = createReducer(initialState, 
-    on(guide.sendMessages, (state, data): GuideActionShowMessageDTO => {
-        return {
-            title: data.title,
-            text: data.text,
-            icon: data.icon,
-            timeout: data.timeout,
-            id: data.title + data.text // if either the title or text changes...make the change happen
-        }
-    }),
-    on(guide.hide, (state, data) => {
-        return {
-            title: undefined,
-            text: undefined,
-            icon: undefined,
-            id: undefined
-        }
-    })
-)
+  on(guide.hide, (state, data) => {
+    return {};
+  }),
 
+  on(guide.updateAvatar, (state, data) => {
+    const newState = Object.assign({}, state);
+    newState.avatar = data;
+    return newState;
+  }),
 
-export function guideReducer(state:any, action:any) {
-    return _guideReducer(state, action);
+  on(guide.sendMessage, (state, data) => {
+    const newState = Object.assign({}, state);
+    newState.message = data;
+    return newState;
+  }),
+
+  on(guide.sendPrompt, (state, data) => {
+    console.log(data);
+    const newState = Object.assign({}, state);
+    newState.prompt = data;
+    // newState.prompt ? (newState.prompt.type = data.type) : null;
+    console.log(newState.prompt);
+    return newState;
+  }),
+
+  on(guide.sendSpotlight, (state, data) => {
+    const newState = Object.assign({}, state);
+    newState.spotlight = data;
+    return newState;
+  }),
+
+  on(guide.startVideo, (state, data) => {
+    const newState = Object.assign({}, state);
+    newState.video = data;
+    return newState;
+  }),
+
+  on(guide.hideAvatar, (state, data) => {
+    const newState = Object.assign({}, state);
+    delete newState.avatar;
+    return newState;
+  }),
+
+  on(guide.hideMessage, (state, data) => {
+    const newState = Object.assign({}, state);
+    delete newState.message;
+    return newState;
+  }),
+
+  on(guide.hidePrompt, (state, data) => {
+    const newState = Object.assign({}, state);
+    delete newState.prompt;
+    return newState;
+  }),
+
+  on(guide.hideSpotlight, (state, data) => {
+    const newState = Object.assign({}, state);
+    delete newState.spotlight;
+    return newState;
+  }),
+
+  on(guide.hideVideo, (state, video) => {
+    const newState = Object.assign({}, state);
+    delete newState.video;
+    return newState;
+  }),
+
+  on(guide.startTimer, (state, data) => {
+    const newState = Object.assign({}, state);
+    newState.timer = data;
+    return newState;
+  }),
+
+  on(guide.hideTimer, (state, video) => {
+    const newState = Object.assign({}, state);
+    delete newState.timer;
+    return newState;
+  }),
+);
+
+export function guideReducer(state: any, action: any) {
+  return _guideReducer(state, action);
 }

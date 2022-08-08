@@ -1,5 +1,10 @@
 #webcam {
     position: absolute;
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    /* Safari and Chrome */
+    -moz-transform: rotateY(180deg);
+    /* Firefox */
 }
 
 #phaser-canvas {
@@ -25,7 +30,34 @@ app-spotlight {
 
 app-guide {
     position: absolute;
-    top: 30px;
-    left: 30px;
     z-index: 2;
+    width: 100vw;
+    height: 100vh;
+}
+
+#close-session {
+    padding: 10px; 
+    cursor: pointer; 
+    position: fixed; 
+    right: 0; 
+    top: 0; 
+    bottom: 0;
+    z-index: 3;
+}
+
+#end-session {
+    padding: 10px;
+    margin: 20px;
+    cursor: pointer;
+    position: fixed;
+    right: 0;
+    // top: 10;
+    bottom: 0;
+    // left: 10;
+    z-index: 3;
+}
+
+app-select-genre {
+    position: absolute;
+    z-index: 3;
 }

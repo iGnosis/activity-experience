@@ -1,132 +1,176 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, TemplateRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import * as Phaser from 'phaser';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
-import { CalibrationService } from 'src/app/services/calibration/calibration.service';
+import { AnalyticsService } from 'src/app/services/analytics/analytics.service';
 import { CareplanService } from 'src/app/services/careplan/careplan.service';
 import { SitToStandService } from 'src/app/services/classifiers/sit-to-stand/sit-to-stand.service';
-import { EventsService } from 'src/app/services/events/events.service';
-import { HolisticService } from 'src/app/services/holistic/holistic.service';
+import { CoordinationService } from 'src/app/services/coordination/coordination.service';
 import { SessionService } from 'src/app/services/session/session.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
-import { VideoService } from 'src/app/services/video/video.service';
-import { session as sessionAction } from 'src/app/store/actions/session.actions';
+import { SessionRow, SessionState } from 'src/app/types/pointmotion';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { session } from 'src/app/store/actions/session.actions';
+import { PoseService } from 'src/app/services/pose/pose.service';
+
 @Component({
   selector: 'app-session',
   templateUrl: './session.component.html',
-  styleUrls: ['./session.component.scss']
+  styleUrls: ['./session.component.scss'],
 })
 export class SessionComponent implements AfterViewInit {
-  
-  @ViewChild('videoElm') video!: ElementRef
-  @ViewChild('canvasElm') canvas!: ElementRef
-  @ViewChild('sessionElm') sessionElm!: ElementRef
-  session?: Phaser.Game
+  @ViewChild('videoElm') video!: ElementRef;
+  @ViewChild('canvasElm') canvas!: ElementRef;
+  @ViewChild('sessionElm') sessionElm!: ElementRef;
+  @ViewChild('sessionCloseModal', { read: TemplateRef })
+  sessionCloseModal: TemplateRef<any>;
+  @ViewChild('noVideoModal', { read: TemplateRef })
+  noVideoModal: TemplateRef<any>;
+  game?: Phaser.Game;
+  session: SessionRow | undefined;
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
     parent: 'phaser-canvas',
-    // @ts-ignore
-    'render.transparent': true,
+    render: {
+      transparent: true,
+    },
     transparent: true,
     // backgroundColor: 'rgba(0,0,0,0)',
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: {y: 200}
+        gravity: { y: 200 },
       },
     },
-  }
-  careplan: any
-  dispatcher?: {dispatchEventName: Function, dispatchEventId: Function}
+  };
+  careplan: any;
+  chevronRightIcon = faChevronRight;
+  isEndSessionVisible = false;
+  announcement = '';
+  selectGenre = false;
+  noVideoError: string;
 
-  //temporary
-  showCelebration = false
-  
+  sessionEnded: boolean | undefined = false;
+
   // DI the needed scenes
   constructor(
-    private store: Store<{spotlight: any}>,
+    private store: Store<{ spotlight: any; session: SessionState }>,
+    private analyticsService: AnalyticsService,
     private uiHelperService: UiHelperService,
     private careplanService: CareplanService,
-    private mpHolisticService: HolisticService,
+    private poseService: PoseService,
     private sit2standService: SitToStandService,
     private sessionService: SessionService,
-    private eventsService: EventsService) {
+    private calibrationScene: CalibrationScene,
+    private sit2standScene: SitToStandScene,
+    private coordinationService: CoordinationService,
+    private router: Router,
+    private modalService: NgbModal,
+  ) {
+    this.store
+      .select((state) => state.session)
+      .subscribe((session) => {
+        this.session = session.session;
+        this.sessionEnded = session.isSessionEnded;
+      });
   }
-  
+
   async ngAfterViewInit() {
+    // start the video
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      this.video.nativeElement.srcObject = stream;
+      const box = this.uiHelperService.setBoundingBox(stream);
+      console.log('setBoundingBox:box:', box);
+      // aspect ratio of the screen and webcam may be different. make calculations easier
+      this.updateDimensions(this.video.nativeElement);
 
-    this.eventsService.addContext('session', this)
-    
-    // Use this for analytics
-    const session = await this.sessionService.new()
-
-    // Set the session id in the global store
-    await this.store.dispatch(sessionAction.startSession(session.insert_session_one))
-
-    // Download the careplan. do it in the welcome page later
-    this.careplan = this.careplanService.downloadCarePlan(session.insert_session_one.id)
-    
-    // Register the session component to send and receive events
-    this.dispatcher = this.eventsService.addContext('session', this)
-
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    this.video.nativeElement.srcObject = stream
-    
-    const box = this.uiHelperService.setBoundingBox(stream)
-    this.updateDimensions(this.video.nativeElement)
-
-    this.dispatcher?.dispatchEventName('ready')
-    // this.dispatcher?.dispatchEventId('start_game')
-
-
-    this.store.select(state => state.spotlight).subscribe(val => {
-      this.showCelebration = true 
-      setTimeout(() => {
-        this.showCelebration = false
-      }, 2000);
-    })
+      this.startGame();
+    } catch (err: any) {
+      console.log(err);
+      this.noVideoError = err.toString().replace('DOMException:', '');
+      this.modalService.open(this.noVideoModal, {
+        centered: true,
+        keyboard: false,
+        backdrop: 'static',
+      });
+    }
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
-    const box = this.uiHelperService.getBoundingBox()
-    if( box.topLeft.x ) {
+    const box = this.uiHelperService.getBoundingBox();
+    if (box.topLeft.x) {
       // the video needs padding on the left
-      elm.style.marginLeft = box.topLeft.x +'px'
-    } else if ( box.topLeft.y ) {
+      elm.style.marginLeft = box.topLeft.x + 'px';
+    } else if (box.topLeft.y) {
       // the video needs padding on the top
-      elm.style.marginTop = box.topLeft.y +'px'
-      elm.style.marginTop = box.topLeft.y +'px'
+      elm.style.marginTop = box.topLeft.y + 'px';
+      elm.style.marginTop = box.topLeft.y + 'px';
     }
 
-    elm.width = box.topRight.x - box.topLeft.x 
-    elm.height = box.bottomLeft.y - box.topLeft.y
-  }
- 
-  async action_startCalibration(data: any) {
-    
+    elm.width = box.topRight.x - box.topLeft.x;
+    elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
-  async action_startGame(data: any) {
-    // setTimeout(() => {
-    //   // Set the canvas to take up the same space as the video. Simplifying all the calculations
-    //   const canvas = document.querySelector('#phaser-canvas canvas') as HTMLCanvasElement
-    //   this.updateDimensions(canvas)
-    //   // @ts-ignore.
-    //   window.pm.session = this 
-    //   // this.sessionElm.nativeElement.requestFullscreen()
-    // })
+  async startGame() {
+    const scenes = [this.calibrationScene, this.sit2standScene];
+    this.config.scene = scenes;
+    this.game = new Phaser.Game(this.config);
+    this.coordinationService.start(this.game as Phaser.Game, () => {});
+    this.updateDimensions(this.canvas.nativeElement.querySelector('canvas'));
+    setTimeout(() => {
+      // Start mediapipe
+      this.startMediaPipe();
+    });
   }
 
-  action_startMediaPipe(data: any) {
+  startMediaPipe() {
     // Start MediaPipe Holistic
     console.log('STARTING MEDIAPIPE');
-    
-    this.mpHolisticService.start(this.video.nativeElement, 20)
+    setTimeout(() => {
+      this.poseService.start(this.video.nativeElement);
+    }, 2000); // gives time for things to settle down
   }
-  
-  action_restartGame(data: any) {
+
+  async openSessionCloseModal() {
+    this.modalService.open(this.sessionCloseModal, { centered: true });
+  }
+
+  timeoutId?: any;
+  showEndSession() {
+    this.isEndSessionVisible = true;
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      this.isEndSessionVisible = false;
+    }, 2000);
+  }
+
+  closeSessionConfirmed() {
+    this.analyticsService.sendSessionEndedAt();
+    Howler.stop();
+    this.sendSessionEndEvent();
+  }
+  sendSessionEndEvent() {
+    window.parent.postMessage(
+      {
+        patient: { id: this.session?.patient },
+        session: { id: this.session?.id },
+      },
+      '*',
+    );
+  }
+
+  closeModal() {
+    this.modalService.dismissAll();
   }
 }

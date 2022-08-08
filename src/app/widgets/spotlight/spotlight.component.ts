@@ -1,66 +1,62 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { EventsService } from 'src/app/services/events/events.service';
-import { SpotlightActionShowMessageDTO, SpotlightActionShowMessagesDTO } from 'src/app/types/pointmotion';
+import {
+  SpotlightActionShowMessageDTO,
+  SpotlightActionShowMessagesDTO,
+} from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'app-spotlight',
   templateUrl: './spotlight.component.html',
-  styleUrls: ['./spotlight.component.scss']
+  styleUrls: ['./spotlight.component.scss'],
 })
 export class SpotlightComponent implements OnInit, AfterViewInit {
+  message: string | undefined = '';
+  hidden = false;
+  messagesQueue: Array<SpotlightActionShowMessageDTO> = [];
 
-  message: string | undefined = '' 
-  hidden = false
-  messagesQueue: Array<SpotlightActionShowMessageDTO> = []
+  constructor() {}
 
-  constructor(private eventService: EventsService) { }
-  
-  ngAfterViewInit(): void {
-    this.eventService.addContext('spotlight', this)
-  }
+  ngAfterViewInit(): void {}
 
-  ngOnInit(): void {
-  }
-  
+  ngOnInit(): void {}
 
   async action_showMessages(data: SpotlightActionShowMessagesDTO) {
     // Show messages at an interval and then throw the next event.
-    this.messagesQueue = this.messagesQueue.concat(data.data.messages)
+    this.messagesQueue = this.messagesQueue.concat(data.data.messages);
     console.log('start action_showMessages');
-    await this.processMessageQueue()
+    await this.processMessageQueue();
     console.log('end action_showMessages');
   }
 
   async processMessageQueue() {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       if (Array.isArray(this.messagesQueue) && this.messagesQueue.length > 0) {
         // TODO: Handle the producer consumer problem
-        for(let message of this.messagesQueue) {
+        for (const message of this.messagesQueue) {
           console.log('spotlight: updating message', message.text);
-          
-          this.message = message.text
-          await this.sleep(message.timeout)
+
+          this.message = message.text;
+          //   await this.sleep(message.timeout);
         }
-        this.messagesQueue = []
-        resolve({})
+        this.messagesQueue = [];
+        resolve({});
       }
-    })
-    
+    });
   }
 
   async sleep(timeout: number) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({})
-      }, timeout)
-    })
+        resolve({});
+      }, timeout);
+    });
   }
 
-  async action_show(data: any) {
-    this.hidden = false
+  async action_show() {
+    this.hidden = false;
   }
 
-  async action_hide(data: any) {
-    this.hidden = true
+  async action_hide() {
+    this.hidden = true;
   }
 }

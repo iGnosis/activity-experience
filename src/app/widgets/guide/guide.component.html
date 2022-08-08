@@ -1,4 +1,69 @@
-<div class="guide" [hidden]="!messageTitle && !messageBody">
+
+
+ <div class="guide">
+    <div #messageCenter *ngIf="state.message?.position == 'center'" class="message-center">
+        {{ state.message?.text }}
+    </div>
+    <div #messageBottom *ngIf="state.message?.position == 'bottom'" class="message-bottom">
+        {{ state.message?.text }}
+    </div>
+    <div #avatar class="avatar {{avatarPosition}}" *ngIf="state.avatar">
+        <img [src]="'assets/images/'+ state.avatar.name+'.jpg'" alt="">
+    </div>
+ </div>
+
+ <div class="spotlight d-flex justify-content-center align-items-center" *ngIf="state.spotlight?.text">
+     <div class="display-container p-6">
+        <div class="display-1 text-white text-center ">{{ state.spotlight?.text }}</div>
+     </div>
+ </div>
+
+
+<div class="guide-prompt d-flex {{ state.prompt.className }}" *ngIf="state.prompt">
+    <div class="card">
+        <div class="card-header text-center" *ngIf="state.prompt.icon">
+            <fa-icon [icon]="state.prompt.icon" size="6x"></fa-icon>
+        </div>
+        <div class="text-center text-white" *ngIf="state.prompt.promptType === 'success'">
+          <!-- <fa-icon [icon]="faCheckIcon" size="6x"></fa-icon> -->
+          <img style="border-radius: 50%;" src="/assets/images/circle-check-solid.svg" alt="">
+        </div>
+        <div class="card-body text-center" *ngIf="state.prompt.text">
+            <h2>{{ state.prompt.text }}</h2>
+        </div>
+    </div>
+</div>
+
+
+<div class="video d-flex justify-content-center align-items-center" [ngClass]="{'lg': state.video.size == 'lg'}" *ngIf="state.video">
+    <iframe #yt  [src]="state.video.url | safe: 'resourceUrl'" title="Sit To Stand" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <button class="btn btn-primary" (click)="onSkipVideoTutorial()">Skip Video Introduction</button>
+</div>
+
+
+<div class="timer" #timer *ngIf="state.timer"></div>
+
+<!-- <div class="guide" [hidden]="!messageTitle && !messageBody">
     <h1>{{ messageTitle }}</h1>
     <p>{{messageBody}}</p>
 </div>
+
+ -->
+
+
+ <!-- <div class="fwh guide-center d-flex justify-content-center align-items-center">
+    <div class="row guide-container-center bg-primary justify-content-left p-5" [ngClass]="{'faded': faded}">
+        <h1 class="text-white content">this is cool. this is cool. this is cool. this is cool. this is cool. this is cool. </h1>
+    </div>
+</div> -->
+
+
+
+
+
+<!-- <div  class="guide guide-bottom  d-flex justify-content-start align-items-end" style="position: relative; top: -60px">
+    <div class="guide-bottom row guide-container-bottom bg-primary justify-content-left p-5">
+        <div class="display-3 text-white"> {{ messageTitle}}</div>
+        <h1 class="text-white content"> {{ messageBody }}</h1>
+    </div>
+</div> -->

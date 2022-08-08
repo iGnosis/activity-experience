@@ -1,2 +1,1 @@
-export class System {
-}
+export class System {}

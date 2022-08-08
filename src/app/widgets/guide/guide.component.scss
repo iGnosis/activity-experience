@@ -1,4 +1,254 @@
-.guide {
-    padding: 16px;
-    background-color: #FFFFFF;
+@import '/src/app/variables';
+
+
+.fwh {
+    width: 100vw;
+    height: 100vh;
 }
+.guide {
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+
+    .message-center {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-25vw, -100px);
+        background: $primary;
+        border: 6px #FFF solid;
+        width: 50vw;
+        height: auto;
+        padding: 16px;
+        font-size: 3rem;
+        color: #FFF;
+        border-radius: 18px;
+    }
+
+    .message-bottom {
+        position: fixed;
+        bottom: 120px;
+        left: 170px;
+        background: $primary;
+        border: 6px #FFF solid;
+        width: 50vw;
+        height: auto;
+        padding: 16px;
+        font-size: 3rem;
+        border-radius: 18px;
+        color: #FFF;
+    }
+
+    .avatar {
+        width: 180px;
+        height: 180px;
+        border: 6px #fff solid;
+        border-radius: 50%;
+        position: fixed;
+        transition: top 0.5s ease-out, left 0.5s ease-out;
+        &.center {
+            top: calc(51vh - 150px);
+            left: calc(50vw - 25vw - 180px + 20px); // 50% minus width of the message-center box minus width of image plus padding/2
+        }
+
+        &.bottom {
+            top: calc(100vh - 360px);
+            left: 0;
+        }
+    }
+}
+
+.spotlight {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    z-index: 11;
+    top: 0;
+
+    .display-container {
+        width: 100vw;
+        background-color: $primary;
+        .display-1 {
+            max-width: 60vw;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+    
+    // background-color: rgba(0,0,0, 0.75);
+}
+
+.guide-prompt {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    z-index: 12;
+    padding: 5vw;
+    top: 0;
+
+    &.round {
+        .card {
+            background: $success;
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+
+            h2 {
+                font-size: 75px;
+                position: relative;
+                // top: -40px;
+                color: #FFF;
+                font-weight: bold;
+            }
+        }
+    }
+    .card {
+        max-width: 25vw;
+    }
+}
+
+.video {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    z-index: 13;
+}
+
+.video.lg {
+    position: fixed;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+
+    iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    button {
+        z-index: 3;
+        position: absolute;
+        bottom: 160px;
+        right: 32px;
+    }
+}
+
+
+.timer {
+    position: fixed;
+    bottom: 0;
+    height: 16px;
+    left: 0;
+    width: 0vw;
+    transition: width 5s linear;
+    background-color: #FFB000;
+}
+
+// .guide {
+//     width: 100vw;
+//     height: 100vh;
+
+//     &.guide-bottom {
+//         width: 600px;
+//         border-radius: 12px;
+//         position: relative;
+//         left: calc(40vw - 300px);
+//     }
+    
+    
+//     .guide-container-center {
+//         width: 600px;
+//         border: 6px white solid;
+//         border-radius: 12px;
+//         position: relative;
+//         left: 60px;
+        
+//         &::before {
+//             content: '';
+//             background: url('/assets/images/guide.jpg');
+//             background-size: cover;
+//             background-color: $primary;
+//             border-radius: 100%;
+//             position: absolute;
+//             width: 200px;
+//             height: 200px;
+//             top: 0;
+//             bottom: 0;
+//             left: -750px;
+//             right: 0;
+//             margin: auto;
+//             border: 6px white solid;
+//             transition: width 3s, height 3s, top 3s;
+//         }
+
+//         .avatar-container {
+//             position: relative;
+//             .guide-avatar {
+//                 width: 200px;
+//                 height: 200px;
+//                 border-radius: 100px;
+//                 border: 6px white solid;
+//                 left: -75px;
+//                 position: absolute;
+//                 display: inline-block;
+//             }
+//         }
+        
+//         .content {
+//             display: inline-block;
+//         }
+        
+//     }
+
+
+//     .guide-container-bottom {
+//         min-width: 600px;
+//         max-width: 80vw;
+//         border: 6px white solid;
+//         border-radius: 12px;
+//         position: relative;
+//         left: 60px;
+        
+//         &::before {
+//             content: '';
+//             background: url('/assets/images/guide.jpg');
+//             background-size: cover;
+//             background-color: $primary;
+//             border-radius: 100%;
+//             position: absolute;
+//             width: 200px;
+//             height: 200px;
+//             top: 0;
+//             bottom: 0;
+//             left: -750px;
+//             right: 0;
+//             margin: auto;
+//             border: 6px white solid;
+//             transition: width 3s, height 3s, top 3s;
+//         }
+
+//         .avatar-container {
+//             position: relative;
+//             .guide-avatar {
+//                 width: 200px;
+//                 height: 200px;
+//                 border-radius: 100px;
+//                 border: 6px white solid;
+//                 left: -75px;
+//                 position: absolute;
+//                 display: inline-block;
+//             }
+//         }
+        
+//         .content {
+//             display: inline-block;
+//         }
+        
+//     }
+// }
+
+

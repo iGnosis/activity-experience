@@ -1,0 +1,12 @@
+<div class="pre-session-survey p-5" (mouseenter)="stopMusic()" >
+    <div class="txt mb-6 display-2 text-white text-center">What type of music do you want to play?</div>
+
+    <div class="container mt-6">
+        <div class="row mt-6 options">
+            <div class="col p-5 m-2"  (mouseenter)="debouncedPlayMusic(genre.title)" (mouseleave)="stopMusic(genre.title)" (click)="selectGenre(genre)" [ngClass]="{'bg-success': genre.selected, 'bg-primary': !genre.selected}" *ngFor="let genre of genres">
+                <!-- <img [src]="genre.icon" [alt]="genre.title"> -->
+                <h2 class="text-white text-center mt-4 text-uppercase">{{ genre.title }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
