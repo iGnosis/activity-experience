@@ -195,10 +195,10 @@ export class BeatBoxerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'video',
+            type: 'gif',
             title: 'Did you hear that?',
             description: 'You just created music by punching the punching bag!',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/images/beat-boxer/did-you-hear-that.png',
           },
           attributes: {
             visibility: 'visible',
@@ -419,7 +419,7 @@ export class BeatBoxerService {
             type: 'video',
             title: 'Be the musician!',
             description: 'Try following a rhythm when you play the notes.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/beat-boxer/be-the-musician.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -667,10 +667,10 @@ export class BeatBoxerService {
               await this.elements.sleep(2000);
               this.elements.video.state = {
                 data: {
-                  type: 'video',
+                  type: 'gif',
                   title: 'Right hand for red',
                   description: 'Use your right hand to punch the red punching bags.',
-                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                  src: 'assets/images/beat-boxer/red-bag.png',
                 },
                 attributes: {
                   visibility: 'visible',
@@ -692,10 +692,10 @@ export class BeatBoxerService {
               await this.elements.sleep(3000);
               this.elements.video.state = {
                 data: {
-                  type: 'video',
+                  type: 'gif',
                   title: 'Left hand for blue',
                   description: 'Use your left hand to punch the blue punching bags.',
-                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                  src: 'assets/images/beat-boxer/blue-bag.png',
                 },
                 attributes: {
                   visibility: 'visible',
