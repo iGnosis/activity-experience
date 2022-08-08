@@ -862,6 +862,39 @@ export type AnalyticsDTO = {
   score: number;
   reactionTime: number;
 };
+// New Analytics Structure
+export type NewAnalyticsDTO = {
+  prompt: AnalyticsPromptDTO;
+  reaction: AnalyticsReactionDTO;
+  result: AnalyticsResultDTO;
+};
+export type AnalyticsPromptDTO = {
+  type: string;
+  timestamp: number;
+  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO;
+};
+export type AnalyticsReactionDTO = {
+  type: string;
+  timestamp: number;
+  startTime: number;
+  completionTime: number;
+};
+export type AnalyticsResultDTO = {
+  type: string;
+  timestamp: number;
+  score: number;
+};
+
+export type Sit2StandAnalyticsDTO = {
+  number: number;
+};
+export type BeatboxerAnalyticsDTO = {
+  bagPosition: string;
+  bagType: string;
+  level: number;
+  obstacle: boolean;
+  obstaclePosition: string;
+};
 
 export type PreferenceState = {
   /**
@@ -906,7 +939,7 @@ export type GameState = {
   /**
    * Analytics for the game.
    */
-  analytics?: AnalyticsDTO[];
+  analytics?: AnalyticsDTO[] | NewAnalyticsDTO[]; // Todo: remove old analytics structure
   /**
    * Patient ID of the patient playing the game.
    */
@@ -1019,6 +1052,13 @@ export type GuideElementState = {
   showIndefinitely?: boolean;
 };
 
+export type ConfettiElementState = {
+  /**
+   * Optional: Inputs a number indicating the total duration for which the confetti has to be shown.
+   */
+  duration?: number;
+};
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -1107,6 +1147,7 @@ export type ElementsState = {
   overlay: { data: OverlayElementState; attributes: ElementAttributes };
   banner: { data: BannerElementState; attributes: ElementAttributes };
   guide: { data: GuideElementState; attributes: ElementAttributes };
+  confetti: { data: ConfettiElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1119,6 +1160,7 @@ export type ElementsObservables = {
   overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
+  confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
