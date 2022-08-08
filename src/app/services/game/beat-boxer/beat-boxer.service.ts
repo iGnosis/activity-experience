@@ -21,7 +21,7 @@ import { take } from 'rxjs';
   providedIn: 'root',
 })
 export class BeatBoxerService {
-  private genre: Genre;
+  private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
   private level: number[] = [1, 1.5, -1, -1.5];

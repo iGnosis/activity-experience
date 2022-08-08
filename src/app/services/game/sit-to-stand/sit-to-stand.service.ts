@@ -24,7 +24,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 })
 export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
-  private genre: Genre;
+  private genre: Genre = 'jazz';
   private successfulReps = 0;
   private failedReps = 0;
   private totalReps = 0;
