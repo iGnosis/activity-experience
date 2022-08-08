@@ -30,6 +30,13 @@ export class GameElement<T, M> {
     if (state.attributes.reCalibrationCount) {
       this.attributes.reCalibrationCount = state.attributes.reCalibrationCount;
     }
+    if (!this.attributes.reCalibrationCount) {
+      // alert('reCalibrationCount not set');
+      console.error('reCalibrationCount not set');
+      console.error(this._state.data);
+      console.error(this._state.attributes);
+      return;
+    }
     if (this.reCalibrationCount !== this.attributes.reCalibrationCount) {
       console.error('Global::reCalibrationCount', this.reCalibrationCount);
       console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);
@@ -56,6 +63,13 @@ export class GameElement<T, M> {
   }
 
   set data(d: T) {
+    if (!this.attributes.reCalibrationCount) {
+      console.error('reCalibrationCount not set');
+      console.error(this._state.data);
+      console.error(this._state.attributes);
+      throw new Error('reCalibrationCount not set');
+      // return;
+    }
     if (this.reCalibrationCount !== this.attributes.reCalibrationCount) {
       console.error('Global::reCalibrationCount', this.reCalibrationCount);
       console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);

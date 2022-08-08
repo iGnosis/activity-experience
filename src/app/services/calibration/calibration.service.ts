@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { debounceTime, Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
 import { PoseService } from '../pose/pose.service';
@@ -12,12 +12,17 @@ export class CalibrationService {
   isEnabled = false;
   result = new Subject<CalibrationStatusType>();
   subscription: Subscription;
+  subscriptionReCalibration: Subscription;
   mode: CalibrationMode = 'full';
   visibilityThreshold = 0.7;
   _reCalibrationCount = 0;
   reCalibrationCount = new Subject<number>();
 
-  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
+  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {
+    this.result.pipe(debounceTime(2000)).subscribe((status) => {
+      // this.calculateCalibrationCount(status);
+    });
+  }
 
   enable(autoSwitchMode = true) {
     this.isEnabled = true;
@@ -29,13 +34,13 @@ export class CalibrationService {
       if (newStatus.status !== this.status) {
         this.calibrationScene.destroyGraphics();
         // On successful recalibration, just increment the counter.
-        if (newStatus.status === 'success') {
-          this._reCalibrationCount += 1;
-          this.reCalibrationCount.next(this._reCalibrationCount);
-        } else if (newStatus.status === 'error') {
-          this._reCalibrationCount += 1;
-          this.reCalibrationCount.next(this._reCalibrationCount);
-        }
+        // if (newStatus.status === 'success') {
+        //   // this._reCalibrationCount += 1;
+        //   this.reCalibrationCount.next(this._reCalibrationCount);
+        // } else if (newStatus.status === 'error') {
+        //   // this._reCalibrationCount += 1;
+        //   // this.reCalibrationCount.next(this._reCalibrationCount);
+        // }
         // Update all the subscribers interested in calibration status
         this.result.next(newStatus.status);
 
@@ -49,7 +54,16 @@ export class CalibrationService {
       }
       this.status = newStatus.status;
     });
+    this.subscriptionReCalibration = this.result.pipe(debounceTime(2000)).subscribe((status) => {
+      this._reCalibrationCount += 1;
+      this.reCalibrationCount.next(this._reCalibrationCount);
+    });
   }
+
+  // calculateCalibrationCount(status: CalibrationStatusType) {
+  //   this._reCalibrationCount += 1;
+  //   this.reCalibrationCount.next(this._reCalibrationCount);
+  // }
 
   switchMode(status: CalibrationStatusType) {
     if (status === 'success') {
@@ -157,6 +171,8 @@ export class CalibrationService {
     }
 
     if (this.mode === 'full') {
+      // to remove if calibration points are already drawn.
+      this.calibrationScene.destroyGraphics();
       // highlight points that aren't in the box.
       this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
       return { status: 'warning' };

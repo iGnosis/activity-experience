@@ -62,17 +62,65 @@ export class CheckinService {
     }
   }
 
-  async getLastGame() {
+  async getOnboardingStatus() {
+    try {
+      const onboardingStatus = await this.client.req(
+        gql`
+          query GetOnboardingStatus {
+            patient {
+              onboardingStatus
+            }
+          }
+        `,
+      );
+
+      return onboardingStatus.patient;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateOnboardingStatus(status: any) {
+    try {
+      const id = localStorage.getItem('patient');
+
+      const onboardingStatus = await this.client.req(
+        gql`
+          mutation updateOnboardingStatus($onboardingStatus: jsonb!, $id: uuid!) {
+            update_patient(
+              where: { id: { _eq: $id } }
+              _append: { onboardingStatus: $onboardingStatus }
+            ) {
+              returning {
+                onboardingStatus
+              }
+            }
+          }
+        `,
+        {
+          onboardingStatus: status,
+          id,
+        },
+      );
+
+      return onboardingStatus.update_patient_by_pk;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getLastGame(today: string) {
     try {
       const lastGame = await this.client.req(
         gql`
-          query GetLastGame {
-            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _is_null: false } }) {
+          query GetLastGame($today: timestamptz = "") {
+            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _gte: $today } }) {
               id
               game
             }
           }
         `,
+        { today },
       );
 
       return lastGame.game;

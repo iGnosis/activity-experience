@@ -11,10 +11,11 @@ export const environment: Environment = {
   analytics: {
     calibration: true,
   },
+  googleAnalyticsTrackingID: 'G-MTGG72G6ND',
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.dev.pointmotioncontrol.com',
-  order: ['sit_stand_achieve'],
+  order: ['sit_stand_achieve', 'beat_boxer'],
   settings: {
     sit_stand_achieve: {
       configuration: {

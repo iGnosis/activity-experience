@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, take } from 'rxjs';
 import { OverlayService } from 'src/app/services/elements/overlay/overlay.service';
+import { TtsService } from 'src/app/services/tts/tts.service';
 import { ElementAttributes, OverlayElementState } from 'src/app/types/pointmotion';
 
 @Component({
@@ -13,7 +14,7 @@ export class OverlayComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   cardCount = 0;
 
-  constructor(private overlayService: OverlayService) {}
+  constructor(private overlayService: OverlayService, private ttsService: TtsService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
@@ -36,6 +37,9 @@ export class OverlayComponent implements OnInit, OnDestroy {
         return;
       }
       ++this.cardCount;
+      if (this.state.data.cards[this.cardCount - 1].tts) {
+        this.ttsService.tts(this.state.data.cards[this.cardCount - 1].tts as string);
+      }
     }, this.state.data.transitionDuration || 1000);
   }
 }

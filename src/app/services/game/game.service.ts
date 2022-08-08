@@ -22,6 +22,10 @@ import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.ser
 import { CheckinService } from '../checkin/checkin.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
+import { SoundsService } from '../sounds/sounds.service';
+import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { debounceTime } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +53,7 @@ export class GameService {
   gamesCompleted: Array<Activities> = [];
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
-  gameStatus = {
+  private gameStatus = {
     stage: 'welcome',
     breakpoint: 0,
   };
@@ -60,10 +64,11 @@ export class GameService {
 
   set calibrationStatus(status: CalibrationStatusType) {
     // TODO: Update the time the person stayed calibrated in the stage (and db)
-    console.log(status);
+    this.setReclibrationCountForElements();
     this._calibrationStatus = status;
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+      this.soundsService.stopAllAudio();
     } else if (status === 'success') {
       this.startGame();
     }
@@ -76,14 +81,27 @@ export class GameService {
     private handTrackerService: HandTrackerService,
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
+    private beatBoxerScene: BeatBoxerScene,
     private sitToStandService: SitToStandService,
+    private soundsService: SoundsService,
+    private beatBoxerService: BeatBoxerService,
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
-  ) {}
+  ) {
+    this.store
+      .select((state: any) => state.game)
+      .subscribe((game) => {
+        if (game.id) {
+          // Update the game state whenever redux state changes
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
+        }
+      });
+  }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     this.checkAuth();
@@ -97,7 +115,6 @@ export class GameService {
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.setupSubscriptions();
       this.startCalibration();
     } catch (err: any) {
       console.log(err);
@@ -134,20 +151,20 @@ export class GameService {
   }
 
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene];
+    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
-      beat_boxer: this.sitToStandService,
+      beat_boxer: this.beatBoxerService,
       sound_slicer: this.sitToStandService,
     };
   }
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.subscribe((status: any) => {
+    this.calibrationService.result.pipe(debounceTime(2000)).subscribe((status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
         if (this.elements.timer.data.mode === 'pause') {
@@ -191,7 +208,9 @@ export class GameService {
   }
 
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
-    const lastGame = await this.checkinService.getLastGame();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastGame = await this.checkinService.getLastGame(today.toISOString());
 
     if (!lastGame || !lastGame.length) {
       if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
@@ -213,11 +232,11 @@ export class GameService {
         nextGame = environment.order[idxOfLastGame + 1];
       }
 
-      //reset the game status to welcome screen
-      this.gameStatus = {
-        stage: 'welcome',
-        breakpoint: 0,
-      };
+      // //reset the game status to welcome screen
+      // this.gameStatus = {
+      //   stage: 'welcome',
+      //   breakpoint: 0,
+      // };
 
       return {
         name: nextGame,
@@ -226,8 +245,18 @@ export class GameService {
     }
   }
 
-  getRemainingStages() {
+  async getRemainingStages(nextGame: string) {
     const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+    // Todo: uncomment this to enable the tutorial
+    const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    if (
+      onboardingStatus &&
+      onboardingStatus.length > 0 &&
+      onboardingStatus[0].onboardingStatus &&
+      nextGame in onboardingStatus[0].onboardingStatus
+    ) {
+      allStages.splice(1, 1);
+    }
     return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
@@ -237,7 +266,7 @@ export class GameService {
     if (!nextGame) return;
 
     const activity = this.getActivities()[nextGame.name];
-    const remainingStages = this.getRemainingStages();
+    const remainingStages = await this.getRemainingStages(nextGame.name);
     console.log('remainingStages', remainingStages);
 
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
@@ -248,6 +277,7 @@ export class GameService {
           console.log(err);
         });
         if (response && response.insert_game_one) {
+          console.log('newGame:response.insert_game_one:', response.insert_game_one);
           this.store.dispatch(game.newGame(response.insert_game_one));
         }
         // get genre
@@ -289,6 +319,7 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.store.dispatch(game.gameCompleted());
       this.gamesCompleted.push(nextGame.name);
     }
     // If more games available, start the next game.
@@ -317,6 +348,16 @@ export class GameService {
       },
     };
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
+    // Adding 5 seconds delay to allow the person to see the calibration box
+    // Even if they are already calibrated.
+    await this.sleep(5000);
+    this.setupSubscriptions();
+  }
+
+  async sleep(timeout: number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, timeout);
+    });
   }
 
   async executeBatch(
@@ -325,11 +366,13 @@ export class GameService {
   ) {
     return new Promise(async (resolve, reject) => {
       try {
+        console.log('breakpoint', this.gameStatus);
+
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
             reject('Recalibration count changed');
-            return;
-            // throw new Error('Recalibration count changed');
+            // return;
+            throw new Error('Recalibration count changed');
             // TODO save the index of the current item in the batch.
           }
           this.gameStatus.breakpoint = i;
@@ -345,6 +388,24 @@ export class GameService {
         resolve({});
       } catch (err) {
         reject(err);
+      }
+    });
+  }
+
+  async setReclibrationCountForElements() {
+    Object.keys(this.elements).forEach((key) => {
+      if (
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key] &&
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key].attributes
+      ) {
+        // alert(this.reCalibrationCount);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.elements[key].attributes.reCalibrationCount = this.reCalibrationCount;
       }
     });
   }

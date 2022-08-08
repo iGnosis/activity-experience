@@ -21,7 +21,6 @@ const _gameReducer = createReducer(
   initialState,
   on(game.newGame, (state, data) => {
     return {
-      ...state,
       id: data.id,
     };
   }),
@@ -37,6 +36,12 @@ const _gameReducer = createReducer(
       repsCompleted: (state.repsCompleted || 0) + 1,
     };
   }),
+  on(game.pushAnalytics, (state, data) => {
+    return {
+      ...state,
+      analytics: data.analytics,
+    };
+  }),
   on(game.setTotalElapsedTime, (state, data) => {
     return {
       ...state,
@@ -46,7 +51,7 @@ const _gameReducer = createReducer(
   on(game.gameCompleted, (state) => {
     return {
       ...state,
-      endedAt: 'now()',
+      endedAt: new Date().toISOString(),
     };
   }),
 );

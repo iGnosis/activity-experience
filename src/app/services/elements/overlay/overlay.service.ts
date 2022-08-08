@@ -17,14 +17,17 @@ export class OverlayService extends GameElement<OverlayElementState, object> {
           {
             icon: '/assets/images/overlay_icons/Protect.jpg',
             message: 'Safety above all',
+            tts: "Please make sure you're in a safe environment.",
           },
           {
             icon: '/assets/images/overlay_icons/T_Pose.jpg',
             message: 'Space to move',
+            tts: "You'll need enough space to freely move.",
           },
           {
             icon: '/assets/images/overlay_icons/Waiting.jpg',
             message: 'Rest if you feel tired',
+            tts: 'Take a break if you feel tired.',
           },
         ],
       },

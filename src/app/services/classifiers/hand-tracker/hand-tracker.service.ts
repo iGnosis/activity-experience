@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-import { Subject, Subscription } from 'rxjs';
+import { debounceTime, Subject, Subscription } from 'rxjs';
 import { HandTrackerStatus } from 'src/app/types/pointmotion';
 import { PoseService } from '../../pose/pose.service';
 
@@ -14,8 +14,14 @@ export class HandTrackerService {
   subscription: Subscription;
   result = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
+  debouncedStatus: HandTrackerStatus = undefined;
 
-  constructor(private poseService: PoseService) {}
+  constructor(private poseService: PoseService) {
+    this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
+      this.debouncedStatus = status;
+      console.log('HandTrackerService:debouncedStatus:', this.status);
+    });
+  }
 
   enable() {
     this.isEnabled = true;
@@ -45,7 +51,7 @@ export class HandTrackerService {
   async waitUntilHandRaised(hand: HandTrackerStatus) {
     return new Promise((resolve, _) => {
       const interval = setInterval(() => {
-        if (this.status === hand) {
+        if (this.debouncedStatus === hand) {
           clearInterval(interval);
           resolve({});
         }

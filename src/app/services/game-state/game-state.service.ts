@@ -39,4 +39,43 @@ export class GameStateService {
       },
     );
   }
+
+  // called after completion of a game.
+  async _updateRewards(startDate: Date, endDate: Date, userTimezone: string) {
+    // unlocks rewards based on recent user activity.
+    this.client.req(
+      `mutation UpdateRewards($startDate: String!, $endDate: String!, $userTimezone: String!) {
+      updateRewards(startDate: $startDate, endDate: $endDate, userTimezone: $userTimezone) {
+        status
+      }
+    }`,
+      { startDate, endDate, userTimezone },
+    );
+  }
+
+  async _gameCompleted(startDate: Date, endDate: Date, currentDate: Date, userTimezone: string) {
+    this.client.req(
+      `mutation GameCompleted($startDate: String!, $endDate: String!, $currentDate: String!, $userTimezone: String!) {
+      gameCompleted(startDate: $startDate, endDate: $endDate, currentDate: $currentDate, userTimezone: $userTimezone) {
+        status
+      }
+    }`,
+      { startDate, endDate, currentDate, userTimezone },
+    );
+  }
+
+  // doing this becuase it's a pain to workout dates w.r.t user's timezone server-side...
+  async postLoopHook() {
+    const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const currentDate = new Date();
+    const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    startDate.setHours(0, 0, 0, 0);
+    currentDate.setHours(0, 0, 0, 0);
+    endDate.setHours(24, 0, 0, 0);
+
+    await this._updateRewards(startDate, endDate, userTimezone);
+    await this._gameCompleted(startDate, endDate, currentDate, userTimezone);
+  }
 }

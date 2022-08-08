@@ -3,6 +3,7 @@ import { trigger, transition, animate, style, state } from '@angular/animations'
 import { RibbonService } from 'src/app/services/elements/ribbon/ribbon.service';
 import { Subscription } from 'rxjs';
 import { ElementAttributes, RibbonElementState } from 'src/app/types/pointmotion';
+import { TtsService } from 'src/app/services/tts/tts.service';
 
 @Component({
   selector: 'element-ribbon',
@@ -32,7 +33,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
   textAnimationState: 'open' | 'enter' | 'exit' = 'enter';
   subscription: Subscription;
   to: any;
-  constructor(private ribbonService: RibbonService) {}
+  constructor(private ribbonService: RibbonService, private ttsService: TtsService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
@@ -66,6 +67,7 @@ export class RibbonComponent implements OnInit, OnDestroy {
             }
             this.title = data.titles[++i];
             this.textAnimationState = 'open';
+            if (data.tts) this.ttsService.tts(this.title);
           }
           periodical();
         },
