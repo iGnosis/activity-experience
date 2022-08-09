@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { left } from '@popperjs/core';
+import { Howl } from 'howler';
 import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
+import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 
 export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
@@ -296,8 +298,14 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param gameObjectWithBody the gameObject to calculate width
    * @returns width of the gameObject
    */
-  getWidth(gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody): number {
-    return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
+  getWidth(
+    gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+  ): number | undefined {
+    if (gameObjectWithBody.body) {
+      const { right, left } = gameObjectWithBody.body;
+      if (right && left) return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
+    }
+    return undefined;
   }
 
   /**
@@ -308,9 +316,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   isInBounds(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody, point: number, level: number) {
     const { width } = this.game.canvas;
-    console.log('point ', point, ' width ', width);
-    console.log('bag x & y', bag.body.x, bag.body.y);
-    const bagWidth = this.getWidth(bag);
+    const bagWidth = this.getWidth(bag) || 160;
 
     if (point > width || point + bagWidth > width) {
       console.log('point + bagWidth ', point + bagWidth, ' width ', width);
@@ -418,6 +424,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     } else {
       bag && bag.setOrigin(0.5, 0.1);
     }
+    bag && bag.body && bag.refreshBody();
   }
 
   /**
@@ -813,5 +820,26 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   enableCollisionDetection(value = true) {
     this.collisions = value;
+  }
+
+  beatBoxerMusic: Howl;
+  beatBoxerMusicId: number;
+  configureMusic() {
+    this.beatBoxerMusic = new Howl({
+      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
+      sprite: audioSprites.beatBoxer,
+      html5: true,
+    });
+  }
+
+  nextPianoNote = 1;
+  playSuccessMusic() {
+    if (this.beatBoxerMusic && this.beatBoxerMusic.playing(this.beatBoxerMusicId)) {
+      this.beatBoxerMusic.stop();
+    }
+    if (this.beatBoxerMusic && !this.beatBoxerMusic.playing(this.beatBoxerMusicId)) {
+      this.beatBoxerMusicId = this.beatBoxerMusic.play(`note_${this.nextPianoNote}`);
+      this.nextPianoNote += 1;
+    }
   }
 }

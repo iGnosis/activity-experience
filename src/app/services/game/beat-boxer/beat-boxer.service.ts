@@ -81,12 +81,15 @@ export class BeatBoxerService {
           this.gameStateService.updateGame(id, gameState);
         }
       });
+    this.beatBoxerScene.configureMusic();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
         if (preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
           this.soundsService.loadMusicFiles(this.genre);
+        } else {
+          this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
     calibrationService.reCalibrationCount.subscribe((count) => {
@@ -190,7 +193,7 @@ export class BeatBoxerService {
         await this.elements.sleep(1200);
         this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
-        this.soundsService.playMusic(this.genre, 'trigger');
+        this.beatBoxerScene.playSuccessMusic();
         this.ttsService.tts(
           'Did you hear that? You just created music by punching the punching bag.',
         );
@@ -246,7 +249,7 @@ export class BeatBoxerService {
           this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.beatBoxerScene.playSuccessMusic();
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -316,7 +319,7 @@ export class BeatBoxerService {
           this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.beatBoxerScene.playSuccessMusic();
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -386,7 +389,7 @@ export class BeatBoxerService {
           await this.elements.sleep(5000);
         } else {
           this.beatBoxerScene.destroyExistingBags();
-          this.soundsService.playMusic(this.genre, 'trigger');
+          this.beatBoxerScene.playSuccessMusic();
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
             data: {
@@ -471,7 +474,7 @@ export class BeatBoxerService {
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
             this.beatBoxerScene.destroyExistingBags();
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.beatBoxerScene.playSuccessMusic();
           } else {
             this.soundsService.playCalibrationSound('error');
           }
@@ -629,7 +632,6 @@ export class BeatBoxerService {
         await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
-        this.soundsService.playMusic(this.genre, 'backtrack');
         //Todo: reps
         while (this.successfulReps < this.config.minCorrectReps) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
@@ -655,7 +657,7 @@ export class BeatBoxerService {
           this.totalReps++;
           if (rep.result === 'success') {
             this.beatBoxerScene.destroyExistingBags();
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.beatBoxerScene.playSuccessMusic();
             // Todo: replace placeholder values with actual values
             this.analytics.push({
               prompt: {
