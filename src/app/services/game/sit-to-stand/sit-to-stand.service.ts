@@ -851,14 +851,8 @@ export class SitToStandService implements ActivityBase {
   postLoop() {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
-      async () => {
-        await this.gameStateService.postLoopHook();
-
-        // push analytics to the server.
-        // TODO: This won't support resuming games.
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
-      },
       async (reCalibrationCount: number) => {
+        this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
 
         const achievementRatio = this.successfulReps / this.totalReps;
