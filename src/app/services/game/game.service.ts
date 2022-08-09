@@ -55,6 +55,7 @@ export class GameService {
   gamesCompleted: Array<Activities> = [];
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
+  calibrationStartTime: Date;
   private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
@@ -178,8 +179,10 @@ export class GameService {
         this.elements.guide.data = {
           showIndefinitely: false,
         };
+        this.calibrationStartTime = new Date();
       }
       if (this.calibrationStatus === 'error') {
+        if (this.calibrationStartTime) this.updateCalibrationDuration();
         this.elements.timer.data = {
           mode: 'pause',
         };
@@ -193,6 +196,14 @@ export class GameService {
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
     });
+  }
+
+  updateCalibrationDuration() {
+    const calibrationEndTime = new Date();
+    const timeDiff = Math.abs(calibrationEndTime.getTime() - this.calibrationStartTime.getTime());
+    const calibrationDuration = Math.ceil(timeDiff / 1000);
+    console.log('calibrationDuration: ', calibrationDuration);
+    this.store.dispatch(game.setCalibrationDuration({ calibrationDuration }));
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
@@ -285,6 +296,9 @@ export class GameService {
           console.log(err);
         });
         if (response && response.insert_game_one) {
+          // will update the calibration duration before starting the next game
+          // Todo: update calibration duration after the game ends
+          if (this.calibrationStartTime) this.updateCalibrationDuration();
           console.log('newGame:response.insert_game_one:', response.insert_game_one);
           this.store.dispatch(game.newGame(response.insert_game_one));
         }
@@ -366,6 +380,7 @@ export class GameService {
     // Adding 5 seconds delay to allow the person to see the calibration box
     // Even if they are already calibrated.
     await this.sleep(5000);
+    this.calibrationStartTime = new Date();
     this.setupSubscriptions();
   }
 
@@ -385,6 +400,8 @@ export class GameService {
 
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
+            if (this.calibrationStartTime) this.updateCalibrationDuration();
+
             reject('Recalibration count changed');
             // return;
             throw new Error('Recalibration count changed');

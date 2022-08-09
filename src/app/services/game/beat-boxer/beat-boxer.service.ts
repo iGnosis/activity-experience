@@ -4,7 +4,7 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { Store } from '@ngrx/store';
-import { GameState, Genre, NewAnalyticsDTO, PreferenceState } from 'src/app/types/pointmotion';
+import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
@@ -26,7 +26,8 @@ export class BeatBoxerService {
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
   private level: number[] = [1, 1.5, -1, -1.5];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
-  private analytics: NewAnalyticsDTO[] = [];
+  private analytics: AnalyticsDTO[] = [];
+  private isGameComplete = false;
   private getRandomItemFromArray = (array: any[]) => {
     return array[Math.floor(Math.random() * array.length)];
   };
@@ -50,7 +51,7 @@ export class BeatBoxerService {
     return time;
   }
   private config = {
-    minCorrectReps: environment.settings['beat_boxer'].configuration.minCorrectReps,
+    gameDuration: environment.settings['beat_boxer'].configuration.gameDuration,
     speed: environment.settings['beat_boxer'].configuration.speed,
   };
   private successfulReps = 0;
@@ -615,12 +616,14 @@ export class BeatBoxerService {
           },
         };
         const updateElapsedTime = (elapsedTime: number) => {
+          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
           this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
         };
         this.elements.timer.state = {
           data: {
             mode: 'start',
-            duration: 60 * 60 * 1000,
+            isCountdown: true,
+            duration: this.config.gameDuration! * 1000,
             onPause: updateElapsedTime,
             onComplete: updateElapsedTime,
           },
@@ -632,8 +635,8 @@ export class BeatBoxerService {
         await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
-        //Todo: reps
-        while (this.successfulReps < this.config.minCorrectReps) {
+        // while (this.successfulReps < this.config.minCorrectReps) {
+        while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
@@ -684,6 +687,7 @@ export class BeatBoxerService {
               },
             });
             this.successfulReps++;
+            this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
               data: {
                 label: 'Punches',
@@ -784,6 +788,16 @@ export class BeatBoxerService {
               };
 
               await this.elements.sleep(3000);
+              this.elements.timer.state = {
+                data: {
+                  mode: 'resume',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              this.failedReps = 0;
             }
           }
           await this.elements.sleep(2000);
@@ -832,9 +846,8 @@ export class BeatBoxerService {
         };
 
         this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime();
-          const fastestTime = this.updateTimer(fastestTimeInSecs || state.game.totalDuration || 0);
+          totalDuration = this.updateTimer(this.config.gameDuration! / 1000);
+          const highScore = await this.checkinService.getHighScore('beat_boxer');
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
@@ -845,9 +858,14 @@ export class BeatBoxerService {
               htmlStr: `
             <div class="pl-10 text-start px-14" style="padding-left: 20px;">
               <h1 class="pt-8 display-3">Beat Boxer</h1>
-              <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
-              <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
-              <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
+              <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
+              <h2 class="pt-5">High Score: ${Math.max(
+                highScore.length ? highScore[0].repsCompleted : 0,
+                this.successfulReps,
+              )} Punches</h2>
+              <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
+                totalDuration.seconds
+              } minutes</h2>
             <div>
             `,
               buttons: [
