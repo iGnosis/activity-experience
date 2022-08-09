@@ -301,7 +301,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   getWidth(
     gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
   ): number | undefined {
-    if (gameObjectWithBody.body) {
+    if (gameObjectWithBody && gameObjectWithBody.body) {
       const { right, left } = gameObjectWithBody.body;
       if (right && left) return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
     }
