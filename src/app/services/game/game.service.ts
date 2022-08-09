@@ -6,7 +6,9 @@ import {
   Activities,
   ActivityBase,
   ActivityConfiguration,
+  ActivityStage,
   CalibrationStatusType,
+  GameStatus,
   Genre,
   HandTrackerStatus,
 } from 'src/app/types/pointmotion';
@@ -53,9 +55,10 @@ export class GameService {
   gamesCompleted: Array<Activities> = [];
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
-  private gameStatus = {
+  private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
+    game: 'sit_stand_achieve',
   };
 
   get calibrationStatus() {
@@ -208,45 +211,47 @@ export class GameService {
   }
 
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const lastGame = await this.checkinService.getLastGame(today.toISOString());
+    // will be called in two cases...
+    // once one game is finished
+    // second when the user is calibrated (again)
+    const lastGame = await this.checkinService.getLastGame();
 
     if (!lastGame || !lastGame.length) {
-      if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
-        // If the person has not played sit2stand yet.
+      // No game played today...Play first game as per config.
+      return {
+        name: environment.order[0],
+        settings: environment.settings[environment.order[0]],
+      };
+    } else {
+      // If the last game is the same as the one being currently... Return the current game.
+      if (this.gameStatus.game !== lastGame[0].game) {
         return {
-          name: 'sit_stand_achieve',
-          settings: environment.settings['sit_stand_achieve'],
+          name: this.gameStatus.game,
+          settings: environment.settings[this.gameStatus.game],
         };
       } else {
-        return;
+        // Start the next game...
+        // find the index of the last played game
+        const index = environment.order.indexOf(lastGame[0].game);
+        if (environment.order.length === index) {
+          // Person has played the last game... start the first game.
+          return {
+            name: environment.order[0],
+            settings: environment.settings[environment.order[0]],
+          };
+        } else {
+          // Start the next game.
+          return {
+            name: environment.order[index + 1],
+            settings: environment.settings[environment.order[index + 1]],
+          };
+        }
       }
-    } else {
-      const idxOfLastGame = environment.order.indexOf(lastGame[0].game);
-
-      let nextGame;
-      if (idxOfLastGame === environment.order.length - 1) {
-        nextGame = environment.order[0];
-      } else {
-        nextGame = environment.order[idxOfLastGame + 1];
-      }
-
-      // //reset the game status to welcome screen
-      // this.gameStatus = {
-      //   stage: 'welcome',
-      //   breakpoint: 0,
-      // };
-
-      return {
-        name: nextGame,
-        settings: environment.settings[nextGame],
-      };
     }
   }
 
-  async getRemainingStages(nextGame: string) {
-    const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+  async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
+    const allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     // Todo: uncomment this to enable the tutorial
     const onboardingStatus = await this.checkinService.getOnboardingStatus();
     if (
@@ -263,7 +268,10 @@ export class GameService {
   async startGame() {
     const reCalibrationCount = this.reCalibrationCount;
     let nextGame = await this.findNextGame();
-    if (!nextGame) return;
+    if (!nextGame) {
+      alert('game over');
+      return;
+    }
 
     const activity = this.getActivities()[nextGame.name];
     const remainingStages = await this.getRemainingStages(nextGame.name);
@@ -296,11 +304,13 @@ export class GameService {
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: this.gameStatus.breakpoint,
+            game: nextGame.name,
           };
         } else {
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: 0,
+            game: nextGame.name,
           };
         }
 
@@ -325,6 +335,11 @@ export class GameService {
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
     if (nextGame) {
+      this.gameStatus = {
+        stage: 'welcome',
+        breakpoint: 0,
+        game: nextGame.name,
+      };
       this.startGame();
     }
 

@@ -698,7 +698,7 @@ export type SessionStateField = {
   currentActivity?: ActivityState;
 };
 
-export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
+export type ActivityStage = 'welcome' | 'tutorial' | 'preLoop' | 'loop' | 'postLoop';
 
 export type ActivityState = {
   name?: string;
@@ -1201,3 +1201,9 @@ export interface ActivityBase {
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
+
+export type GameStatus = {
+  stage: ActivityStage;
+  breakpoint: number;
+  game: Activities;
+};

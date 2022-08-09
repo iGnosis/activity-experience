@@ -109,7 +109,9 @@ export class CheckinService {
     }
   }
 
-  async getLastGame(today: string) {
+  async getLastGame() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     try {
       const lastGame = await this.client.req(
         gql`
