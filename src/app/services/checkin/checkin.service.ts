@@ -131,24 +131,49 @@ export class CheckinService {
     }
   }
 
-  async getFastestTime() {
+  async getFastestTime(game: string) {
     try {
       const fastestTime = await this.client.req(
         gql`
-          query GetFastestTime {
+          query GetFastestTime($game: game_name_enum = sit_stand_achieve) {
             game(
               limit: 1
               order_by: { totalDuration: asc_nulls_last }
-              where: { endedAt: { _is_null: false } }
+              where: { endedAt: { _is_null: false }, _and: { game: { _eq: $game } } }
             ) {
               id
               totalDuration
             }
           }
         `,
+        { game },
       );
 
       return fastestTime.game[0].totalDuration;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getHighScore(game: string) {
+    try {
+      const highScore = await this.client.req(
+        gql`
+          query GetHighScore($game: game_name_enum = beat_boxer) {
+            game(
+              limit: 1
+              order_by: { repsCompleted: desc_nulls_last }
+              where: { endedAt: { _is_null: false }, _and: { game: { _eq: $game } } }
+            ) {
+              id
+              repsCompleted
+            }
+          }
+        `,
+        { game },
+      );
+
+      return highScore.game;
     } catch (err) {
       console.log(err);
     }

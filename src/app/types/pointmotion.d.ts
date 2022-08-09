@@ -743,7 +743,11 @@ export interface ActivityConfiguration {
     /**
      * Number of correct reps required for an activity to end.
      */
-    minCorrectReps: number;
+    minCorrectReps?: number;
+    /**
+     * Duration for which the game should run.
+     */
+    gameDuration?: number;
     /**
      * Defines speed in milliseconds at which the activity should be run.
      */
@@ -856,14 +860,6 @@ export type DebugTaskEvent = {
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type AnalyticsDTO = {
-  prompt: number | string;
-  class: 'sit' | 'stand';
-  success: boolean;
-  score: number;
-  reactionTime: number;
-};
-// New Analytics Structure
-export type NewAnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
   reaction: AnalyticsReactionDTO;
   result: AnalyticsResultDTO;
@@ -880,13 +876,13 @@ export type AnalyticsReactionDTO = {
   completionTime: number;
 };
 export type AnalyticsResultDTO = {
-  type: string;
+  type: 'success' | 'failure';
   timestamp: number;
   score: number;
 };
-
+// individual game data
 export type Sit2StandAnalyticsDTO = {
-  number: number;
+  number: number | string;
 };
 export type BeatboxerAnalyticsDTO = {
   bagPosition: string;
@@ -939,11 +935,15 @@ export type GameState = {
   /**
    * Analytics for the game.
    */
-  analytics?: AnalyticsDTO[] | NewAnalyticsDTO[]; // Todo: remove old analytics structure
+  analytics?: AnalyticsDTO[];
   /**
    * Patient ID of the patient playing the game.
    */
   patient?: string;
+  /**
+   * Indicates the amount of time for which the user was calibrated. (in seconds)
+   */
+  calibrationDuration?: number;
 };
 
 export type ScoreElementState = {
@@ -969,9 +969,13 @@ export type ScoreElementState = {
 export type TimerElementState = {
   /**
    * Timer can be controlled using the modes.
-   * * Note: During 'start' mode the 'duration' has to be specified.
+   * * Note: During 'start' or 'countdown' mode the 'duration' has to be specified.
    */
   mode: 'start' | 'stop' | 'pause' | 'resume';
+  /**
+   * Indicates whether the timer should count down or start from 0.
+   */
+  isCountdown?: boolean;
   /**
    * Sets the duration of the timer.
    */

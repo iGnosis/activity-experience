@@ -634,7 +634,7 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        while (this.successfulReps < this.config.minCorrectReps) {
+        while (this.successfulReps < this.config.minCorrectReps!) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
@@ -643,9 +643,9 @@ export class SitToStandService implements ActivityBase {
           // checking if not more than two even or two odd in a row.
           if (this.analytics && this.analytics.length >= 2) {
             const prevReps = this.analytics.slice(-2);
-            if (prevReps[0].class === prevReps[1].class) {
+            if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
               // if two even or two odd in a row, we generate the opposite class number.
-              prevReps[0].class === 'sit'
+              prevReps[0].prompt.type === 'sit'
                 ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
                 : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
             }
@@ -672,10 +672,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          const promptTimestamp = Date.now();
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             promptClass,
             this.config.speed,
           );
+          const reactionTimestamp = Date.now();
           this.totalReps += 1;
           this.elements.timeout.state = {
             data: {
@@ -689,11 +691,24 @@ export class SitToStandService implements ActivityBase {
           if (res.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
             this.analytics.push({
-              prompt: promptNum,
-              class: promptClass,
-              score: 1,
-              success: true,
-              reactionTime: 0,
+              prompt: {
+                type: promptClass,
+                timestamp: promptTimestamp,
+                data: {
+                  number: promptNum,
+                },
+              },
+              reaction: {
+                type: promptClass,
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'success',
+                timestamp: Date.now(),
+                score: 1,
+              },
             });
             this.elements.prompt.state = {
               data: {
@@ -720,11 +735,24 @@ export class SitToStandService implements ActivityBase {
           } else {
             this.soundsService.playCalibrationSound('error');
             this.analytics.push({
-              prompt: promptNum,
-              class: promptClass,
-              score: 0,
-              success: false,
-              reactionTime: 0,
+              prompt: {
+                type: promptClass,
+                timestamp: promptTimestamp,
+                data: {
+                  number: promptNum,
+                },
+              },
+              reaction: {
+                type: promptClass === 'sit' ? 'stand' : 'sit',
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'failure',
+                timestamp: Date.now(),
+                score: 0,
+              },
             });
             this.elements.prompt.state = {
               data: {
@@ -868,10 +896,10 @@ export class SitToStandService implements ActivityBase {
         };
         this.store.pipe(take(1)).subscribe(async (state) => {
           totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime();
+          const fastestTimeInSecs = await this.checkinService.getFastestTime('sit_stand_achieve');
           console.log('fastest: ', fastestTimeInSecs);
           const fastestTime = this.sit2StandService.updateTimer(
-            fastestTimeInSecs || state.game.totalDuration || 0,
+            Math.min(fastestTimeInSecs || Number.MAX_VALUE, state.game.totalDuration!),
           );
           this.elements.banner.state = {
             attributes: {
