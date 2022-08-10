@@ -389,7 +389,7 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
-          this.beatBoxerScene.destroyExistingBags();
+          this.beatBoxerScene.destroyGameObjects();
           this.beatBoxerScene.playSuccessMusic();
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
@@ -474,7 +474,7 @@ export class BeatBoxerService {
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            this.beatBoxerScene.destroyExistingBags();
+            this.beatBoxerScene.destroyGameObjects();
             this.beatBoxerScene.playSuccessMusic();
           } else {
             this.soundsService.playCalibrationSound('error');
@@ -659,7 +659,7 @@ export class BeatBoxerService {
           const reactionTimestamp = Date.now();
           this.totalReps++;
           if (rep.result === 'success') {
-            this.beatBoxerScene.destroyExistingBags();
+            this.beatBoxerScene.destroyGameObjects();
             this.beatBoxerScene.playSuccessMusic();
             // Todo: replace placeholder values with actual values
             this.analytics.push({
