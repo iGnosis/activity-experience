@@ -37,7 +37,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   speedBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   obstacle: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
 
-  nopeSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   confettiAnim?: Phaser.GameObjects.Sprite;
   musicAnim?: Phaser.GameObjects.Sprite;
 
@@ -236,25 +236,61 @@ export class BeatBoxerScene extends Phaser.Scene {
 
   /**
    * function to destroy existing bags on the screen/ scene.
+   * * If no game object is provided, it will remove all exisiting game objects.
+   * @param object game object to destroy.
    */
-  destroyExistingBags() {
-    if (this.heavyBlue) {
-      this.heavyBlue.destroy(true);
-    }
-    if (this.speedBlue) {
-      this.speedBlue.destroy(true);
-    }
-    if (this.heavyRed) {
-      this.heavyRed.destroy(true);
-    }
-    if (this.speedRed) {
-      this.speedRed.destroy(true);
-    }
-    if (this.obstacle) {
-      this.obstacle.destroy(true);
-    }
-    if (this.nopeSign) {
-      this.nopeSign.destroy(true);
+  destroyGameObjects(object?: BagType | 'obstacle' | 'wrong-sign') {
+    switch (object) {
+      case 'heavy-blue':
+        if (this.heavyBlue) {
+          this.heavyBlue.destroy(true);
+        }
+        break;
+      case 'heavy-red':
+        if (this.heavyRed) {
+          this.heavyRed.destroy(true);
+        }
+        break;
+      case 'speed-blue':
+        if (this.speedBlue) {
+          this.speedBlue.destroy(true);
+        }
+        break;
+      case 'speed-red':
+        if (this.speedRed) {
+          this.speedRed.destroy(true);
+        }
+        break;
+      case 'obstacle':
+        if (this.obstacle) {
+          this.obstacle.destroy(true);
+        }
+        break;
+      case 'wrong-sign':
+        if (this.wrongSign) {
+          this.wrongSign.destroy(true);
+        }
+        break;
+      default:
+        console.log('destroying all objects');
+        if (this.heavyBlue) {
+          this.heavyBlue.destroy(true);
+        }
+        if (this.speedBlue) {
+          this.speedBlue.destroy(true);
+        }
+        if (this.heavyRed) {
+          this.heavyRed.destroy(true);
+        }
+        if (this.speedRed) {
+          this.speedRed.destroy(true);
+        }
+        if (this.obstacle) {
+          this.obstacle.destroy(true);
+        }
+        if (this.wrongSign) {
+          this.wrongSign.destroy(true);
+        }
     }
   }
 
@@ -314,9 +350,9 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param level level of the bag
    * @returns it will return `newX` if it is out of bounds.
    */
-  isInBounds(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody, point: number, level: number) {
+  isInBounds(point: number, level: number) {
     const { width } = this.game.canvas;
-    const bagWidth = this.getWidth(bag) || 160;
+    const bagWidth = 160;
 
     if (point > width || point + bagWidth > width) {
       console.log('point + bagWidth ', point + bagWidth, ' width ', width);
@@ -344,63 +380,73 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
     console.log(`position: ${centerOfMotion}, type: ${type}`);
-    const { width, height } = this.game.canvas;
-    let x = width - (30 / 100) * width;
+    let x = 0;
     const y = 0;
     if (this.results) {
       const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
       x = shoulderX + level * maxReach;
     }
-
     switch (type) {
       case 'heavy-blue':
         this.heavyBlue && this.heavyBlue.destroy(true);
-        this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue');
-        const isHeavyBlueInBounds = this.isInBounds(this.heavyBlue, x, level);
+        const isHeavyBlueInBounds = this.isInBounds(x, level);
         if (isHeavyBlueInBounds.isInBounds) {
+          this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue');
           this.heavyBlue && this.setBagOrigin(this.heavyBlue, centerOfMotion, level);
         } else {
-          this.heavyBlue &&
-            this.heavyBlue.setPosition(isHeavyBlueInBounds.newX, y).setOrigin(0.5, 0.1);
+          if (isHeavyBlueInBounds.newX) {
+            this.heavyBlue = this.physics.add
+              .staticImage(isHeavyBlueInBounds.newX, y, 'heavy_bag_blue')
+              .setOrigin(0.5, 0.1);
+          }
         }
         this.heavyBlue && this.heavyBlue.refreshBody();
         this.heavyBlue && this.animateEntry(centerOfMotion, this.heavyBlue);
         break;
       case 'heavy-red':
         this.heavyRed && this.heavyRed.destroy(true);
-        this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red');
-        const isHeavyRedInBounds = this.isInBounds(this.heavyBlue, x, level);
+        const isHeavyRedInBounds = this.isInBounds(x, level);
         if (isHeavyRedInBounds.isInBounds) {
+          this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red');
           this.heavyRed && this.setBagOrigin(this.heavyRed, centerOfMotion, level);
         } else {
-          this.heavyRed &&
-            this.heavyRed.setPosition(isHeavyRedInBounds.newX, y).setOrigin(0.5, 0.1);
+          if (isHeavyRedInBounds.newX) {
+            this.heavyRed = this.physics.add
+              .staticImage(isHeavyRedInBounds.newX, y, 'heavy_bag_red')
+              .setOrigin(0.5, 0.1);
+          }
         }
         this.heavyRed && this.heavyRed.refreshBody();
         this.heavyRed && this.animateEntry(centerOfMotion, this.heavyRed);
         break;
       case 'speed-red':
         this.speedRed && this.speedRed.destroy(true);
-        this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red');
-        const isSpeedRedInBounds = this.isInBounds(this.heavyBlue, x, level);
+        const isSpeedRedInBounds = this.isInBounds(x, level);
         if (isSpeedRedInBounds.isInBounds) {
+          this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red');
           this.speedRed && this.setBagOrigin(this.speedRed, centerOfMotion, level);
         } else {
-          this.speedRed &&
-            this.speedRed.setPosition(isSpeedRedInBounds.newX, y).setOrigin(0.5, 0.1);
+          if (isSpeedRedInBounds.newX) {
+            this.speedRed = this.physics.add
+              .staticImage(isSpeedRedInBounds.newX, y, 'speed_bag_red')
+              .setOrigin(0.5, 0.1);
+          }
         }
         this.speedRed && this.speedRed.refreshBody();
         this.speedRed && this.animateEntry(centerOfMotion, this.speedRed);
         break;
       case 'speed-blue':
         this.speedBlue && this.speedBlue.destroy(true);
-        this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue');
-        const isSpeedBlueInBounds = this.isInBounds(this.heavyBlue, x, level);
+        const isSpeedBlueInBounds = this.isInBounds(x, level);
         if (isSpeedBlueInBounds.isInBounds) {
+          this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue');
           this.speedBlue && this.setBagOrigin(this.speedBlue, centerOfMotion, level);
         } else {
-          this.speedBlue &&
-            this.speedBlue.setPosition(isSpeedBlueInBounds.newX, y).setOrigin(0.5, 0.1);
+          if (isSpeedBlueInBounds.newX) {
+            this.speedBlue = this.physics.add
+              .staticImage(isSpeedBlueInBounds.newX, y, 'speed_bag_blue')
+              .setOrigin(0.5, 0.1);
+          }
         }
         this.speedBlue && this.speedBlue.refreshBody();
         this.speedBlue && this.animateEntry(centerOfMotion, this.speedBlue);
@@ -440,9 +486,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       x = shoulderX + level * maxReach;
     }
     this.obstacle && this.obstacle.destroy(true);
-    this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
-    const isObstacleInBounds = this.isInBounds(this.heavyBlue, x, level);
+    const isObstacleInBounds = this.isInBounds(x, level);
     if (isObstacleInBounds.isInBounds) {
+      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
       this.obstacle && this.setBagOrigin(this.obstacle, centerOfMotion, level);
     } else {
       this.obstacle && this.obstacle.setPosition(isObstacleInBounds.newX, y).setOrigin(0.5, 0.1);
@@ -642,14 +688,14 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   showWrongSign(bag: Phaser.Types.Physics.Arcade.GameObjectWithBody) {
-    if (this.nopeSign) {
-      this.nopeSign.destroy(true);
+    if (this.wrongSign) {
+      this.wrongSign.destroy(true);
     }
     const x = (bag.body.right + bag.body.left) / 2;
     const y = (bag.body.top + bag.body.bottom) / 2;
-    this.nopeSign = this.physics.add.staticImage(x, y, 'wrong_sign');
+    this.wrongSign = this.physics.add.staticImage(x, y, 'wrong_sign');
     setTimeout(() => {
-      this.nopeSign && this.nopeSign.destroy(true);
+      this.wrongSign && this.wrongSign.destroy(true);
     }, 1000);
   }
 
