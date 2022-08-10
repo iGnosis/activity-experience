@@ -885,11 +885,8 @@ export type Sit2StandAnalyticsDTO = {
   number: number | string;
 };
 export type BeatboxerAnalyticsDTO = {
-  bagPosition: string;
-  bagType: string;
-  level: number;
-  obstacle: boolean;
-  obstaclePosition: string;
+  leftBag: BagType | 'obstacle' | undefined;
+  rightBag: BagType | 'obstacle' | undefined;
 };
 
 export type PreferenceState = {
