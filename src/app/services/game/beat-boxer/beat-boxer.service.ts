@@ -389,7 +389,7 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
-          this.beatBoxerScene.destroyGameObjects();
+          this.beatBoxerScene.destroyGameObjects('obstacle');
           this.beatBoxerScene.playSuccessMusic();
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
@@ -469,8 +469,10 @@ export class BeatBoxerService {
           );
 
           this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
+          setTimeout(() => this.beatBoxerScene.destroyGameObjects(randomBag), this.config.speed);
           if (shouldShowObstacle) {
             this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
+            setTimeout(() => this.beatBoxerScene.destroyGameObjects('obstacle'), this.config.speed);
           }
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
@@ -572,6 +574,10 @@ export class BeatBoxerService {
         };
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         this.ttsService.tts('Get ready to start.');
         await this.elements.sleep(2000);
         this.elements.ribbon.state = {
@@ -651,15 +657,23 @@ export class BeatBoxerService {
           );
 
           this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
+          const bagTimeout = setTimeout(
+            () => this.beatBoxerScene.destroyGameObjects(randomBag),
+            this.config.speed,
+          );
           if (shouldShowObstacle) {
             this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
           }
+          const obstacleTimeout = setTimeout(
+            () => this.beatBoxerScene.destroyGameObjects('obstacle'),
+            this.config.speed,
+          );
           const promptTimestamp = Date.now();
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(this.config.speed);
           const reactionTimestamp = Date.now();
           this.totalReps++;
           if (rep.result === 'success') {
-            this.beatBoxerScene.destroyGameObjects();
+            clearTimeout(bagTimeout); // if success, clear the timeout so that next bag doesn't get destroyed
             this.beatBoxerScene.playSuccessMusic();
             // Todo: replace placeholder values with actual values
             this.analytics.push({
@@ -700,6 +714,7 @@ export class BeatBoxerService {
             };
             this.failedReps = 0;
           } else {
+            clearTimeout(obstacleTimeout); // if failure, clear the timeout so that next obstacle doesn't get destroyed
             this.soundsService.playCalibrationSound('error');
             // Todo: replace placeholder values with actual values
             this.analytics.push({
@@ -800,7 +815,7 @@ export class BeatBoxerService {
               this.failedReps = 0;
             }
           }
-          await this.elements.sleep(2000);
+          await this.elements.sleep(this.config.speed);
         }
         this.elements.confetti.state = {
           data: {},
