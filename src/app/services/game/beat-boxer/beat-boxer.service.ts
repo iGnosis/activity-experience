@@ -846,7 +846,7 @@ export class BeatBoxerService {
         };
 
         this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.updateTimer(this.config.gameDuration! / 1000);
+          totalDuration = this.updateTimer(this.config.gameDuration!);
           const highScore = await this.checkinService.getHighScore('beat_boxer');
           this.elements.banner.state = {
             attributes: {
