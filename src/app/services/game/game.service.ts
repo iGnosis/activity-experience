@@ -74,7 +74,18 @@ export class GameService {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
       this.soundsService.stopAllAudio();
     } else if (status === 'success') {
-      this.startGame();
+      if (this.gameStatus.stage !== 'loop') this.startGame();
+      else {
+        this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
+          this.soundsService.playCalibrationSound('success');
+          if (this.elements.timer.data.mode === 'pause') {
+            this.elements.timer.data = {
+              mode: 'resume',
+            };
+          }
+          this.startGame();
+        });
+      }
     }
   }
 
@@ -168,18 +179,31 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.pipe(debounceTime(2000)).subscribe((status: any) => {
+    this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
-        if (this.elements.timer.data.mode === 'pause') {
-          this.elements.timer.data = {
-            mode: 'resume',
+        if (this.gameStatus.stage === 'loop') {
+          this.ttsService.tts('Now I can see you again.');
+          await this.elements.sleep(3000);
+          this.ttsService.tts('Please raise one of your hands to continue.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Please raise one of your hands to continue.',
+              showIndefinitely: true,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
           };
+          await this.elements.sleep(3000);
+          this.elements.guide.attributes = {
+            visibility: 'hidden',
+          };
+          this.elements.guide.data = {
+            showIndefinitely: false,
+          };
+          this.calibrationStartTime = new Date();
         }
-        this.elements.guide.data = {
-          showIndefinitely: false,
-        };
-        this.calibrationStartTime = new Date();
       }
       if (this.calibrationStatus === 'error') {
         if (this.calibrationStartTime) this.updateCalibrationDuration();
