@@ -17,7 +17,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   collisions = false;
   collisionDetected?: {
     bagType: BagType | 'obstacle';
-    gloveColor: string;
+    gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
   subscription: Subscription;
@@ -479,7 +479,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   showObstacle(centerOfMotion: CenterOfMotion, level: number) {
     const { width, height } = this.game.canvas;
-    let x = width - (30 / 100) * width;
+    let x = 0;
     const y = 0;
     if (this.results) {
       const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
@@ -488,10 +488,14 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.obstacle && this.obstacle.destroy(true);
     const isObstacleInBounds = this.isInBounds(x, level);
     if (isObstacleInBounds.isInBounds) {
-      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(1, 0.1);
+      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top');
       this.obstacle && this.setBagOrigin(this.obstacle, centerOfMotion, level);
     } else {
-      this.obstacle && this.obstacle.setPosition(isObstacleInBounds.newX, y).setOrigin(0.5, 0.1);
+      if (isObstacleInBounds.newX) {
+        this.obstacle = this.physics.add
+          .staticImage(isObstacleInBounds.newX, y, 'obstacle_top')
+          .setOrigin(0.5, 0.1);
+      }
     }
     this.obstacle && this.obstacle.refreshBody();
     this.obstacle && this.animateEntry(centerOfMotion, this.obstacle);
@@ -536,7 +540,7 @@ export class BeatBoxerScene extends Phaser.Scene {
           this.playConfettiAnim(_heavyRed);
           _heavyRed.destroy();
           this.collisionDetected = {
-            bagType: 'speed-red',
+            bagType: 'heavy-red',
             gloveColor: 'red',
             result: 'success',
           };
@@ -821,9 +825,12 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @returns returns collision data if collision detected or else returns failure.
    */
   waitForCollisionOrTimeout(
+    bag1: BagType | 'obstacle',
+    bag2: BagType | 'obstacle',
     timeout?: number,
   ): Promise<
-    { result: 'failure' } | { bagType: string; gloveColor: string; result: 'success' | 'failure' }
+    | { result: undefined }
+    | { bagType: BagType | 'obstacle'; gloveColor: string; result: 'success' | 'failure' }
   > {
     return new Promise((resolve) => {
       const startTime = new Date().getTime();
@@ -831,16 +838,18 @@ export class BeatBoxerScene extends Phaser.Scene {
         // if timeout...
         if (timeout && new Date().getTime() - startTime > timeout) {
           resolve({
-            result: 'failure',
+            result: undefined,
           });
           clearInterval(interval);
           this.collisionDetected = undefined;
         }
         // if collision detected...
-        if (this.collisionDetected) {
-          resolve({
-            ...this.collisionDetected,
-          });
+        if (
+          this.collisionDetected &&
+          this.collisionDetected.bagType &&
+          (this.collisionDetected.bagType === bag1 || bag2)
+        ) {
+          resolve({ ...this.collisionDetected! });
           clearInterval(interval);
           this.collisionDetected = undefined;
         }
