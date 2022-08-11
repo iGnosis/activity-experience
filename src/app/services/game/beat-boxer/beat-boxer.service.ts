@@ -202,7 +202,7 @@ export class BeatBoxerService {
         await this.elements.sleep(1200);
         this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
-        this.beatBoxerScene.playSuccessMusic();
+        this.soundsService.playCalibrationSound('success');
         this.ttsService.tts(
           'Did you hear that? You just created music by punching the punching bag.',
         );
@@ -258,7 +258,7 @@ export class BeatBoxerService {
           this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomRedBag);
           if (rep.result === 'success') {
-            this.beatBoxerScene.playSuccessMusic();
+            this.soundsService.playCalibrationSound('success');
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -328,7 +328,7 @@ export class BeatBoxerService {
           this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomBlueBag);
           if (rep.result === 'success') {
-            this.beatBoxerScene.playSuccessMusic();
+            this.soundsService.playCalibrationSound('success');
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -399,7 +399,7 @@ export class BeatBoxerService {
           await this.elements.sleep(5000);
         } else {
           this.beatBoxerScene.destroyGameObjects('obstacle');
-          this.beatBoxerScene.playSuccessMusic();
+          this.soundsService.playCalibrationSound('success');
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
             data: {
@@ -551,7 +551,7 @@ export class BeatBoxerService {
               this.bagsAvailable.right = undefined;
             }
             clearTimeout(bagTimeout);
-            this.beatBoxerScene.playSuccessMusic();
+            this.soundsService.playCalibrationSound('success');
           } else if (rep.result === 'failure') {
             clearTimeout(obstacleTimeout);
             if (rep.bagType === this.bagsAvailable.left) {
@@ -610,10 +610,10 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(3000);
-        this.soundsService.pauseActivityInstructionSound(this.genre);
         await this.checkinService.updateOnboardingStatus({
           beat_boxer: true,
         });
+        this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];
   }
