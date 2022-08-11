@@ -1,6 +1,9 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { take } from 'rxjs';
 import { ElementsService } from 'src/app/services/elements/elements.service';
+import { GameStateService } from 'src/app/services/game-state/game-state.service';
 import { GameService } from 'src/app/services/game/game.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { UserService } from 'src/app/services/user/user.service';
@@ -22,6 +25,8 @@ export class GameComponent implements OnInit {
     private gameService: GameService,
     private userService: UserService,
     private route: ActivatedRoute,
+    private store: Store,
+    private gameStateService: GameStateService,
   ) {}
   ngOnInit(): void {
     // Ask the parent window to send a token... we're ready, well almost.
@@ -51,5 +56,19 @@ export class GameComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.get('debug')) {
       this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
     }
+  }
+
+  @HostListener('window:unload', ['$event'])
+  doBeforeUnload() {
+    this.store
+      .select((state: any) => state.game)
+      .pipe(take(1))
+      .subscribe((game) => {
+        if (game.id) {
+          const { id, ...gameState } = game;
+          this.gameStateService.updateGame(id, gameState);
+        }
+      });
+    return false;
   }
 }
