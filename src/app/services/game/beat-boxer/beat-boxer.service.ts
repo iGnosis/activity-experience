@@ -660,6 +660,10 @@ export class BeatBoxerService {
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts('Get ready to start.');
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         await this.elements.sleep(2000);
         this.elements.ribbon.state = {
           attributes: {

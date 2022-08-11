@@ -18,6 +18,8 @@ export class GameComponent implements OnInit {
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('gameElm') gameElm!: ElementRef;
   videoAvailable = false;
+  browserSupported = false;
+  cameraStatus?: 'success' | 'failure';
 
   constructor(
     private elements: ElementsService,
@@ -27,8 +29,15 @@ export class GameComponent implements OnInit {
     private route: ActivatedRoute,
     private store: Store,
     private gameStateService: GameStateService,
-  ) {}
-  ngOnInit(): void {
+  ) {
+    if (
+      navigator.userAgent.indexOf('Chrome') != -1 ||
+      navigator.userAgent.indexOf('Firefox') != -1
+    ) {
+      this.browserSupported = true;
+    }
+  }
+  async ngOnInit(): Promise<void> {
     // Ask the parent window to send a token... we're ready, well almost.
     window.parent.postMessage(
       {
@@ -46,7 +55,10 @@ export class GameComponent implements OnInit {
       async (data) => {
         const tokenHandled = this.userService.handleToken(data);
         if (tokenHandled) {
-          await this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
+          this.cameraStatus = await this.gameService.bootstrap(
+            this.video.nativeElement,
+            this.canvas.nativeElement,
+          );
           this.videoAvailable = true;
         }
       },
@@ -54,7 +66,10 @@ export class GameComponent implements OnInit {
     );
 
     if (this.route.snapshot.queryParamMap.get('debug')) {
-      this.gameService.bootstrap(this.video.nativeElement, this.canvas.nativeElement);
+      this.cameraStatus = await this.gameService.bootstrap(
+        this.video.nativeElement,
+        this.canvas.nativeElement,
+      );
     }
   }
 
@@ -70,5 +85,9 @@ export class GameComponent implements OnInit {
         }
       });
     return false;
+  }
+
+  refreshTab() {
+    window.location.reload();
   }
 }
