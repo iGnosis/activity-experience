@@ -391,8 +391,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         this.heavyBlue && this.heavyBlue.destroy(true);
         const isHeavyBlueInBounds = this.isInBounds(x, level);
         if (isHeavyBlueInBounds.isInBounds) {
-          this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue');
-          this.heavyBlue && this.setBagOrigin(this.heavyBlue, centerOfMotion, level);
+          this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(0.5, 0.1);
         } else {
           if (isHeavyBlueInBounds.newX) {
             this.heavyBlue = this.physics.add
@@ -400,15 +399,14 @@ export class BeatBoxerScene extends Phaser.Scene {
               .setOrigin(0.5, 0.1);
           }
         }
-        this.heavyBlue && this.heavyBlue.refreshBody();
         this.heavyBlue && this.animateEntry(centerOfMotion, this.heavyBlue);
+        this.heavyBlue && this.heavyBlue.refreshBody();
         break;
       case 'heavy-red':
         this.heavyRed && this.heavyRed.destroy(true);
         const isHeavyRedInBounds = this.isInBounds(x, level);
         if (isHeavyRedInBounds.isInBounds) {
-          this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red');
-          this.heavyRed && this.setBagOrigin(this.heavyRed, centerOfMotion, level);
+          this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(0.5, 0.1);
         } else {
           if (isHeavyRedInBounds.newX) {
             this.heavyRed = this.physics.add
@@ -416,15 +414,14 @@ export class BeatBoxerScene extends Phaser.Scene {
               .setOrigin(0.5, 0.1);
           }
         }
-        this.heavyRed && this.heavyRed.refreshBody();
         this.heavyRed && this.animateEntry(centerOfMotion, this.heavyRed);
+        this.heavyRed && this.heavyRed.refreshBody();
         break;
       case 'speed-red':
         this.speedRed && this.speedRed.destroy(true);
         const isSpeedRedInBounds = this.isInBounds(x, level);
         if (isSpeedRedInBounds.isInBounds) {
-          this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red');
-          this.speedRed && this.setBagOrigin(this.speedRed, centerOfMotion, level);
+          this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(0.5, 0.1);
         } else {
           if (isSpeedRedInBounds.newX) {
             this.speedRed = this.physics.add
@@ -432,15 +429,14 @@ export class BeatBoxerScene extends Phaser.Scene {
               .setOrigin(0.5, 0.1);
           }
         }
-        this.speedRed && this.speedRed.refreshBody();
         this.speedRed && this.animateEntry(centerOfMotion, this.speedRed);
+        this.speedRed && this.speedRed.refreshBody();
         break;
       case 'speed-blue':
         this.speedBlue && this.speedBlue.destroy(true);
         const isSpeedBlueInBounds = this.isInBounds(x, level);
         if (isSpeedBlueInBounds.isInBounds) {
-          this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue');
-          this.speedBlue && this.setBagOrigin(this.speedBlue, centerOfMotion, level);
+          this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(0.5, 0.1);
         } else {
           if (isSpeedBlueInBounds.newX) {
             this.speedBlue = this.physics.add
@@ -448,29 +444,10 @@ export class BeatBoxerScene extends Phaser.Scene {
               .setOrigin(0.5, 0.1);
           }
         }
-        this.speedBlue && this.speedBlue.refreshBody();
         this.speedBlue && this.animateEntry(centerOfMotion, this.speedBlue);
+        this.speedBlue && this.speedBlue.refreshBody();
         break;
     }
-  }
-
-  setBagOrigin(
-    bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
-    centerOfMotion: CenterOfMotion,
-    level: number,
-  ) {
-    if (centerOfMotion === 'right' && level < 0) {
-      bag && bag.setOrigin(1, 0.1);
-    } else if (centerOfMotion === 'right' && level > 0) {
-      bag && bag.setOrigin(0, 0.1);
-    } else if (centerOfMotion === 'left' && level < 0) {
-      bag && bag.setOrigin(1, 0.1);
-    } else if (centerOfMotion === 'left' && level > 0) {
-      bag && bag.setOrigin(0, 0.1);
-    } else {
-      bag && bag.setOrigin(0.5, 0.1);
-    }
-    bag && bag.body && bag.refreshBody();
   }
 
   /**
@@ -488,8 +465,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.obstacle && this.obstacle.destroy(true);
     const isObstacleInBounds = this.isInBounds(x, level);
     if (isObstacleInBounds.isInBounds) {
-      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top');
-      this.obstacle && this.setBagOrigin(this.obstacle, centerOfMotion, level);
+      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(0.5, 0.1);
     } else {
       if (isObstacleInBounds.newX) {
         this.obstacle = this.physics.add
@@ -497,8 +473,8 @@ export class BeatBoxerScene extends Phaser.Scene {
           .setOrigin(0.5, 0.1);
       }
     }
-    this.obstacle && this.obstacle.refreshBody();
     this.obstacle && this.animateEntry(centerOfMotion, this.obstacle);
+    this.obstacle && this.obstacle.refreshBody();
   }
 
   override update(time: number, delta: number): void {
