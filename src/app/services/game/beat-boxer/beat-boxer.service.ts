@@ -199,7 +199,11 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
-        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
+        this.beatBoxerScene.showBag(
+          'left',
+          'speed-blue',
+          this.getRandomItemFromArray(this.negativeLevel),
+        );
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts(
@@ -407,12 +411,13 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition: CenterOfMotion = this.bagPositions[
-          Math.floor(Math.random() * 2)
-        ] as CenterOfMotion;
+        this.beatBoxerScene.showBag(
+          'left',
+          'speed-blue',
+          this.getRandomItemFromArray(this.negativeLevel),
+        );
+        this.beatBoxerScene.showObstacle('right', this.getRandomItemFromArray(this.positiveLevel));
 
-        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
-        this.beatBoxerScene.showObstacle(randomPosition, 1.5);
         const rep = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue', 'obstacle');
         if (rep.result === 'failure') {
           this.beatBoxerScene.destroyGameObjects('speed-blue');
