@@ -24,7 +24,7 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private level: number[] = [1, 1.5, -1, -1.5];
+  private level: number[] = [0.7, 1, 1.3, -0.7, -1, -1.3];
   private positiveLevel: number[] = [0.7, 1, 1.3];
   private negativeLevel: number[] = [-0.7, -1, -1.3];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
@@ -250,6 +250,16 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
@@ -320,6 +330,16 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
@@ -461,6 +481,16 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
       },
       async (reCalibrationCount: number) => {
         let successfulReps = 0;
@@ -1024,37 +1054,37 @@ export class BeatBoxerService {
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
-        await this.elements.sleep(20000);
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'intro',
-            htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Next Activity</h2>
-              <h1 class="pt-6 display-4">Sound Slice</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Range of Motion and Balance</h2>
-            </div>
-            `,
-            buttons: [
-              {
-                title: 'Starting Sound Slice',
-                progressDurationMs: 5000,
-              },
-            ],
-          },
-        };
-        await this.elements.sleep(10000);
+        await this.elements.sleep(12000);
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sound Slice</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="py-2">Range of Motion and Balance</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sound Slice',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // await this.elements.sleep(10000);
       },
     ];
   }
