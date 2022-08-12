@@ -27,7 +27,7 @@ export const environment: Environment = {
     beat_boxer: {
       configuration: {
         gameDuration: 3 * 60,
-        speed: 3500,
+        speed: 2500,
       },
     },
     sound_slicer: {

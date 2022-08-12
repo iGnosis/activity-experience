@@ -24,7 +24,6 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private level: number[] = [2, 2.5, -2.5, -2];
   private positiveLevel: number[] = [2, 2.5, 2.9];
   private negativeLevel: number[] = [-2, -2.5, -2.9];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
@@ -250,12 +249,29 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
+          let randomLevel = 0;
+          if (randomPosition === 'left') {
+            randomLevel = this.getRandomItemFromArray(this.negativeLevel);
+          }
+          if (randomPosition === 'right') {
+            randomLevel = this.getRandomItemFromArray(this.positiveLevel);
+          }
           this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
+
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomRedBag);
           if (rep.result === 'success') {
             this.soundsService.playCalibrationSound('success');
@@ -320,11 +336,26 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
-
+          let randomLevel = 0;
+          if (randomPosition === 'left') {
+            randomLevel = this.getRandomItemFromArray(this.negativeLevel);
+          }
+          if (randomPosition === 'right') {
+            randomLevel = this.getRandomItemFromArray(this.positiveLevel);
+          }
           this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
           const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomBlueBag);
           if (rep.result === 'success') {
@@ -461,6 +492,16 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
       },
       async (reCalibrationCount: number) => {
         let successfulReps = 0;
@@ -1024,13 +1065,12 @@ export class BeatBoxerService {
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
-
         // call method to send user back to Patient Portal.
 
         await this.elements.sleep(20000);
@@ -1057,7 +1097,31 @@ export class BeatBoxerService {
             ],
           },
         };
-        await this.elements.sleep(10000);
+        await this.elements.sleep(12000);
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sound Slice</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="py-2">Range of Motion and Balance</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sound Slice',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // await this.elements.sleep(10000);
       },
     ];
   }

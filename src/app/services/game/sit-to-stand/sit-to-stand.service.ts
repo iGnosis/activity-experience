@@ -919,13 +919,13 @@ export class SitToStandService implements ActivityBase {
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
-        await this.elements.sleep(17000);
+        await this.elements.sleep(12000);
       },
     ];
   }
