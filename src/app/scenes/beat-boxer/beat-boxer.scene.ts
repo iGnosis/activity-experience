@@ -173,7 +173,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   calculateReach(
     results: Results,
     position: CenterOfMotion,
-  ): { shoulderX: number; maxReach: number } {
+  ): { shoulderX: number; wristX: number; maxReach: number } {
     const { width, height } = this.game.canvas;
     if (
       position === 'left' &&
@@ -199,6 +199,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         );
       return {
         shoulderX: width - leftShoulder.x * width,
+        wristX: width - leftWrist.x * width,
         maxReach,
       };
     } else if (
@@ -225,10 +226,12 @@ export class BeatBoxerScene extends Phaser.Scene {
         );
       return {
         shoulderX: width - rightShoulder.x * width,
+        wristX: width - rightWrist.x * width,
         maxReach,
       };
     }
     return {
+      wristX: 200,
       shoulderX: width / 2,
       maxReach: 200,
     };
@@ -383,8 +386,8 @@ export class BeatBoxerScene extends Phaser.Scene {
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
-      x = shoulderX + level * maxReach;
+      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      x = wristX * level;
     }
     switch (type) {
       case 'heavy-blue':
@@ -459,8 +462,8 @@ export class BeatBoxerScene extends Phaser.Scene {
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX } = this.calculateReach(this.results, centerOfMotion);
-      x = shoulderX + level * maxReach;
+      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      x = wristX * level;
     }
     this.obstacle && this.obstacle.destroy(true);
     const isObstacleInBounds = this.isInBounds(x, level);

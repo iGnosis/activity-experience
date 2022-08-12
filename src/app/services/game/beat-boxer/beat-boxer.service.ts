@@ -24,9 +24,9 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private level: number[] = [1, 1.5, -1, -1.5];
-  private positiveLevel: number[] = [0.7, 1, 1.3];
-  private negativeLevel: number[] = [-0.7, -1, -1.3];
+  private level: number[] = [1, 1.5, -1.5, 1];
+  private positiveLevel: number[] = [1.9, 2.3, 2.5];
+  private negativeLevel: number[] = [-1.9, -2.3, -2.5];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
   private isGameComplete = false;
@@ -1030,6 +1030,9 @@ export class BeatBoxerService {
             },
           };
         });
+
+        // call method to send user back to Patient Portal.
+
         await this.elements.sleep(20000);
         this.elements.banner.state = {
           attributes: {
