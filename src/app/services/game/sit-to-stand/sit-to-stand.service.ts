@@ -157,6 +157,42 @@ export class SitToStandService implements ActivityBase {
         this.soundsService.playActivityInstructionSound(this.genre);
         this.elements.guide.state = {
           data: {
+            title: 'You will need a chair for this activity.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('You will need a chair for this activity.');
+        await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Please sit on the chair to continue.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Please sit on the chair to continue.');
+        const res = await this.sit2StandService.waitForClassChangeOrTimeOut('sit');
+        this.elements.guide.state = {
+          data: {
+            title: "Great, let's begin.",
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("Great, let's begin.");
+        await this.elements.sleep(5000);
+        this.elements.guide.state = {
+          data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
             titleDuration: 3000,
           },
