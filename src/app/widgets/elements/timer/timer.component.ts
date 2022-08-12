@@ -19,6 +19,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   source: Observable<number>;
   timer: Subscription;
   attributes: ElementAttributes;
+  isCountdown: boolean;
   onComplete?: (elapsedTime: number) => void;
   onPause?: (elapsedTime: number) => void;
   constructor(private timerService: TimerService) {}
@@ -32,7 +33,10 @@ export class TimerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscription = this.timerService._subject.subscribe((state) => {
       this.attributes = state.attributes;
-      const { mode, duration, onComplete, onPause } = state.data;
+      const { mode, duration, isCountdown, onComplete, onPause } = state.data;
+      if (typeof isCountdown === 'boolean') {
+        this.isCountdown = isCountdown;
+      }
       switch (mode) {
         case 'start':
           if (duration) {
@@ -67,7 +71,11 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.source = timer(0, 1000);
     this.timer = this.source.subscribe((val) => {
       this.elapsedTime += 1;
-      this.updateTimer(val);
+      if (this.isCountdown) {
+        this.updateTimer(this.duration / 1000 - val);
+      } else {
+        this.updateTimer(val);
+      }
       if (val * 1000 >= duration) {
         this.stopTimer();
       }
@@ -90,7 +98,11 @@ export class TimerComponent implements OnInit, OnDestroy {
     const prevElapsedTime = this.elapsedTime;
     this.timer = this.source.subscribe((val) => {
       this.elapsedTime += 1;
-      this.updateTimer(val + prevElapsedTime);
+      if (this.isCountdown) {
+        this.updateTimer(this.duration / 1000 - (val + prevElapsedTime));
+      } else {
+        this.updateTimer(val + prevElapsedTime);
+      }
       if ((prevElapsedTime + val) * 1000 >= this.duration) {
         this.stopTimer();
       }

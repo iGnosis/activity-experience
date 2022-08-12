@@ -24,7 +24,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 })
 export class SitToStandService implements ActivityBase {
   _handTrackerStatus: HandTrackerStatus;
-  private genre: Genre;
+  private genre: Genre = 'jazz';
   private successfulReps = 0;
   private failedReps = 0;
   private totalReps = 0;
@@ -87,7 +87,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
           data: {
-            titles: ['Next Activity', 'Sit, Stand, Achieve'],
+            titles: ['Starting Sit, Stand, Achieve'],
           },
         };
         await this.elements.sleep(6000);
@@ -147,6 +147,37 @@ export class SitToStandService implements ActivityBase {
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
       },
+      async (reCalibrationCount: number) => {
+        this.elements.guide.state = {
+          data: {
+            title: 'You will need a chair for this activity.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('You will need a chair for this activity.');
+      },
+      async (reCalibrationCount: number) => {
+        await this.elements.sleep(5000);
+        let res = { result: '' };
+        this.elements.guide.state = {
+          data: {
+            title: 'Please sit on the chair to continue.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Please sit on the chair to continue.');
+        while (res.result !== 'success') {
+          res = await this.sit2StandService.waitForClassChangeOrTimeOut('sit');
+        }
+      },
     ];
   }
 
@@ -155,6 +186,18 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         this.soundsService.playActivityInstructionSound(this.genre);
+        this.elements.guide.state = {
+          data: {
+            title: "Great, let's begin.",
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("Great, let's begin.");
+        await this.elements.sleep(5000);
         this.elements.guide.state = {
           data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
@@ -634,7 +677,7 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        while (this.successfulReps < this.config.minCorrectReps) {
+        while (this.successfulReps < this.config.minCorrectReps!) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
@@ -643,9 +686,9 @@ export class SitToStandService implements ActivityBase {
           // checking if not more than two even or two odd in a row.
           if (this.analytics && this.analytics.length >= 2) {
             const prevReps = this.analytics.slice(-2);
-            if (prevReps[0].class === prevReps[1].class) {
+            if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
               // if two even or two odd in a row, we generate the opposite class number.
-              prevReps[0].class === 'sit'
+              prevReps[0].prompt.type === 'sit'
                 ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
                 : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
             }
@@ -672,10 +715,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          const promptTimestamp = Date.now();
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             promptClass,
             this.config.speed,
           );
+          const reactionTimestamp = Date.now();
           this.totalReps += 1;
           this.elements.timeout.state = {
             data: {
@@ -689,11 +734,24 @@ export class SitToStandService implements ActivityBase {
           if (res.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
             this.analytics.push({
-              prompt: promptNum,
-              class: promptClass,
-              score: 1,
-              success: true,
-              reactionTime: 0,
+              prompt: {
+                type: promptClass,
+                timestamp: promptTimestamp,
+                data: {
+                  number: promptNum,
+                },
+              },
+              reaction: {
+                type: promptClass,
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'success',
+                timestamp: Date.now(),
+                score: 1,
+              },
             });
             this.elements.prompt.state = {
               data: {
@@ -720,11 +778,24 @@ export class SitToStandService implements ActivityBase {
           } else {
             this.soundsService.playCalibrationSound('error');
             this.analytics.push({
-              prompt: promptNum,
-              class: promptClass,
-              score: 0,
-              success: false,
-              reactionTime: 0,
+              prompt: {
+                type: promptClass,
+                timestamp: promptTimestamp,
+                data: {
+                  number: promptNum,
+                },
+              },
+              reaction: {
+                type: promptClass === 'sit' ? 'stand' : 'sit',
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'failure',
+                timestamp: Date.now(),
+                score: 0,
+              },
             });
             this.elements.prompt.state = {
               data: {
@@ -851,14 +922,8 @@ export class SitToStandService implements ActivityBase {
   postLoop() {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
-      async () => {
-        await this.gameStateService.postLoopHook();
-
-        // push analytics to the server.
-        // TODO: This won't support resuming games.
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
-      },
       async (reCalibrationCount: number) => {
+        this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
 
         const achievementRatio = this.successfulReps / this.totalReps;
@@ -874,10 +939,10 @@ export class SitToStandService implements ActivityBase {
         };
         this.store.pipe(take(1)).subscribe(async (state) => {
           totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime();
+          const fastestTimeInSecs = await this.checkinService.getFastestTime('sit_stand_achieve');
           console.log('fastest: ', fastestTimeInSecs);
           const fastestTime = this.sit2StandService.updateTimer(
-            fastestTimeInSecs || state.game.totalDuration || 0,
+            Math.min(fastestTimeInSecs || Number.MAX_VALUE, state.game.totalDuration!),
           );
           this.elements.banner.state = {
             attributes: {
@@ -897,13 +962,13 @@ export class SitToStandService implements ActivityBase {
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
-        await this.elements.sleep(17000);
+        await this.elements.sleep(12000);
       },
     ];
   }

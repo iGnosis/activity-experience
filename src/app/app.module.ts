@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { SessionComponent } from './pages/session/session.component';
 import { GuideComponent } from './widgets/elements/guide/guide.component';
+import { ConfettiComponent } from './widgets/elements/confetti/confetti.component';
 import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
 import { VideoComponent } from './widgets/video/video.component';
 import { CalibrationComponent } from './widgets/calibration/calibration.component';
@@ -44,6 +45,7 @@ export let AppInjector: Injector;
     WelcomeComponent,
     SessionComponent,
     GuideComponent,
+    ConfettiComponent,
     SpotlightComponent,
     VideoElementComponent,
     VideoComponent,

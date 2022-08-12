@@ -66,6 +66,7 @@ export class GameStateService {
 
   // doing this becuase it's a pain to workout dates w.r.t user's timezone server-side...
   async postLoopHook() {
+    console.log('game-state:postLoopHook');
     const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const currentDate = new Date();
     const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);

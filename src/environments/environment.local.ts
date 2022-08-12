@@ -25,8 +25,8 @@ export const environment: Environment = {
     },
     beat_boxer: {
       configuration: {
-        minCorrectReps: 10,
-        speed: 5000,
+        gameDuration: 3 * 60,
+        speed: 2500,
       },
     },
     sound_slicer: {

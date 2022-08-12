@@ -203,7 +203,7 @@ export class CoordinationService {
   }
 
   async explainSit2Stand() {
-    this.activityStage = 'explain';
+    this.activityStage = 'tutorial';
 
     try {
       if (this.calibrationStatus === 'error' || this.calibrationStatus === 'warning') {
@@ -339,7 +339,7 @@ export class CoordinationService {
       this.sit2StandExplained = true;
       // this.soundService.pauseActivityInstructionSound();
 
-      this.activityStage = 'preGame';
+      this.activityStage = 'preLoop';
       this.sendSessionState(this.activityStage);
 
       this.runSit2Stand();
@@ -362,14 +362,14 @@ export class CoordinationService {
     if (stage) {
       this.activityStage = stage;
     }
-    if (this.activityStage === 'preGame' && this.calibrationStatus !== 'error') {
+    if (this.activityStage === 'preLoop' && this.calibrationStatus !== 'error') {
       await this.prePlaySit2Stand();
     }
 
     try {
       // await this.waitForCalibration('success');
       console.log('activity stage, calibstatus:', this.activityStage, this.calibrationStatus);
-      if (this.activityStage === 'game' && this.calibrationStatus !== 'error') {
+      if (this.activityStage === 'loop' && this.calibrationStatus !== 'error') {
         // Do 5 reps: TODO get number of reps from the careplan
         this.desiredClass = 'unknown';
         this.previousDesiredClass = 'unknown';
@@ -461,7 +461,7 @@ export class CoordinationService {
             task_name: this.desiredClass,
           });
 
-          await this.step('game', 'sendPrompt', {
+          await this.step('loop', 'sendPrompt', {
             text: num.toString(),
             className: 'round',
             position: 'right',
@@ -469,7 +469,7 @@ export class CoordinationService {
           this.isWaitingForReaction = true;
 
           // resolve has status property that can be used to send taskEnded events.
-          await this.step('game', 'startTimer', { timeout: 6000 });
+          await this.step('loop', 'startTimer', { timeout: 6000 });
           const res = await this.waitForClassChangeOrTimeOut(
             this.desiredClass,
             this.previousDesiredClass,
@@ -477,7 +477,7 @@ export class CoordinationService {
           );
           console.log('res of rep', res.result);
           this.isWaitingForReaction = false;
-          await this.step('game', 'hideTimer');
+          await this.step('loop', 'hideTimer');
 
           // playing chord
           if (res.result === 'success') {
@@ -523,7 +523,7 @@ export class CoordinationService {
         }
 
         if (this.runConfig.reps >= this.totalReps) {
-          this.activityStage = 'postGame';
+          this.activityStage = 'postLoop';
           this.sendSessionState(this.activityStage);
         }
       }
@@ -532,14 +532,14 @@ export class CoordinationService {
       return;
     }
 
-    if (this.activityStage === 'postGame' && this.calibrationStatus !== 'error') {
+    if (this.activityStage === 'postLoop' && this.calibrationStatus !== 'error') {
       await this.postPlaySit2Stand();
     }
   }
 
   async prePlaySit2Stand() {
     try {
-      this.activityStage = 'preGame';
+      this.activityStage = 'preLoop';
       if (!this.soundService.isBacktrackPlaying(this.genre)) {
         this.soundService.playMusic(this.genre, 'backtrack');
       }
@@ -559,7 +559,7 @@ export class CoordinationService {
       await this.step(this.activityStage, 'sendSpotlight', { text: 'GO' });
       await this.step(this.activityStage, 'sleep', 1000);
       await this.step(this.activityStage, 'hideSpotlight');
-      this.activityStage = 'game';
+      this.activityStage = 'loop';
       this.sendSessionState(this.activityStage);
     } catch (err) {
       console.log('exited preplaysit2stand');
@@ -620,14 +620,14 @@ export class CoordinationService {
     this.activityCompleted = true;
     this.calibrationService.disable();
 
-    await this.step('postGame', 'hidePrompt');
-    await this.step('postGame', 'updateAvatar', { name: 'mila' });
+    await this.step('postLoop', 'hidePrompt');
+    await this.step('postLoop', 'updateAvatar', { name: 'mila' });
     // this.store.dispatch(guide.sendMessage({ text: 'YOU WERE AMAZING!!!', position: 'center' }));
-    await this.step('postGame', 'sendMessage', { text: 'YOU WERE AMAZING!!!', position: 'center' });
+    await this.step('postLoop', 'sendMessage', { text: 'YOU WERE AMAZING!!!', position: 'center' });
     // ending constantDrum here
     // this.soundService.endConstantDrum();
-    await this.step('postGame', 'sleep', 3000);
-    await this.step('postGame', 'sendMessage', {
+    await this.step('postLoop', 'sleep', 3000);
+    await this.step('postLoop', 'sendMessage', {
       text: 'Thank you for playing!',
       position: 'center',
     });
@@ -635,7 +635,7 @@ export class CoordinationService {
     this.soundService.pauseBacktrack(this.genre);
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
-    await this.step('postGame', 'sleep', 5000);
+    await this.step('postLoop', 'sleep', 5000);
   }
 
   async start(game: Phaser.Game, onComplete: any) {
@@ -654,7 +654,7 @@ export class CoordinationService {
   async runSit2Stand() {
     // this.sit2StandExplained = true
     if (!this.sit2StandExplained) {
-      this.activityStage === 'explain' && this.explainSit2Stand();
+      this.activityStage === 'tutorial' && this.explainSit2Stand();
     } else {
       // Run the sit2stand logic
       this.playSit2Stand();
@@ -684,14 +684,14 @@ export class CoordinationService {
     return new Promise(async (resolve, reject) => {
       // check if the user is calibrated or not
       console.log(step, type, data);
-      if (step === 'explain' && this.calibrationStatus === 'error') {
+      if (step === 'tutorial' && this.calibrationStatus === 'error') {
         // this.soundService.pauseActivityInstructionSound();
         reject({});
         return;
-      } else if (step === 'preGame' && this.calibrationStatus === 'error') {
+      } else if (step === 'preLoop' && this.calibrationStatus === 'error') {
         reject({});
         return;
-      } else if (step === 'game' && this.calibrationStatus === 'error') {
+      } else if (step === 'loop' && this.calibrationStatus === 'error') {
         reject({});
         return;
       }
@@ -1076,19 +1076,19 @@ export class CoordinationService {
 
     // we are resuming the activity based on the activityStage
     if (
-      this.activityStage === 'preGame' ||
-      this.activityStage === 'game' ||
-      this.activityStage === 'postGame' ||
-      this.activityStage === 'explain'
+      this.activityStage === 'preLoop' ||
+      this.activityStage === 'loop' ||
+      this.activityStage === 'postLoop' ||
+      this.activityStage === 'tutorial'
     ) {
-      if (this.activityStage === 'preGame' || this.activityStage === 'postGame') {
+      if (this.activityStage === 'preLoop' || this.activityStage === 'postLoop') {
         // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
           this.soundService.playMusic(this.genre, 'backtrack');
         }
         this.playSit2Stand(this.activityStage);
-      } else if (this.activityStage === 'game') {
+      } else if (this.activityStage === 'loop') {
         // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
         if (!this.soundService.isBacktrackPlaying(this.genre)) {
@@ -1098,7 +1098,7 @@ export class CoordinationService {
         this.runConfig.id += 1;
         console.log('ID updated for the runConfig', this.runConfig.id);
         this.playSit2Stand(this.activityStage);
-      } else if (this.activityStage === 'explain') {
+      } else if (this.activityStage === 'tutorial') {
         // this.soundService.resumeActivityInstructionSound();
         this.runSit2Stand();
       }
@@ -1131,9 +1131,9 @@ export class CoordinationService {
 
   async pauseActivity() {
     if (
-      this.activityStage === 'preGame' ||
-      this.activityStage === 'game' ||
-      this.activityStage === 'postGame'
+      this.activityStage === 'preLoop' ||
+      this.activityStage === 'loop' ||
+      this.activityStage === 'postLoop'
     ) {
       this.soundService.pauseBacktrack(this.genre);
     }

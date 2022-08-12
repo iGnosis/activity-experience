@@ -79,7 +79,8 @@ export class CalibrationScene extends Scene {
       height,
     );
 
-    this.calibrationRectangle.right = this.add.rectangle(
+    this.calibrationRectangle.right = new Phaser.GameObjects.Rectangle(
+      this,
       width - (width - this.calibrationBox.width) / 4,
       height / 2,
       (width - this.calibrationBox.width) / 2,
@@ -359,7 +360,6 @@ export class CalibrationScene extends Scene {
     this.add.existing(this.calibrationRectangle.center as Phaser.GameObjects.Rectangle);
 
     console.log(`drawCalibrationBox: ${width} X ${height}`);
-
     let fillColor = 0x000066;
 
     switch (type) {

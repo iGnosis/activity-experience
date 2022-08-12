@@ -4,7 +4,7 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { Store } from '@ngrx/store';
-import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
+import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
@@ -21,14 +21,22 @@ import { take } from 'rxjs';
   providedIn: 'root',
 })
 export class BeatBoxerService {
-  private genre: Genre;
+  private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private level: number[] = [1, 1.5, -1, -1.5];
+  private positiveLevel: number[] = [2, 2.5, 2.9];
+  private negativeLevel: number[] = [-2, -2.5, -2.9];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
-  private getRandomItemFromArray = (array: any[]) => {
+  private analytics: AnalyticsDTO[] = [];
+  private isGameComplete = false;
+  private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
   };
+  private bagsAvailable: {
+    left?: undefined | BagType | 'obstacle';
+    right?: undefined | BagType | 'obstacle';
+  } = {};
+
   private updateTimer(totalSeconds: number) {
     let minutes = 0;
     if (totalSeconds >= 60) {
@@ -49,7 +57,7 @@ export class BeatBoxerService {
     return time;
   }
   private config = {
-    minCorrectReps: environment.settings['beat_boxer'].configuration.minCorrectReps,
+    gameDuration: environment.settings['beat_boxer'].configuration.gameDuration,
     speed: environment.settings['beat_boxer'].configuration.speed,
   };
   private successfulReps = 0;
@@ -80,12 +88,15 @@ export class BeatBoxerService {
           this.gameStateService.updateGame(id, gameState);
         }
       });
+    this.beatBoxerScene.configureMusic();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
         if (preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
           this.soundsService.loadMusicFiles(this.genre);
+        } else {
+          this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
     calibrationService.reCalibrationCount.subscribe((count) => {
@@ -187,18 +198,22 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(1200);
-        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
-        const result = await this.beatBoxerScene.waitForCollisionOrTimeout();
-        this.soundsService.playMusic(this.genre, 'trigger');
+        this.beatBoxerScene.showBag(
+          'left',
+          'speed-blue',
+          this.getRandomItemFromArray(this.negativeLevel),
+        );
+        const result = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
+        this.soundsService.playCalibrationSound('success');
         this.ttsService.tts(
           'Did you hear that? You just created music by punching the punching bag.',
         );
         this.elements.video.state = {
           data: {
-            type: 'video',
+            type: 'gif',
             title: 'Did you hear that?',
             description: 'You just created music by punching the punching bag!',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/images/beat-boxer/did-you-hear-that.png',
           },
           attributes: {
             visibility: 'visible',
@@ -223,11 +238,13 @@ export class BeatBoxerService {
         };
         await this.elements.sleep(5000);
         this.ttsService.tts('Ready?');
+        let successfulReps = 0;
+        const repsToComplete = 4;
         this.elements.score.state = {
           data: {
             label: '',
-            value: '0',
-            goal: '4',
+            value: successfulReps,
+            goal: repsToComplete,
           },
           attributes: {
             visibility: 'visible',
@@ -235,17 +252,32 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        let successfulReps = 0;
-        const repsToComplete = 4;
-        for (let i = 0; i < 4; i++) {
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomRedBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(0, 2));
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
 
+          let randomLevel = 0;
+          if (randomPosition === 'left') {
+            randomLevel = this.getRandomItemFromArray(this.negativeLevel);
+          }
+          if (randomPosition === 'right') {
+            randomLevel = this.getRandomItemFromArray(this.positiveLevel);
+          }
           this.beatBoxerScene.showBag(randomPosition, randomRedBag, randomLevel);
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomRedBag);
           if (rep.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.soundsService.playCalibrationSound('success');
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -307,15 +339,30 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        for (let i = 0; i < 4; i++) {
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        while (successfulReps < repsToComplete) {
           const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
           const randomBlueBag: BagType = this.getRandomItemFromArray(this.bagTypes.slice(2, 4));
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
-
+          let randomLevel = 0;
+          if (randomPosition === 'left') {
+            randomLevel = this.getRandomItemFromArray(this.negativeLevel);
+          }
+          if (randomPosition === 'right') {
+            randomLevel = this.getRandomItemFromArray(this.positiveLevel);
+          }
           this.beatBoxerScene.showBag(randomPosition, randomBlueBag, randomLevel);
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(randomBlueBag);
           if (rep.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.soundsService.playCalibrationSound('success');
             successfulReps += 1;
             this.elements.score.state = {
               data: {
@@ -363,14 +410,16 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition: CenterOfMotion = this.bagPositions[
-          Math.floor(Math.random() * 2)
-        ] as CenterOfMotion;
+        this.beatBoxerScene.showBag(
+          'left',
+          'speed-blue',
+          this.getRandomItemFromArray(this.negativeLevel),
+        );
+        this.beatBoxerScene.showObstacle('right', this.getRandomItemFromArray(this.positiveLevel));
 
-        this.beatBoxerScene.showBag('left', 'speed-blue', -1.5);
-        this.beatBoxerScene.showObstacle(randomPosition, 1.5);
-        const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+        const rep = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue', 'obstacle');
         if (rep.result === 'failure') {
+          this.beatBoxerScene.destroyGameObjects('speed-blue');
           this.soundsService.playCalibrationSound('error');
           this.ttsService.tts("I knew you couldn't resist it.");
           this.elements.guide.state = {
@@ -384,8 +433,8 @@ export class BeatBoxerService {
           };
           await this.elements.sleep(5000);
         } else {
-          this.beatBoxerScene.destroyExistingBags();
-          this.soundsService.playMusic(this.genre, 'trigger');
+          this.beatBoxerScene.destroyGameObjects('obstacle');
+          this.soundsService.playCalibrationSound('success');
           this.ttsService.tts('Good job!');
           this.elements.guide.state = {
             data: {
@@ -419,7 +468,7 @@ export class BeatBoxerService {
             type: 'video',
             title: 'Be the musician!',
             description: 'Try following a rhythm when you play the notes.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/beat-boxer/be-the-musician.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -447,37 +496,139 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
       },
       async (reCalibrationCount: number) => {
-        for (let i = 0; i < 6; i++) {
+        let successfulReps = 0;
+        const repsToComplete = 6;
+        while (successfulReps < repsToComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
-          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
-          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
           const shouldShowObstacle = Math.random() > 0.5;
-          // show obstacle where the bag doesn't show up
-          const randomObstacleLevel: number = this.getRandomItemFromArray(
-            this.level.filter((lvl) => lvl !== randomLevel),
+
+          if (shouldShowObstacle) {
+            if (!this.bagsAvailable.left && this.bagsAvailable.right !== 'obstacle') {
+              this.beatBoxerScene.showObstacle(
+                'left',
+                this.getRandomItemFromArray(this.negativeLevel),
+              );
+              this.bagsAvailable.left = 'obstacle';
+            }
+            if (!this.bagsAvailable.right && this.bagsAvailable.left !== 'obstacle') {
+              this.beatBoxerScene.showObstacle(
+                'right',
+                this.getRandomItemFromArray(this.positiveLevel),
+              );
+              this.bagsAvailable.right = 'obstacle';
+            }
+          }
+          let bag: BagType;
+          if (!this.bagsAvailable.left) {
+            bag = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.right || ''),
+            );
+            this.beatBoxerScene.showBag(
+              'left',
+              bag,
+              this.getRandomItemFromArray(this.negativeLevel),
+            );
+            this.bagsAvailable.left = bag;
+          }
+
+          if (!this.bagsAvailable.right) {
+            bag = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
+            );
+            this.beatBoxerScene.showBag(
+              'right',
+              bag,
+              this.getRandomItemFromArray(this.positiveLevel),
+            );
+            this.bagsAvailable.right = bag;
+          }
+          const bagTimeout = setTimeout(() => {
+            this.beatBoxerScene.destroyGameObjects(bag);
+            if (this.bagsAvailable.left === bag) this.bagsAvailable.left = undefined;
+            if (this.bagsAvailable.right === bag) this.bagsAvailable.right = undefined;
+          }, this.config.speed);
+
+          let obstacleTimeout;
+          if (this.bagsAvailable.left === 'obstacle') {
+            obstacleTimeout = setTimeout(() => {
+              if (this.bagsAvailable.left === 'obstacle') {
+                this.beatBoxerScene.destroyGameObjects('obstacle');
+                this.bagsAvailable.left = undefined;
+              }
+            }, this.config.speed);
+          }
+
+          if (this.bagsAvailable.right === 'obstacle') {
+            obstacleTimeout = setTimeout(() => {
+              if (this.bagsAvailable.right === 'obstacle') {
+                this.beatBoxerScene.destroyGameObjects('obstacle');
+                this.bagsAvailable.right = undefined;
+              }
+            }, this.config.speed);
+          }
+
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(
+            this.bagsAvailable.left,
+            this.bagsAvailable.right,
+            this.config.speed,
           );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
-          if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
-          }
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
           if (rep.result === 'success') {
-            this.beatBoxerScene.destroyExistingBags();
-            this.soundsService.playMusic(this.genre, 'trigger');
-          } else {
+            successfulReps++;
+            if (rep.bagType === this.bagsAvailable.left) {
+              this.bagsAvailable.left = undefined;
+            }
+            if (rep.bagType === this.bagsAvailable.right) {
+              this.bagsAvailable.right = undefined;
+            }
+            clearTimeout(bagTimeout);
+            this.soundsService.playCalibrationSound('success');
+          } else if (rep.result === 'failure') {
+            clearTimeout(obstacleTimeout);
+            if (rep.bagType === this.bagsAvailable.left) {
+              this.bagsAvailable.left = undefined;
+            }
+            if (rep.bagType === this.bagsAvailable.right) {
+              this.bagsAvailable.right = undefined;
+            }
             this.soundsService.playCalibrationSound('error');
+          } else {
+            this.beatBoxerScene.destroyGameObjects();
+            this.bagsAvailable.left = undefined;
+            this.bagsAvailable.right = undefined;
           }
-          await this.elements.sleep(2000);
+          await this.elements.sleep(this.config.speed);
         }
-        // Todo: confetti animation
+        await this.elements.sleep(1000);
+        this.elements.confetti.state = {
+          data: {},
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         await this.elements.sleep(3000);
+        this.elements.confetti.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
         this.ttsService.tts("Great job! looks like you're getting the hang of it.");
         this.elements.guide.state = {
           data: {
@@ -504,10 +655,10 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(3000);
-        this.soundsService.pauseActivityInstructionSound(this.genre);
         await this.checkinService.updateOnboardingStatus({
           beat_boxer: true,
         });
+        this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];
   }
@@ -515,7 +666,7 @@ export class BeatBoxerService {
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Next Activity. Beat Boxer.');
+        this.ttsService.tts('Starting Beat Boxer');
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -554,6 +705,10 @@ export class BeatBoxerService {
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts('Get ready to start.');
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         await this.elements.sleep(2000);
         this.elements.ribbon.state = {
           attributes: {
@@ -574,18 +729,6 @@ export class BeatBoxerService {
   loop() {
     return [
       async (reCalibrationCount: number) => {
-        this.elements.ribbon.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            titles: ['3', '2', '1', 'Go!'],
-            titleDuration: 1200,
-            tts: true,
-          },
-        };
-        await this.elements.sleep(7000);
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -597,12 +740,14 @@ export class BeatBoxerService {
           },
         };
         const updateElapsedTime = (elapsedTime: number) => {
+          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
           this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
         };
         this.elements.timer.state = {
           data: {
             mode: 'start',
-            duration: 60 * 60 * 1000,
+            isCountdown: true,
+            duration: this.config.gameDuration! * 1000,
             onPause: updateElapsedTime,
             onComplete: updateElapsedTime,
           },
@@ -614,32 +759,124 @@ export class BeatBoxerService {
         await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
-        this.soundsService.playMusic(this.genre, 'backtrack');
-        //Todo: reps
-        while (this.successfulReps < this.config.minCorrectReps) {
+        this.beatBoxerScene.enableMusic();
+        // while (this.successfulReps < this.config.minCorrectReps) {
+        while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          const randomPosition: CenterOfMotion = this.getRandomItemFromArray(this.bagPositions);
-          const obstaclePosition = this.getRandomItemFromArray(this.bagPositions);
-          const randomBag: BagType = this.getRandomItemFromArray(this.bagTypes);
-          const randomLevel: number = this.getRandomItemFromArray(this.level);
+
           const shouldShowObstacle = Math.random() > 0.5;
-          // show obstacle where the bag doesn't show up
-          const randomObstacleLevel: number = this.getRandomItemFromArray(
-            this.level.filter((lvl) => lvl !== randomLevel),
+
+          if (shouldShowObstacle) {
+            if (!this.bagsAvailable.left && this.bagsAvailable.right !== 'obstacle') {
+              this.beatBoxerScene.showObstacle(
+                'left',
+                this.getRandomItemFromArray(this.negativeLevel),
+              );
+              this.bagsAvailable.left = 'obstacle';
+            }
+            if (!this.bagsAvailable.right && this.bagsAvailable.left !== 'obstacle') {
+              this.beatBoxerScene.showObstacle(
+                'right',
+                this.getRandomItemFromArray(this.positiveLevel),
+              );
+              this.bagsAvailable.right = 'obstacle';
+            }
+          }
+          let bag: BagType;
+          if (!this.bagsAvailable.left) {
+            bag = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.right || ''),
+            );
+            this.beatBoxerScene.showBag(
+              'left',
+              bag,
+              this.getRandomItemFromArray(this.negativeLevel),
+            );
+            this.bagsAvailable.left = bag;
+          }
+
+          if (!this.bagsAvailable.right) {
+            bag = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
+            );
+            this.beatBoxerScene.showBag(
+              'right',
+              bag,
+              this.getRandomItemFromArray(this.positiveLevel),
+            );
+            this.bagsAvailable.right = bag;
+          }
+          const bagTimeout = setTimeout(() => {
+            this.beatBoxerScene.destroyGameObjects(bag);
+            if (this.bagsAvailable.left === bag) this.bagsAvailable.left = undefined;
+            if (this.bagsAvailable.right === bag) this.bagsAvailable.right = undefined;
+          }, this.config.speed);
+
+          console.log('left :', this.bagsAvailable.left, ' right :', this.bagsAvailable.right);
+          let obstacleTimeout;
+          if (this.bagsAvailable.left === 'obstacle') {
+            obstacleTimeout = setTimeout(() => {
+              if (this.bagsAvailable.left === 'obstacle') {
+                this.beatBoxerScene.destroyGameObjects('obstacle');
+                this.bagsAvailable.left = undefined;
+              }
+            }, this.config.speed);
+          }
+
+          if (this.bagsAvailable.right === 'obstacle') {
+            obstacleTimeout = setTimeout(() => {
+              if (this.bagsAvailable.right === 'obstacle') {
+                this.beatBoxerScene.destroyGameObjects('obstacle');
+                this.bagsAvailable.right = undefined;
+              }
+            }, this.config.speed);
+          }
+          const promptTimestamp = Date.now();
+
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(
+            this.bagsAvailable.left,
+            this.bagsAvailable.right,
+            this.config.speed,
           );
 
-          this.beatBoxerScene.showBag(randomPosition, randomBag, randomLevel);
-          if (shouldShowObstacle) {
-            this.beatBoxerScene.showObstacle(obstaclePosition, randomObstacleLevel);
-          }
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout();
+          console.log('result: ', rep);
+
+          const reactionTimestamp = Date.now();
           this.totalReps++;
           if (rep.result === 'success') {
-            this.beatBoxerScene.destroyExistingBags();
-            this.soundsService.playMusic(this.genre, 'trigger');
+            if (rep.bagType === this.bagsAvailable.left) {
+              this.bagsAvailable.left = undefined;
+            }
+            if (rep.bagType === this.bagsAvailable.right) {
+              this.bagsAvailable.right = undefined;
+            }
+            clearTimeout(bagTimeout);
+            // Todo: replace placeholder values with actual values
+            this.analytics.push({
+              prompt: {
+                type: 'bag',
+                timestamp: promptTimestamp,
+                data: {
+                  leftBag: this.bagsAvailable.left,
+                  rightBag: this.bagsAvailable.right,
+                },
+              },
+              reaction: {
+                type: 'punch',
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'success',
+                timestamp: Date.now(),
+                score: 1,
+              },
+            });
             this.successfulReps++;
+            this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
               data: {
                 label: 'Punches',
@@ -651,8 +888,36 @@ export class BeatBoxerService {
               },
             };
             this.failedReps = 0;
-          } else {
-            this.soundsService.playCalibrationSound('error');
+          } else if (rep.result === 'failure') {
+            clearTimeout(obstacleTimeout);
+            if (rep.bagType === this.bagsAvailable.left) {
+              this.bagsAvailable.left = undefined;
+            }
+            if (rep.bagType === this.bagsAvailable.right) {
+              this.bagsAvailable.right = undefined;
+            }
+            // Todo: replace placeholder values with actual values
+            this.analytics.push({
+              prompt: {
+                type: 'bag',
+                timestamp: promptTimestamp,
+                data: {
+                  leftBag: this.bagsAvailable.left,
+                  rightBag: this.bagsAvailable.right,
+                },
+              },
+              reaction: {
+                type: 'punch',
+                timestamp: reactionTimestamp,
+                startTime: Date.now(),
+                completionTime: Date.now(),
+              },
+              result: {
+                type: 'failure',
+                timestamp: Date.now(),
+                score: 0,
+              },
+            });
             this.failedReps++;
             if (this.failedReps >= 3) {
               this.elements.timer.state = {
@@ -667,10 +932,10 @@ export class BeatBoxerService {
               await this.elements.sleep(2000);
               this.elements.video.state = {
                 data: {
-                  type: 'video',
+                  type: 'gif',
                   title: 'Right hand for red',
                   description: 'Use your right hand to punch the red punching bags.',
-                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                  src: 'assets/images/beat-boxer/red-bag.png',
                 },
                 attributes: {
                   visibility: 'visible',
@@ -692,10 +957,10 @@ export class BeatBoxerService {
               await this.elements.sleep(3000);
               this.elements.video.state = {
                 data: {
-                  type: 'video',
+                  type: 'gif',
                   title: 'Left hand for blue',
                   description: 'Use your left hand to punch the blue punching bags.',
-                  src: 'assets/videos/sit-to-stand/odd_num.mp4',
+                  src: 'assets/images/beat-boxer/blue-bag.png',
                 },
                 attributes: {
                   visibility: 'visible',
@@ -715,11 +980,31 @@ export class BeatBoxerService {
               };
 
               await this.elements.sleep(3000);
+              this.elements.timer.state = {
+                data: {
+                  mode: 'resume',
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              this.failedReps = 0;
             }
+          } else {
+            this.beatBoxerScene.destroyGameObjects();
+            this.bagsAvailable.left = undefined;
+            this.bagsAvailable.right = undefined;
           }
-          await this.elements.sleep(2000);
+          await this.elements.sleep(this.config.speed);
         }
-        //Todo: confetti animation
+        this.elements.confetti.state = {
+          data: {},
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
       },
     ];
   }
@@ -728,7 +1013,9 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.enableMusic(false);
         this.gameStateService.postLoopHook();
+        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
@@ -756,9 +1043,8 @@ export class BeatBoxerService {
         };
 
         this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime();
-          const fastestTime = this.updateTimer(fastestTimeInSecs || state.game.totalDuration || 0);
+          totalDuration = this.updateTimer(this.config.gameDuration!);
+          const highScore = await this.checkinService.getHighScore('beat_boxer');
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
@@ -769,45 +1055,76 @@ export class BeatBoxerService {
               htmlStr: `
             <div class="pl-10 text-start px-14" style="padding-left: 20px;">
               <h1 class="pt-8 display-3">Beat Boxer</h1>
-              <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
-              <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
-              <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
+              <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
+              <h2 class="pt-5">High Score: ${Math.max(
+                highScore.length ? highScore[0].repsCompleted : 0,
+                this.successfulReps,
+              )} Punches</h2>
+              <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
+                totalDuration.seconds
+              } minutes</h2>
             <div>
             `,
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
+
         await this.elements.sleep(20000);
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'intro',
-            htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Next Activity</h2>
-              <h1 class="pt-6 display-4">Sound Slice</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Range of Motion and Balance</h2>
-            </div>
-            `,
-            buttons: [
-              {
-                title: 'Starting Sound Slice',
-                progressDurationMs: 5000,
-              },
-            ],
-          },
-        };
-        await this.elements.sleep(10000);
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sound Slice</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="py-2">Range of Motion and Balance</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sound Slice',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // await this.elements.sleep(12000);
+
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sound Slice</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="py-2">Range of Motion and Balance</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sound Slice',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // await this.elements.sleep(10000);
       },
     ];
   }
