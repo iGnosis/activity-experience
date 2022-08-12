@@ -729,7 +729,6 @@ export class BeatBoxerService {
   loop() {
     return [
       async (reCalibrationCount: number) => {
-        this.beatBoxerScene.enableMusic();
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -760,6 +759,7 @@ export class BeatBoxerService {
         await this.elements.sleep(5000);
       },
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.enableMusic();
         // while (this.successfulReps < this.config.minCorrectReps) {
         while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
@@ -1005,7 +1005,6 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        this.beatBoxerScene.enableMusic(false);
       },
     ];
   }
@@ -1014,6 +1013,7 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.enableMusic(false);
         this.gameStateService.postLoopHook();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
