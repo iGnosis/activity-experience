@@ -175,7 +175,7 @@ export class GameService {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      sound_slicer: this.sitToStandService,
+      // sound_slicer: this.sitToStandService,
     };
   }
 
@@ -270,8 +270,30 @@ export class GameService {
         // Start the next game...
         // find the index of the last played game
         const index = environment.order.indexOf(lastGame[0].game);
-        if (environment.order.length === index) {
+        if (environment.order.length === index + 1) {
           // Person has played the last game... start the first game.
+          this.ttsService.tts('Please raise one of your hands to close the game.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Please raise one of your hands to close the game.',
+              showIndefinitely: true,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          await this.handTrackerService.waitUntilHandRaised('any-hand');
+          this.soundsService.playCalibrationSound('success');
+          this.elements.guide.attributes = {
+            visibility: 'hidden',
+          };
+          await this.elements.sleep(1000);
+          window.parent.postMessage(
+            {
+              type: 'end-game',
+            },
+            '*',
+          );
           return {
             name: environment.order[0],
             settings: environment.settings[environment.order[0]],
