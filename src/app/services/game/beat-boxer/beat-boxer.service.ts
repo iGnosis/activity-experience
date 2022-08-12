@@ -1076,33 +1076,33 @@ export class BeatBoxerService {
             },
           };
         });
-        // call method to send user back to Patient Portal.
 
         await this.elements.sleep(20000);
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'intro',
-            htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Next Activity</h2>
-              <h1 class="pt-6 display-4">Sound Slice</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Range of Motion and Balance</h2>
-            </div>
-            `,
-            buttons: [
-              {
-                title: 'Starting Sound Slice',
-                progressDurationMs: 5000,
-              },
-            ],
-          },
-        };
-        await this.elements.sleep(12000);
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sound Slice</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="py-2">Range of Motion and Balance</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sound Slice',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // await this.elements.sleep(12000);
+
         // this.elements.banner.state = {
         //   attributes: {
         //     visibility: 'visible',
