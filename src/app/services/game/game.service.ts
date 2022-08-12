@@ -131,8 +131,10 @@ export class GameService {
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
       this.startCalibration();
+      return 'success';
     } catch (err: any) {
       console.log(err);
+      return 'failure';
     }
   }
 
