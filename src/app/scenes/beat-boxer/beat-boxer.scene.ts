@@ -231,7 +231,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       };
     }
     return {
-      wristX: 200,
+      wristX: 250,
       shoulderX: width / 2,
       maxReach: 200,
     };
@@ -387,7 +387,24 @@ export class BeatBoxerScene extends Phaser.Scene {
     const y = 0;
     if (this.results) {
       const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
-      x = wristX * level;
+      let tmpX = 0;
+      if (centerOfMotion === 'right') {
+        // pick whichever is the maximum, to reduce the chances of collision.
+        tmpX = shoulderX;
+        if (wristX > shoulderX) {
+          tmpX = wristX;
+        }
+      }
+
+      if (centerOfMotion === 'left') {
+        // pick whichever is the minimum, to reduce the chances of collision.
+        tmpX = shoulderX;
+        if (wristX < shoulderX) {
+          tmpX = wristX;
+        }
+      }
+
+      x = tmpX * level;
     }
     switch (type) {
       case 'heavy-blue':
@@ -463,7 +480,25 @@ export class BeatBoxerScene extends Phaser.Scene {
     const y = 0;
     if (this.results) {
       const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
-      x = wristX * level;
+
+      let tmpX = 0;
+      if (centerOfMotion === 'right') {
+        // pick whichever is the maximum, to reduce the chances of collision.
+        tmpX = shoulderX;
+        if (wristX > shoulderX) {
+          tmpX = wristX;
+        }
+      }
+
+      if (centerOfMotion === 'left') {
+        // pick whichever is the minimum, to reduce the chances of collision.
+        tmpX = shoulderX;
+        if (wristX < shoulderX) {
+          tmpX = wristX;
+        }
+      }
+
+      x = tmpX * level;
     }
     this.obstacle && this.obstacle.destroy(true);
     const isObstacleInBounds = this.isInBounds(x, level);

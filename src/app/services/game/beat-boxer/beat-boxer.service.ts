@@ -24,9 +24,9 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private level: number[] = [1, 1.5, -1.5, 1];
-  private positiveLevel: number[] = [1.9, 2.3, 2.5];
-  private negativeLevel: number[] = [-1.9, -2.3, -2.5];
+  private level: number[] = [2, 2.5, -2.5, -2];
+  private positiveLevel: number[] = [2, 2.5, 2.9];
+  private negativeLevel: number[] = [-2, -2.5, -2.9];
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
   private isGameComplete = false;
