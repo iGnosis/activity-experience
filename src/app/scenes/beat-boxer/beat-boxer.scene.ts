@@ -21,10 +21,12 @@ export class BeatBoxerScene extends Phaser.Scene {
     result: 'success' | 'failure';
   };
   subscription: Subscription;
+
   onCollision?: (value: {
     type: BagType | 'obstacle-top' | 'obstacle-bottom';
     result: 'success' | 'failure';
   }) => void;
+  music = false;
   enableLeft = false;
   enableRight = false;
   results?: Results;
@@ -526,6 +528,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     if (this.collisions) {
       if (this.blueGlove && this.heavyBlue) {
         this.physics.overlap(this.blueGlove, this.heavyBlue, async (_blueGlove, _heavyBlue) => {
+          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_heavyBlue);
           await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.playConfettiAnim(x, y);
@@ -543,6 +546,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.blueGlove && this.speedBlue) {
         this.physics.overlap(this.blueGlove, this.speedBlue, async (_blueGlove, _speedBlue) => {
+          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_speedBlue);
           await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.playConfettiAnim(x, y);
@@ -560,6 +564,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.redGlove && this.heavyRed) {
         this.physics.overlap(this.redGlove, this.heavyRed, async (_redGlove, _heavyRed) => {
+          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_heavyRed);
           await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.playConfettiAnim(x, y);
@@ -577,6 +582,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.redGlove && this.speedRed) {
         this.physics.overlap(this.redGlove, this.speedRed, async (_redGlove, _speedRed) => {
+          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_speedRed);
           await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.playConfettiAnim(x, y);
@@ -595,6 +601,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.redGlove && this.obstacle) {
         this.physics.overlap(this.redGlove, this.obstacle, async (_redGlove, _obstacleTop) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_obstacleTop);
           await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -613,6 +620,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.blueGlove && this.obstacle) {
         this.physics.overlap(this.blueGlove, this.obstacle, async (_blueGlove, _obstacleTop) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_obstacleTop);
           await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -633,6 +641,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       // punching blue bags with red glove or red bags with blue glove..
       if (this.blueGlove && this.heavyRed) {
         this.physics.overlap(this.blueGlove, this.heavyRed, async (_blueGlove, _heavyRed) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_heavyRed);
           await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -651,6 +660,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.blueGlove && this.speedRed) {
         this.physics.overlap(this.blueGlove, this.speedRed, async (_blueGlove, _speedRed) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_speedRed);
           await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -669,6 +679,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.redGlove && this.heavyBlue) {
         this.physics.overlap(this.redGlove, this.heavyBlue, async (_redGlove, _heavyBlue) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_heavyBlue);
           await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -687,6 +698,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.redGlove && this.speedBlue) {
         this.physics.overlap(this.redGlove, this.speedBlue, async (_redGlove, _speedBlue) => {
+          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_speedBlue);
           await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
           this.showWrongSign(x, y);
@@ -796,7 +808,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     return new Promise((resolve) => {
-      const bagHeight = bag.body.bottom - bag.body.top;
+      const bagHeight = bag.body.bottom - bag.body.top || 700;
       this.tweens.addCounter({
         from: 0,
         to: -bagHeight,
@@ -818,7 +830,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   /**
-   *
    * @param timeout timeout in `ms`. If `timeout` is not provided, it will wait until collision is detected.
    * @returns returns collision data if collision detected or else returns failure.
    */
@@ -875,24 +886,47 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.collisions = value;
   }
 
-  beatBoxerMusic: Howl;
-  beatBoxerMusicId: number;
+  successMusic: Howl;
+  successMusicId: number;
+  failureMusic: Howl;
+  failureMusicId: number;
   configureMusic() {
-    this.beatBoxerMusic = new Howl({
+    this.successMusic = new Howl({
       src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
       sprite: audioSprites.beatBoxer,
+      html5: true,
+    });
+
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
       html5: true,
     });
   }
 
   nextPianoNote = 1;
   playSuccessMusic() {
-    if (this.beatBoxerMusic && this.beatBoxerMusic.playing(this.beatBoxerMusicId)) {
-      this.beatBoxerMusic.stop();
+    if (this.successMusic && this.successMusic.playing(this.successMusicId)) {
+      this.successMusic.stop();
     }
-    if (this.beatBoxerMusic && !this.beatBoxerMusic.playing(this.beatBoxerMusicId)) {
-      this.beatBoxerMusicId = this.beatBoxerMusic.play(`note_${this.nextPianoNote}`);
+    if (this.successMusic && !this.successMusic.playing(this.successMusicId)) {
+      this.successMusicId = this.successMusic.play(`note_${this.nextPianoNote}`);
       this.nextPianoNote += 1;
     }
+  }
+
+  playFailureMusic() {
+    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusic.stop();
+    }
+    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusicId = this.failureMusic.play();
+    }
+  }
+
+  /**
+   * @param value default `true`.
+   */
+  enableMusic(value = true) {
+    this.music = value;
   }
 }

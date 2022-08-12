@@ -729,6 +729,7 @@ export class BeatBoxerService {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.enableMusic();
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -852,8 +853,6 @@ export class BeatBoxerService {
               this.bagsAvailable.right = undefined;
             }
             clearTimeout(bagTimeout);
-            // this.beatBoxerScene.destroyGameObjects();
-            this.beatBoxerScene.playSuccessMusic();
             // Todo: replace placeholder values with actual values
             this.analytics.push({
               prompt: {
@@ -897,7 +896,6 @@ export class BeatBoxerService {
             if (rep.bagType === this.bagsAvailable.right) {
               this.bagsAvailable.right = undefined;
             }
-            this.soundsService.playCalibrationSound('error');
             // Todo: replace placeholder values with actual values
             this.analytics.push({
               prompt: {
@@ -1007,6 +1005,7 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
+        this.beatBoxerScene.enableMusic(false);
       },
     ];
   }
