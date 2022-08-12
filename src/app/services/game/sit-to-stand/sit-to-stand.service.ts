@@ -87,7 +87,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
           data: {
-            titles: ['Next Activity', 'Sit, Stand, Achieve'],
+            titles: ['Starting Sit, Stand, Achieve'],
           },
         };
         await this.elements.sleep(6000);
@@ -147,14 +147,7 @@ export class SitToStandService implements ActivityBase {
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
       },
-    ];
-  }
-
-  tutorial() {
-    console.log('running tutorial');
-    return [
       async (reCalibrationCount: number) => {
-        this.soundsService.playActivityInstructionSound(this.genre);
         this.elements.guide.state = {
           data: {
             title: 'You will need a chair for this activity.',
@@ -166,7 +159,10 @@ export class SitToStandService implements ActivityBase {
           },
         };
         this.ttsService.tts('You will need a chair for this activity.');
+      },
+      async (reCalibrationCount: number) => {
         await this.elements.sleep(5000);
+        let res = { result: '' };
         this.elements.guide.state = {
           data: {
             title: 'Please sit on the chair to continue.',
@@ -178,7 +174,18 @@ export class SitToStandService implements ActivityBase {
           },
         };
         this.ttsService.tts('Please sit on the chair to continue.');
-        const res = await this.sit2StandService.waitForClassChangeOrTimeOut('sit');
+        while (res.result !== 'success') {
+          res = await this.sit2StandService.waitForClassChangeOrTimeOut('sit');
+        }
+      },
+    ];
+  }
+
+  tutorial() {
+    console.log('running tutorial');
+    return [
+      async (reCalibrationCount: number) => {
+        this.soundsService.playActivityInstructionSound(this.genre);
         this.elements.guide.state = {
           data: {
             title: "Great, let's begin.",

@@ -112,7 +112,6 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
-        await this.elements.sleep(3000);
         this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {
@@ -667,7 +666,7 @@ export class BeatBoxerService {
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Next Activity. Beat Boxer.');
+        this.ttsService.tts('Starting Beat Boxer');
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
