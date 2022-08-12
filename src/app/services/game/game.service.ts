@@ -310,8 +310,7 @@ export class GameService {
   }
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
-    const allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    // Todo: uncomment this to enable the tutorial
+    let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.checkinService.getOnboardingStatus();
     if (
       onboardingStatus &&
@@ -319,9 +318,9 @@ export class GameService {
       onboardingStatus[0].onboardingStatus &&
       onboardingStatus[0].onboardingStatus[nextGame]
     ) {
-      allStages.splice(1, 1);
+      allStages = allStages.filter((stage) => stage !== 'tutorial');
     }
-    return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
+    return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
   async startGame() {
