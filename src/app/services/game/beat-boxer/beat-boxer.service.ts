@@ -24,8 +24,8 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private positiveLevel: number[] = [2, 2.5, 2.9];
-  private negativeLevel: number[] = [-2, -2.5, -2.9];
+  private positiveLevel: number[] = [1.2, 1.35, 1.4];
+  private negativeLevel: number[] = [0.45, 0.65, 0.7]; // [0.45, 0.65, ] 0.6 left most -> 0.9
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
   private isGameComplete = false;
@@ -112,6 +112,11 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
+        // this.beatBoxerScene.showBag(
+        //   'left',
+        //   'speed-blue',
+        //   this.getRandomItemFromArray(this.negativeLevel),
+        // );
         this.ttsService.tts("Raise your left hand when you're ready to begin.");
         this.elements.guide.state = {
           data: {

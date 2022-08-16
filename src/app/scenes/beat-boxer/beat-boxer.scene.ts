@@ -360,12 +360,14 @@ export class BeatBoxerScene extends Phaser.Scene {
     const bagWidth = 160;
 
     if (point > width || point + bagWidth > width) {
+      console.log('Bag out of bounds - right');
       console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: width - bagWidth - 16,
       };
     } else if (point < 0 || point - bagWidth < 0) {
+      console.log('Bag out of bounds - left');
       console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
