@@ -80,6 +80,18 @@ export class SitToStandService implements ActivityBase {
   welcome() {
     console.log('running welcome');
     return [
+      // test toast element
+      async (reCalibrationCount: number) => {
+        this.elements.toast.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            body: 'Hello. Testing toast body.',
+          },
+        };
+      },
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
           attributes: {

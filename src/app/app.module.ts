@@ -36,6 +36,7 @@ import { SafeHtmlPipe } from './pipes/safe-html.pipe';
 import { VideoElementComponent } from './widgets/elements/video/video.component';
 import { SafePipe } from 'src/pipes/safe/safe.pipe';
 import { preferenceReducer } from './store/reducers/preference.reducer';
+import { ToastComponent } from './widgets/elements/toast/toast.component';
 
 export let AppInjector: Injector;
 
@@ -45,6 +46,7 @@ export let AppInjector: Injector;
     WelcomeComponent,
     SessionComponent,
     GuideComponent,
+    ToastComponent,
     ConfettiComponent,
     SpotlightComponent,
     VideoElementComponent,
