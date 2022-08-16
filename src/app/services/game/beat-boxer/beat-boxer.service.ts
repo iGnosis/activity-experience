@@ -206,13 +206,13 @@ export class BeatBoxerService {
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts(
-          'Did you hear that? You just created music by punching the punching bag.',
+          'Did you hear that? You just created sound by punching the punching bag.',
         );
         this.elements.video.state = {
           data: {
             type: 'gif',
             title: 'Did you hear that?',
-            description: 'You just created music by punching the punching bag!',
+            description: 'You just created sound by punching the punching bag!',
             src: 'assets/images/beat-boxer/did-you-hear-that.png',
           },
           attributes: {
