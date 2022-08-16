@@ -1065,6 +1065,16 @@ export type ToastElementState = {
    * Set toast's body value.
    */
   body?: string;
+
+  /**
+   * Set toast's header value.
+   */
+  header?: string;
+
+  /**
+   * Set toast's duration value in (ms).
+   */
+  delay?: number;
 };
 
 export type PromptPosition = 'center' | 'top-right';

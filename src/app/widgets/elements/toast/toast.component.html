@@ -1,15 +1,26 @@
-<!-- <div>
-  <h6>Body only</h6>
-  <ngb-toast [autohide]="false">
-    I am a simple static toast.
-  </ngb-toast>
+<div aria-live="polite" aria-atomic="true" style="position: relative; min-height: 200px;">
+  <div class="toast" style="position: absolute; top: 0; right: 0;">
 
-  <h6 class="mt-4">With a text header</h6>
-  <ngb-toast *ngIf="show" header="Hello" [autohide]="false" (hidden)="show=false">
-    I am a simple static toast with a header.
-  </ngb-toast>
-</div> -->
+    <div class="toast-body">
+      <div class="row">
+        <div class="col-lg-2 my-auto">
+          <span class="info">
+            <i class="bi bi-info-circle-fill"></i>
+          </span>
+        </div>
+        <div class="col-lg-8">
+          <p class="header-text">{{ state.data.header }}</p>
+          <p class="body-text">{{ state.data.body }}</p>
+        </div>
+        <div class="col-lg-2 my-auto">
+          <a [routerLink]="" (click)="closeToast()">
+            <span class="close-btn">
+              <i class="bi bi-x-lg"></i>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
 
-<div>
-  <h1>Toast element works!</h1>
+  </div>
 </div>

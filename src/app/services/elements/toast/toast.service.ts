@@ -12,7 +12,10 @@ export class ToastService extends GameElement<ToastElementState, object> {
     super(calibrationService);
     this._subject = new Subject<{ data: ToastElementState; attributes: ElementAttributes }>();
     this._state = {
-      data: {},
+      data: {
+        body: '',
+        header: '',
+      },
       attributes: {},
     };
   }
