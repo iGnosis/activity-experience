@@ -9,6 +9,7 @@ import { RibbonService } from './ribbon/ribbon.service';
 import { ScoreService } from './score/score.service';
 import { TimeoutService } from './timeout/timeout.service';
 import { TimerService } from './timer/timer.service';
+import { ToastService } from './toast/toast.service';
 import { VideoService } from './video/video.service';
 
 @Injectable({
@@ -26,6 +27,7 @@ export class ElementsService {
     public banner: BannerService,
     public guide: GuideService,
     public confetti: ConfettiService,
+    public toast: ToastService,
   ) {}
 
   async sleep(timeout: number) {
@@ -48,6 +50,7 @@ export class ElementsService {
       banner: this.banner.subject,
       guide: this.guide.subject,
       confetti: this.confetti.subject,
+      toast: this.toast.subject,
     };
   }
 
@@ -63,6 +66,7 @@ export class ElementsService {
       banner: this.banner.state,
       guide: this.guide.state,
       confetti: this.confetti.state,
+      toast: this.toast.state,
     };
   }
 }
