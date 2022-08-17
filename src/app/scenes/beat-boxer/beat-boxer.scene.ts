@@ -530,9 +530,9 @@ export class BeatBoxerScene extends Phaser.Scene {
     if (this.collisions) {
       if (this.blueGlove && this.heavyBlue) {
         this.physics.overlap(this.blueGlove, this.heavyBlue, async (_blueGlove, _heavyBlue) => {
-          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_heavyBlue);
           await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playSuccessMusic();
           this.playConfettiAnim(x, y);
           this.collisionDetected = {
             bagType: 'heavy-blue',
@@ -548,9 +548,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.blueGlove && this.speedBlue) {
         this.physics.overlap(this.blueGlove, this.speedBlue, async (_blueGlove, _speedBlue) => {
-          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_speedBlue);
           await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playSuccessMusic();
           this.playConfettiAnim(x, y);
           this.collisionDetected = {
             bagType: 'speed-blue',
@@ -566,9 +566,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.redGlove && this.heavyRed) {
         this.physics.overlap(this.redGlove, this.heavyRed, async (_redGlove, _heavyRed) => {
-          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_heavyRed);
           await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playSuccessMusic();
           this.playConfettiAnim(x, y);
           this.collisionDetected = {
             bagType: 'heavy-red',
@@ -584,9 +584,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       if (this.redGlove && this.speedRed) {
         this.physics.overlap(this.redGlove, this.speedRed, async (_redGlove, _speedRed) => {
-          this.music && this.playSuccessMusic();
           const [x, y] = this.getCenter(_speedRed);
           await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playSuccessMusic();
           this.playConfettiAnim(x, y);
           this.collisionDetected = {
             bagType: 'speed-red',
@@ -603,9 +603,9 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.redGlove && this.obstacle) {
         this.physics.overlap(this.redGlove, this.obstacle, async (_redGlove, _obstacleTop) => {
-          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_obstacleTop);
           await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playFailureMusic();
           this.showWrongSign(x, y);
           this.collisionDetected = {
             bagType: 'obstacle',
@@ -622,9 +622,9 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.blueGlove && this.obstacle) {
         this.physics.overlap(this.blueGlove, this.obstacle, async (_blueGlove, _obstacleTop) => {
-          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_obstacleTop);
           await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playFailureMusic();
           this.showWrongSign(x, y);
           this.collisionDetected = {
             bagType: 'obstacle',
@@ -643,9 +643,9 @@ export class BeatBoxerScene extends Phaser.Scene {
       // punching blue bags with red glove or red bags with blue glove..
       if (this.blueGlove && this.heavyRed) {
         this.physics.overlap(this.blueGlove, this.heavyRed, async (_blueGlove, _heavyRed) => {
-          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_heavyRed);
           await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playFailureMusic();
           this.showWrongSign(x, y);
           this.collisionDetected = {
             bagType: 'heavy-red',
@@ -662,9 +662,9 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.blueGlove && this.speedRed) {
         this.physics.overlap(this.blueGlove, this.speedRed, async (_blueGlove, _speedRed) => {
-          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_speedRed);
           await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playFailureMusic();
           this.showWrongSign(x, y);
           this.collisionDetected = {
             bagType: 'speed-red',
@@ -681,9 +681,9 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       if (this.redGlove && this.heavyBlue) {
         this.physics.overlap(this.redGlove, this.heavyBlue, async (_redGlove, _heavyBlue) => {
-          this.music && this.playFailureMusic();
           const [x, y] = this.getCenter(_heavyBlue);
           await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
+          this.music && this.playFailureMusic();
           this.showWrongSign(x, y);
           this.collisionDetected = {
             bagType: 'heavy-blue',
@@ -911,6 +911,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       this.successMusic.stop();
     }
     if (this.successMusic && !this.successMusic.playing(this.successMusicId)) {
+      console.log('playing piano note, ', this.nextPianoNote);
       this.successMusicId = this.successMusic.play(`note_${this.nextPianoNote}`);
       this.nextPianoNote += 1;
     }

@@ -1,0 +1,24 @@
+@import '../../../variables';
+
+.info {
+  color: $primary;
+  font-size: 32px;
+}
+
+.close-btn {
+  font-size: 18px;
+}
+
+.toast-body {
+  background-color: #fff;
+
+  .header-text {
+    margin-bottom: 2px;
+    color: $primary;
+    font-weight: bold;
+  }
+
+  .body-text {
+    color: $primary;
+  }
+}

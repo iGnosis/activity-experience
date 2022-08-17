@@ -737,7 +737,7 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_slicer';
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
 export interface ActivityConfiguration {
   configuration: {
     /**
@@ -1060,6 +1060,23 @@ export type ConfettiElementState = {
   duration?: number;
 };
 
+export type ToastElementState = {
+  /**
+   * Set toast's body value.
+   */
+  body?: string;
+
+  /**
+   * Set toast's header value.
+   */
+  header?: string;
+
+  /**
+   * Set toast's duration value in (ms).
+   */
+  delay?: number;
+};
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -1149,6 +1166,7 @@ export type ElementsState = {
   banner: { data: BannerElementState; attributes: ElementAttributes };
   guide: { data: GuideElementState; attributes: ElementAttributes };
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
+  toast: { data: ToastElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1162,6 +1180,7 @@ export type ElementsObservables = {
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
   confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
+  toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
