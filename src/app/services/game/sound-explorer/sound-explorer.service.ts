@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { GameState } from 'src/app/types/pointmotion';
+import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -15,6 +15,7 @@ import { game } from 'src/app/store/actions/game.actions';
   providedIn: 'root',
 })
 export class SoundExplorerService {
+  private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private config = {
     gameDuration: environment.settings['sound_explorer'].configuration.gameDuration,
@@ -28,6 +29,7 @@ export class SoundExplorerService {
   constructor(
     private store: Store<{
       game: GameState;
+      preference: PreferenceState;
     }>,
     private elements: ElementsService,
     private gameStateService: GameStateService,
@@ -49,6 +51,16 @@ export class SoundExplorerService {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+    this.store
+      .select((state) => state.preference)
+      .subscribe((preference) => {
+        if (preference.genre && this.genre !== preference.genre) {
+          this.genre = preference.genre;
+          this.soundsService.loadMusicFiles(this.genre);
+        } else {
+          this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
+        }
+      });
   }
 
   welcome() {
@@ -78,7 +90,8 @@ export class SoundExplorerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Use your hands to interact with the shapes you see on screen.');
+        this.soundsService.playActivityInstructionSound(this.genre);
+        this.ttsService.tts('Use your hands to interact with the shapes you see on the screen.');
         this.elements.guide.state = {
           data: {
             title: 'Use your hands to interact with the shapes on screen.',
@@ -391,6 +404,7 @@ export class SoundExplorerService {
           sound_explorer: true,
         });
         await this.elements.sleep(3000);
+        this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];
   }
@@ -523,7 +537,9 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        // this.store.dispatch(game.gameCompleted());
+        this.store.dispatch(game.gameCompleted());
+        this.gameStateService.postLoopHook();
+        this.soundsService.stopGenreSound();
         this.ttsService.tts(
           `Your score is ${this.successfulReps}, time completed ${this.config
             .gameDuration!} seconds.`,
