@@ -48,7 +48,7 @@ export declare class Calibration {
 
 export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
 
-export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'both-hands' | undefined;
+export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-hands' | undefined;
 
 /**
  * We support two modes: 'full' | 'fast'.
@@ -885,11 +885,8 @@ export type Sit2StandAnalyticsDTO = {
   number: number | string;
 };
 export type BeatboxerAnalyticsDTO = {
-  bagPosition: string;
-  bagType: string;
-  level: number;
-  obstacle: boolean;
-  obstaclePosition: string;
+  leftBag: BagType | 'obstacle' | undefined;
+  rightBag: BagType | 'obstacle' | undefined;
 };
 
 export type PreferenceState = {
@@ -1063,6 +1060,23 @@ export type ConfettiElementState = {
   duration?: number;
 };
 
+export type ToastElementState = {
+  /**
+   * Set toast's body value.
+   */
+  body?: string;
+
+  /**
+   * Set toast's header value.
+   */
+  header?: string;
+
+  /**
+   * Set toast's duration value in (ms).
+   */
+  delay?: number;
+};
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -1152,6 +1166,7 @@ export type ElementsState = {
   banner: { data: BannerElementState; attributes: ElementAttributes };
   guide: { data: GuideElementState; attributes: ElementAttributes };
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
+  toast: { data: ToastElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1165,6 +1180,7 @@ export type ElementsObservables = {
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
   confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
+  toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {

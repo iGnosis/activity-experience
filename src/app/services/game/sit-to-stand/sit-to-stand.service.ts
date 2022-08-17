@@ -87,7 +87,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
           data: {
-            titles: ['Next Activity', 'Sit, Stand, Achieve'],
+            titles: ['Starting Sit, Stand, Achieve'],
           },
         };
         await this.elements.sleep(6000);
@@ -147,6 +147,37 @@ export class SitToStandService implements ActivityBase {
         await this.handTrackerService.waitUntilHandRaised('left-hand');
         this.soundsService.playCalibrationSound('success');
       },
+      async (reCalibrationCount: number) => {
+        this.elements.guide.state = {
+          data: {
+            title: 'You will need a chair for this activity.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('You will need a chair for this activity.');
+      },
+      async (reCalibrationCount: number) => {
+        await this.elements.sleep(5000);
+        let res = { result: '' };
+        this.elements.guide.state = {
+          data: {
+            title: 'Please sit on the chair to continue.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Please sit on the chair to continue.');
+        while (res.result !== 'success') {
+          res = await this.sit2StandService.waitForClassChangeOrTimeOut('sit');
+        }
+      },
     ];
   }
 
@@ -155,6 +186,18 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         this.soundsService.playActivityInstructionSound(this.genre);
+        this.elements.guide.state = {
+          data: {
+            title: "Great, let's begin.",
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("Great, let's begin.");
+        await this.elements.sleep(5000);
         this.elements.guide.state = {
           data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
@@ -919,13 +962,13 @@ export class SitToStandService implements ActivityBase {
               buttons: [
                 {
                   title: 'Next Activity',
-                  progressDurationMs: 15000,
+                  progressDurationMs: 10000,
                 },
               ],
             },
           };
         });
-        await this.elements.sleep(17000);
+        await this.elements.sleep(12000);
       },
     ];
   }

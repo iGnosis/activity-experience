@@ -74,7 +74,18 @@ export class GameService {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
       this.soundsService.stopAllAudio();
     } else if (status === 'success') {
-      this.startGame();
+      if (this.gameStatus.stage !== 'loop') this.startGame();
+      else {
+        this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
+          this.soundsService.playCalibrationSound('success');
+          if (this.elements.timer.data.mode === 'pause') {
+            this.elements.timer.data = {
+              mode: 'resume',
+            };
+          }
+          this.startGame();
+        });
+      }
     }
   }
 
@@ -120,8 +131,10 @@ export class GameService {
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
       this.startCalibration();
+      return 'success';
     } catch (err: any) {
       console.log(err);
+      return 'failure';
     }
   }
 
@@ -162,24 +175,37 @@ export class GameService {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      sound_slicer: this.sitToStandService,
+      // sound_slicer: this.sitToStandService,
     };
   }
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.pipe(debounceTime(2000)).subscribe((status: any) => {
+    this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
-        if (this.elements.timer.data.mode === 'pause') {
-          this.elements.timer.data = {
-            mode: 'resume',
+        if (this.gameStatus.stage === 'loop') {
+          this.ttsService.tts('Now I can see you again.');
+          await this.elements.sleep(3000);
+          this.ttsService.tts('Please raise one of your hands to continue.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Please raise one of your hands to continue.',
+              showIndefinitely: true,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
           };
+          await this.elements.sleep(3000);
+          this.elements.guide.attributes = {
+            visibility: 'hidden',
+          };
+          this.elements.guide.data = {
+            showIndefinitely: false,
+          };
+          this.calibrationStartTime = new Date();
         }
-        this.elements.guide.data = {
-          showIndefinitely: false,
-        };
-        this.calibrationStartTime = new Date();
       }
       if (this.calibrationStatus === 'error') {
         if (this.calibrationStartTime) this.updateCalibrationDuration();
@@ -244,8 +270,30 @@ export class GameService {
         // Start the next game...
         // find the index of the last played game
         const index = environment.order.indexOf(lastGame[0].game);
-        if (environment.order.length === index) {
+        if (environment.order.length === index + 1) {
           // Person has played the last game... start the first game.
+          this.ttsService.tts('Please raise one of your hands to close the game.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Please raise one of your hands to close the game.',
+              showIndefinitely: true,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          await this.handTrackerService.waitUntilHandRaised('any-hand');
+          this.soundsService.playCalibrationSound('success');
+          this.elements.guide.attributes = {
+            visibility: 'hidden',
+          };
+          await this.elements.sleep(1000);
+          window.parent.postMessage(
+            {
+              type: 'end-game',
+            },
+            '*',
+          );
           return {
             name: environment.order[0],
             settings: environment.settings[environment.order[0]],
@@ -262,18 +310,17 @@ export class GameService {
   }
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
-    const allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    // Todo: uncomment this to enable the tutorial
+    let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.checkinService.getOnboardingStatus();
     if (
       onboardingStatus &&
       onboardingStatus.length > 0 &&
       onboardingStatus[0].onboardingStatus &&
-      nextGame in onboardingStatus[0].onboardingStatus
+      onboardingStatus[0].onboardingStatus[nextGame]
     ) {
-      allStages.splice(1, 1);
+      allStages = allStages.filter((stage) => stage !== 'tutorial');
     }
-    return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
+    return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
   async startGame() {

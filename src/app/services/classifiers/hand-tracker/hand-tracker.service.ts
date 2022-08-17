@@ -51,7 +51,13 @@ export class HandTrackerService {
   async waitUntilHandRaised(hand: HandTrackerStatus) {
     return new Promise((resolve, _) => {
       const interval = setInterval(() => {
-        if (this.debouncedStatus === hand) {
+        if (
+          hand === 'any-hand' &&
+          ['left-hand', 'right-hand', 'both-hands'].includes(this.debouncedStatus!)
+        ) {
+          clearInterval(interval);
+          resolve({});
+        } else if (this.debouncedStatus === hand) {
           clearInterval(interval);
           resolve({});
         }
