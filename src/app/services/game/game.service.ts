@@ -255,58 +255,62 @@ export class GameService {
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
+      console.log('no game played today. returning the first game as per config.');
       return {
         name: environment.order[0],
         settings: environment.settings[environment.order[0]],
       };
-    } else {
-      // If the last game is the same as the one being currently... Return the current game.
-      if (this.gameStatus.game !== lastGame[0].game) {
-        return {
-          name: this.gameStatus.game,
-          settings: environment.settings[this.gameStatus.game],
-        };
-      } else {
-        // Start the next game...
-        // find the index of the last played game
-        const index = environment.order.indexOf(lastGame[0].game);
-        if (environment.order.length === index + 1) {
-          // Person has played the last game... start the first game.
-          this.ttsService.tts('Please raise one of your hands to close the game.');
-          this.elements.guide.state = {
-            data: {
-              title: 'Please raise one of your hands to close the game.',
-              showIndefinitely: true,
-            },
-            attributes: {
-              visibility: 'visible',
-            },
-          };
-          await this.handTrackerService.waitUntilHandRaised('any-hand');
-          this.soundsService.playCalibrationSound('success');
-          this.elements.guide.attributes = {
-            visibility: 'hidden',
-          };
-          await this.elements.sleep(1000);
-          window.parent.postMessage(
-            {
-              type: 'end-game',
-            },
-            '*',
-          );
-          return {
-            name: environment.order[0],
-            settings: environment.settings[environment.order[0]],
-          };
-        } else {
-          // Start the next game.
-          return {
-            name: environment.order[index + 1],
-            settings: environment.settings[environment.order[index + 1]],
-          };
-        }
-      }
     }
+
+    // If the last game is the same as the one being currently... Return the current game.
+    console.log(
+      'If the last game is the same as the one being currently... Return the current game.',
+    );
+    if (this.gameStatus.game !== lastGame[0].game) {
+      return {
+        name: this.gameStatus.game,
+        settings: environment.settings[this.gameStatus.game],
+      };
+    }
+
+    // Start the next game...
+    // find the index of the last played game
+    const index = environment.order.indexOf(lastGame[0].game);
+    if (environment.order.length === index + 1) {
+      // Person has played the last game... start the first game.
+      this.ttsService.tts('Please raise one of your hands to close the game.');
+      this.elements.guide.state = {
+        data: {
+          title: 'Please raise one of your hands to close the game.',
+          showIndefinitely: true,
+        },
+        attributes: {
+          visibility: 'visible',
+        },
+      };
+      await this.handTrackerService.waitUntilHandRaised('any-hand');
+      this.soundsService.playCalibrationSound('success');
+      this.elements.guide.attributes = {
+        visibility: 'hidden',
+      };
+      await this.elements.sleep(1000);
+      window.parent.postMessage(
+        {
+          type: 'end-game',
+        },
+        '*',
+      );
+      return {
+        name: environment.order[0],
+        settings: environment.settings[environment.order[0]],
+      };
+    }
+
+    // Start the next game.
+    return {
+      name: environment.order[index + 1],
+      settings: environment.settings[environment.order[index + 1]],
+    };
   }
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {

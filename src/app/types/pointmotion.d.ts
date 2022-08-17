@@ -737,7 +737,7 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_slicer';
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
 export interface ActivityConfiguration {
   configuration: {
     /**

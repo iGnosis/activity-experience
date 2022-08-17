@@ -11,7 +11,7 @@ export const environment: Environment = {
   endpoint: 'https://api.prod.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.prod.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.prod.pointmotioncontrol.com',
-  order: ['sit_stand_achieve', 'beat_boxer'],
+  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer'],
   settings: {
     sit_stand_achieve: {
       configuration: {
@@ -25,7 +25,7 @@ export const environment: Environment = {
         speed: 2500,
       },
     },
-    sound_slicer: {
+    sound_explorer: {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,
