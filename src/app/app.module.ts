@@ -36,6 +36,8 @@ import { SafeHtmlPipe } from './pipes/safe-html.pipe';
 import { VideoElementComponent } from './widgets/elements/video/video.component';
 import { SafePipe } from 'src/pipes/safe/safe.pipe';
 import { preferenceReducer } from './store/reducers/preference.reducer';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { environment } from 'src/environments/environment';
 import { ToastComponent } from './widgets/elements/toast/toast.component';
 
 export let AppInjector: Injector;
@@ -80,6 +82,10 @@ export let AppInjector: Injector;
       spotlight: spotlightReducer, // spotlight component
       announcement: announcementReducer,
       preference: preferenceReducer,
+    }),
+    StoreDevtoolsModule.instrument({
+      name: 'Activity Experience',
+      logOnly: environment.production,
     }),
     FontAwesomeModule,
     SafePipeModule,
