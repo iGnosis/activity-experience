@@ -74,8 +74,7 @@ export class GameService {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
       this.soundsService.stopAllAudio();
     } else if (status === 'success') {
-      if (this.gameStatus.stage !== 'loop') this.startGame();
-      else {
+      if (this.gameStatus.stage === 'loop') {
         this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
           this.soundsService.playCalibrationSound('success');
           if (this.elements.timer.data.mode === 'pause') {
@@ -205,6 +204,8 @@ export class GameService {
             showIndefinitely: false,
           };
           this.calibrationStartTime = new Date();
+        } else {
+          this.startGame();
         }
       }
       if (this.calibrationStatus === 'error') {
