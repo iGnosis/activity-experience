@@ -49,6 +49,9 @@ export class GameService {
     physics: {
       default: 'arcade',
       arcade: {
+        // debug: true,
+        // debugShowBody: true,
+        // debugShowVelocity: true,
         gravity: { y: 200 },
       },
     },
@@ -182,8 +185,8 @@ export class GameService {
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
-      sit_stand_achieve: this.sitToStandService,
-      beat_boxer: this.beatBoxerService,
+      sit_stand_achieve: this.soundExplorerService,
+      beat_boxer: this.soundExplorerService,
       sound_explorer: this.soundExplorerService,
     };
   }

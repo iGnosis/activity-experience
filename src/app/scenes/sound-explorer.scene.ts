@@ -72,10 +72,36 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
-  create() {}
+  create() {
+    const { width, height } = this.game.canvas;
+    this.group = this.physics.add.group({
+      collideWorldBounds: true,
+    });
 
-  override update(time: number, delta: number): void {}
+    this.physics.world.setBounds(0, 0, width, height, true, true, true, true);
 
+    this.physics.world.on('worldbounds', (_body: Phaser.Physics.Arcade.Body) => {
+      console.log(_body);
+      _body.gameObject.destroy(true);
+      console.log(this.group.getChildren().length);
+    });
+  }
+
+  override update(time: number, delta: number): void {
+    if (this.collisions) {
+      if (this.leftHand && this.group && this.group.getChildren().length >= 1) {
+        this.physics.overlap(this.leftHand, this.group, (_leftHand, _shape) => {
+          console.log('collision recorded');
+          console.log(_shape);
+          _shape.destroy(true);
+          console.log(this.group);
+          console.log(this.group.getChildren().length);
+        });
+      }
+    }
+  }
+
+  group: Phaser.Physics.Arcade.Group;
   circle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   triangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   rectangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
@@ -89,13 +115,13 @@ export class SoundExplorerScene extends Phaser.Scene {
     return Phaser.Math.Angle.WrapDegrees(Phaser.Math.DegToRad(angle));
   }
 
+  // musicType: 'note' | 'harmony' | 'chord';
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
     const shapeScale = 0.04;
 
-    const phaserAngle = this.toPhaserAngle(angle);
-
-    console.log('normalize = ', phaserAngle);
-    console.log('normalize = ', Phaser.Math.RadToDeg(phaserAngle));
+    // if (shapes.length >= 2) {
+    //   this.musicType = 'chord';
+    // }
 
     console.log(
       'shapes::',
@@ -108,36 +134,34 @@ export class SoundExplorerScene extends Phaser.Scene {
       velocity,
     );
 
-    const velocityX = velocity * Math.cos(angle);
-    const velocityY = -velocity * Math.sin(angle);
+    // const velocityX = velocity * Math.cos(angle);
+    // const velocityY = -velocity * Math.sin(angle);
     for (let i = 0; i < shapes.length; i++) {
-      // const [originX, originY] = this.getOrigin(origin);
-      // const [originX, originY] = [
-      //   Phaser.Math.Between(40, 100),
-      //   Phaser.Math.Between(this.game.canvas.height - 60, this.game.canvas.height - 20),
-      // ];
-      const [originX, originY] = [400, 400];
+      const [originX, originY] = this.getOrigin(origin);
+
       console.log('OriginPoint::x:', originX);
       console.log('OriginPoint::y:', originY);
-
-      // this.physics.add.group({
-      //   dragX: 60,
-      //   dragY: 60,
-
-      // });
 
       switch (shapes[i]) {
         case 'circle':
           this.circle = this.physics.add
             .sprite(originX, originY, TextureKeys.Circle)
             .setScale(shapeScale);
-          // this.circle.setVelocity(velocityX, velocityY);
-          this.physics.velocityFromRotation(phaserAngle, velocity, this.circle.body.velocity);
+          this.circle.body.onWorldBounds = true;
+          this.group.add(this.circle);
+
+          this.physics.velocityFromRotation(
+            Phaser.Math.DegToRad(angle),
+            velocity,
+            this.circle.body.velocity,
+          );
           break;
         case 'triangle':
           this.triangle = this.physics.add
             .sprite(originX, originY, TextureKeys.Triangle)
             .setScale(shapeScale);
+          this.triangle.body.onWorldBounds = true;
+          this.group.add(this.triangle);
           this.physics.velocityFromRotation(
             Phaser.Math.DegToRad(angle),
             velocity,
@@ -148,6 +172,8 @@ export class SoundExplorerScene extends Phaser.Scene {
           this.rectangle = this.physics.add
             .sprite(originX, originY, TextureKeys.Rectangle)
             .setScale(shapeScale);
+          this.rectangle.body.onWorldBounds = true;
+          this.group.add(this.rectangle);
           this.physics.velocityFromRotation(
             Phaser.Math.DegToRad(angle),
             velocity,
@@ -158,6 +184,8 @@ export class SoundExplorerScene extends Phaser.Scene {
           this.wrong = this.physics.add
             .sprite(originX, originY, TextureKeys.Wrong)
             .setScale(shapeScale);
+          this.wrong.body.onWorldBounds = true;
+          this.group.add(this.wrong);
           this.physics.velocityFromRotation(
             Phaser.Math.DegToRad(angle),
             velocity,
@@ -166,6 +194,8 @@ export class SoundExplorerScene extends Phaser.Scene {
           break;
       }
     }
+
+    console.log('group::children:', this.group.getChildren());
   }
 
   leftHand: Phaser.GameObjects.Arc;
@@ -180,7 +210,9 @@ export class SoundExplorerScene extends Phaser.Scene {
       const leftIndex = results.poseLandmarks[19];
       const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
 
-      this.leftHand = this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5);
+      this.leftHand = this.physics.add.existing(
+        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+      );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
@@ -188,7 +220,9 @@ export class SoundExplorerScene extends Phaser.Scene {
       const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
 
       // this.rightHand = this.add.arc(width - x * width, y * height, 25, 0, 360, false, 0xffffff, 0.5);
-      this.rightHand = this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5);
+      this.rightHand = this.physics.add.existing(
+        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+      );
     }
   }
 
@@ -202,7 +236,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       case 'bottom-right':
         return [width, height];
       case 'bottom-left':
-        return [0, Phaser.Math.Between((75 / 100) * height, height)];
+        return [50, Phaser.Math.Between((75 / 100) * height, (85 / 100) * height)];
       case 'bottom-center':
         return [width / 2, height];
       case 'top-left':
@@ -253,6 +287,10 @@ export class SoundExplorerScene extends Phaser.Scene {
           clearInterval(interval);
         }
         // if collision detected...
+        if (this.group.getChildren().length === 0) {
+          resolve({});
+          clearInterval();
+        }
       }, 300);
     });
   }
