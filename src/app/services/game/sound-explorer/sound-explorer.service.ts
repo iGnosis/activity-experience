@@ -10,7 +10,7 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
-import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -26,6 +26,22 @@ export class SoundExplorerService {
   private successfulReps = 0;
   private failedReps = 0;
   private totalReps = 0;
+  private shapes: Shape[] = ['circle', 'triangle', 'rectangle'];
+  private originsWithAngleRange: { [key in Origin]: number[] } = {
+    'bottom-right': [-180, -90],
+    'bottom-left': [-90, 0],
+    'bottom-center': [-180, 0],
+    'left-center': [-90, 90],
+    'right-center': [-270, -90],
+    'top-left': [0, 90],
+    'top-right': [-270, -180],
+  };
+  private getRandomItemFromArray = <T>(array: T[]): T => {
+    return array[Math.floor(Math.random() * array.length)];
+  };
+  private getRandomNumberBetweenRange = (...args: number[]) => {
+    return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0];
+  };
 
   constructor(
     private store: Store<{
@@ -41,6 +57,7 @@ export class SoundExplorerService {
     private soundsService: SoundsService,
     private soundExplorerScene: SoundExplorerScene,
   ) {
+    this.handTrackerService.enable();
     this.store
       .select((state) => state.game)
       .subscribe((game) => {
@@ -73,6 +90,7 @@ export class SoundExplorerService {
   welcome() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.scene.start('soundSlicer');
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -110,6 +128,17 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(5000);
+        const randomPosition = this.getRandomItemFromArray(
+          Object.keys(this.originsWithAngleRange) as Origin[],
+        );
+        this.soundExplorerScene.showShapes(
+          [this.getRandomItemFromArray(this.shapes)],
+          randomPosition,
+          this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+          500,
+        );
+        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+        console.log('rep: ', rep);
         this.ttsService.tts(
           'Did you hear that? You just created musical note by interacting with the shape.',
         );
@@ -145,7 +174,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(2500);
-        const successfulReps = 0;
+        let successfulReps = 0;
         const repsToComplete = 3;
         this.elements.score.state = {
           data: {
@@ -159,6 +188,20 @@ export class SoundExplorerService {
           },
         };
         // Todo: 3 reps with single notes
+        for (let i = 0; i < 3; i++) {
+          const randomPosition = this.getRandomItemFromArray(
+            Object.keys(this.originsWithAngleRange) as Origin[],
+          );
+          this.soundExplorerScene.showShapes(
+            [this.getRandomItemFromArray(this.shapes)],
+            randomPosition,
+            this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+            600,
+          );
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          console.log('rep: ', rep);
+          await this.elements.sleep(1000);
+        }
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
           visibility: 'hidden',
