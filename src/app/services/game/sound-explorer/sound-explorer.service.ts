@@ -11,6 +11,7 @@ import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { sampleSize as _sampleSize } from 'lodash';
 
 @Injectable({
   providedIn: 'root',
@@ -174,7 +175,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(2500);
-        let successfulReps = 0;
+        const successfulReps = 0;
         const repsToComplete = 3;
         this.elements.score.state = {
           data: {
@@ -564,13 +565,30 @@ export class SoundExplorerService {
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
         while (!this.isGameComplete) {
-          // get random origin position
-          // get random shape/s (an array of shapes)
-          // also set the multiplier = 2 if shapes are 3 or more, otherwise multiplier = 1
+          const randomSampleSize = Math.floor(Math.random() * this.shapes.length);
+          const randomShapes = _sampleSize(this.shapes, randomSampleSize);
+
+          let scoreMultiplier = 1;
+          if (randomShapes.length >= 3) {
+            // we double the score if there are more than 2 shapes.
+            scoreMultiplier = 2;
+          }
+
+          const randomPosition = this.getRandomItemFromArray(
+            Object.keys(this.originsWithAngleRange) as Origin[],
+          );
+
+          // flip a coin...
+          const showObstacle = Math.random() > 0.5;
+          this.soundExplorerScene.showShapes(
+            showObstacle ? ['wrong'] : randomShapes,
+            randomPosition,
+            this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+            500,
+          );
+          await this.soundExplorerScene.waitForCollisionOrTimeout();
           // multiply the score with multiplier.
-          // call Phaser API that'd display shapes
           // if success, calculate the score. (probably Phaser APIs should do it?)
-          // this.soundExplorerScene.showShapes(['circle', 'rectangle'], 'bottom-left', 60, 500)
         }
       },
 
