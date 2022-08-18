@@ -234,19 +234,31 @@ export class SoundExplorerScene extends Phaser.Scene {
     const { width, height } = this.game.canvas;
     switch (type) {
       case 'bottom-right':
-        return [width, height];
+        return [
+          Phaser.Math.Between((90 / 100) * width, (95 / 100) * width),
+          Phaser.Math.Between((80 / 100) * height, (95 / 100) * height),
+        ];
       case 'bottom-left':
-        return [50, Phaser.Math.Between((75 / 100) * height, (85 / 100) * height)];
+        return [
+          Phaser.Math.Between((5 / 100) * width, (15 / 100) * width),
+          Phaser.Math.Between((80 / 100) * height, (95 / 100) * height),
+        ];
       case 'bottom-center':
-        return [width / 2, height];
+        return [width / 2, Phaser.Math.Between((80 / 100) * height, (95 / 100) * height)];
       case 'top-left':
-        return [0, 0];
+        return [
+          Phaser.Math.Between((5 / 100) * width, (15 / 100) * width),
+          Phaser.Math.Between((5 / 100) * height, (15 / 100) * height),
+        ];
       case 'top-right':
-        return [width, 0];
+        return [
+          Phaser.Math.Between((80 / 100) * width, (95 / 100) * width),
+          Phaser.Math.Between((5 / 100) * height, (15 / 100) * height),
+        ];
       case 'left-center':
-        return [0, height / 2];
+        return [Phaser.Math.Between((5 / 100) * width, (15 / 100) * width), height / 2];
       case 'right-center':
-        return [width, height / 2];
+        return [Phaser.Math.Between((80 / 100) * width, (95 / 100) * width), height / 2];
     }
   }
 
