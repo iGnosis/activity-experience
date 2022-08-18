@@ -467,9 +467,11 @@ export class SoundExplorerService {
 
   loop() {
     return [
+      // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
+
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
@@ -482,12 +484,15 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(8000);
-        // Todo: Game
-        const successfulReps = 0;
+      },
+
+      // Initializes score & timer.
+      // When the timer runs out, loop() is ended.
+      async (reCalibrationCount: number) => {
         this.elements.score.state = {
           data: {
             label: 'Score',
-            value: successfulReps,
+            value: this.successfulReps,
           },
           attributes: {
             visibility: 'visible',
@@ -511,6 +516,23 @@ export class SoundExplorerService {
             reCalibrationCount,
           },
         };
+      },
+
+      // The actual meat. This function keeps runnning until the timer runs out.
+      async (reCalibrationCount: number) => {
+        while (!this.isGameComplete) {
+          // get random origin position
+          // get random shape/s (an array of shapes)
+          // also set the multiplier = 2 if shapes are 3 or more, otherwise multiplier = 1
+          // multiply the score with multiplier.
+          // call Phaser API that'd display shapes
+          // if success, calculate the score. (probably Phaser APIs should do it?)
+          // this.soundExplorerScene.showShapes(['circle', 'rectangle'], 'bottom-left', 60, 500)
+        }
+      },
+
+      // this probably should be in postLoop() ?
+      async (reCalibrationCount: number) => {
         await this.elements.sleep(5000);
         this.elements.score.attributes = {
           visibility: 'hidden',
