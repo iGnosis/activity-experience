@@ -91,10 +91,15 @@ export class SoundExplorerScene extends Phaser.Scene {
     if (this.collisions) {
       if (this.leftHand && this.group && this.group.getChildren().length >= 1) {
         this.physics.overlap(this.leftHand, this.group, (_leftHand, _shape) => {
-          console.log('collision recorded');
           console.log(_shape);
           _shape.destroy(true);
-          console.log(this.group);
+          console.log(this.group.getChildren().length);
+        });
+      }
+      if (this.rightHand && this.group && this.group.getChildren().length >= 1) {
+        this.physics.overlap(this.rightHand, this.group, (_rightHand, _shape) => {
+          console.log(_shape);
+          _shape.destroy(true);
           console.log(this.group.getChildren().length);
         });
       }
