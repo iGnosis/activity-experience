@@ -6,7 +6,9 @@ import {
   Activities,
   ActivityBase,
   ActivityConfiguration,
+  ActivityStage,
   CalibrationStatusType,
+  GameStatus,
   Genre,
   HandTrackerStatus,
 } from 'src/app/types/pointmotion';
@@ -53,9 +55,11 @@ export class GameService {
   gamesCompleted: Array<Activities> = [];
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
-  private gameStatus = {
+  calibrationStartTime: Date;
+  private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
+    game: 'sit_stand_achieve',
   };
 
   get calibrationStatus() {
@@ -70,7 +74,17 @@ export class GameService {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
       this.soundsService.stopAllAudio();
     } else if (status === 'success') {
-      this.startGame();
+      if (this.gameStatus.stage === 'loop') {
+        this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
+          this.soundsService.playCalibrationSound('success');
+          if (this.elements.timer.data.mode === 'pause') {
+            this.elements.timer.data = {
+              mode: 'resume',
+            };
+          }
+          this.startGame();
+        });
+      }
     }
   }
 
@@ -116,8 +130,10 @@ export class GameService {
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
       this.startCalibration();
+      return 'success';
     } catch (err: any) {
       console.log(err);
+      return 'failure';
     }
   }
 
@@ -158,25 +174,42 @@ export class GameService {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      sound_slicer: this.sitToStandService,
+      // sound_slicer: this.sitToStandService,
     };
   }
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.pipe(debounceTime(2000)).subscribe((status: any) => {
+    this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
-        if (this.elements.timer.data.mode === 'pause') {
-          this.elements.timer.data = {
-            mode: 'resume',
+        if (this.gameStatus.stage === 'loop') {
+          this.ttsService.tts('Now I can see you again.');
+          await this.elements.sleep(3000);
+          this.ttsService.tts('Please raise one of your hands to continue.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Please raise one of your hands to continue.',
+              showIndefinitely: true,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
           };
+          await this.elements.sleep(3000);
+          this.elements.guide.attributes = {
+            visibility: 'hidden',
+          };
+          this.elements.guide.data = {
+            showIndefinitely: false,
+          };
+          this.calibrationStartTime = new Date();
+        } else {
+          this.startGame();
         }
-        this.elements.guide.data = {
-          showIndefinitely: false,
-        };
       }
       if (this.calibrationStatus === 'error') {
+        if (this.calibrationStartTime) this.updateCalibrationDuration();
         this.elements.timer.data = {
           mode: 'pause',
         };
@@ -190,6 +223,14 @@ export class GameService {
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
     });
+  }
+
+  updateCalibrationDuration() {
+    const calibrationEndTime = new Date();
+    const timeDiff = Math.abs(calibrationEndTime.getTime() - this.calibrationStartTime.getTime());
+    const calibrationDuration = Math.ceil(timeDiff / 1000);
+    console.log('calibrationDuration: ', calibrationDuration);
+    this.store.dispatch(game.setCalibrationDuration({ calibrationDuration }));
   }
 
   updateDimensions(elm: HTMLVideoElement | HTMLCanvasElement) {
@@ -208,62 +249,92 @@ export class GameService {
   }
 
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const lastGame = await this.checkinService.getLastGame(today.toISOString());
+    // will be called in two cases...
+    // once one game is finished
+    // second when the user is calibrated (again)
+    const lastGame = await this.checkinService.getLastGame();
 
     if (!lastGame || !lastGame.length) {
-      if (this.gamesCompleted.indexOf('sit_stand_achieve') === -1) {
-        // If the person has not played sit2stand yet.
-        return {
-          name: 'sit_stand_achieve',
-          settings: environment.settings['sit_stand_achieve'],
-        };
-      } else {
-        return;
-      }
-    } else {
-      const idxOfLastGame = environment.order.indexOf(lastGame[0].game);
-
-      let nextGame;
-      if (idxOfLastGame === environment.order.length - 1) {
-        nextGame = environment.order[0];
-      } else {
-        nextGame = environment.order[idxOfLastGame + 1];
-      }
-
-      // //reset the game status to welcome screen
-      // this.gameStatus = {
-      //   stage: 'welcome',
-      //   breakpoint: 0,
-      // };
-
+      // No game played today...Play first game as per config.
+      console.log('no game played today. returning the first game as per config.');
       return {
-        name: nextGame,
-        settings: environment.settings[nextGame],
+        name: environment.order[0],
+        settings: environment.settings[environment.order[0]],
       };
     }
+
+    // If the last game is the same as the one being currently... Return the current game.
+    console.log(
+      'If the last game is the same as the one being currently... Return the current game.',
+    );
+    if (this.gameStatus.game !== lastGame[0].game) {
+      return {
+        name: this.gameStatus.game,
+        settings: environment.settings[this.gameStatus.game],
+      };
+    }
+
+    // Start the next game...
+    // find the index of the last played game
+    const index = environment.order.indexOf(lastGame[0].game);
+    if (environment.order.length === index + 1) {
+      // Person has played the last game... start the first game.
+      this.ttsService.tts('Please raise one of your hands to close the game.');
+      this.elements.guide.state = {
+        data: {
+          title: 'Please raise one of your hands to close the game.',
+          showIndefinitely: true,
+        },
+        attributes: {
+          visibility: 'visible',
+        },
+      };
+      await this.handTrackerService.waitUntilHandRaised('any-hand');
+      this.soundsService.playCalibrationSound('success');
+      this.elements.guide.attributes = {
+        visibility: 'hidden',
+      };
+      await this.elements.sleep(1000);
+      window.parent.postMessage(
+        {
+          type: 'end-game',
+        },
+        '*',
+      );
+      return {
+        name: environment.order[0],
+        settings: environment.settings[environment.order[0]],
+      };
+    }
+
+    // Start the next game.
+    return {
+      name: environment.order[index + 1],
+      settings: environment.settings[environment.order[index + 1]],
+    };
   }
 
-  async getRemainingStages(nextGame: string) {
-    const allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    // Todo: uncomment this to enable the tutorial
+  async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
+    let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.checkinService.getOnboardingStatus();
     if (
       onboardingStatus &&
       onboardingStatus.length > 0 &&
       onboardingStatus[0].onboardingStatus &&
-      nextGame in onboardingStatus[0].onboardingStatus
+      onboardingStatus[0].onboardingStatus[nextGame]
     ) {
-      allStages.splice(1, 1);
+      allStages = allStages.filter((stage) => stage !== 'tutorial');
     }
-    return allStages.splice(allStages.indexOf(this.gameStatus.stage), allStages.length);
+    return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
   }
 
   async startGame() {
     const reCalibrationCount = this.reCalibrationCount;
     let nextGame = await this.findNextGame();
-    if (!nextGame) return;
+    if (!nextGame) {
+      alert('game over');
+      return;
+    }
 
     const activity = this.getActivities()[nextGame.name];
     const remainingStages = await this.getRemainingStages(nextGame.name);
@@ -277,6 +348,9 @@ export class GameService {
           console.log(err);
         });
         if (response && response.insert_game_one) {
+          // will update the calibration duration before starting the next game
+          // Todo: update calibration duration after the game ends
+          if (this.calibrationStartTime) this.updateCalibrationDuration();
           console.log('newGame:response.insert_game_one:', response.insert_game_one);
           this.store.dispatch(game.newGame(response.insert_game_one));
         }
@@ -296,11 +370,13 @@ export class GameService {
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: this.gameStatus.breakpoint,
+            game: nextGame.name,
           };
         } else {
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: 0,
+            game: nextGame.name,
           };
         }
 
@@ -325,6 +401,11 @@ export class GameService {
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
     if (nextGame) {
+      this.gameStatus = {
+        stage: 'welcome',
+        breakpoint: 0,
+        game: nextGame.name,
+      };
       this.startGame();
     }
 
@@ -351,6 +432,7 @@ export class GameService {
     // Adding 5 seconds delay to allow the person to see the calibration box
     // Even if they are already calibrated.
     await this.sleep(5000);
+    this.calibrationStartTime = new Date();
     this.setupSubscriptions();
   }
 
@@ -370,6 +452,8 @@ export class GameService {
 
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
           if (this.reCalibrationCount !== reCalibrationCount) {
+            if (this.calibrationStartTime) this.updateCalibrationDuration();
+
             reject('Recalibration count changed');
             // return;
             throw new Error('Recalibration count changed');

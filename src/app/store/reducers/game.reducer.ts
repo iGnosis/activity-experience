@@ -42,6 +42,12 @@ const _gameReducer = createReducer(
       analytics: data.analytics,
     };
   }),
+  on(game.setCalibrationDuration, (state, data) => {
+    return {
+      ...state,
+      calibrationDuration: (state.calibrationDuration || 0) + (data.calibrationDuration || 0),
+    };
+  }),
   on(game.setTotalElapsedTime, (state, data) => {
     return {
       ...state,

@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 import { SessionComponent } from './pages/session/session.component';
 import { GuideComponent } from './widgets/elements/guide/guide.component';
+import { ConfettiComponent } from './widgets/elements/confetti/confetti.component';
 import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
 import { VideoComponent } from './widgets/video/video.component';
 import { CalibrationComponent } from './widgets/calibration/calibration.component';
@@ -35,6 +36,9 @@ import { SafeHtmlPipe } from './pipes/safe-html.pipe';
 import { VideoElementComponent } from './widgets/elements/video/video.component';
 import { SafePipe } from 'src/pipes/safe/safe.pipe';
 import { preferenceReducer } from './store/reducers/preference.reducer';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { environment } from 'src/environments/environment';
+import { ToastComponent } from './widgets/elements/toast/toast.component';
 
 export let AppInjector: Injector;
 
@@ -44,6 +48,8 @@ export let AppInjector: Injector;
     WelcomeComponent,
     SessionComponent,
     GuideComponent,
+    ToastComponent,
+    ConfettiComponent,
     SpotlightComponent,
     VideoElementComponent,
     VideoComponent,
@@ -76,6 +82,10 @@ export let AppInjector: Injector;
       spotlight: spotlightReducer, // spotlight component
       announcement: announcementReducer,
       preference: preferenceReducer,
+    }),
+    StoreDevtoolsModule.instrument({
+      name: 'Activity Experience',
+      logOnly: environment.production,
     }),
     FontAwesomeModule,
     SafePipeModule,

@@ -227,7 +227,7 @@ export class WelcomeComponent implements OnInit {
               currentActivity: response.session[0].state.currentActivity,
             }),
           );
-          if (response.session[0].state.stage !== 'postGame') {
+          if (response.session[0].state.stage !== 'postLoop') {
             this.router.navigate(['session']);
           }
         }

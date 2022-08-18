@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 import { BannerService } from './banner/banner.service';
+import { ConfettiService } from './confetti/confetti.service';
 import { GuideService } from './guide/guide.service';
 import { OverlayService } from './overlay/overlay.service';
 import { PromptService } from './prompt/prompt.service';
@@ -8,6 +9,7 @@ import { RibbonService } from './ribbon/ribbon.service';
 import { ScoreService } from './score/score.service';
 import { TimeoutService } from './timeout/timeout.service';
 import { TimerService } from './timer/timer.service';
+import { ToastService } from './toast/toast.service';
 import { VideoService } from './video/video.service';
 
 @Injectable({
@@ -24,6 +26,8 @@ export class ElementsService {
     public overlay: OverlayService,
     public banner: BannerService,
     public guide: GuideService,
+    public confetti: ConfettiService,
+    public toast: ToastService,
   ) {}
 
   async sleep(timeout: number) {
@@ -45,6 +49,8 @@ export class ElementsService {
       overlay: this.overlay.subject,
       banner: this.banner.subject,
       guide: this.guide.subject,
+      confetti: this.confetti.subject,
+      toast: this.toast.subject,
     };
   }
 
@@ -59,6 +65,8 @@ export class ElementsService {
       overlay: this.overlay.state,
       banner: this.banner.state,
       guide: this.guide.state,
+      confetti: this.confetti.state,
+      toast: this.toast.state,
     };
   }
 }

@@ -48,7 +48,7 @@ export declare class Calibration {
 
 export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
 
-export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'both-hands' | undefined;
+export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-hands' | undefined;
 
 /**
  * We support two modes: 'full' | 'fast'.
@@ -698,7 +698,7 @@ export type SessionStateField = {
   currentActivity?: ActivityState;
 };
 
-export type ActivityStage = 'welcome' | 'explain' | 'preGame' | 'game' | 'postGame';
+export type ActivityStage = 'welcome' | 'tutorial' | 'preLoop' | 'loop' | 'postLoop';
 
 export type ActivityState = {
   name?: string;
@@ -737,13 +737,17 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_slicer';
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
 export interface ActivityConfiguration {
   configuration: {
     /**
      * Number of correct reps required for an activity to end.
      */
-    minCorrectReps: number;
+    minCorrectReps?: number;
+    /**
+     * Duration for which the game should run.
+     */
+    gameDuration?: number;
     /**
      * Defines speed in milliseconds at which the activity should be run.
      */
@@ -856,11 +860,33 @@ export type DebugTaskEvent = {
 export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type AnalyticsDTO = {
-  prompt: number | string;
-  class: 'sit' | 'stand';
-  success: boolean;
+  prompt: AnalyticsPromptDTO;
+  reaction: AnalyticsReactionDTO;
+  result: AnalyticsResultDTO;
+};
+export type AnalyticsPromptDTO = {
+  type: string;
+  timestamp: number;
+  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO;
+};
+export type AnalyticsReactionDTO = {
+  type: string;
+  timestamp: number;
+  startTime: number;
+  completionTime: number;
+};
+export type AnalyticsResultDTO = {
+  type: 'success' | 'failure';
+  timestamp: number;
   score: number;
-  reactionTime: number;
+};
+// individual game data
+export type Sit2StandAnalyticsDTO = {
+  number: number | string;
+};
+export type BeatboxerAnalyticsDTO = {
+  leftBag: BagType | 'obstacle' | undefined;
+  rightBag: BagType | 'obstacle' | undefined;
 };
 
 export type PreferenceState = {
@@ -911,6 +937,10 @@ export type GameState = {
    * Patient ID of the patient playing the game.
    */
   patient?: string;
+  /**
+   * Indicates the amount of time for which the user was calibrated. (in seconds)
+   */
+  calibrationDuration?: number;
 };
 
 export type ScoreElementState = {
@@ -936,9 +966,13 @@ export type ScoreElementState = {
 export type TimerElementState = {
   /**
    * Timer can be controlled using the modes.
-   * * Note: During 'start' mode the 'duration' has to be specified.
+   * * Note: During 'start' or 'countdown' mode the 'duration' has to be specified.
    */
   mode: 'start' | 'stop' | 'pause' | 'resume';
+  /**
+   * Indicates whether the timer should count down or start from 0.
+   */
+  isCountdown?: boolean;
   /**
    * Sets the duration of the timer.
    */
@@ -1017,6 +1051,30 @@ export type GuideElementState = {
    * Bypasses titleDuration, and shows the widget indefinitely.
    */
   showIndefinitely?: boolean;
+};
+
+export type ConfettiElementState = {
+  /**
+   * Optional: Inputs a number indicating the total duration for which the confetti has to be shown.
+   */
+  duration?: number;
+};
+
+export type ToastElementState = {
+  /**
+   * Set toast's body value.
+   */
+  body?: string;
+
+  /**
+   * Set toast's header value.
+   */
+  header?: string;
+
+  /**
+   * Set toast's duration value in (ms).
+   */
+  delay?: number;
 };
 
 export type PromptPosition = 'center' | 'top-right';
@@ -1107,6 +1165,8 @@ export type ElementsState = {
   overlay: { data: OverlayElementState; attributes: ElementAttributes };
   banner: { data: BannerElementState; attributes: ElementAttributes };
   guide: { data: GuideElementState; attributes: ElementAttributes };
+  confetti: { data: ConfettiElementState; attributes: ElementAttributes };
+  toast: { data: ToastElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1119,6 +1179,8 @@ export type ElementsObservables = {
   overlay: Observable<{ data: OverlayElementState; attributes: ElementAttributes }>;
   banner: Observable<{ data: BannerElementState; attributes: ElementAttributes }>;
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
+  confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
+  toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
@@ -1159,3 +1221,9 @@ export interface ActivityBase {
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
+
+export type GameStatus = {
+  stage: ActivityStage;
+  breakpoint: number;
+  game: Activities;
+};
