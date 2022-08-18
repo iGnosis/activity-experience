@@ -20,7 +20,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
-  subscription: Subscription;
+  poseSubscription: Subscription;
 
   onCollision?: (value: {
     type: BagType | 'obstacle-top' | 'obstacle-bottom';
@@ -151,7 +151,7 @@ export class BeatBoxerScene extends Phaser.Scene {
 
   enable(): void {
     this.enabled = true;
-    this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
       if (this.blueGlove) {
         this.blueGlove.destroy(true);
@@ -161,6 +161,11 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
       this.drawGloves(results);
     });
+  }
+
+  disable(): void {
+    this.enabled = false;
+    this.poseSubscription.unsubscribe();
   }
 
   /**
@@ -245,6 +250,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param object game object to destroy.
    */
   async destroyGameObjects(object?: BagType | 'obstacle' | 'wrong-sign') {
+    console.log('Destroy Game Objects::', object);
     switch (object) {
       case 'heavy-blue':
         if (this.heavyBlue) {
@@ -277,7 +283,6 @@ export class BeatBoxerScene extends Phaser.Scene {
         }
         break;
       default:
-        console.log('destroying all objects');
         if (this.heavyBlue) {
           await this.animateExit(this.heavyBlue);
         }
@@ -350,7 +355,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   /**
-   * @param bag the bag that has to be checked
    * @param point the x coordination of the bag position
    * @param level level of the bag
    * @returns it will return `newX` if it is out of bounds.
@@ -360,13 +364,11 @@ export class BeatBoxerScene extends Phaser.Scene {
     const bagWidth = 160;
 
     if (point > width || point + bagWidth > width) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: width - bagWidth - 16,
       };
     } else if (point < 0 || point - bagWidth < 0) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: bagWidth + 16,
@@ -384,7 +386,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
   showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
-    console.log(`position: ${centerOfMotion}, type: ${type}`);
+    console.log(`position: ${centerOfMotion}, type: ${type}, level: ${level}`);
     let x = 0;
     const y = 0;
     if (this.results) {
