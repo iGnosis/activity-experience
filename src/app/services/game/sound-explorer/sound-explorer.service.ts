@@ -10,6 +10,7 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -38,6 +39,7 @@ export class SoundExplorerService {
     private ttsService: TtsService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
+    private soundExplorerScene: SoundExplorerScene,
   ) {
     this.store
       .select((state) => state.game)
@@ -61,6 +63,11 @@ export class SoundExplorerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
+
+    this.soundExplorerScene.enable();
+    this.soundExplorerScene.enableCollisionDetection();
+    this.soundExplorerScene.enableLeftHand();
+    this.soundExplorerScene.enableRightHand();
   }
 
   welcome() {

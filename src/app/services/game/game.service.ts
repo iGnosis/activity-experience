@@ -29,6 +29,7 @@ import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { debounceTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -98,6 +99,7 @@ export class GameService {
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private beatBoxerScene: BeatBoxerScene,
+    private soundExplorerScene: SoundExplorerScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
@@ -170,7 +172,12 @@ export class GameService {
   }
 
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
+    return [
+      this.calibrationScene,
+      this.sitToStandScene,
+      this.beatBoxerScene,
+      this.soundExplorerScene,
+    ];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
