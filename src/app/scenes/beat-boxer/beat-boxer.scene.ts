@@ -5,6 +5,7 @@ import { Howl } from 'howler';
 import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { ObstacleType } from 'src/app/types/pointmotion';
 
 export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
@@ -383,7 +384,9 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param type type of the bag.. `heavy-blue` | `speed-blue` | `heavy-red` | `speed-red`.
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
-  showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
+  showBag(centerOfMotion: CenterOfMotion, type: BagType, level?: number) {
+    level = this.getRandomLevel(centerOfMotion, type);
+
     console.log(`position: ${centerOfMotion}, type: ${type}`);
     let x = 0;
     const y = 0;
@@ -479,11 +482,50 @@ export class BeatBoxerScene extends Phaser.Scene {
     ];
   }
 
+  getRandomItemFromArray = <T>(array: T[]): T => {
+    return array[Math.floor(Math.random() * array.length)];
+  };
+
+  getRandomLevel(centerOfMotion: CenterOfMotion, type: BagType | 'obstacle') {
+    const levels = {
+      // has a wide body.
+      'heavy-blue': {
+        right: [1.25, 1.35, 1.4], // right-wrist <---> right side of the screen
+        left: [0.5, 0.65, 0.7], // left side of the screen  <---> left-wrist
+      },
+      'heavy-red': {
+        right: [1.25, 1.35, 1.4], // right-wrist <---> right side of the screen
+        left: [0.5, 0.65, 0.7], // left side of the screen  <---> left-wrist
+      },
+
+      // 'speed' objects are the smallest.
+      'speed-blue': {
+        right: [1.25, 1.35, 1.4], // right-wrist <---> right side of the screen
+        left: [0.5, 0.65, 0.7], // left side of the screen  <---> left-wrist
+      },
+      'speed-red': {
+        right: [1.25, 1.35, 1.4], // right-wrist <---> right side of the screen
+        left: [0.5, 0.65, 0.7], // left side of the screen  <---> left-wrist
+      },
+
+      // has a larger body width than heavy & speed objects
+      // so we try to place them a bit far.
+      obstacle: {
+        right: [1.35, 1.4], // right-wrist <---> right side of the screen
+        left: [0.5, 0.65], // left side of the screen  <---> left-wrist]
+      },
+    };
+
+    return this.getRandomItemFromArray(levels[type][centerOfMotion]);
+  }
+
   /**
    * @param centerOfMotion Center of motion i.e. `left` or `right`.
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
-  showObstacle(centerOfMotion: CenterOfMotion, level: number) {
+  showObstacle(centerOfMotion: CenterOfMotion, level?: number) {
+    level = this.getRandomLevel(centerOfMotion, 'obstacle');
+
     const { width, height } = this.game.canvas;
     let x = 0;
     const y = 0;
