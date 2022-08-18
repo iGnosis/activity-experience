@@ -43,6 +43,17 @@ export class SoundExplorerService {
   private getRandomNumberBetweenRange = (...args: number[]) => {
     return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0];
   };
+  private drawShape = (shape: Shape) => {
+    const randomPosition = this.getRandomItemFromArray(
+      Object.keys(this.originsWithAngleRange) as Origin[],
+    );
+    this.soundExplorerScene.showShapes(
+      [shape],
+      randomPosition,
+      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+      600,
+    );
+  };
 
   constructor(
     private store: Store<{
@@ -175,7 +186,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(2500);
-        const successfulReps = 0;
+        let successfulReps = 0;
         const repsToComplete = 3;
         this.elements.score.state = {
           data: {
@@ -190,16 +201,20 @@ export class SoundExplorerService {
         };
         // Todo: 3 reps with single notes
         for (let i = 0; i < 3; i++) {
-          const randomPosition = this.getRandomItemFromArray(
-            Object.keys(this.originsWithAngleRange) as Origin[],
-          );
-          this.soundExplorerScene.showShapes(
-            [this.getRandomItemFromArray(this.shapes)],
-            randomPosition,
-            this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-            600,
-          );
+          this.drawShape(this.getRandomItemFromArray(this.shapes));
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          successfulReps++;
+          this.elements.score.state = {
+            data: {
+              label: '',
+              value: successfulReps,
+              goal: repsToComplete,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
           console.log('rep: ', rep);
           await this.elements.sleep(1000);
         }
@@ -234,7 +249,11 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(3500);
-        // Todo: 1 rep with multiple notes
+        for (let i = 0; i < 2; i++) {
+          this.drawShape(this.getRandomItemFromArray(this.shapes));
+        }
+        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+        console.log('rep: ', rep);
         this.ttsService.tts('When you play multiple notes at the same time you create a harmony.');
         this.elements.video.state = {
           data: {
@@ -268,7 +287,11 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(3500);
-        // Todo: 1 rep with 3 shapes
+        for (let i = 0; i < 3; i++) {
+          this.drawShape(this.getRandomItemFromArray(this.shapes));
+        }
+        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+        console.log('rep: ', rep);
         this.ttsService.tts(
           'When you interact with 3 or more shapes in one motion, you create a chord.',
         );
@@ -316,7 +339,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(2500);
-        const successfulReps = 0;
+        let successfulReps = 0;
         const repsToComplete = 3;
         this.elements.score.state = {
           data: {
@@ -330,6 +353,27 @@ export class SoundExplorerService {
           },
         };
         // Todo: 3 reps with chords
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            this.drawShape(this.getRandomItemFromArray(this.shapes));
+          }
+          if (i === 2) this.drawShape('wrong');
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          console.log('rep: ', rep);
+          successfulReps++;
+          this.elements.score.state = {
+            data: {
+              label: '',
+              value: successfulReps,
+              goal: repsToComplete,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(1000);
+        }
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
           visibility: 'hidden',
@@ -407,18 +451,35 @@ export class SoundExplorerService {
         };
         await this.elements.sleep(8000);
         // Todo: 30 seconds of tutorial
+        let isGameComplete = false;
+        const onComplete = () => {
+          isGameComplete = true;
+        };
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
             duration: 30 * 1000,
+            onComplete,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(5000);
+        while (!isGameComplete) {
+          for (let j = 0; j < this.getRandomNumberBetweenRange(1, 3); j++) {
+            this.drawShape(this.getRandomItemFromArray(this.shapes));
+          }
+          const shouldShowXMark = Math.random() > 0.5;
+          if (shouldShowXMark) {
+            this.drawShape('wrong');
+          }
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          console.log('rep: ', rep);
+          await this.elements.sleep(1000);
+        }
+        await this.elements.sleep(2000);
         this.elements.timer.state = {
           data: {
             mode: 'stop',
