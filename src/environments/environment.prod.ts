@@ -25,7 +25,7 @@ export const environment: Environment = {
         speed: 2500,
       },
     },
-    sound_slicer: {
+    sound_explorer: {
       configuration: {
         minCorrectReps: 10,
         speed: 5000,

@@ -90,5 +90,4 @@ export class ElementsComponent implements OnInit, OnDestroy {
       ],
     };
   }
-  updateElement() {}
 }

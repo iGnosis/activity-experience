@@ -24,8 +24,10 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private positiveLevel: number[] = [2, 2.5, 2.9];
-  private negativeLevel: number[] = [-2, -2.5, -2.9];
+  private positiveLevel = [1.35, 1.4]; // right-wrist <---> right side of the screen
+
+  // TODO: this is temporary fix, until we have levels for each of the objects.
+  private negativeLevel = [0.5]; // left side of the screen  <---> left-wrist
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
   private isGameComplete = false;
@@ -206,13 +208,13 @@ export class BeatBoxerService {
         const result = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts(
-          'Did you hear that? You just created music by punching the punching bag.',
+          'Did you hear that? You just created sound by punching the punching bag.',
         );
         this.elements.video.state = {
           data: {
             type: 'gif',
             title: 'Did you hear that?',
-            description: 'You just created music by punching the punching bag!',
+            description: 'You just created sound by punching the punching bag!',
             src: 'assets/images/beat-boxer/did-you-hear-that.png',
           },
           attributes: {
@@ -996,7 +998,7 @@ export class BeatBoxerService {
             this.bagsAvailable.left = undefined;
             this.bagsAvailable.right = undefined;
           }
-          await this.elements.sleep(this.config.speed);
+          await this.elements.sleep(1000);
         }
         this.elements.confetti.state = {
           data: {},
@@ -1093,32 +1095,7 @@ export class BeatBoxerService {
         //     `,
         //     buttons: [
         //       {
-        //         title: 'Starting Sound Slice',
-        //         progressDurationMs: 5000,
-        //       },
-        //     ],
-        //   },
-        // };
-        // await this.elements.sleep(12000);
-
-        // this.elements.banner.state = {
-        //   attributes: {
-        //     visibility: 'visible',
-        //     reCalibrationCount,
-        //   },
-        //   data: {
-        //     type: 'intro',
-        //     htmlStr: `
-        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-        //       <h1 class="pt-2">Next Activity</h2>
-        //       <h1 class="pt-6 display-4">Sound Slice</h1>
-        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-        //       <h1 class="py-2">Range of Motion and Balance</h2>
-        //     </div>
-        //     `,
-        //     buttons: [
-        //       {
-        //         title: 'Starting Sound Slice',
+        //         title: 'Starting Sound Explorer',
         //         progressDurationMs: 5000,
         //       },
         //     ],
