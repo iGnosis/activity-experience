@@ -185,8 +185,8 @@ export class GameService {
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
-      sit_stand_achieve: this.soundExplorerService,
-      beat_boxer: this.soundExplorerService,
+      sit_stand_achieve: this.sitToStandService,
+      beat_boxer: this.beatBoxerService,
       sound_explorer: this.soundExplorerService,
     };
   }
