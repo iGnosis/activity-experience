@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from '../services/pose/pose.service';
 
 export enum TextureKeys {
@@ -30,6 +30,9 @@ export class SoundExplorerScene extends Phaser.Scene {
   private enableLeft = false;
   private enableRight = false;
   private collisions = false;
+  private currentScore = 0;
+  score = new BehaviorSubject<number>(0);
+  private group: Phaser.Physics.Arcade.Group;
   constructor(private poseService: PoseService) {
     super({ key: 'soundSlicer' });
   }
@@ -60,7 +63,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   enable(): void {
     this.enabled = true;
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
-      this.results = results;
+      // this.results = results;
       // do something with the pose Results..
       if (this.leftHand) {
         this.leftHand.destroy(true);
@@ -90,37 +93,41 @@ export class SoundExplorerScene extends Phaser.Scene {
   override update(time: number, delta: number): void {
     if (this.collisions) {
       if (this.leftHand && this.group && this.group.getChildren().length >= 1) {
-        this.physics.overlap(this.leftHand, this.group, (_leftHand, _shape) => {
-          console.log(_shape);
+        this.physics.overlap(this.leftHand, this.group, (_leftHand, _shape: any) => {
+          if (!(_shape.texture.key === TextureKeys.Wrong)) {
+            this.currentScore += 1;
+            console.log('score: ', this.currentScore);
+            this.score.next(this.currentScore);
+          }
           _shape.destroy(true);
-          console.log(this.group.getChildren().length);
         });
       }
       if (this.rightHand && this.group && this.group.getChildren().length >= 1) {
-        this.physics.overlap(this.rightHand, this.group, (_rightHand, _shape) => {
-          console.log(_shape);
+        this.physics.overlap(this.rightHand, this.group, (_rightHand, _shape: any) => {
+          if (!(_shape.texture.key === TextureKeys.Wrong)) {
+            this.currentScore += 1;
+            console.log('score: ', this.currentScore);
+            this.score.next(this.currentScore);
+          }
           _shape.destroy(true);
-          console.log(this.group.getChildren().length);
         });
       }
     }
   }
 
-  group: Phaser.Physics.Arcade.Group;
   circle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   triangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   rectangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   wrong: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 
-  /**
-   * @param angle angle to be converted to phaser angle.
-   * @returns The angle in degrees calculated in clockwise positive direction (down = 90 degrees positive, right = 0 degrees positive, up = 90 degrees negative, left = +/- 180 deg)
-   */
-  toPhaserAngle(angle: number): number {
-    return Phaser.Math.Angle.WrapDegrees(Phaser.Math.DegToRad(angle));
-  }
-
   // musicType: 'note' | 'harmony' | 'chord';
+
+  /**
+   * @param shapes an array of shapes
+   * @param origin Origin point of the shapes
+   * @param angle Angle at which the shapes should be thrown
+   * @param velocity Velocity of the shapes
+   */
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
     const shapeScale = 0.04;
 
@@ -205,7 +212,10 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   leftHand: Phaser.GameObjects.Arc;
   rightHand: Phaser.GameObjects.Arc;
-  drawHands(results: Results) {
+  /**
+   * @param results Pose Results
+   */
+  drawHands(results: Results): void {
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
@@ -231,6 +241,9 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * @returns midpoint of (x1, y1) and (x2, y2).
+   */
   midPoint(x1: number, y1: number, x2: number, y2: number) {
     return [(x1 + x2) / 2, (y1 + y2) / 2];
   }
@@ -312,6 +325,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
+  // TODO: Configure Music
   configureMusic(): void {}
   playSuccessMusic(): void {}
   playFailureMusic(): void {}
