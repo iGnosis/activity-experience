@@ -886,33 +886,37 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.collisions = value;
   }
 
-  successMusic: Howl;
-  successMusicId: number;
   failureMusic: Howl;
   failureMusicId: number;
   configureMusic() {
-    this.successMusic = new Howl({
-      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
-      sprite: audioSprites.beatBoxer,
-      html5: true,
-    });
-
     this.failureMusic = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
       html5: true,
     });
   }
 
+  getDurationOfNote(note: number) {
+    return audioSprites['beatBoxer'][`note_${note}`][1];
+  }
+
   nextPianoNote = 1;
   playSuccessMusic() {
-    if (this.successMusic && this.successMusic.playing(this.successMusicId)) {
-      this.successMusic.stop();
-    }
-    if (this.successMusic && !this.successMusic.playing(this.successMusicId)) {
-      console.log('playing piano note, ', this.nextPianoNote);
-      this.successMusicId = this.successMusic.play(`note_${this.nextPianoNote}`);
-      this.nextPianoNote += 1;
-    }
+    const fadeOutDuration = 750;
+    const noteDuration = this.getDurationOfNote(this.nextPianoNote);
+    const durationBeforeFadeOut = noteDuration - fadeOutDuration;
+    // console.log('durationBeforeFadeOut:', durationBeforeFadeOut);
+    const successNote = new Howl({
+      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
+      sprite: audioSprites.beatBoxer,
+      html5: true,
+    });
+    console.log('playing piano note, ', this.nextPianoNote);
+    successNote.play(`note_${this.nextPianoNote}`);
+    successNote.volume(1);
+    setTimeout(() => {
+      successNote.fade(1, 0, fadeOutDuration);
+    }, durationBeforeFadeOut);
+    this.nextPianoNote += 1;
   }
 
   playFailureMusic() {
