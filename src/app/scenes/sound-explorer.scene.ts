@@ -4,12 +4,19 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from '../services/pose/pose.service';
 
 export enum TextureKeys {
-  Circle = 'circle_shape',
-  Triangle = 'triangle_shape',
-  Rectangle = 'rectangle_shape',
-  Wrong = 'wrong_shape',
+  CIRCLE = 'circle_shape',
+  TRIANGLE = 'triangle_shape',
+  RECTANGLE = 'rectangle_shape',
+  WRONG = 'wrong_shape',
+  CONFETTI = 'confetti',
+  CONCENTRIC_CIRCLES = 'concentric_circles',
+  BURST = 'burst',
 }
-
+export enum AnimationKeys {
+  CONFETTI_ANIM = 'confetti_anim',
+  CIRCLES_ANIM = 'circles_anim',
+  BURST_ANIM = 'burst_anim',
+}
 export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong';
 export type Origin =
   | 'bottom-right'
@@ -19,6 +26,12 @@ export type Origin =
   | 'right-center'
   | 'top-left'
   | 'top-right';
+export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
+  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
+  texture?: {
+    key: string;
+  };
+};
 
 @Injectable({
   providedIn: 'root',
@@ -33,6 +46,31 @@ export class SoundExplorerScene extends Phaser.Scene {
   private currentScore = 0;
   score = new BehaviorSubject<number>(0);
   private group: Phaser.Physics.Arcade.Group;
+  private leftHand: Phaser.GameObjects.Arc;
+  private rightHand: Phaser.GameObjects.Arc;
+
+  private collisionCallback = (
+    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _shape: GameObjectWithBodyAndTexture,
+  ) => {
+    const [x, y] = this.getCenter(_shape);
+
+    // updating the score, if the shape is not X shape.
+    if (!(_shape.texture && _shape.texture.key === TextureKeys.WRONG)) {
+      this.currentScore += 1;
+      console.log('score: ', this.currentScore);
+      this.score.next(this.currentScore);
+
+      this.add.sprite(x, y, TextureKeys.CONFETTI).play(AnimationKeys.CONFETTI_ANIM);
+      this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
+      // TODO: Add Success Music
+    } else {
+      // TODO: Add failure music
+      this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
+    }
+    _shape.destroy(true);
+  };
+
   constructor(private poseService: PoseService) {
     super({ key: 'soundSlicer' });
   }
@@ -40,31 +78,48 @@ export class SoundExplorerScene extends Phaser.Scene {
   preload() {
     // preloading design assets
     this.load.image({
-      key: TextureKeys.Circle,
+      key: TextureKeys.CIRCLE,
       url: 'assets/images/sound-slicer/Circle shape.png',
     });
 
     this.load.image({
-      key: TextureKeys.Rectangle,
+      key: TextureKeys.RECTANGLE,
       url: 'assets/images/sound-slicer/Rectangle shape.png',
     });
 
     this.load.image({
-      key: TextureKeys.Triangle,
+      key: TextureKeys.TRIANGLE,
       url: 'assets/images/sound-slicer/Triangle shape.png',
     });
 
     this.load.image({
-      key: TextureKeys.Wrong,
+      key: TextureKeys.WRONG,
       url: 'assets/images/sound-slicer/Wrong shape.png',
     });
+
+    // loading animation assets
+    this.load.atlas(
+      TextureKeys.CONFETTI,
+      'assets/images/beat-boxer/confetti.png',
+      'assets/images/beat-boxer/confetti.json',
+    );
+
+    this.load.atlas(
+      TextureKeys.CONCENTRIC_CIRCLES,
+      'assets/images/sound-slicer/circles.png',
+      'assets/images/sound-slicer/circles.json',
+    );
+    this.load.atlas(
+      TextureKeys.BURST,
+      'assets/images/sound-slicer/burst.png',
+      'assets/images/sound-slicer/burst.json',
+    );
   }
 
   enable(): void {
     this.enabled = true;
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       // this.results = results;
-      // do something with the pose Results..
       if (this.leftHand) {
         this.leftHand.destroy(true);
       }
@@ -77,48 +132,95 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.game.canvas;
+
+    this.anims.create({
+      key: AnimationKeys.CONFETTI_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.CONFETTI, {
+        start: 1,
+        end: 30,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      repeat: 0,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.CIRCLES_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.CONCENTRIC_CIRCLES, {
+        start: 4,
+        end: 36,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      repeat: 0,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.BURST_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.BURST, {
+        start: 7,
+        end: 43,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      repeat: 0,
+      hideOnComplete: true,
+    });
+
+    // creating a group.
     this.group = this.physics.add.group({
       collideWorldBounds: true,
     });
 
+    // setting world bounds and enabling collisions.
     this.physics.world.setBounds(0, 0, width, height, true, true, true, true);
 
+    // event listener for 'worldbounds', triggers when any gameObject with collideWorldBounds set to true is collided with world bounds.
     this.physics.world.on('worldbounds', (_body: Phaser.Physics.Arcade.Body) => {
       console.log(_body);
       _body.gameObject.destroy(true);
-      console.log(this.group.getChildren().length);
+      console.log(this.group.getLength());
     });
   }
 
   override update(time: number, delta: number): void {
     if (this.collisions) {
-      if (this.leftHand && this.group && this.group.getChildren().length >= 1) {
-        this.physics.overlap(this.leftHand, this.group, (_leftHand, _shape: any) => {
-          if (!(_shape.texture.key === TextureKeys.Wrong)) {
-            this.currentScore += 1;
-            console.log('score: ', this.currentScore);
-            this.score.next(this.currentScore);
-          }
-          _shape.destroy(true);
-        });
+      if (this.leftHand && this.group && this.group.getLength() >= 1) {
+        this.physics.overlap(this.leftHand, this.group, this.collisionCallback);
       }
-      if (this.rightHand && this.group && this.group.getChildren().length >= 1) {
-        this.physics.overlap(this.rightHand, this.group, (_rightHand, _shape: any) => {
-          if (!(_shape.texture.key === TextureKeys.Wrong)) {
-            this.currentScore += 1;
-            console.log('score: ', this.currentScore);
-            this.score.next(this.currentScore);
-          }
-          _shape.destroy(true);
-        });
+      if (this.rightHand && this.group && this.group.getLength() >= 1) {
+        this.physics.overlap(this.rightHand, this.group, this.collisionCallback);
       }
     }
   }
 
-  circle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  triangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  rectangle: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  wrong: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
+    return [
+      (gameObject.body.right + gameObject.body.left) / 2,
+      (gameObject.body.top + gameObject.body.bottom) / 2,
+    ];
+  }
+
+  getTextureKey(shape: Shape): string {
+    switch (shape) {
+      case 'circle':
+        return TextureKeys.CIRCLE;
+      case 'rectangle':
+        return TextureKeys.RECTANGLE;
+      case 'triangle':
+        return TextureKeys.TRIANGLE;
+      case 'wrong':
+        return TextureKeys.WRONG;
+    }
+  }
 
   // musicType: 'note' | 'harmony' | 'chord';
 
@@ -135,83 +237,29 @@ export class SoundExplorerScene extends Phaser.Scene {
     //   this.musicType = 'chord';
     // }
 
-    console.log(
-      'shapes::',
-      shapes,
-      ' Origin::',
-      origin,
-      ' angle::',
-      angle,
-      ' velocity::',
-      velocity,
-    );
-
     // const velocityX = velocity * Math.cos(angle);
     // const velocityY = -velocity * Math.sin(angle);
-    for (let i = 0; i < shapes.length; i++) {
+    for (const shape of shapes) {
       const [originX, originY] = this.getOrigin(origin);
+      const textureKey = this.getTextureKey(shape);
 
       console.log('OriginPoint::x:', originX);
       console.log('OriginPoint::y:', originY);
 
-      switch (shapes[i]) {
-        case 'circle':
-          this.circle = this.physics.add
-            .sprite(originX, originY, TextureKeys.Circle)
-            .setScale(shapeScale);
-          this.circle.body.onWorldBounds = true;
-          this.group.add(this.circle);
-
-          this.physics.velocityFromRotation(
-            Phaser.Math.DegToRad(angle),
-            velocity,
-            this.circle.body.velocity,
-          );
-          break;
-        case 'triangle':
-          this.triangle = this.physics.add
-            .sprite(originX, originY, TextureKeys.Triangle)
-            .setScale(shapeScale);
-          this.triangle.body.onWorldBounds = true;
-          this.group.add(this.triangle);
-          this.physics.velocityFromRotation(
-            Phaser.Math.DegToRad(angle),
-            velocity,
-            this.triangle.body.velocity,
-          );
-          break;
-        case 'rectangle':
-          this.rectangle = this.physics.add
-            .sprite(originX, originY, TextureKeys.Rectangle)
-            .setScale(shapeScale);
-          this.rectangle.body.onWorldBounds = true;
-          this.group.add(this.rectangle);
-          this.physics.velocityFromRotation(
-            Phaser.Math.DegToRad(angle),
-            velocity,
-            this.rectangle.body.velocity,
-          );
-          break;
-        case 'wrong':
-          this.wrong = this.physics.add
-            .sprite(originX, originY, TextureKeys.Wrong)
-            .setScale(shapeScale);
-          this.wrong.body.onWorldBounds = true;
-          this.group.add(this.wrong);
-          this.physics.velocityFromRotation(
-            Phaser.Math.DegToRad(angle),
-            velocity,
-            this.wrong.body.velocity,
-          );
-          break;
-      }
+      const gameObject = this.physics.add.sprite(originX, originY, textureKey).setScale(shapeScale);
+      // console.log('showShapes::gameObject:', gameObject);
+      gameObject.body.onWorldBounds = true;
+      this.group.add(gameObject);
+      this.physics.velocityFromRotation(
+        Phaser.Math.DegToRad(angle),
+        velocity,
+        gameObject.body.velocity,
+      );
     }
 
     console.log('group::children:', this.group.getChildren());
   }
 
-  leftHand: Phaser.GameObjects.Arc;
-  rightHand: Phaser.GameObjects.Arc;
   /**
    * @param results Pose Results
    */
@@ -250,6 +298,7 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   getOrigin(type: Origin): [number, number] {
     const { width, height } = this.game.canvas;
+    // adding some randomness so that the shapes won't overlap completely.
     switch (type) {
       case 'bottom-right':
         return [
@@ -317,7 +366,7 @@ export class SoundExplorerScene extends Phaser.Scene {
           clearInterval(interval);
         }
         // if collision detected...
-        if (this.group.getChildren().length === 0) {
+        if (this.group.getLength() === 0) {
           resolve({});
           clearInterval();
         }
