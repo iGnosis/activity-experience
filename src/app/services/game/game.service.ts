@@ -28,6 +28,8 @@ import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { debounceTime } from 'rxjs';
+import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -47,6 +49,9 @@ export class GameService {
     physics: {
       default: 'arcade',
       arcade: {
+        // debug: true,
+        // debugShowBody: true,
+        // debugShowVelocity: true,
         gravity: { y: 200 },
       },
     },
@@ -96,9 +101,11 @@ export class GameService {
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private beatBoxerScene: BeatBoxerScene,
+    private soundExplorerScene: SoundExplorerScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
+    private soundExplorerService: SoundExplorerService,
     private poseService: PoseService,
     private store: Store,
     private gameStateService: GameStateService,
@@ -167,14 +174,19 @@ export class GameService {
   }
 
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
+    return [
+      this.calibrationScene,
+      this.sitToStandScene,
+      this.beatBoxerScene,
+      this.soundExplorerScene,
+    ];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      // sound_slicer: this.sitToStandService,
+      sound_explorer: this.soundExplorerService,
     };
   }
 

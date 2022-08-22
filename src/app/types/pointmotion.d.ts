@@ -1,6 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { Shape } from '../scenes/sound-explorer.scene';
 
 declare global {
   interface Window {
@@ -867,7 +868,7 @@ export type AnalyticsDTO = {
 export type AnalyticsPromptDTO = {
   type: string;
   timestamp: number;
-  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO;
+  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;
 };
 export type AnalyticsReactionDTO = {
   type: string;
@@ -887,6 +888,9 @@ export type Sit2StandAnalyticsDTO = {
 export type BeatboxerAnalyticsDTO = {
   leftBag: BagType | 'obstacle' | undefined;
   rightBag: BagType | 'obstacle' | undefined;
+};
+export type SoundExplorerAnalyticsDTO = {
+  shapes: Shape[];
 };
 
 export type PreferenceState = {

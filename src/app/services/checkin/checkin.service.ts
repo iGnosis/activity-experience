@@ -178,4 +178,27 @@ export class CheckinService {
       console.log(err);
     }
   }
+
+  getDurationForTimer(totalSeconds: number): {
+    minutes: string;
+    seconds: string;
+  } {
+    let minutes = 0;
+    if (totalSeconds >= 60) {
+      minutes = Math.floor(totalSeconds / 60);
+      totalSeconds -= 60 * minutes;
+    }
+    let time = { minutes: '0', seconds: '00' };
+    time = {
+      minutes:
+        minutes < 10
+          ? (time.minutes = '0' + minutes.toString())
+          : (time.minutes = minutes.toString()),
+      seconds:
+        totalSeconds < 10
+          ? (time.seconds = '0' + totalSeconds.toString())
+          : (time.seconds = totalSeconds.toString()),
+    };
+    return time;
+  }
 }
