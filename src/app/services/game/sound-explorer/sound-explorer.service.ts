@@ -12,7 +12,7 @@ import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -26,17 +26,16 @@ export class SoundExplorerService {
   };
   private isGameComplete = false;
   private successfulReps = 0;
-  private failedReps = 0;
-  private totalReps = 0;
+  private pointsGained = 0;
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle'];
   private originsWithAngleRange: { [key in Origin]: number[] } = {
-    'bottom-right': [-170, -100],
-    'bottom-left': [-80, -10],
-    'bottom-center': [-170, -10],
-    'left-center': [-80, 80],
-    'right-center': [-260, -100],
-    'top-left': [10, 80],
-    'top-right': [-260, -190],
+    'bottom-right': [-140, -110],
+    'bottom-left': [-80, -50],
+    'bottom-center': [-150, -30],
+    'left-center': [-60, 10],
+    'right-center': [-190, -130],
+    'top-left': [10, 60],
+    'top-right': [-240, -190],
   };
   private analytics: AnalyticsDTO[] = [];
   private scoreSubscription: Subscription;
@@ -143,17 +142,25 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(5000);
-        const randomPosition = this.getRandomItemFromArray(
-          Object.keys(this.originsWithAngleRange) as Origin[],
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
         );
-        this.soundExplorerScene.showShapes(
-          [this.getRandomItemFromArray(this.shapes)],
-          randomPosition,
-          this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-          500,
-        );
-        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-        console.log('rep: ', rep);
+        while (score === 0) {
+          const randomPosition = this.getRandomItemFromArray(
+            Object.keys(this.originsWithAngleRange) as Origin[],
+          );
+          this.soundExplorerScene.showShapes(
+            [this.getRandomItemFromArray(this.shapes)],
+            randomPosition,
+            this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+            500,
+          );
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+        }
+        scoreSubscription.unsubscribe();
         this.ttsService.tts(
           'Did you hear that? You just created musical note by interacting with the shape.',
         );
@@ -201,13 +208,13 @@ export class SoundExplorerService {
           },
         };
         // Todo: 3 reps with single notes
-        for (let i = 0; i < 3; i++) {
-          this.drawShape(this.getRandomItemFromArray(this.shapes));
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+        let repCount = -1;
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(() => {
+          repCount++;
           this.elements.score.state = {
             data: {
               label: '',
-              value: i + 1,
+              value: repCount,
               goal: 3,
             },
             attributes: {
@@ -215,8 +222,13 @@ export class SoundExplorerService {
               reCalibrationCount,
             },
           };
+        });
+        while (repCount < 3) {
+          this.drawShape(this.getRandomItemFromArray(this.shapes));
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
+        scoreSubscription.unsubscribe();
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
           visibility: 'hidden',
@@ -248,11 +260,19 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(3500);
-        this.drawShape(
-          ...Array.from({ length: 2 }, () => this.getRandomItemFromArray(this.shapes)),
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
         );
-        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-        console.log('rep: ', rep);
+        while (score === 0) {
+          this.drawShape(
+            ...Array.from({ length: 2 }, () => this.getRandomItemFromArray(this.shapes)),
+          );
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+        }
+        scoreSubscription.unsubscribe();
         this.ttsService.tts('When you play multiple notes at the same time you create a harmony.');
         this.elements.video.state = {
           data: {
@@ -286,11 +306,19 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(3500);
-        this.drawShape(
-          ...Array.from({ length: 3 }, () => this.getRandomItemFromArray(this.shapes)),
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
         );
-        const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-        console.log('rep: ', rep);
+        while (score === 0) {
+          this.drawShape(
+            ...Array.from({ length: 3 }, () => this.getRandomItemFromArray(this.shapes)),
+          );
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+        }
+        scoreSubscription.unsubscribe();
         this.ttsService.tts(
           'When you interact with 3 or more shapes in one motion, you create a chord.',
         );
@@ -350,17 +378,13 @@ export class SoundExplorerService {
           },
         };
         // Todo: 3 reps with chords
-        for (let i = 0; i < 3; i++) {
-          const shapesArray = Array.from({ length: 3 }, () =>
-            this.getRandomItemFromArray(this.shapes),
-          );
-          if (i === 2) shapesArray.push('wrong');
-          this.drawShape(...shapesArray);
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+        let repCount = -1;
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(() => {
+          repCount++;
           this.elements.score.state = {
             data: {
               label: '',
-              value: i + 1,
+              value: repCount,
               goal: 3,
             },
             attributes: {
@@ -368,8 +392,17 @@ export class SoundExplorerService {
               reCalibrationCount,
             },
           };
+        });
+        while (repCount < 3) {
+          const shapesArray = Array.from({ length: 3 }, () =>
+            this.getRandomItemFromArray(this.shapes),
+          );
+          if (repCount === 3) shapesArray.push('wrong');
+          this.drawShape(...shapesArray);
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
+        scoreSubscription.unsubscribe();
         await this.elements.sleep(2000);
         this.elements.score.attributes = {
           visibility: 'hidden',
@@ -607,7 +640,9 @@ export class SoundExplorerService {
               value: score,
             },
           };
+          this.pointsGained = score - this.successfulReps;
           this.successfulReps = score;
+          this.store.dispatch(game.setScore({ score }));
         });
         const updateElapsedTime = (elapsedTime: number) => {
           if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
@@ -630,19 +665,21 @@ export class SoundExplorerService {
 
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
+        let difficulty = 1;
         while (!this.isGameComplete) {
-          const randomSampleSize = Math.floor(Math.random() * this.shapes.length);
-          const randomShapes: Shape[] = _sampleSize(this.shapes, randomSampleSize);
+          const sampleSize = Math.floor(Math.min(difficulty, this.shapes.length)); // Max 3 shapes at a time
+          const randomShapes: Shape[] = _sampleSize(this.shapes, sampleSize);
 
           // flip a coin...
           const showObstacle = Math.random() > 0.5;
           this.drawShape(...(showObstacle ? [...randomShapes, 'wrong' as Shape] : randomShapes));
           await this.soundExplorerScene.waitForCollisionOrTimeout();
+          if (this.pointsGained < sampleSize / 2) difficulty = 1;
+          else difficulty++;
           // Todo: replace placeholder analytics values.
           this.analytics.push({
             prompt: {
-              type:
-                randomSampleSize === 1 ? 'single' : randomSampleSize === 2 ? 'harmony' : 'chord',
+              type: sampleSize === 1 ? 'single' : sampleSize === 2 ? 'harmony' : 'chord',
               timestamp: Date.now(),
               data: {
                 shapes: randomShapes,
