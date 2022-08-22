@@ -628,22 +628,6 @@ export class SoundExplorerService {
       // Initializes score & timer.
       // When the timer runs out, loop() is ended.
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.score.next(this.successfulReps);
-        this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
-          this.elements.score.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              label: 'Score',
-              value: score,
-            },
-          };
-          this.pointsGained = score - this.successfulReps;
-          this.successfulReps = score;
-          this.store.dispatch(game.setScore({ score }));
-        });
         const updateElapsedTime = (elapsedTime: number) => {
           if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
           this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
@@ -666,6 +650,22 @@ export class SoundExplorerService {
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
         let difficulty = 1;
+        this.soundExplorerScene.score.next(this.successfulReps);
+        this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
+          this.elements.score.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              label: 'Score',
+              value: score,
+            },
+          };
+          this.pointsGained = score - this.successfulReps; // points obtained in current rep
+          this.successfulReps = score;
+          this.store.dispatch(game.setScore({ score }));
+        });
         while (!this.isGameComplete) {
           const sampleSize = Math.floor(Math.min(difficulty, this.shapes.length)); // Max 3 shapes at a time
           const randomShapes: Shape[] = _sampleSize(this.shapes, sampleSize);
@@ -692,9 +692,9 @@ export class SoundExplorerService {
               completionTime: Date.now(),
             },
             result: {
-              type: 'success',
+              type: this.pointsGained <= 0 ? 'failure' : 'success',
               timestamp: Date.now(),
-              score: this.successfulReps,
+              score: this.pointsGained,
             },
           });
         }
