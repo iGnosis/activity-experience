@@ -378,20 +378,11 @@ export class SoundExplorerService {
           },
         };
         // Todo: 3 reps with chords
-        let repCount = -1;
-        const scoreSubscription = this.soundExplorerScene.score.subscribe(() => {
-          repCount++;
-          this.elements.score.state = {
-            data: {
-              label: '',
-              value: repCount,
-              goal: 3,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
+        let repCount = 0;
+        let currentScore = 0;
+        let prevScore = 0;
+        const scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
+          currentScore = score;
         });
         while (repCount < 3) {
           const shapesArray = Array.from({ length: 3 }, () =>
@@ -400,6 +391,10 @@ export class SoundExplorerService {
           if (repCount === 3) shapesArray.push('wrong');
           this.drawShape(...shapesArray);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          if (prevScore !== currentScore) {
+            repCount++;
+            prevScore = currentScore;
+          }
           await this.elements.sleep(1000);
         }
         scoreSubscription.unsubscribe();
