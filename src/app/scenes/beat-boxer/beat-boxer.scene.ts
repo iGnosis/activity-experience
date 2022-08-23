@@ -135,6 +135,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
     });
     this.anims.create({
       key: 'music_anim',
@@ -146,6 +147,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
     });
   }
 
@@ -720,17 +722,8 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   playConfettiAnim(x: number, y: number) {
-    // stopping the exisiting confetti..
-    if (this.confettiAnim || this.musicAnim) {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }
-    this.confettiAnim = this.add.sprite(x, y, 'confetti').play('confetti_anim', true);
-    this.musicAnim = this.add.sprite(x, y, 'music').setScale(0.8).play('music_anim', true);
-    setTimeout(() => {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }, 1000);
+    this.add.sprite(x, y, 'confetti').play('confetti_anim');
+    this.add.sprite(x, y, 'music').play('music_anim');
   }
 
   showWrongSign(x: number, y: number) {
