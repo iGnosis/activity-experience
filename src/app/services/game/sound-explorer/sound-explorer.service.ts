@@ -45,12 +45,41 @@ export class SoundExplorerService {
   private getRandomNumberBetweenRange = (...args: number[]) => {
     return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0];
   };
+
   private drawShape = (...shapes: Shape[]) => {
     const randomPosition = this.getRandomItemFromArray(
       Object.keys(this.originsWithAngleRange) as Origin[],
     );
     this.soundExplorerScene.showShapes(
       shapes,
+      randomPosition,
+      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+      this.config.speed,
+    );
+  };
+
+  private drawShapes = async (numberOfShapes: number, timeoutBetweenShapes = 200) => {
+    const randomPosition = this.getRandomItemFromArray(
+      Object.keys(this.originsWithAngleRange) as Origin[],
+    );
+    for (let i = 0; i < numberOfShapes; i++) {
+      const shape = this.getRandomItemFromArray(this.shapes);
+      this.soundExplorerScene.showShapes(
+        [shape],
+        randomPosition,
+        this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
+        this.config.speed,
+      );
+      await this.elements.sleep(timeoutBetweenShapes);
+    }
+  };
+
+  private drawObstacle = async () => {
+    const randomPosition = this.getRandomItemFromArray(
+      Object.keys(this.originsWithAngleRange) as Origin[],
+    );
+    this.soundExplorerScene.showShapes(
+      ['wrong'],
       randomPosition,
       this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
       this.config.speed,
