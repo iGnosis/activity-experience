@@ -1016,6 +1016,7 @@ export class BeatBoxerService {
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
+        this.beatBoxerScene.disable();
         this.gameStateService.postLoopHook();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();

@@ -155,18 +155,25 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.enabled = true;
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
-      if (this.blueGlove) {
-        this.blueGlove.destroy(true);
-      }
-      if (this.redGlove) {
-        this.redGlove.destroy(true);
-      }
+      this.destroyGloves();
       this.drawGloves(results);
     });
   }
 
+  destroyGloves() {
+    if (this.blueGlove) {
+      this.blueGlove.destroy(true);
+    }
+    if (this.redGlove) {
+      this.redGlove.destroy(true);
+    }
+  }
+
   disable(): void {
     this.enabled = false;
+    this.enableLeft = false;
+    this.enableRight = false;
+    this.destroyGloves();
     this.poseSubscription.unsubscribe();
   }
 
