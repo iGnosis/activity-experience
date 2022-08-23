@@ -46,24 +46,17 @@ export class SoundExplorerService {
     return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0];
   };
 
-  private drawShape = (...shapes: Shape[]) => {
+  private drawShapes = async (
+    numberOfShapes: number,
+    timeoutBetweenShapes = 200,
+  ): Promise<Shape[]> => {
     const randomPosition = this.getRandomItemFromArray(
       Object.keys(this.originsWithAngleRange) as Origin[],
     );
-    this.soundExplorerScene.showShapes(
-      shapes,
-      randomPosition,
-      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-      this.config.speed,
-    );
-  };
-
-  private drawShapes = async (numberOfShapes: number, timeoutBetweenShapes = 200) => {
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
+    const shapes: Shape[] = [];
     for (let i = 0; i < numberOfShapes; i++) {
       const shape = this.getRandomItemFromArray(this.shapes);
+      shapes.push(shape);
       this.soundExplorerScene.showShapes(
         [shape],
         randomPosition,
@@ -72,6 +65,7 @@ export class SoundExplorerService {
       );
       await this.elements.sleep(timeoutBetweenShapes);
     }
+    return shapes;
   };
 
   private drawObstacle = async () => {
@@ -253,7 +247,7 @@ export class SoundExplorerService {
           };
         });
         while (repCount < 3) {
-          this.drawShape(this.getRandomItemFromArray(this.shapes));
+          this.drawShapes(1);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
@@ -295,9 +289,7 @@ export class SoundExplorerService {
           (currentScore) => (score = currentScore),
         );
         while (score === 0) {
-          this.drawShape(
-            ...Array.from({ length: 2 }, () => this.getRandomItemFromArray(this.shapes)),
-          );
+          this.drawShapes(2);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
@@ -341,9 +333,7 @@ export class SoundExplorerService {
           (currentScore) => (score = currentScore),
         );
         while (score === 0) {
-          this.drawShape(
-            ...Array.from({ length: 3 }, () => this.getRandomItemFromArray(this.shapes)),
-          );
+          this.drawShapes(3);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
@@ -414,14 +404,22 @@ export class SoundExplorerService {
           currentScore = score;
         });
         while (repCount < 3) {
-          const shapesArray = Array.from({ length: 3 }, () =>
-            this.getRandomItemFromArray(this.shapes),
-          );
-          if (repCount === 3) shapesArray.push('wrong');
-          this.drawShape(...shapesArray);
+          this.drawShapes(3);
+          if (repCount === 3) this.drawObstacle();
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           if (prevScore !== currentScore) {
             repCount++;
+            this.elements.score.state = {
+              data: {
+                label: '',
+                value: repCount,
+                goal: 3,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
             prevScore = currentScore;
           }
           await this.elements.sleep(1000);
@@ -523,18 +521,13 @@ export class SoundExplorerService {
         let difficulty = 1;
         let successfulReps = 0;
         while (!isGameComplete) {
-          const shapesArray = Array.from({ length: difficulty }, () =>
-            this.getRandomItemFromArray(this.shapes),
-          );
+          this.drawShapes(difficulty);
           const shouldShowXMark = Math.random() > 0.5;
-          if (shouldShowXMark) {
-            shapesArray.push('wrong');
-          }
-          this.drawShape(...shapesArray);
+          if (shouldShowXMark) this.drawObstacle();
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           // if successful rep 3 times, increase difficulty
           successfulReps++;
-          if (successfulReps % 3 === 0) difficulty++;
+          if (successfulReps !== 0 && successfulReps % 3 === 0) difficulty++;
           await this.elements.sleep(1000);
         }
         await this.elements.sleep(2000);
@@ -690,23 +683,30 @@ export class SoundExplorerService {
           this.successfulReps = score;
           this.store.dispatch(game.setScore({ score }));
         });
+        let streak = 0;
         while (!this.isGameComplete) {
-          const sampleSize = Math.floor(Math.min(difficulty, this.shapes.length)); // Max 3 shapes at a time
-          const randomShapes: Shape[] = _sampleSize(this.shapes, sampleSize);
+          const shapes = await this.drawShapes(difficulty);
 
-          // flip a coin...
           const showObstacle = Math.random() > 0.5;
-          this.drawShape(...(showObstacle ? [...randomShapes, 'wrong' as Shape] : randomShapes));
+          if (showObstacle) this.drawObstacle();
+
           await this.soundExplorerScene.waitForCollisionOrTimeout();
-          if (this.pointsGained < sampleSize / 2) difficulty = 1;
-          else difficulty++;
+          await this.elements.sleep(100);
+
+          // if low points, reset difficulty
+          if (this.pointsGained < difficulty / 2) {
+            difficulty = 1;
+            streak = 0;
+          } else streak++;
+          // if continously high points, increase difficulty
+          if (streak !== 0 && streak % 3 === 0) difficulty++;
           // Todo: replace placeholder analytics values.
           this.analytics.push({
             prompt: {
-              type: sampleSize === 1 ? 'single' : sampleSize === 2 ? 'harmony' : 'chord',
+              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
               timestamp: Date.now(),
               data: {
-                shapes: randomShapes,
+                shapes,
               },
             },
             reaction: {
