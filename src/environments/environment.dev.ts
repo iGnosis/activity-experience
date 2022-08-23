@@ -32,7 +32,7 @@ export const environment: Environment = {
     sound_explorer: {
       configuration: {
         minCorrectReps: 10,
-        speed: 5000,
+        speed: 400,
       },
     },
   },
