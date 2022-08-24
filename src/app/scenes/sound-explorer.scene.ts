@@ -8,6 +8,7 @@ export enum TextureKeys {
   TRIANGLE = 'triangle_shape',
   RECTANGLE = 'rectangle_shape',
   WRONG = 'wrong_shape',
+  HEXAGON = 'hexagon_shape',
   CONFETTI = 'confetti',
   CONCENTRIC_CIRCLES = 'concentric_circles',
   BURST = 'burst',
@@ -17,7 +18,7 @@ export enum AnimationKeys {
   CIRCLES_ANIM = 'circles_anim',
   BURST_ANIM = 'burst_anim',
 }
-export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong';
+export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
 export type Origin =
   | 'bottom-right'
   | 'bottom-left'
@@ -97,13 +98,17 @@ export class SoundExplorerScene extends Phaser.Scene {
       url: 'assets/images/sound-slicer/Wrong shape.png',
     });
 
+    this.load.image({
+      key: TextureKeys.HEXAGON,
+      url: 'assets/images/sound-slicer/Hexagon shape.png',
+    });
+
     // loading animation assets
     this.load.atlas(
       TextureKeys.CONFETTI,
       'assets/images/beat-boxer/confetti.png',
       'assets/images/beat-boxer/confetti.json',
     );
-
     this.load.atlas(
       TextureKeys.CONCENTRIC_CIRCLES,
       'assets/images/sound-slicer/circles.png',
@@ -132,6 +137,11 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.game.canvas;
+
+    // creating a group.
+    this.group = this.physics.add.group({
+      collideWorldBounds: true,
+    });
 
     this.anims.create({
       key: AnimationKeys.CONFETTI_ANIM,
@@ -175,11 +185,6 @@ export class SoundExplorerScene extends Phaser.Scene {
       hideOnComplete: true,
     });
 
-    // creating a group.
-    this.group = this.physics.add.group({
-      collideWorldBounds: true,
-    });
-
     // setting world bounds and enabling collisions.
     this.physics.world.setBounds(0, 0, width, height, true, true, true, true);
 
@@ -219,6 +224,8 @@ export class SoundExplorerScene extends Phaser.Scene {
         return TextureKeys.TRIANGLE;
       case 'wrong':
         return TextureKeys.WRONG;
+      case 'hexagon':
+        return TextureKeys.HEXAGON;
     }
   }
 
@@ -360,9 +367,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       const interval = setInterval(() => {
         // if timeout...
         if (timeout && new Date().getTime() - startTime > timeout) {
-          resolve({
-            result: undefined,
-          });
+          resolve({});
           clearInterval(interval);
         }
         // if collision detected...

@@ -27,7 +27,7 @@ export class SoundExplorerService {
   private isGameComplete = false;
   private successfulReps = 0;
   private pointsGained = 0;
-  private shapes: Shape[] = ['circle', 'triangle', 'rectangle'];
+  private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]: number[] } = {
     'bottom-right': [-140, -110],
     'bottom-left': [-80, -50],
