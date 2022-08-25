@@ -26,6 +26,8 @@ export class SoundExplorerService {
   };
   private isGameComplete = false;
   private successfulReps = 0;
+  private totalReps = 0;
+  private currentScore = 0;
   private pointsGained = 0;
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]: number[] } = {
@@ -667,7 +669,7 @@ export class SoundExplorerService {
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
         let difficulty = 1;
-        this.soundExplorerScene.score.next(this.successfulReps);
+        this.soundExplorerScene.score.next(this.currentScore);
         this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
           this.elements.score.state = {
             attributes: {
@@ -679,8 +681,8 @@ export class SoundExplorerService {
               value: score,
             },
           };
-          this.pointsGained = score - this.successfulReps; // points obtained in current rep
-          this.successfulReps = score;
+          this.pointsGained = score - this.currentScore; // points obtained in current rep
+          this.currentScore = score;
           this.store.dispatch(game.setScore({ score }));
         });
         let streak = 0;
@@ -692,12 +694,16 @@ export class SoundExplorerService {
 
           await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(100);
+          this.totalReps++;
 
           // if low points, reset difficulty
           if (this.pointsGained < difficulty / 2) {
             difficulty = 1;
             streak = 0;
-          } else streak++;
+          } else {
+            streak++;
+            this.successfulReps++;
+          }
           // if continously high points, increase difficulty
           if (streak !== 0 && streak % 3 === 0) difficulty++;
           // Todo: replace placeholder analytics values.
@@ -763,8 +769,14 @@ export class SoundExplorerService {
         this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+        const achievementRatio = this.successfulReps / this.totalReps;
+        if (achievementRatio < 0.6) {
+          await this.checkinService.updateOnboardingStatus({
+            sound_explorer: false,
+          });
+        }
         this.ttsService.tts(
-          `Your score is ${this.successfulReps}, time completed ${this.config
+          `Your score is ${this.currentScore}, time completed ${this.config
             .gameDuration!} seconds.`,
         );
         const highScore = await this.checkinService.getHighScore('sound_explorer');
@@ -784,10 +796,10 @@ export class SoundExplorerService {
             htmlStr: `
           <div class="pl-10 text-start px-14" style="padding-left: 20px;">
             <h1 class="pt-8 display-3">Sound Explorer</h1>
-            <h2 class="pt-7">Score: ${this.successfulReps}</h2>
+            <h2 class="pt-7">Score: ${this.currentScore}</h2>
             <h2 class="pt-5">High Score: ${Math.max(
               highScore && highScore.length ? highScore[0].repsCompleted : 0,
-              this.successfulReps,
+              this.currentScore,
             )}</h2>
             <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
               totalDuration.seconds
