@@ -17,7 +17,7 @@ export class PoseService {
   numOfResults = 0;
   pose: Pose;
   config: 'cdn' | 'local';
-  private results = new Subject<Results>();
+  results = new Subject<Results>();
 
   constructor() {}
 

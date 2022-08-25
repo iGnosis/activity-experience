@@ -8,9 +8,11 @@ import {
   ActivityConfiguration,
   ActivityStage,
   CalibrationStatusType,
+  GameState,
   GameStatus,
   Genre,
   HandTrackerStatus,
+  PreferenceState,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -27,7 +29,7 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { debounceTime } from 'rxjs';
+import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
@@ -107,7 +109,10 @@ export class GameService {
     private beatBoxerService: BeatBoxerService,
     private soundExplorerService: SoundExplorerService,
     private poseService: PoseService,
-    private store: Store,
+    private store: Store<{
+      game: GameState;
+      preference: PreferenceState;
+    }>,
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
     private jwtService: JwtService,
@@ -168,9 +173,43 @@ export class GameService {
     return new Promise((resolve) => {
       setTimeout(() => {
         this.poseService.start(video);
+        this.startPoseTracker();
         resolve({});
       }, 1000);
     });
+  }
+
+  startPoseTracker() {
+    if (typeof Worker !== 'undefined') {
+      const poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
+        type: 'module',
+      });
+      const poseSubscription = this.poseService.results
+        .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
+        .subscribe(([poseResults, calibrationStatus]) => {
+          if (calibrationStatus !== 'success') return;
+          const { poseLandmarks } = poseResults;
+          this.store
+            .select((store) => store.game.id)
+            .pipe(take(1))
+            .subscribe((gameId) => {
+              if (!gameId) return;
+              poseTrackerWorker.postMessage(
+                JSON.parse(
+                  JSON.stringify({
+                    poseLandmarks,
+                    timestamp: Date.now(),
+                    userId: localStorage.getItem('patient'),
+                    gameId,
+                  }),
+                ),
+              );
+            });
+        });
+      poseTrackerWorker.onmessage = ({ data }) => {
+        console.log(`pose tracker message: `, data);
+      };
+    }
   }
 
   getScenes() {
