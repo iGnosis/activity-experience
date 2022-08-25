@@ -68,6 +68,7 @@ export class GameService {
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
+  private poseTrackerWorker: Worker;
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -181,10 +182,13 @@ export class GameService {
 
   startPoseTracker() {
     if (typeof Worker !== 'undefined') {
-      const poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
+      this.poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
         type: 'module',
       });
-      poseTrackerWorker.postMessage(environment.websocketEndpoint);
+      this.poseTrackerWorker.postMessage({
+        type: 'connect',
+        websocketEndpoint: environment.websocketEndpoint,
+      });
 
       const poseSubscription = this.poseService.results
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
@@ -196,7 +200,8 @@ export class GameService {
             .pipe(take(1))
             .subscribe((gameId) => {
               if (!gameId) return;
-              poseTrackerWorker.postMessage({
+              this.poseTrackerWorker.postMessage({
+                type: 'update-pose',
                 poseLandmarks,
                 timestamp: Date.now(),
                 userId: localStorage.getItem('patient'),
@@ -204,7 +209,7 @@ export class GameService {
               });
             });
         });
-      poseTrackerWorker.onmessage = ({ data }) => {
+      this.poseTrackerWorker.onmessage = ({ data }) => {
         console.log(`pose tracker message: `, data);
       };
     }
@@ -322,6 +327,18 @@ export class GameService {
         settings: environment.settings[this.gameStatus.game],
       };
     }
+    // stop pose tracking for the current game
+    this.store
+      .select((store) => store.game.id)
+      .pipe(take(1))
+      .subscribe((gameId) => {
+        if (!gameId) return;
+        this.poseTrackerWorker.postMessage({
+          type: 'game-end',
+          userId: localStorage.getItem('patient'),
+          gameId,
+        });
+      });
 
     // Start the next game...
     // find the index of the last played game
