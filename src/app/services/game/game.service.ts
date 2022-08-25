@@ -267,9 +267,12 @@ export class GameService {
         this.elements.timer.data = {
           mode: 'pause',
         };
-        this.ttsService.tts('To resume the game, please get yourself within the red box.');
+        this.ttsService.tts(
+          'To resume the game, please get your whole body, from head to toe, within the red box.',
+        );
         this.elements.guide.data = {
-          title: 'To resume the game, please get yourself within the red box.',
+          title:
+            'To resume the game, please get your whole body, from head to toe, within the red box.',
           showIndefinitely: true,
         };
       }
@@ -484,13 +487,15 @@ export class GameService {
 
   async startCalibration() {
     // TODO: Start the calibration process.
-    this.ttsService.tts('To start, please get yourself within the red box.');
+    this.ttsService.tts(
+      'To start, please get your whole body, from head to toe, within the red box.',
+    );
     this.elements.guide.state = {
       attributes: {
         visibility: 'visible',
       },
       data: {
-        title: 'To start, please get yourself within the red box.',
+        title: 'To start, please get your whole body, from head to toe, within the red box.',
         showIndefinitely: true,
       },
     };
