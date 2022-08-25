@@ -1,17 +1,16 @@
-/// <reference lib="webworker" />
-
-import { environment } from 'src/environments/environment';
-
-interface PoseTracker {
-  t: number;
-  g: string;
-  u: string;
-  p: any[];
-}
 // const socket = new WebSocket(environment.apiEndpoint.replace('https://', 'wss://'));
-const socket = new WebSocket(environment.apiEndpoint);
-addEventListener('message', ({ data }: any) => {
-  const { poseLandmarks: p, timestamp: t, gameId: g, userId: u } = data;
-  if (p && p.filter((landmark: any) => landmark.visibility < 0.7).length > 0) return;
-  socket.send(JSON.stringify({ t, g, u, p }));
+addEventListener('message', () => {
+  let endpoint = '';
+  let socket: WebSocket;
+  return ({ data }: any) => {
+    if (typeof data === 'string') {
+      endpoint = data;
+      socket = new WebSocket(endpoint);
+      return;
+    }
+
+    const { poseLandmarks: p, timestamp: t, gameId: g, userId: u } = data;
+    if (p && p.filter((landmark: any) => landmark.visibility < 0.7).length > 0) return;
+    if (socket) socket.send(JSON.stringify({ t, g, u, p }));
+  };
 });

@@ -184,6 +184,8 @@ export class GameService {
       const poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
         type: 'module',
       });
+      poseTrackerWorker.postMessage(environment.apiEndpoint);
+
       const poseSubscription = this.poseService.results
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
