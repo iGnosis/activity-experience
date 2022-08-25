@@ -766,6 +766,7 @@ export interface Environment {
   };
   endpoint: string;
   apiEndpoint: string;
+  websocketEndpoint: string;
   googleAnalyticsTrackingID: string;
   postSessionRedirectEndpoint: string;
   /**

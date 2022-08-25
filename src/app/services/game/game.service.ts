@@ -184,7 +184,7 @@ export class GameService {
       const poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
         type: 'module',
       });
-      poseTrackerWorker.postMessage(environment.apiEndpoint);
+      poseTrackerWorker.postMessage(environment.websocketEndpoint);
 
       const poseSubscription = this.poseService.results
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
@@ -196,16 +196,12 @@ export class GameService {
             .pipe(take(1))
             .subscribe((gameId) => {
               if (!gameId) return;
-              poseTrackerWorker.postMessage(
-                JSON.parse(
-                  JSON.stringify({
-                    poseLandmarks,
-                    timestamp: Date.now(),
-                    userId: localStorage.getItem('patient'),
-                    gameId,
-                  }),
-                ),
-              );
+              poseTrackerWorker.postMessage({
+                poseLandmarks,
+                timestamp: Date.now(),
+                userId: localStorage.getItem('patient'),
+                gameId,
+              });
             });
         });
       poseTrackerWorker.onmessage = ({ data }) => {
