@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
+import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from '../services/pose/pose.service';
+import { audioSprites } from '../services/sounds/audio-sprites';
 
 export enum TextureKeys {
   CIRCLE = 'circle_shape',
@@ -49,25 +51,39 @@ export class SoundExplorerScene extends Phaser.Scene {
   private group: Phaser.Physics.Arcade.Group;
   private leftHand: Phaser.GameObjects.Arc;
   private rightHand: Phaser.GameObjects.Arc;
+  private currentNote = 1;
+  private music = false;
 
   private collisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _shape: GameObjectWithBodyAndTexture,
   ) => {
+    if (!_shape.texture) return;
+
     const [x, y] = this.getCenter(_shape);
 
     // updating the score, if the shape is not X shape.
-    if (!(_shape.texture && _shape.texture.key === TextureKeys.WRONG)) {
+    if (!(_shape.texture.key === TextureKeys.WRONG)) {
       this.currentScore += 1;
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
 
       this.add.sprite(x, y, TextureKeys.CONFETTI).play(AnimationKeys.CONFETTI_ANIM);
       this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
-      // TODO: Add Success Music
+
+      // to play success music based on the shape
+      if (this.music && _shape.texture.key === TextureKeys.CIRCLE) {
+        this.playSuccessMusic('bass');
+      } else if (this.music && _shape.texture.key === TextureKeys.TRIANGLE) {
+        this.playSuccessMusic('tenor');
+      } else if (this.music && _shape.texture.key === TextureKeys.RECTANGLE) {
+        this.playSuccessMusic('alto');
+      } else if (this.music && _shape.texture.key === TextureKeys.HEXAGON) {
+        this.playSuccessMusic('soprano');
+      }
     } else {
-      // TODO: Add failure music
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
+      this.music && this.playFailureMusic();
     }
     _shape.destroy(true);
   };
@@ -229,8 +245,6 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  // musicType: 'note' | 'harmony' | 'chord';
-
   /**
    * @param shapes an array of shapes
    * @param origin Origin point of the shapes
@@ -240,9 +254,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
     const shapeScale = 0.04;
 
-    // if (shapes.length >= 2) {
-    //   this.musicType = 'chord';
-    // }
+    this.setNextNote();
 
     // const velocityX = velocity * Math.cos(angle);
     // const velocityY = -velocity * Math.sin(angle);
@@ -379,8 +391,101 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
-  // TODO: Configure Music
-  configureMusic(): void {}
-  playSuccessMusic(): void {}
-  playFailureMusic(): void {}
+  setNextNote() {
+    if (this.currentNote === 16) {
+      this.currentNote = 1;
+    } else {
+      this.currentNote += 1;
+    }
+  }
+
+  alto: Howl;
+  soprano: Howl;
+  bass: Howl;
+  tenor: Howl;
+  failureMusic: Howl;
+  altoId: number;
+  sopranoId: number;
+  bassId: number;
+  tenorId: number;
+  failureMusicId: number;
+  configureMusic(): void {
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+    });
+    this.alto = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/Alto.mp3',
+      sprite: audioSprites.soundExplorer.alto,
+      html5: true,
+    });
+    this.bass = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/Bass.mp3',
+      sprite: audioSprites.soundExplorer.bass,
+      html5: true,
+    });
+    this.soprano = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/Soprano.mp3',
+      sprite: audioSprites.soundExplorer.soprano,
+      html5: true,
+    });
+    this.tenor = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/Tenor.mp3',
+      sprite: audioSprites.soundExplorer.tenor,
+      html5: true,
+    });
+  }
+
+  playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
+    switch (type) {
+      case 'alto':
+        if (this.alto && this.alto.playing(this.altoId)) {
+          this.alto.stop();
+        }
+        if (this.alto && !this.alto.playing(this.altoId)) {
+          this.altoId = this.alto.play(`Alto_${this.currentNote}`);
+        }
+        break;
+      case 'bass':
+        if (this.bass && this.bass.playing(this.bassId)) {
+          this.bass.stop();
+        }
+        if (this.bass && !this.bass.playing(this.bassId)) {
+          this.bassId = this.bass.play(`Bass_${this.currentNote}`);
+        }
+        break;
+      case 'soprano':
+        if (this.soprano && this.soprano.playing(this.sopranoId)) {
+          this.soprano.stop();
+        }
+        if (this.soprano && !this.soprano.playing(this.sopranoId)) {
+          this.sopranoId = this.soprano.play(`Soprano_${this.currentNote}`);
+        }
+        break;
+      case 'tenor':
+        if (this.tenor && this.tenor.playing(this.tenorId)) {
+          this.tenor.stop();
+        }
+        if (this.tenor && !this.tenor.playing(this.tenorId)) {
+          this.tenorId = this.tenor.play(`Tenor_${this.currentNote}`);
+        }
+        break;
+    }
+  }
+
+  playFailureMusic(): void {
+    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusic.stop();
+    }
+    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusicId = this.failureMusic.play();
+    }
+  }
+
+  /**
+   * @param value default `true`.
+   */
+  enableMusic(value = true) {
+    this.music = value;
+  }
 }
