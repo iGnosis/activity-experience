@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 const poseTrackerFn = () => {
   let endpoint = '';
   let socket: Socket;
+  let gameId: string;
 
   return ({ data }: any) => {
     switch (data.type) {
@@ -14,6 +15,11 @@ const poseTrackerFn = () => {
         socket = io(endpoint);
         break;
       case 'update-pose':
+        if (gameId && data.gameId !== gameId && socket) {
+          // if the game id has changed, end current game before starting a new one
+          socket.emit('game-end', { userId: data.userId, gameId: gameId });
+          gameId = data.gameId;
+        }
         const { poseLandmarks: p, timestamp: t, gameId: g, userId: u } = data;
         const points = [12, 11, 24, 23, 26, 25];
         const keyBodyPoints = points.map((point) => p[point]);
@@ -23,10 +29,6 @@ const poseTrackerFn = () => {
         )
           return;
         if (socket) socket.send({ t, g, u, p });
-        break;
-      case 'game-end':
-        const { gameId, userId } = data;
-        if (socket) socket.emit('game-end', { userId, gameId });
         break;
     }
   };
