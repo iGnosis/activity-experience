@@ -998,7 +998,6 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
-        this.gameStateService.postLoopHook();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
@@ -1020,7 +1019,6 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        this.store.dispatch(game.gameCompleted());
         let totalDuration: {
           minutes: string;
           seconds: string;
@@ -1084,6 +1082,8 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(7000);
+        this.gameStateService.postLoopHook();
+        this.store.dispatch(game.gameCompleted());
       },
     ];
   }
