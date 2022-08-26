@@ -10,6 +10,7 @@ export const environment: Environment = {
   googleAnalyticsTrackingID: 'G-MTGG72G6ND',
   endpoint: 'https://api.prod.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.prod.pointmotioncontrol.com',
+  websocketEndpoint: 'wss://services.prod.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.prod.pointmotioncontrol.com',
   order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer'],
   settings: {
