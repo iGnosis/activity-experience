@@ -1016,6 +1016,7 @@ export class BeatBoxerService {
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
+        this.beatBoxerScene.disable();
         this.gameStateService.postLoopHook();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
@@ -1077,31 +1078,31 @@ export class BeatBoxerService {
           };
         });
 
-        await this.elements.sleep(20000);
-        // this.elements.banner.state = {
-        //   attributes: {
-        //     visibility: 'visible',
-        //     reCalibrationCount,
-        //   },
-        //   data: {
-        //     type: 'intro',
-        //     htmlStr: `
-        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-        //       <h1 class="pt-2">Next Activity</h2>
-        //       <h1 class="pt-6 display-4">Sound Slice</h1>
-        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-        //       <h1 class="py-2">Range of Motion and Balance</h2>
-        //     </div>
-        //     `,
-        //     buttons: [
-        //       {
-        //         title: 'Starting Sound Explorer',
-        //         progressDurationMs: 5000,
-        //       },
-        //     ],
-        //   },
-        // };
-        // await this.elements.sleep(10000);
+        await this.elements.sleep(12000);
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'intro',
+            htmlStr: `
+            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+              <h1 class="pt-2">Next Activity</h2>
+              <h1 class="pt-6 display-4">Sound Explorer</h1>
+              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+              <h1 class="py-2">Range of Motion and Balance</h2>
+            </div>
+            `,
+            buttons: [
+              {
+                title: 'Starting Sound Explorer',
+                progressDurationMs: 5000,
+              },
+            ],
+          },
+        };
+        await this.elements.sleep(7000);
       },
     ];
   }

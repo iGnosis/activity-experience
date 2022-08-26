@@ -8,9 +8,11 @@ import {
   ActivityConfiguration,
   ActivityStage,
   CalibrationStatusType,
+  GameState,
   GameStatus,
   Genre,
   HandTrackerStatus,
+  PreferenceState,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -27,7 +29,9 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { debounceTime } from 'rxjs';
+import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
+import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -47,6 +51,9 @@ export class GameService {
     physics: {
       default: 'arcade',
       arcade: {
+        // debug: true,
+        // debugShowBody: true,
+        // debugShowVelocity: true,
         gravity: { y: 200 },
       },
     },
@@ -61,6 +68,7 @@ export class GameService {
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
+  private poseTrackerWorker: Worker;
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -96,11 +104,16 @@ export class GameService {
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private beatBoxerScene: BeatBoxerScene,
+    private soundExplorerScene: SoundExplorerScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
+    private soundExplorerService: SoundExplorerService,
     private poseService: PoseService,
-    private store: Store,
+    private store: Store<{
+      game: GameState;
+      preference: PreferenceState;
+    }>,
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
     private jwtService: JwtService,
@@ -161,20 +174,61 @@ export class GameService {
     return new Promise((resolve) => {
       setTimeout(() => {
         this.poseService.start(video);
+        this.startPoseTracker();
         resolve({});
       }, 1000);
     });
   }
 
+  startPoseTracker() {
+    if (typeof Worker !== 'undefined') {
+      this.poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
+        type: 'module',
+      });
+      this.poseTrackerWorker.postMessage({
+        type: 'connect',
+        websocketEndpoint: environment.websocketEndpoint,
+      });
+
+      const poseSubscription = this.poseService.results
+        .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
+        .subscribe(([poseResults, calibrationStatus]) => {
+          if (calibrationStatus !== 'success') return;
+          const { poseLandmarks } = poseResults;
+          this.store
+            .select((store) => store.game.id)
+            .pipe(take(1))
+            .subscribe((gameId) => {
+              if (!gameId) return;
+              this.poseTrackerWorker.postMessage({
+                type: 'update-pose',
+                poseLandmarks,
+                timestamp: Date.now(),
+                userId: localStorage.getItem('patient'),
+                gameId,
+              });
+            });
+        });
+      this.poseTrackerWorker.onmessage = ({ data }) => {
+        console.log(`pose tracker message: `, data);
+      };
+    }
+  }
+
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
+    return [
+      this.calibrationScene,
+      this.sitToStandScene,
+      this.beatBoxerScene,
+      this.soundExplorerScene,
+    ];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      // sound_slicer: this.sitToStandService,
+      sound_explorer: this.soundExplorerService,
     };
   }
 
@@ -213,9 +267,12 @@ export class GameService {
         this.elements.timer.data = {
           mode: 'pause',
         };
-        this.ttsService.tts('To resume the game, please get yourself within the red box.');
+        this.ttsService.tts(
+          'To resume the game, please get your whole body, from head to toe, within the red box.',
+        );
         this.elements.guide.data = {
-          title: 'To resume the game, please get yourself within the red box.',
+          title:
+            'To resume the game, please get your whole body, from head to toe, within the red box.',
           showIndefinitely: true,
         };
       }
@@ -273,6 +330,18 @@ export class GameService {
         settings: environment.settings[this.gameStatus.game],
       };
     }
+    // stop pose tracking for the current game
+    this.store
+      .select((store) => store.game.id)
+      .pipe(take(1))
+      .subscribe((gameId) => {
+        if (!gameId) return;
+        this.poseTrackerWorker.postMessage({
+          type: 'game-end',
+          userId: localStorage.getItem('patient'),
+          gameId,
+        });
+      });
 
     // Start the next game...
     // find the index of the last played game
@@ -418,13 +487,15 @@ export class GameService {
 
   async startCalibration() {
     // TODO: Start the calibration process.
-    this.ttsService.tts('To start, please get yourself within the red box.');
+    this.ttsService.tts(
+      'To start, please get your whole body, from head to toe, within the red box.',
+    );
     this.elements.guide.state = {
       attributes: {
         visibility: 'visible',
       },
       data: {
-        title: 'To start, please get yourself within the red box.',
+        title: 'To start, please get your whole body, from head to toe, within the red box.',
         showIndefinitely: true,
       },
     };
