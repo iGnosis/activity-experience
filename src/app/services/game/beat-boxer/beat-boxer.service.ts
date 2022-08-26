@@ -845,8 +845,33 @@ export class BeatBoxerService {
 
           console.log('result: ', rep);
 
-          const reactionTimestamp = Date.now();
+          const resultTimestamp = Date.now();
           this.totalReps++;
+          // Todo: replace placeholder values with actual values
+          const hasUserInteracted: boolean = rep.result !== undefined;
+          this.analytics.push({
+            prompt: {
+              type: 'bag',
+              timestamp: promptTimestamp,
+              data: {
+                leftBag: this.bagsAvailable.left,
+                rightBag: this.bagsAvailable.right,
+              },
+            },
+            reaction: {
+              type: 'punch',
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserInteracted
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user interacted with the bag
+            },
+            result: {
+              type: rep.result || 'failure',
+              timestamp: resultTimestamp,
+              score: rep.result === 'success' ? 1 : 0,
+            },
+          });
           if (rep.result === 'success') {
             if (rep.bagType === this.bagsAvailable.left) {
               this.bagsAvailable.left = undefined;
@@ -855,28 +880,6 @@ export class BeatBoxerService {
               this.bagsAvailable.right = undefined;
             }
             clearTimeout(bagTimeout);
-            // Todo: replace placeholder values with actual values
-            this.analytics.push({
-              prompt: {
-                type: 'bag',
-                timestamp: promptTimestamp,
-                data: {
-                  leftBag: this.bagsAvailable.left,
-                  rightBag: this.bagsAvailable.right,
-                },
-              },
-              reaction: {
-                type: 'punch',
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'success',
-                timestamp: Date.now(),
-                score: 1,
-              },
-            });
             this.successfulReps++;
             this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
@@ -898,28 +901,6 @@ export class BeatBoxerService {
             if (rep.bagType === this.bagsAvailable.right) {
               this.bagsAvailable.right = undefined;
             }
-            // Todo: replace placeholder values with actual values
-            this.analytics.push({
-              prompt: {
-                type: 'bag',
-                timestamp: promptTimestamp,
-                data: {
-                  leftBag: this.bagsAvailable.left,
-                  rightBag: this.bagsAvailable.right,
-                },
-              },
-              reaction: {
-                type: 'punch',
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'failure',
-                timestamp: Date.now(),
-                score: 0,
-              },
-            });
             this.failedReps++;
             if (this.failedReps >= 3) {
               this.elements.timer.state = {

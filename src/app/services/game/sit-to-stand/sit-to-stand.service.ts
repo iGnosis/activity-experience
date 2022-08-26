@@ -704,6 +704,7 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          const promptTimestamp = Date.now();
           this.ttsService.tts(promptNum.toString());
           this.elements.timeout.state = {
             data: {
@@ -715,12 +716,11 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          const promptTimestamp = Date.now();
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             promptClass,
             this.config.speed,
           );
-          const reactionTimestamp = Date.now();
+          const resultTimestamp = Date.now();
           this.totalReps += 1;
           this.elements.timeout.state = {
             data: {
@@ -731,28 +731,39 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          const userState =
+            res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
+          const hasUserStateChanged: boolean =
+            this.analytics.length > 0
+              ? this.analytics.slice(-1)[0].reaction.type !== userState
+              : true;
+          if (!hasUserStateChanged) {
+            console.log('%c Not changed! ', 'background: #222; color: red');
+          }
+          this.analytics.push({
+            prompt: {
+              type: promptClass,
+              timestamp: promptTimestamp,
+              data: {
+                number: promptNum,
+              },
+            },
+            reaction: {
+              type: userState,
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserStateChanged
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user state changed
+            },
+            result: {
+              type: res.result,
+              timestamp: resultTimestamp,
+              score: res.result === 'success' ? 1 : 0,
+            },
+          });
           if (res.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
-            this.analytics.push({
-              prompt: {
-                type: promptClass,
-                timestamp: promptTimestamp,
-                data: {
-                  number: promptNum,
-                },
-              },
-              reaction: {
-                type: promptClass,
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'success',
-                timestamp: Date.now(),
-                score: 1,
-              },
-            });
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,
@@ -777,26 +788,6 @@ export class SitToStandService implements ActivityBase {
             };
           } else {
             this.soundsService.playCalibrationSound('error');
-            this.analytics.push({
-              prompt: {
-                type: promptClass,
-                timestamp: promptTimestamp,
-                data: {
-                  number: promptNum,
-                },
-              },
-              reaction: {
-                type: promptClass === 'sit' ? 'stand' : 'sit',
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'failure',
-                timestamp: Date.now(),
-                score: 0,
-              },
-            });
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,

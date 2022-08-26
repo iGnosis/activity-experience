@@ -690,11 +690,13 @@ export class SoundExplorerService {
         let streak = 0;
         while (!this.isGameComplete) {
           const shapes = await this.drawShapes(difficulty);
+          const promptTimestamp = Date.now();
 
           const showObstacle = Math.random() > 0.5;
           if (showObstacle) this.drawObstacle();
 
           await this.soundExplorerScene.waitForCollisionOrTimeout();
+          const resultTimestamp = Date.now();
           await this.elements.sleep(100);
           this.totalReps++;
 
@@ -712,7 +714,7 @@ export class SoundExplorerService {
           this.analytics.push({
             prompt: {
               type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-              timestamp: Date.now(),
+              timestamp: promptTimestamp,
               data: {
                 shapes,
               },
@@ -721,14 +723,18 @@ export class SoundExplorerService {
               type: 'slice',
               timestamp: Date.now(),
               startTime: Date.now(),
-              completionTime: Date.now(),
+              completionTime:
+                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
             },
             result: {
               type: this.pointsGained <= 0 ? 'failure' : 'success',
-              timestamp: Date.now(),
+              timestamp: resultTimestamp,
               score: this.pointsGained,
             },
           });
+          if (this.pointsGained === 0) {
+            console.log('%c Not changed! ', 'background: #222; color: red');
+          }
         }
       },
 

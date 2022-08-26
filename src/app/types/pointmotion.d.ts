@@ -875,7 +875,7 @@ export type AnalyticsReactionDTO = {
   type: string;
   timestamp: number;
   startTime: number;
-  completionTime: number;
+  completionTime: number | null;
 };
 export type AnalyticsResultDTO = {
   type: 'success' | 'failure';
