@@ -48,6 +48,21 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   preload() {
+    let heavyBagScale = 1;
+    let speedBagScale = 0.8;
+    let handOverlayScale = 0.6;
+    let obstacleScale = 1.1;
+
+    const { width, height } = this.game.canvas;
+
+    if (width < 1200) {
+      heavyBagScale = 0.7;
+      speedBagScale = 0.4;
+      handOverlayScale = 0.3;
+      obstacleScale = 0.7;
+    }
+    console.log(`Width:: ${width} height:: ${height}`);
+
     this.load.atlas(
       'confetti',
       'assets/images/beat-boxer/confetti.png',
@@ -62,63 +77,56 @@ export class BeatBoxerScene extends Phaser.Scene {
       key: 'left_hand_overlay',
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
       key: 'right_hand_overlay',
       url: 'assets/images/beat-boxer/HAND_OVERLAY_RIGHT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
       key: 'heavy_bag_blue',
       url: 'assets/images/beat-boxer/HEAVY_BAG_BLUE.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
       key: 'heavy_bag_red',
       url: 'assets/images/beat-boxer/HEAVY_BAG_RED.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
       key: 'speed_bag_red',
       url: 'assets/images/beat-boxer/SPEED_BAG_RED.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
       key: 'speed_bag_blue',
       url: 'assets/images/beat-boxer/SPEED_BAG_BLUE.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
       key: 'obstacle_top',
       url: 'assets/images/beat-boxer/OBSTACLE_TOP.svg',
       svgConfig: {
-        scale: 1.1,
-      },
-    });
-    this.load.svg({
-      key: 'obstacle_bottom',
-      url: 'assets/images/beat-boxer/OBSTACLE_BOTTOM.svg',
-      svgConfig: {
-        scale: 1.1,
+        scale: obstacleScale,
       },
     });
     this.load.svg({
       key: 'wrong_sign',
       url: 'assets/images/beat-boxer/WRONG_HIT.svg',
       svgConfig: {
-        scale: 1,
+        scale: obstacleScale,
       },
     });
   }
