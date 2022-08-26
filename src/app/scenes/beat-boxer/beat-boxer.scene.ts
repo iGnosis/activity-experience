@@ -48,20 +48,21 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   preload() {
-    let heavyBagScale = 1;
-    let speedBagScale = 0.8;
-    let handOverlayScale = 0.6;
-    let obstacleScale = 1.1;
+    // default scale of desing assets
+    const heavyBagScale = 1;
+    const speedBagScale = 0.8;
+    const handOverlayScale = 0.6;
+    const obstacleScale = 1.1;
 
-    const { width, height } = this.game.canvas;
+    // const { width, height } = this.game.canvas;
 
-    if (width < 1200) {
-      heavyBagScale = 0.7;
-      speedBagScale = 0.4;
-      handOverlayScale = 0.3;
-      obstacleScale = 0.7;
-    }
-    console.log(`Width:: ${width} height:: ${height}`);
+    // if (width < 1200) {
+    //   // scale if canvas width less than 1200
+    //   heavyBagScale = 0.7;
+    //   speedBagScale = 0.4;
+    //   handOverlayScale = 0.3;
+    //   obstacleScale = 0.7;
+    // }
 
     this.load.atlas(
       'confetti',
@@ -897,10 +898,17 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   failureMusic: Howl;
+  successMusic: Howl;
   failureMusicId: number;
   configureMusic() {
     this.failureMusic = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+    });
+
+    this.successMusic = new Howl({
+      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
+      sprite: audioSprites.beatBoxer,
       html5: true,
     });
   }
@@ -915,16 +923,11 @@ export class BeatBoxerScene extends Phaser.Scene {
     const noteDuration = this.getDurationOfNote(this.nextPianoNote);
     const durationBeforeFadeOut = noteDuration - fadeOutDuration;
     // console.log('durationBeforeFadeOut:', durationBeforeFadeOut);
-    const successNote = new Howl({
-      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
-      sprite: audioSprites.beatBoxer,
-      html5: true,
-    });
     console.log('playing piano note, ', this.nextPianoNote);
-    successNote.play(`note_${this.nextPianoNote}`);
-    successNote.volume(1);
+    this.successMusic.volume(1);
+    this.successMusic.play(`note_${this.nextPianoNote}`);
     setTimeout(() => {
-      successNote.fade(1, 0, fadeOutDuration);
+      this.successMusic.fade(1, 0, fadeOutDuration);
     }, durationBeforeFadeOut);
     this.nextPianoNote += 1;
   }
