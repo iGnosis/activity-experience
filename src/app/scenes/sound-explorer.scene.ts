@@ -90,6 +90,7 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   constructor(private poseService: PoseService) {
     super({ key: 'soundSlicer' });
+    this.score.subscribe((score) => (this.currentScore = score));
   }
 
   preload() {
