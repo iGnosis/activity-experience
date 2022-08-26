@@ -819,7 +819,10 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     return new Promise((resolve) => {
-      const bagHeight = bag.body.bottom - bag.body.top || 700;
+      let bagHeight = 700;
+      if (bag.body) {
+        bagHeight = bag.body.bottom - bag.body.top;
+      }
       this.tweens.addCounter({
         from: 0,
         to: -bagHeight,
