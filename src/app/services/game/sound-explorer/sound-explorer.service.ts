@@ -124,6 +124,7 @@ export class SoundExplorerService {
     this.soundExplorerScene.enableCollisionDetection();
     this.soundExplorerScene.enableLeftHand();
     this.soundExplorerScene.enableRightHand();
+    this.soundExplorerScene.configureMusic();
   }
 
   welcome() {
@@ -627,6 +628,7 @@ export class SoundExplorerService {
     return [
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.enableMusic();
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
 
@@ -765,6 +767,7 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.enableMusic(false);
         this.store.dispatch(game.gameCompleted());
         this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
