@@ -119,6 +119,11 @@ export class GameService {
     private jwtService: JwtService,
     private ttsService: TtsService,
   ) {
+    window.onbeforeunload = () => {
+      this.endPoseTracking();
+      if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
+      return false;
+    };
     this.store
       .select((state: any) => state.game)
       .subscribe((game) => {
@@ -213,6 +218,21 @@ export class GameService {
         console.log(`pose tracker message: `, data);
       };
     }
+  }
+
+  endPoseTracking() {
+    if (!this.poseTrackerWorker) return;
+    this.store
+      .select((store) => store.game.id)
+      .pipe(take(1))
+      .subscribe((gameId) => {
+        if (!gameId) return;
+        this.poseTrackerWorker.postMessage({
+          type: 'game-end',
+          userId: localStorage.getItem('patient'),
+          gameId,
+        });
+      });
   }
 
   getScenes() {
@@ -331,17 +351,7 @@ export class GameService {
       };
     }
     // stop pose tracking for the current game
-    this.store
-      .select((store) => store.game.id)
-      .pipe(take(1))
-      .subscribe((gameId) => {
-        if (!gameId) return;
-        this.poseTrackerWorker.postMessage({
-          type: 'game-end',
-          userId: localStorage.getItem('patient'),
-          gameId,
-        });
-      });
+    this.endPoseTracking();
 
     // Start the next game...
     // find the index of the last played game
