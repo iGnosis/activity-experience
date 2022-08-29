@@ -762,6 +762,7 @@ export class SitToStandService implements ActivityBase {
               score: res.result === 'success' ? 1 : 0,
             },
           });
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (res.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {

@@ -872,6 +872,7 @@ export class BeatBoxerService {
               score: rep.result === 'success' ? 1 : 0,
             },
           });
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (rep.result === 'success') {
             if (rep.bagType === this.bagsAvailable.left) {
               this.bagsAvailable.left = undefined;
@@ -998,7 +999,6 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {

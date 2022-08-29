@@ -732,6 +732,7 @@ export class SoundExplorerService {
               score: this.pointsGained,
             },
           });
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (this.pointsGained === 0) {
             console.log('%c Not changed! ', 'background: #222; color: red');
           }
@@ -777,7 +778,6 @@ export class SoundExplorerService {
         this.store.dispatch(game.gameCompleted());
         this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({
