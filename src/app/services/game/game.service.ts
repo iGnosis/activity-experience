@@ -63,6 +63,7 @@ export class GameService {
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
   calibrationStartTime: Date;
+  isNewGame = false;
   private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
@@ -405,16 +406,6 @@ export class GameService {
     // the game at the exact same stage.
     if (activity) {
       try {
-        const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
-          console.log(err);
-        });
-        if (response && response.insert_game_one) {
-          // will update the calibration duration before starting the next game
-          // Todo: update calibration duration after the game ends
-          if (this.calibrationStartTime) this.updateCalibrationDuration();
-          console.log('newGame:response.insert_game_one:', response.insert_game_one);
-          this.store.dispatch(game.newGame(response.insert_game_one));
-        }
         // get genre
         this.checkinService.getUserGenre();
       } catch (err) {
@@ -425,6 +416,19 @@ export class GameService {
         if (reCalibrationCount !== this.reCalibrationCount) {
           return;
           // throw new Error('Re-calibration occurred');
+        }
+        if (remainingStages[i] === 'welcome' && !this.isNewGame) {
+          const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+            console.log(err);
+          });
+          if (response && response.insert_game_one) {
+            this.isNewGame = true;
+            // will update the calibration duration before starting the next game
+            // Todo: update calibration duration after the game ends
+            if (this.calibrationStartTime) this.updateCalibrationDuration();
+            console.log('newGame:response.insert_game_one:', response.insert_game_one);
+            this.store.dispatch(game.newGame(response.insert_game_one));
+          }
         }
 
         if (remainingStages[i] === this.gameStatus.stage) {
@@ -456,6 +460,7 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
       this.gamesCompleted.push(nextGame.name);
     }
