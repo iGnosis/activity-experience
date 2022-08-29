@@ -197,19 +197,18 @@ export class GameService {
       const poseSubscription = this.poseService.results
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
-          if (calibrationStatus !== 'success') return;
           const { poseLandmarks } = poseResults;
           this.store
             .select((store) => store.game.id)
             .pipe(take(1))
             .subscribe((gameId) => {
-              if (!gameId) return;
               this.poseTrackerWorker.postMessage({
                 type: 'update-pose',
                 poseLandmarks,
                 timestamp: Date.now(),
                 userId: localStorage.getItem('patient'),
                 gameId,
+                calibrationStatus,
               });
             });
         });
