@@ -711,27 +711,30 @@ export class SoundExplorerService {
           // if continously high points, increase difficulty
           if (streak !== 0 && streak % 3 === 0) difficulty++;
           // Todo: replace placeholder analytics values.
-          this.analytics.push({
-            prompt: {
-              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-              timestamp: promptTimestamp,
-              data: {
-                shapes,
+          this.analytics = [
+            ...this.analytics,
+            {
+              prompt: {
+                type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
+                timestamp: promptTimestamp,
+                data: {
+                  shapes,
+                },
+              },
+              reaction: {
+                type: 'slice',
+                timestamp: Date.now(),
+                startTime: Date.now(),
+                completionTime:
+                  this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
+              },
+              result: {
+                type: this.pointsGained <= 0 ? 'failure' : 'success',
+                timestamp: resultTimestamp,
+                score: this.pointsGained,
               },
             },
-            reaction: {
-              type: 'slice',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTime:
-                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
-            },
-            result: {
-              type: this.pointsGained <= 0 ? 'failure' : 'success',
-              timestamp: resultTimestamp,
-              score: this.pointsGained,
-            },
-          });
+          ];
           this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (this.pointsGained === 0) {
             console.log('%c Not changed! ', 'background: #222; color: red');
