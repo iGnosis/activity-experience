@@ -1,5 +1,3 @@
-// const socket = new WebSocket(environment.apiEndpoint.replace('https://', 'wss://'));
-
 import { io, Socket } from 'socket.io-client';
 
 const poseTrackerFn = () => {
@@ -15,6 +13,7 @@ const poseTrackerFn = () => {
         socket = io(endpoint);
         break;
       case 'update-pose':
+        if (data.calibrationStatus !== 'success' || !data.gameId) return;
         if (gameId && data.gameId !== gameId && socket) {
           // if the game id has changed, end current game before starting a new one
           socket.emit('game-end', { userId: data.userId, gameId: gameId });

@@ -737,31 +737,32 @@ export class SitToStandService implements ActivityBase {
             this.analytics.length > 0
               ? this.analytics.slice(-1)[0].reaction.type !== userState
               : true;
-          if (!hasUserStateChanged) {
-            console.log('%c Not changed! ', 'background: #222; color: red');
-          }
-          this.analytics.push({
-            prompt: {
-              type: promptClass,
-              timestamp: promptTimestamp,
-              data: {
-                number: promptNum,
+          this.analytics = [
+            ...this.analytics,
+            {
+              prompt: {
+                type: promptClass,
+                timestamp: promptTimestamp,
+                data: {
+                  number: promptNum,
+                },
+              },
+              reaction: {
+                type: userState,
+                timestamp: Date.now(),
+                startTime: Date.now(),
+                completionTime: hasUserStateChanged
+                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                  : null, // seconds between reaction and result if user state changed
+              },
+              result: {
+                type: res.result,
+                timestamp: resultTimestamp,
+                score: res.result === 'success' ? 1 : 0,
               },
             },
-            reaction: {
-              type: userState,
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTime: hasUserStateChanged
-                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                : null, // seconds between reaction and result if user state changed
-            },
-            result: {
-              type: res.result,
-              timestamp: resultTimestamp,
-              score: res.result === 'success' ? 1 : 0,
-            },
-          });
+          ];
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (res.result === 'success') {
             this.soundsService.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {

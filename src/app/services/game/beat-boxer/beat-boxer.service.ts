@@ -849,29 +849,33 @@ export class BeatBoxerService {
           this.totalReps++;
           // Todo: replace placeholder values with actual values
           const hasUserInteracted: boolean = rep.result !== undefined;
-          this.analytics.push({
-            prompt: {
-              type: 'bag',
-              timestamp: promptTimestamp,
-              data: {
-                leftBag: this.bagsAvailable.left,
-                rightBag: this.bagsAvailable.right,
+          this.analytics = [
+            ...this.analytics,
+            {
+              prompt: {
+                type: 'bag',
+                timestamp: promptTimestamp,
+                data: {
+                  leftBag: this.bagsAvailable.left,
+                  rightBag: this.bagsAvailable.right,
+                },
+              },
+              reaction: {
+                type: 'punch',
+                timestamp: Date.now(),
+                startTime: Date.now(),
+                completionTime: hasUserInteracted
+                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                  : null, // seconds between reaction and result if user interacted with the bag
+              },
+              result: {
+                type: rep.result || 'failure',
+                timestamp: resultTimestamp,
+                score: rep.result === 'success' ? 1 : 0,
               },
             },
-            reaction: {
-              type: 'punch',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTime: hasUserInteracted
-                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                : null, // seconds between reaction and result if user interacted with the bag
-            },
-            result: {
-              type: rep.result || 'failure',
-              timestamp: resultTimestamp,
-              score: rep.result === 'success' ? 1 : 0,
-            },
-          });
+          ];
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (rep.result === 'success') {
             if (rep.bagType === this.bagsAvailable.left) {
               this.bagsAvailable.left = undefined;
@@ -998,7 +1002,6 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
