@@ -144,17 +144,33 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(2500);
+        this.ttsService.tts(
+          'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
+        );
         this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
           data: {
-            ...this.elements.overlay.state.data,
-            transitionDuration: 4000,
+            cards: [
+              {
+                icon: '/assets/images/overlay_icons/no-chair.png',
+                message: 'No chair required',
+              },
+              {
+                icon: '/assets/images/overlay_icons/space-to-move.png',
+                message: 'Space to move',
+              },
+              {
+                icon: '/assets/images/overlay_icons/stand-up.png',
+                message: 'Please stand up',
+              },
+            ],
+            transitionDuration: 2500,
           },
         };
-        await this.elements.sleep(18000);
+        await this.elements.sleep(9000);
       },
     ];
   }
