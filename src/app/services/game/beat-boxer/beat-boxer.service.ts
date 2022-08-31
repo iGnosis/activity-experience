@@ -1081,8 +1081,8 @@ export class BeatBoxerService {
             ],
           },
         };
-        await this.elements.sleep(7000);
         this.gameStateService.postLoopHook();
+        await this.elements.sleep(7000);
         this.store.dispatch(game.gameCompleted());
       },
     ];

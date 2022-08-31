@@ -914,7 +914,6 @@ export class SitToStandService implements ActivityBase {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async (reCalibrationCount: number) => {
-        this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
 
         const achievementRatio = this.successfulReps / this.totalReps;
@@ -959,6 +958,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
         });
+        this.gameStateService.postLoopHook();
         await this.elements.sleep(12000);
       },
     ];

@@ -775,7 +775,6 @@ export class SoundExplorerService {
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.enableMusic(false);
         this.store.dispatch(game.gameCompleted());
-        this.gameStateService.postLoopHook();
         this.soundsService.stopGenreSound();
         this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
         const achievementRatio = this.successfulReps / this.totalReps;
@@ -824,6 +823,7 @@ export class SoundExplorerService {
           },
         };
 
+        this.gameStateService.postLoopHook();
         await this.elements.sleep(12000);
       },
     ];
