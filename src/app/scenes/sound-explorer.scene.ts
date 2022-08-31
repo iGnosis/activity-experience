@@ -254,6 +254,7 @@ export class SoundExplorerScene extends Phaser.Scene {
    * @param velocity Velocity of the shapes
    */
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
+    if (!this.group) return;
     const shapeScale = 0.04;
 
     this.setNextNote();
@@ -270,7 +271,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       const gameObject = this.physics.add.sprite(originX, originY, textureKey).setScale(shapeScale);
       // console.log('showShapes::gameObject:', gameObject);
       gameObject.body.onWorldBounds = true;
-      this.group.add(gameObject);
+      this.group && this.group.add(gameObject);
       this.physics.velocityFromRotation(
         Phaser.Math.DegToRad(angle),
         velocity,
