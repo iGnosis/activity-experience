@@ -959,7 +959,6 @@ export class SitToStandService implements ActivityBase {
             },
           };
         });
-        this.gameStateService.postLoopHook();
         await this.elements.sleep(12000);
       },
     ];

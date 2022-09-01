@@ -463,6 +463,7 @@ export class GameService {
       this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
       this.gamesCompleted.push(nextGame.name);
+      this.gameStateService.postLoopHook();
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
