@@ -13,7 +13,7 @@ const poseTrackerFn = () => {
         socket = io(endpoint);
         break;
       case 'update-pose':
-        if (data.calibrationStatus !== 'success' || !data.gameId) return;
+        if (data.calibrationStatus !== 'success' || !data.gameId || data.endedAt) return;
         if (gameId && data.gameId !== gameId && socket) {
           // if the game id has changed, end current game before starting a new one
           socket.emit('game-end', { userId: data.userId, gameId: gameId });

@@ -200,15 +200,17 @@ export class GameService {
         .subscribe(([poseResults, calibrationStatus]) => {
           const { poseLandmarks } = poseResults;
           this.store
-            .select((store) => store.game.id)
+            .select((store) => store.game)
             .pipe(take(1))
-            .subscribe((gameId) => {
+            .subscribe((game) => {
+              const { id, endedAt } = game;
               this.poseTrackerWorker.postMessage({
                 type: 'update-pose',
                 poseLandmarks,
                 timestamp: Date.now(),
                 userId: localStorage.getItem('patient'),
-                gameId,
+                gameId: id,
+                endedAt,
                 calibrationStatus,
               });
             });
