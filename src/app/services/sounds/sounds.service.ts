@@ -208,30 +208,32 @@ export class SoundsService {
   }
 
   pauseBacktrack(genre: Genre) {
-    switch (genre) {
-      case 'classical':
-        if (
-          this.currentClassicalBacktrackId &&
-          this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
-        ) {
-          this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
-        }
-        break;
-      case 'dance':
-        if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
-          this.dance.pause(this.danceBacktrackId);
-        }
-        break;
-      case 'rock':
-        if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
-          this.rock.pause(this.rockBacktrackId);
-        }
-        break;
-      case 'surprise me!':
-        return;
-      case 'jazz':
-        this.pauseConstantDrum();
-    }
+    setTimeout(() => {
+      switch (genre) {
+        case 'classical':
+          if (
+            this.currentClassicalBacktrackId &&
+            this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
+          ) {
+            this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
+          }
+          break;
+        case 'dance':
+          if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
+            this.dance.pause(this.danceBacktrackId);
+          }
+          break;
+        case 'rock':
+          if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
+            this.rock.pause(this.rockBacktrackId);
+          }
+          break;
+        case 'surprise me!':
+          return;
+        case 'jazz':
+          this.pauseConstantDrum();
+      }
+    }, 5000);
   }
 
   currentClassicalSet = 1;
