@@ -90,7 +90,7 @@ export class SitToStandService implements ActivityBase {
             titles: ['Starting Sit, Stand, Achieve'],
           },
         };
-        await this.elements.sleep(6000);
+        await this.elements.sleep(2500);
       },
       async (reCalibrationCount: number) => {
         this.elements.overlay.state = {
@@ -133,10 +133,10 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Please raise your left hand to get started.');
+        this.ttsService.tts('Please raise one of your hands to get started.');
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to get started.',
+            title: 'Please raise one of your hands to get started.',
             showIndefinitely: true,
           },
           attributes: {
@@ -144,7 +144,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
       },
       async (reCalibrationCount: number) => {
@@ -232,7 +232,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to move further',
+            title: 'Please raise one of your hands to move further',
             showIndefinitely: true,
           },
           attributes: {
@@ -241,9 +241,9 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        this.ttsService.tts('Please raise your left hand to move further');
+        this.ttsService.tts('Please raise one of your hands to move further');
 
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
 
         this.elements.guide.state = {
@@ -285,7 +285,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to move further',
+            title: 'Please raise one of your hands to move further',
             showIndefinitely: true,
           },
           attributes: {
@@ -293,8 +293,8 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Please raise your left hand to move further');
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.ttsService.tts('Please raise one of your hands to move further');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
@@ -630,15 +630,15 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             showIndefinitely: true,
-            title: 'Raise your left hand to move further.',
+            title: 'Raise one of your hands to move further.',
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Raise your left hand to move further');
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.ttsService.tts('Raise one of your hands to move further');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},

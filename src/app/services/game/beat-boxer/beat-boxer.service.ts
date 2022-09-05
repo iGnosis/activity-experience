@@ -114,10 +114,10 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
-        this.ttsService.tts("Raise your left hand when you're ready to begin.");
+        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your left hand when you're ready to start.",
+            title: "Raise one of your hands when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -125,7 +125,7 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.attributes = {
           visibility: 'hidden',
@@ -709,10 +709,10 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(7000);
-        this.ttsService.tts("Raise your left hand when you're ready to begin.");
+        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your left hand when you're ready to start.",
+            title: "Raise one of your hands when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -720,7 +720,7 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.ttsService.tts('Get ready to start.');
         this.elements.guide.attributes = {
