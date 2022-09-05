@@ -208,32 +208,48 @@ export class SoundsService {
   }
 
   pauseBacktrack(genre: Genre) {
-    setTimeout(() => {
-      switch (genre) {
-        case 'classical':
-          if (
-            this.currentClassicalBacktrackId &&
-            this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
-          ) {
-            this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
-          }
-          break;
-        case 'dance':
-          if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
-            this.dance.pause(this.danceBacktrackId);
-          }
-          break;
-        case 'rock':
-          if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
-            this.rock.pause(this.rockBacktrackId);
-          }
-          break;
-        case 'surprise me!':
-          return;
-        case 'jazz':
-          this.pauseConstantDrum();
-      }
-    }, 5000);
+    switch (genre) {
+      case 'classical':
+        if (
+          this.currentClassicalBacktrackId &&
+          this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
+        ) {
+          this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
+        }
+        break;
+      case 'dance':
+        if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
+          this.dance.pause(this.danceBacktrackId);
+        }
+        break;
+      case 'rock':
+        if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
+          this.rock.pause(this.rockBacktrackId);
+        }
+        break;
+      case 'surprise me!':
+        return;
+      case 'jazz':
+        this.pauseConstantDrum();
+    }
+  }
+
+  stopBacktrack(genre: Genre) {
+    switch (genre) {
+      case 'classical':
+        this.classicalBacktrack && this.classicalBacktrack.fade(100, 0, 5000);
+        break;
+      case 'dance':
+        this.dance && this.dance.fade(100, 0, 5000);
+        break;
+      case 'rock':
+        this.rock && this.rock.fade(100, 0, 500);
+        break;
+      case 'surprise me!':
+        return;
+      case 'jazz':
+        this.drums && this.drums.fade(100, 0, 500);
+    }
   }
 
   currentClassicalSet = 1;

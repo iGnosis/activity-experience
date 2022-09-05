@@ -916,7 +916,7 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         // this.soundsService.stopGenreSound();
-        this.soundsService.pauseBacktrack(this.genre);
+        this.soundsService.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({
