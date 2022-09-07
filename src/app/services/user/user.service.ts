@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import jwtDecode from 'jwt-decode';
+import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
-  constructor(private gqlClientService: GqlClientService) {}
+  constructor(
+    private gqlClientService: GqlClientService,
+    private googleAnalyticsService: GoogleAnalyticsService,
+  ) {}
 
   debug() {
     console.log('hello from user.service');
@@ -29,6 +33,7 @@ export class UserService {
       console.log('decoded: ', hasuraJWTClaims);
       if ('x-hasura-user-id' in hasuraJWTClaims) {
         localStorage.setItem('patient', hasuraJWTClaims['x-hasura-user-id']);
+        this.googleAnalyticsService.setUserId(hasuraJWTClaims['x-hasura-user-id']);
       }
     }
   }

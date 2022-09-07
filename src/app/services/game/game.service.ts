@@ -32,6 +32,7 @@ import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -119,6 +120,7 @@ export class GameService {
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -430,6 +432,12 @@ export class GameService {
             if (this.calibrationStartTime) this.updateCalibrationDuration();
             console.log('newGame:response.insert_game_one:', response.insert_game_one);
             this.store.dispatch(game.newGame(response.insert_game_one));
+            this.googleAnalyticsService.sendEvent('level_start', {
+              level_name: nextGame.name,
+            });
+            this.googleAnalyticsService.sendEvent('stage_start', {
+              name: remainingStages[i],
+            });
           }
         }
 
@@ -440,6 +448,14 @@ export class GameService {
             game: nextGame.name,
           };
         } else {
+          if (i !== 0) {
+            this.googleAnalyticsService.sendEvent('stage_end', {
+              name: remainingStages[i - 1],
+            });
+          }
+          this.googleAnalyticsService.sendEvent('stage_start', {
+            name: remainingStages[i],
+          });
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: 0,
@@ -464,6 +480,9 @@ export class GameService {
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
       this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
+      this.googleAnalyticsService.sendEvent('level_end', {
+        level_name: nextGame.name,
+      });
       this.gamesCompleted.push(nextGame.name);
       this.gameStateService.postLoopHook();
     }
