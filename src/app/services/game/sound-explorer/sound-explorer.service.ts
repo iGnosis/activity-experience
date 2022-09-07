@@ -130,7 +130,7 @@ export class SoundExplorerService {
   welcome() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.scene.start('soundSlicer');
+        this.soundExplorerScene.scene.start('soundExplorer');
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -777,8 +777,8 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.scene.stop('soundExplorer');
         this.soundExplorerScene.enableMusic(false);
-        this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({

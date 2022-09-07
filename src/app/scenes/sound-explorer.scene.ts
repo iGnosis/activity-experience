@@ -90,7 +90,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   };
 
   constructor(private poseService: PoseService) {
-    super({ key: 'soundSlicer' });
+    super({ key: 'soundExplorer' });
     this.score.subscribe((score) => (this.currentScore = score));
   }
 
@@ -388,7 +388,7 @@ export class SoundExplorerScene extends Phaser.Scene {
         // if collision detected...
         if (this.group.getLength() === 0) {
           resolve({});
-          clearInterval();
+          clearInterval(interval);
         }
       }, 300);
     });
