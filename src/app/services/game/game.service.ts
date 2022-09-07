@@ -328,55 +328,20 @@ export class GameService {
       };
     }
 
-    // If the last game is the same as the one being currently... Return the current game.
-    console.log(
-      'If the last game is the same as the one being currently... Return the current game.',
-    );
-    if (this.gameStatus.game !== lastGame[0].game) {
-      return {
-        name: this.gameStatus.game,
-        settings: environment.settings[this.gameStatus.game],
-      };
-    }
-    // stop pose tracking for the current game
+    const lastGameIndex = environment.order.indexOf(lastGame[0].game);
+    // last played game ended, return next game
+    let nextGameIndex = (lastGameIndex + 1) % environment.order.length;
+    const lastPlayedGame = await this.checkinService.getLastPlayedGame();
 
-    // Start the next game...
-    // find the index of the last played game
-    const index = environment.order.indexOf(lastGame[0].game);
-    if (environment.order.length === index + 1) {
-      // Person has played the last game... start the first game.
-      this.ttsService.tts('Please raise one of your hands to close the game.');
-      this.elements.guide.state = {
-        data: {
-          title: 'Please raise one of your hands to close the game.',
-          showIndefinitely: true,
-        },
-        attributes: {
-          visibility: 'visible',
-        },
-      };
-      await this.handTrackerService.waitUntilHandRaised('any-hand');
-      this.soundsService.playCalibrationSound('success');
-      this.elements.guide.attributes = {
-        visibility: 'hidden',
-      };
-      await this.elements.sleep(1000);
-      window.parent.postMessage(
-        {
-          type: 'end-game',
-        },
-        '*',
-      );
-      return {
-        name: environment.order[0],
-        settings: environment.settings[environment.order[0]],
-      };
+    if (!lastPlayedGame[0].endedAt) {
+      const lastGameIndex = environment.order.indexOf(lastPlayedGame[0].game);
+      // game not ended, return the same game
+      nextGameIndex = lastGameIndex;
     }
-
-    // Start the next game.
+    const nextGame = environment.order[nextGameIndex];
     return {
-      name: environment.order[index + 1],
-      settings: environment.settings[environment.order[index + 1]],
+      name: nextGame,
+      settings: environment.settings[nextGame],
     };
   }
 

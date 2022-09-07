@@ -827,6 +827,32 @@ export class SoundExplorerService {
 
         await this.elements.sleep(12000);
       },
+      async (reCalibrationCount: number) => {
+        this.ttsService.tts('Please raise one of your hands to close the game.');
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise one of your hands to close the game.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.soundsService.playCalibrationSound('success');
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        await this.elements.sleep(1000);
+        window.parent.postMessage(
+          {
+            type: 'end-game',
+          },
+          '*',
+        );
+      },
     ];
   }
 }

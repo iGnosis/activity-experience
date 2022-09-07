@@ -131,6 +131,29 @@ export class CheckinService {
     }
   }
 
+  async getLastPlayedGame() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    try {
+      const lastGame = await this.client.req(
+        gql`
+          query GetLastGame($today: timestamptz = "") {
+            game(limit: 1, order_by: { createdAt: desc }, where: { createdAt: { _gte: $today } }) {
+              id
+              game
+              endedAt
+            }
+          }
+        `,
+        { today },
+      );
+
+      return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async getFastestTime(game: string) {
     try {
       const fastestTime = await this.client.req(
