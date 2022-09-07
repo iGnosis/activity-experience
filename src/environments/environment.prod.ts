@@ -28,7 +28,7 @@ export const environment: Environment = {
     },
     sound_explorer: {
       configuration: {
-        gameDuration: 30,
+        gameDuration: 3 * 60,
         speed: 400,
       },
     },
