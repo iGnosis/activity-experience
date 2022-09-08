@@ -17,11 +17,6 @@ import { BannerButton, BannerElementState, ElementAttributes } from 'src/app/typ
       transition('start => mid', animate('0.3s ease-out')),
       transition('mid => end', animate('0.3s ease-out')),
     ]),
-    trigger('animate-progress-bar', [
-      state('start', style({ width: 0 })),
-      state('progress', style({ width: '100%' })),
-      transition('start => progress', animate('{{duration}}s')),
-    ]),
   ],
 })
 export class BannerComponent implements OnInit, OnDestroy {
@@ -68,7 +63,7 @@ export class BannerComponent implements OnInit, OnDestroy {
       this.bannerService.hide();
       this.bannerAnimationState = 'start';
       this.progressBarAnimationState = 'start';
-    }, duration + 500);
+    }, duration);
   }
 
   onButtonClick(button: BannerButton) {

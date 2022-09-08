@@ -722,7 +722,6 @@ export class BeatBoxerService {
         };
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
-        this.ttsService.tts('Get ready to start.');
         this.elements.guide.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1037,45 +1036,46 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        let totalDuration: {
+        const totalDuration: {
           minutes: string;
           seconds: string;
+        } = this.updateTimer(this.config.gameDuration!);
+        const highScore = await this.checkinService.getHighScore('beat_boxer');
+
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'outro',
+            htmlStr: `
+          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
+            <h1 class="pt-8 display-3">Beat Boxer</h1>
+            <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
+            <h2 class="pt-5">High Score: ${Math.max(
+              highScore.length ? highScore[0].repsCompleted : 0,
+              this.successfulReps,
+            )} Punches</h2>
+            <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
+              totalDuration.seconds
+            } minutes</h2>
+          <div>
+          `,
+            buttons: [
+              {
+                title: 'Next Activity',
+                progressDurationMs: 8000,
+              },
+            ],
+          },
         };
-
-        this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.updateTimer(this.config.gameDuration!);
-          const highScore = await this.checkinService.getHighScore('beat_boxer');
-          this.elements.banner.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              type: 'outro',
-              htmlStr: `
-            <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-              <h1 class="pt-8 display-3">Beat Boxer</h1>
-              <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
-              <h2 class="pt-5">High Score: ${Math.max(
-                highScore.length ? highScore[0].repsCompleted : 0,
-                this.successfulReps,
-              )} Punches</h2>
-              <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
-                totalDuration.seconds
-              } minutes</h2>
-            <div>
-            `,
-              buttons: [
-                {
-                  title: 'Next Activity',
-                  progressDurationMs: 10000,
-                },
-              ],
-            },
-          };
-        });
-
-        await this.elements.sleep(12000);
+        await this.elements.sleep(11000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        await this.elements.sleep(500);
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -1099,7 +1099,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        await this.elements.sleep(7000);
+        await this.elements.sleep(6000);
       },
     ];
   }
