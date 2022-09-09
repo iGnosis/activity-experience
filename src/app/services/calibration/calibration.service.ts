@@ -129,17 +129,24 @@ export class CalibrationService {
     // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
     const unCalibratedPoints: number[] = [];
     const calibratedPoints: number[] = [];
+    let points: number[] = [];
 
-    const points = [12, 11, 24, 23, 26, 25];
+    // all points must be visible and be within the calibration box.
+    if (this.mode === 'full') {
+      // 32 total body points -> 0, 1, 2, 3... 32.
+      points = [...Array(33).keys()];
+    } else if (this.mode === 'fast') {
+      // only the key body points must be visible.
+      points = [12, 11, 24, 23, 26, 25];
+    }
+
     const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
-
     const invisiblePoints = keyBodyPoints.filter((point) => {
       if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
         return true;
       }
       return false;
     });
-
     if (invisiblePoints.length > 0) {
       return { status: 'error' };
     }
