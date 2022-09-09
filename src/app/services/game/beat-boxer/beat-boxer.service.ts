@@ -114,10 +114,10 @@ export class BeatBoxerService {
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
-        this.ttsService.tts("Raise your left hand when you're ready to begin.");
+        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your left hand when you're ready to start.",
+            title: "Raise one of your hands when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -125,7 +125,7 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.attributes = {
           visibility: 'hidden',
@@ -144,17 +144,33 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(2500);
+        this.ttsService.tts(
+          'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
+        );
         this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
           data: {
-            ...this.elements.overlay.state.data,
-            transitionDuration: 4000,
+            cards: [
+              {
+                icon: '/assets/images/overlay_icons/no-chair.png',
+                message: 'No chair required',
+              },
+              {
+                icon: '/assets/images/overlay_icons/space-to-move.png',
+                message: 'Space to move',
+              },
+              {
+                icon: '/assets/images/overlay_icons/stand-up.png',
+                message: 'Please stand up',
+              },
+            ],
+            transitionDuration: 2500,
           },
         };
-        await this.elements.sleep(18000);
+        await this.elements.sleep(9000);
       },
     ];
   }
@@ -693,10 +709,10 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(7000);
-        this.ttsService.tts("Raise your left hand when you're ready to begin.");
+        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
-            title: "Raise your left hand when you're ready to start.",
+            title: "Raise one of your hands when you're ready to start.",
             showIndefinitely: true,
           },
           attributes: {
@@ -704,9 +720,8 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
-        this.ttsService.tts('Get ready to start.');
         this.elements.guide.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -845,18 +860,13 @@ export class BeatBoxerService {
 
           console.log('result: ', rep);
 
-          const reactionTimestamp = Date.now();
+          const resultTimestamp = Date.now();
           this.totalReps++;
-          if (rep.result === 'success') {
-            if (rep.bagType === this.bagsAvailable.left) {
-              this.bagsAvailable.left = undefined;
-            }
-            if (rep.bagType === this.bagsAvailable.right) {
-              this.bagsAvailable.right = undefined;
-            }
-            clearTimeout(bagTimeout);
-            // Todo: replace placeholder values with actual values
-            this.analytics.push({
+          // Todo: replace placeholder values with actual values
+          const hasUserInteracted: boolean = rep.result !== undefined;
+          this.analytics = [
+            ...this.analytics,
+            {
               prompt: {
                 type: 'bag',
                 timestamp: promptTimestamp,
@@ -867,16 +877,28 @@ export class BeatBoxerService {
               },
               reaction: {
                 type: 'punch',
-                timestamp: reactionTimestamp,
+                timestamp: Date.now(),
                 startTime: Date.now(),
-                completionTime: Date.now(),
+                completionTime: hasUserInteracted
+                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                  : null, // seconds between reaction and result if user interacted with the bag
               },
               result: {
-                type: 'success',
-                timestamp: Date.now(),
-                score: 1,
+                type: rep.result || 'failure',
+                timestamp: resultTimestamp,
+                score: rep.result === 'success' ? 1 : 0,
               },
-            });
+            },
+          ];
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+          if (rep.result === 'success') {
+            if (rep.bagType === this.bagsAvailable.left) {
+              this.bagsAvailable.left = undefined;
+            }
+            if (rep.bagType === this.bagsAvailable.right) {
+              this.bagsAvailable.right = undefined;
+            }
+            clearTimeout(bagTimeout);
             this.successfulReps++;
             this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
@@ -898,28 +920,6 @@ export class BeatBoxerService {
             if (rep.bagType === this.bagsAvailable.right) {
               this.bagsAvailable.right = undefined;
             }
-            // Todo: replace placeholder values with actual values
-            this.analytics.push({
-              prompt: {
-                type: 'bag',
-                timestamp: promptTimestamp,
-                data: {
-                  leftBag: this.bagsAvailable.left,
-                  rightBag: this.bagsAvailable.right,
-                },
-              },
-              reaction: {
-                type: 'punch',
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'failure',
-                timestamp: Date.now(),
-                score: 0,
-              },
-            });
             this.failedReps++;
             if (this.failedReps >= 3) {
               this.elements.timer.state = {
@@ -1017,9 +1017,6 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
-        this.gameStateService.postLoopHook();
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
-        this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({
@@ -1039,46 +1036,46 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        this.store.dispatch(game.gameCompleted());
-        let totalDuration: {
+        const totalDuration: {
           minutes: string;
           seconds: string;
+        } = this.updateTimer(this.config.gameDuration!);
+        const highScore = await this.checkinService.getHighScore('beat_boxer');
+
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'outro',
+            htmlStr: `
+          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
+            <h1 class="pt-8 display-3">Beat Boxer</h1>
+            <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
+            <h2 class="pt-5">High Score: ${Math.max(
+              highScore.length ? highScore[0].repsCompleted : 0,
+              this.successfulReps,
+            )} Punches</h2>
+            <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
+              totalDuration.seconds
+            } minutes</h2>
+          <div>
+          `,
+            buttons: [
+              {
+                title: 'Next Activity',
+                progressDurationMs: 8000,
+              },
+            ],
+          },
         };
-
-        this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.updateTimer(this.config.gameDuration!);
-          const highScore = await this.checkinService.getHighScore('beat_boxer');
-          this.elements.banner.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              type: 'outro',
-              htmlStr: `
-            <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-              <h1 class="pt-8 display-3">Beat Boxer</h1>
-              <h2 class="pt-7">Punches: ${this.successfulReps}</h2>
-              <h2 class="pt-5">High Score: ${Math.max(
-                highScore.length ? highScore[0].repsCompleted : 0,
-                this.successfulReps,
-              )} Punches</h2>
-              <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
-                totalDuration.seconds
-              } minutes</h2>
-            <div>
-            `,
-              buttons: [
-                {
-                  title: 'Next Activity',
-                  progressDurationMs: 10000,
-                },
-              ],
-            },
-          };
-        });
-
-        await this.elements.sleep(12000);
+        await this.elements.sleep(11000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        await this.elements.sleep(500);
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -1102,7 +1099,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        await this.elements.sleep(7000);
+        await this.elements.sleep(6000);
       },
     ];
   }

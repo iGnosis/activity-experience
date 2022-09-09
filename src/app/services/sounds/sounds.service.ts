@@ -234,6 +234,24 @@ export class SoundsService {
     }
   }
 
+  stopBacktrack(genre: Genre) {
+    switch (genre) {
+      case 'classical':
+        this.classicalBacktrack && this.classicalBacktrack.fade(100, 0, 5000);
+        break;
+      case 'dance':
+        this.dance && this.dance.fade(100, 0, 5000);
+        break;
+      case 'rock':
+        this.rock && this.rock.fade(100, 0, 500);
+        break;
+      case 'surprise me!':
+        return;
+      case 'jazz':
+        this.drums && this.drums.fade(100, 0, 500);
+    }
+  }
+
   currentClassicalSet = 1;
   currentClassicalRep = 1;
   currentClassicalBacktrackId: number;

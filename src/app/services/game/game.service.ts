@@ -32,6 +32,7 @@ import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -63,6 +64,7 @@ export class GameService {
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
   calibrationStartTime: Date;
+  isNewGame = false;
   private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
@@ -118,7 +120,12 @@ export class GameService {
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
+    window.onbeforeunload = () => {
+      if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
+      return false;
+    };
     this.store
       .select((state: any) => state.game)
       .subscribe((game) => {
@@ -193,19 +200,20 @@ export class GameService {
       const poseSubscription = this.poseService.results
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
-          if (calibrationStatus !== 'success') return;
           const { poseLandmarks } = poseResults;
           this.store
-            .select((store) => store.game.id)
+            .select((store) => store.game)
             .pipe(take(1))
-            .subscribe((gameId) => {
-              if (!gameId) return;
+            .subscribe((game) => {
+              const { id, endedAt } = game;
               this.poseTrackerWorker.postMessage({
                 type: 'update-pose',
                 poseLandmarks,
                 timestamp: Date.now(),
                 userId: localStorage.getItem('patient'),
-                gameId,
+                gameId: id,
+                endedAt,
+                calibrationStatus,
               });
             });
         });
@@ -320,66 +328,20 @@ export class GameService {
       };
     }
 
-    // If the last game is the same as the one being currently... Return the current game.
-    console.log(
-      'If the last game is the same as the one being currently... Return the current game.',
-    );
-    if (this.gameStatus.game !== lastGame[0].game) {
-      return {
-        name: this.gameStatus.game,
-        settings: environment.settings[this.gameStatus.game],
-      };
-    }
-    // stop pose tracking for the current game
-    this.store
-      .select((store) => store.game.id)
-      .pipe(take(1))
-      .subscribe((gameId) => {
-        if (!gameId) return;
-        this.poseTrackerWorker.postMessage({
-          type: 'game-end',
-          userId: localStorage.getItem('patient'),
-          gameId,
-        });
-      });
+    const lastGameIndex = environment.order.indexOf(lastGame[0].game);
+    // last played game ended, return next game
+    let nextGameIndex = (lastGameIndex + 1) % environment.order.length;
+    const lastPlayedGame = await this.checkinService.getLastPlayedGame();
 
-    // Start the next game...
-    // find the index of the last played game
-    const index = environment.order.indexOf(lastGame[0].game);
-    if (environment.order.length === index + 1) {
-      // Person has played the last game... start the first game.
-      this.ttsService.tts('Please raise one of your hands to close the game.');
-      this.elements.guide.state = {
-        data: {
-          title: 'Please raise one of your hands to close the game.',
-          showIndefinitely: true,
-        },
-        attributes: {
-          visibility: 'visible',
-        },
-      };
-      await this.handTrackerService.waitUntilHandRaised('any-hand');
-      this.soundsService.playCalibrationSound('success');
-      this.elements.guide.attributes = {
-        visibility: 'hidden',
-      };
-      await this.elements.sleep(1000);
-      window.parent.postMessage(
-        {
-          type: 'end-game',
-        },
-        '*',
-      );
-      return {
-        name: environment.order[0],
-        settings: environment.settings[environment.order[0]],
-      };
+    if (!lastPlayedGame[0].endedAt) {
+      const lastGameIndex = environment.order.indexOf(lastPlayedGame[0].game);
+      // game not ended, return the same game
+      nextGameIndex = lastGameIndex;
     }
-
-    // Start the next game.
+    const nextGame = environment.order[nextGameIndex];
     return {
-      name: environment.order[index + 1],
-      settings: environment.settings[environment.order[index + 1]],
+      name: nextGame,
+      settings: environment.settings[nextGame],
     };
   }
 
@@ -413,16 +375,6 @@ export class GameService {
     // the game at the exact same stage.
     if (activity) {
       try {
-        const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
-          console.log(err);
-        });
-        if (response && response.insert_game_one) {
-          // will update the calibration duration before starting the next game
-          // Todo: update calibration duration after the game ends
-          if (this.calibrationStartTime) this.updateCalibrationDuration();
-          console.log('newGame:response.insert_game_one:', response.insert_game_one);
-          this.store.dispatch(game.newGame(response.insert_game_one));
-        }
         // get genre
         this.checkinService.getUserGenre();
       } catch (err) {
@@ -434,6 +386,25 @@ export class GameService {
           return;
           // throw new Error('Re-calibration occurred');
         }
+        if (remainingStages[i] === 'welcome' && !this.isNewGame) {
+          const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+            console.log(err);
+          });
+          if (response && response.insert_game_one) {
+            this.isNewGame = true;
+            // will update the calibration duration before starting the next game
+            // Todo: update calibration duration after the game ends
+            if (this.calibrationStartTime) this.updateCalibrationDuration();
+            console.log('newGame:response.insert_game_one:', response.insert_game_one);
+            this.store.dispatch(game.newGame(response.insert_game_one));
+            this.googleAnalyticsService.sendEvent('level_start', {
+              level_name: nextGame.name,
+            });
+            this.googleAnalyticsService.sendEvent('stage_start', {
+              name: remainingStages[i],
+            });
+          }
+        }
 
         if (remainingStages[i] === this.gameStatus.stage) {
           this.gameStatus = {
@@ -442,6 +413,14 @@ export class GameService {
             game: nextGame.name,
           };
         } else {
+          if (i !== 0) {
+            this.googleAnalyticsService.sendEvent('stage_end', {
+              name: remainingStages[i - 1],
+            });
+          }
+          this.googleAnalyticsService.sendEvent('stage_start', {
+            name: remainingStages[i],
+          });
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: 0,
@@ -464,8 +443,13 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
+      this.googleAnalyticsService.sendEvent('level_end', {
+        level_name: nextGame.name,
+      });
       this.gamesCompleted.push(nextGame.name);
+      this.gameStateService.postLoopHook();
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();

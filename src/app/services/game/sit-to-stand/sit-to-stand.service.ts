@@ -90,7 +90,7 @@ export class SitToStandService implements ActivityBase {
             titles: ['Starting Sit, Stand, Achieve'],
           },
         };
-        await this.elements.sleep(6000);
+        await this.elements.sleep(2500);
       },
       async (reCalibrationCount: number) => {
         this.elements.overlay.state = {
@@ -133,10 +133,10 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Please raise your left hand to get started.');
+        this.ttsService.tts('Please raise one of your hands to get started.');
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to get started.',
+            title: 'Please raise one of your hands to get started.',
             showIndefinitely: true,
           },
           attributes: {
@@ -144,7 +144,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
       },
       async (reCalibrationCount: number) => {
@@ -232,7 +232,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to move further',
+            title: 'Please raise one of your hands to move further',
             showIndefinitely: true,
           },
           attributes: {
@@ -241,9 +241,9 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        this.ttsService.tts('Please raise your left hand to move further');
+        this.ttsService.tts('Please raise one of your hands to move further');
 
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
 
         this.elements.guide.state = {
@@ -285,7 +285,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise your left hand to move further',
+            title: 'Please raise one of your hands to move further',
             showIndefinitely: true,
           },
           attributes: {
@@ -293,8 +293,8 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Please raise your left hand to move further');
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.ttsService.tts('Please raise one of your hands to move further');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
@@ -630,15 +630,15 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             showIndefinitely: true,
-            title: 'Raise your left hand to move further.',
+            title: 'Raise one of your hands to move further.',
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Raise your left hand to move further');
-        await this.handTrackerService.waitUntilHandRaised('left-hand');
+        this.ttsService.tts('Raise one of your hands to move further');
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
@@ -704,6 +704,7 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
+          const promptTimestamp = Date.now();
           this.ttsService.tts(promptNum.toString());
           this.elements.timeout.state = {
             data: {
@@ -715,12 +716,11 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          const promptTimestamp = Date.now();
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
             promptClass,
             this.config.speed,
           );
-          const reactionTimestamp = Date.now();
+          const resultTimestamp = Date.now();
           this.totalReps += 1;
           this.elements.timeout.state = {
             data: {
@@ -731,9 +731,15 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          if (res.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
-            this.analytics.push({
+          const userState =
+            res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
+          const hasUserStateChanged: boolean =
+            this.analytics.length > 0
+              ? this.analytics.slice(-1)[0].reaction.type !== userState
+              : true;
+          this.analytics = [
+            ...this.analytics,
+            {
               prompt: {
                 type: promptClass,
                 timestamp: promptTimestamp,
@@ -742,17 +748,23 @@ export class SitToStandService implements ActivityBase {
                 },
               },
               reaction: {
-                type: promptClass,
-                timestamp: reactionTimestamp,
+                type: userState,
+                timestamp: Date.now(),
                 startTime: Date.now(),
-                completionTime: Date.now(),
+                completionTime: hasUserStateChanged
+                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                  : null, // seconds between reaction and result if user state changed
               },
               result: {
-                type: 'success',
-                timestamp: Date.now(),
-                score: 1,
+                type: res.result,
+                timestamp: resultTimestamp,
+                score: res.result === 'success' ? 1 : 0,
               },
-            });
+            },
+          ];
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+          if (res.result === 'success') {
+            this.soundsService.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,
@@ -777,26 +789,6 @@ export class SitToStandService implements ActivityBase {
             };
           } else {
             this.soundsService.playCalibrationSound('error');
-            this.analytics.push({
-              prompt: {
-                type: promptClass,
-                timestamp: promptTimestamp,
-                data: {
-                  number: promptNum,
-                },
-              },
-              reaction: {
-                type: promptClass === 'sit' ? 'stand' : 'sit',
-                timestamp: reactionTimestamp,
-                startTime: Date.now(),
-                completionTime: Date.now(),
-              },
-              result: {
-                type: 'failure',
-                timestamp: Date.now(),
-                score: 0,
-              },
-            });
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,
@@ -923,9 +915,8 @@ export class SitToStandService implements ActivityBase {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async (reCalibrationCount: number) => {
-        this.gameStateService.postLoopHook();
-        this.soundsService.stopGenreSound();
-
+        // this.soundsService.stopGenreSound();
+        this.soundsService.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({

@@ -72,6 +72,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
 
       // to play success music based on the shape
+      console.log('play successMusic', _shape.texture.key);
       if (this.music && _shape.texture.key === TextureKeys.CIRCLE) {
         this.playSuccessMusic('bass');
       } else if (this.music && _shape.texture.key === TextureKeys.TRIANGLE) {
@@ -89,7 +90,8 @@ export class SoundExplorerScene extends Phaser.Scene {
   };
 
   constructor(private poseService: PoseService) {
-    super({ key: 'soundSlicer' });
+    super({ key: 'soundExplorer' });
+    this.score.subscribe((score) => (this.currentScore = score));
   }
 
   preload() {
@@ -252,6 +254,7 @@ export class SoundExplorerScene extends Phaser.Scene {
    * @param velocity Velocity of the shapes
    */
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
+    if (!this.group) return;
     const shapeScale = 0.04;
 
     this.setNextNote();
@@ -268,7 +271,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       const gameObject = this.physics.add.sprite(originX, originY, textureKey).setScale(shapeScale);
       // console.log('showShapes::gameObject:', gameObject);
       gameObject.body.onWorldBounds = true;
-      this.group.add(gameObject);
+      this.group && this.group.add(gameObject);
       this.physics.velocityFromRotation(
         Phaser.Math.DegToRad(angle),
         velocity,
@@ -385,7 +388,7 @@ export class SoundExplorerScene extends Phaser.Scene {
         // if collision detected...
         if (this.group.getLength() === 0) {
           resolve({});
-          clearInterval();
+          clearInterval(interval);
         }
       }, 300);
     });
@@ -415,22 +418,22 @@ export class SoundExplorerScene extends Phaser.Scene {
       html5: true,
     });
     this.alto = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/Alto.mp3',
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Alto.mp3',
       sprite: audioSprites.soundExplorer.alto,
       html5: true,
     });
     this.bass = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/Bass.mp3',
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Bass.mp3',
       sprite: audioSprites.soundExplorer.bass,
       html5: true,
     });
     this.soprano = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/Soprano.mp3',
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Soprano.mp3',
       sprite: audioSprites.soundExplorer.soprano,
       html5: true,
     });
     this.tenor = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/Tenor.mp3',
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Tenor.mp3',
       sprite: audioSprites.soundExplorer.tenor,
       html5: true,
     });

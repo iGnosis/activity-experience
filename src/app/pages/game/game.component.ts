@@ -5,6 +5,7 @@ import { take } from 'rxjs';
 import { ElementsService } from 'src/app/services/elements/elements.service';
 import { GameStateService } from 'src/app/services/game-state/game-state.service';
 import { GameService } from 'src/app/services/game/game.service';
+import { GoogleAnalyticsService } from 'src/app/services/google-analytics/google-analytics.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { UserService } from 'src/app/services/user/user.service';
 
@@ -29,12 +30,16 @@ export class GameComponent implements OnInit {
     private route: ActivatedRoute,
     private store: Store,
     private gameStateService: GameStateService,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
     if (
       navigator.userAgent.indexOf('Chrome') != -1 ||
       navigator.userAgent.indexOf('Firefox') != -1
     ) {
       this.browserSupported = true;
+    }
+    if (!this.browserSupported) {
+      this.googleAnalyticsService.sendEvent('browser_unsupported');
     }
   }
   async ngOnInit(): Promise<void> {
@@ -60,6 +65,9 @@ export class GameComponent implements OnInit {
             this.canvas.nativeElement,
           );
           this.videoAvailable = true;
+          if (this.cameraStatus === 'failure') {
+            this.googleAnalyticsService.sendEvent('camera_not_found');
+          }
         }
       },
       false,
@@ -70,6 +78,9 @@ export class GameComponent implements OnInit {
         this.video.nativeElement,
         this.canvas.nativeElement,
       );
+      if (this.cameraStatus === 'failure') {
+        this.googleAnalyticsService.sendEvent('camera_not_found');
+      }
     }
   }
 

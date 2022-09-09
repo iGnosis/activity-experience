@@ -124,12 +124,13 @@ export class SoundExplorerService {
     this.soundExplorerScene.enableCollisionDetection();
     this.soundExplorerScene.enableLeftHand();
     this.soundExplorerScene.enableRightHand();
+    this.soundExplorerScene.configureMusic();
   }
 
   welcome() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.scene.start('soundSlicer');
+        this.soundExplorerScene.scene.start('soundExplorer');
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -627,6 +628,7 @@ export class SoundExplorerService {
     return [
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.enableMusic();
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
 
@@ -688,11 +690,13 @@ export class SoundExplorerService {
         let streak = 0;
         while (!this.isGameComplete) {
           const shapes = await this.drawShapes(difficulty);
+          const promptTimestamp = Date.now();
 
           const showObstacle = Math.random() > 0.5;
           if (showObstacle) this.drawObstacle();
 
           await this.soundExplorerScene.waitForCollisionOrTimeout();
+          const resultTimestamp = Date.now();
           await this.elements.sleep(100);
           this.totalReps++;
 
@@ -707,26 +711,34 @@ export class SoundExplorerService {
           // if continously high points, increase difficulty
           if (streak !== 0 && streak % 3 === 0) difficulty++;
           // Todo: replace placeholder analytics values.
-          this.analytics.push({
-            prompt: {
-              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-              timestamp: Date.now(),
-              data: {
-                shapes,
+          this.analytics = [
+            ...this.analytics,
+            {
+              prompt: {
+                type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
+                timestamp: promptTimestamp,
+                data: {
+                  shapes,
+                },
+              },
+              reaction: {
+                type: 'slice',
+                timestamp: Date.now(),
+                startTime: Date.now(),
+                completionTime:
+                  this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
+              },
+              result: {
+                type: this.pointsGained <= 0 ? 'failure' : 'success',
+                timestamp: resultTimestamp,
+                score: this.pointsGained,
               },
             },
-            reaction: {
-              type: 'slice',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTime: Date.now(),
-            },
-            result: {
-              type: this.pointsGained <= 0 ? 'failure' : 'success',
-              timestamp: Date.now(),
-              score: this.pointsGained,
-            },
-          });
+          ];
+          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+          if (this.pointsGained === 0) {
+            console.log('%c Not changed! ', 'background: #222; color: red');
+          }
         }
       },
 
@@ -765,10 +777,8 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.store.dispatch(game.gameCompleted());
-        this.gameStateService.postLoopHook();
-        this.soundsService.stopGenreSound();
-        this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+        this.soundExplorerScene.scene.stop('soundExplorer');
+        this.soundExplorerScene.enableMusic(false);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({
@@ -816,6 +826,32 @@ export class SoundExplorerService {
         };
 
         await this.elements.sleep(12000);
+      },
+      async (reCalibrationCount: number) => {
+        this.ttsService.tts('Please raise one of your hands to close the game.');
+        this.elements.guide.state = {
+          data: {
+            title: 'Please raise one of your hands to close the game.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.soundsService.playCalibrationSound('success');
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        await this.elements.sleep(1000);
+        window.parent.postMessage(
+          {
+            type: 'end-game',
+          },
+          '*',
+        );
       },
     ];
   }
