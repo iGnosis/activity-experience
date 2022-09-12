@@ -494,7 +494,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
-        this.ttsService.tts('You have the power to create the music.');
+        this.ttsService.tts('You have the power to create the music by moving your body.');
         this.elements.video.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
