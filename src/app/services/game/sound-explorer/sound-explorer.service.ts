@@ -530,7 +530,7 @@ export class SoundExplorerService {
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           // if successful rep 3 times, increase difficulty
           successfulReps++;
-          if (successfulReps !== 0 && successfulReps % 3 === 0) difficulty++;
+          if (successfulReps !== 0 && successfulReps % 3 === 0 && difficulty < 4) difficulty++;
           await this.elements.sleep(1000);
         }
         await this.elements.sleep(2000);
@@ -709,7 +709,7 @@ export class SoundExplorerService {
             this.successfulReps++;
           }
           // if continously high points, increase difficulty
-          if (streak !== 0 && streak % 3 === 0) difficulty++;
+          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) difficulty++;
           // Todo: replace placeholder analytics values.
           this.analytics = [
             ...this.analytics,
