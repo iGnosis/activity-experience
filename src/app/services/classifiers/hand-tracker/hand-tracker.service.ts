@@ -101,9 +101,9 @@ export class HandTrackerService {
     const rightWrist = poseLandmarkArray[16];
     const leftWrist = poseLandmarkArray[15];
     if (
-      (nose.visibility && nose.visibility < this.visibilityThreshold) ||
-      (rightWrist.visibility && rightWrist.visibility < this.visibilityThreshold) ||
-      (leftWrist.visibility && leftWrist.visibility < this.visibilityThreshold)
+      (nose && nose.visibility && nose.visibility < this.visibilityThreshold) ||
+      (rightWrist && rightWrist.visibility && rightWrist.visibility < this.visibilityThreshold) ||
+      (leftWrist && leftWrist.visibility && leftWrist.visibility < this.visibilityThreshold)
     ) {
       return false;
     }
@@ -115,9 +115,9 @@ export class HandTrackerService {
     const rightElbow = poseLandmarkArray[14];
     const leftElbow = poseLandmarkArray[13];
     if (
-      (nose.visibility && nose.visibility < this.visibilityThreshold) ||
-      (rightElbow.visibility && rightElbow.visibility < this.visibilityThreshold) ||
-      (leftElbow.visibility && leftElbow.visibility < this.visibilityThreshold)
+      (nose && nose.visibility && nose.visibility < this.visibilityThreshold) ||
+      (rightElbow && rightElbow.visibility && rightElbow.visibility < this.visibilityThreshold) ||
+      (rightElbow && leftElbow.visibility && leftElbow.visibility < this.visibilityThreshold)
     ) {
       return false;
     }

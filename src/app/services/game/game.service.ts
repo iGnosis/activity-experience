@@ -145,7 +145,17 @@ export class GameService {
         audio: false,
       });
       video.srcObject = stream;
-      const box = this.uiHelperService.setBoundingBox(stream);
+      const videoTracks = stream.getTracks();
+      if (Array.isArray(videoTracks) && videoTracks.length > 0) {
+        const track = videoTracks[0];
+        const streamWidth = track.getSettings().width || 0;
+        const streamHeight = track.getSettings().height || 0;
+
+        this.uiHelperService.setBoundingBox(streamWidth, streamHeight, {
+          innerHeight: window.innerHeight,
+          innerWidth: window.innerWidth,
+        });
+      }
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
