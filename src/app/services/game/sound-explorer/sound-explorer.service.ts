@@ -777,8 +777,9 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.scene.stop('soundExplorer');
         this.soundExplorerScene.enableMusic(false);
+        this.soundExplorerScene.disable();
+        this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({

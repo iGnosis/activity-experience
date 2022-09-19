@@ -357,7 +357,9 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   disable(): void {
     this.enabled = false;
-    this.poseSubscription.unsubscribe();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
+    }
   }
 
   /**
