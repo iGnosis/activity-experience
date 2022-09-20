@@ -13,4 +13,8 @@ describe('JwtService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('should return null if token is not set', () => {
+    expect(service.getToken()).toBeNull();
+  });
 });

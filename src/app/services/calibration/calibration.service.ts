@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { debounceTime, Observable, Subject, Subscription } from 'rxjs';
+import { debounceTime, iif, Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
 import { PoseService } from '../pose/pose.service';
@@ -17,6 +17,14 @@ export class CalibrationService {
   visibilityThreshold = 0.7;
   _reCalibrationCount = 0;
   reCalibrationCount = new Subject<number>();
+  canvasWidth: number;
+  canvasHeight: number;
+  calibrationBox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 
   constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {
     this.result.pipe(debounceTime(2000)).subscribe((status) => {
@@ -26,8 +34,21 @@ export class CalibrationService {
 
   enable(autoSwitchMode = true) {
     this.isEnabled = true;
+    // get canvas height and width from calibration scene.
+    if (this.calibrationScene.game) {
+      this.canvasWidth = this.calibrationScene.game.canvas.width;
+      this.canvasHeight = this.calibrationScene.game.canvas.height;
+      this.calibrationBox = this.calibrationScene.calibrationBox;
+    }
+    console.log('calibrationBox::', this.calibrationBox);
     this.subscription = this.poseService.getPose().subscribe((results) => {
-      const newStatus = this._calibrateBody(results, this.mode);
+      const newStatus = this._calibrateBody(
+        results,
+        this.mode,
+        this.canvasWidth,
+        this.canvasHeight,
+        this.calibrationBox,
+      );
 
       if (!newStatus) return;
 
@@ -95,12 +116,21 @@ export class CalibrationService {
     }
   }
 
-  _isPointWithinCalibrationBox(x: number, y: number, point?: number): boolean {
+  _isPointWithinCalibrationBox(
+    x: number,
+    y: number,
+    calibrationBox: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    },
+  ): boolean {
     const isPointWithinCalibrationBox =
-      this.calibrationScene.calibrationBox.x < x &&
-      x < this.calibrationScene.calibrationBox.x + this.calibrationScene.calibrationBox.width &&
-      this.calibrationScene.calibrationBox.y < y &&
-      y < this.calibrationScene.calibrationBox.y + this.calibrationScene.calibrationBox.height;
+      calibrationBox.x < x &&
+      x < calibrationBox.x + calibrationBox.width &&
+      calibrationBox.y < y &&
+      y < calibrationBox.y + calibrationBox.height;
 
     return isPointWithinCalibrationBox;
   }
@@ -112,6 +142,14 @@ export class CalibrationService {
   _calibrateBody(
     results: Results,
     mode: CalibrationMode,
+    canvasWidth: number,
+    canvasHeight: number,
+    calibrationBox: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    },
   ): {
     status: CalibrationStatusType;
   } {
@@ -152,8 +190,8 @@ export class CalibrationService {
     }
 
     points.forEach((point) => {
-      const xPoint = poseLandmarkArray[point].x * this.calibrationScene.sys.game.canvas.width;
-      const yPoint = poseLandmarkArray[point].y * this.calibrationScene.sys.game.canvas.height;
+      const xPoint = poseLandmarkArray[point].x * canvasWidth;
+      const yPoint = poseLandmarkArray[point].y * canvasHeight;
 
       // it's okay if user isn't within the box.
       if (mode === 'fast') {
@@ -162,7 +200,7 @@ export class CalibrationService {
 
       // user must be within the box.
       if (mode === 'full') {
-        if (!this._isPointWithinCalibrationBox(xPoint, yPoint)) {
+        if (!this._isPointWithinCalibrationBox(xPoint, yPoint, calibrationBox)) {
           // console.log(`point ${point} is out of calibration box`);
           unCalibratedPoints.push(point);
         } else {
@@ -181,7 +219,13 @@ export class CalibrationService {
       // to remove if calibration points are already drawn.
       this.calibrationScene.destroyGraphics();
       // highlight points that aren't in the box.
-      this.calibrationScene.drawCalibrationPoints(results, calibratedPoints, unCalibratedPoints);
+      this.calibrationScene.drawCalibrationPoints(
+        results,
+        calibratedPoints,
+        unCalibratedPoints,
+        canvasWidth,
+        canvasHeight,
+      );
       return { status: 'warning' };
     }
 

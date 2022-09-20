@@ -494,7 +494,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(8000);
-        this.ttsService.tts('You have the power to create the music.');
+        this.ttsService.tts('You have the power to create the music by moving your body.');
         this.elements.video.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1017,6 +1017,7 @@ export class BeatBoxerService {
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
+        this.beatBoxerScene.scene.stop('beatBoxer');
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({

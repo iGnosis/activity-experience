@@ -90,8 +90,18 @@ export class SessionComponent implements AfterViewInit {
         audio: false,
       });
       this.video.nativeElement.srcObject = stream;
-      const box = this.uiHelperService.setBoundingBox(stream);
-      console.log('setBoundingBox:box:', box);
+      const videoTracks = stream.getTracks();
+
+      if (Array.isArray(videoTracks) && videoTracks.length > 0) {
+        const track = videoTracks[0];
+        const width = track.getSettings().width || 0;
+        const height = track.getSettings().height || 0;
+        const box = this.uiHelperService.setBoundingBox(width, height, {
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+        });
+        console.log('setBoundingBox:box:', box);
+      }
       // aspect ratio of the screen and webcam may be different. make calculations easier
       this.updateDimensions(this.video.nativeElement);
 

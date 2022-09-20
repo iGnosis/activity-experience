@@ -74,7 +74,6 @@ export class HolisticServiceOld {
     // console.log(results)
     if (results) {
       this.numOfResults += 1; // increment the number till 100 only
-      this.store.dispatch(pose.send({ pose: results }));
     }
   }
 }

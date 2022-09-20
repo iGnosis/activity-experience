@@ -183,7 +183,9 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.enableLeft = false;
     this.enableRight = false;
     this.destroyGloves();
-    this.poseSubscription.unsubscribe();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
+    }
   }
 
   /**

@@ -40,7 +40,6 @@ export class PoseService {
       this.pose.setOptions(this.options);
 
       this.pose.onResults((results) => {
-        // as soon as we are getting the new results we are destroying the exisiting calibration pose and points to make it look more realtime!
         this.handleResults(results);
       });
 
@@ -93,6 +92,8 @@ export class PoseService {
 
   private handleResults(results: Results) {
     if (results) {
+      console.log('res::');
+      console.log(results);
       this.numOfResults += 1; // increment the number till 100 only
       this.results.next(results);
     }

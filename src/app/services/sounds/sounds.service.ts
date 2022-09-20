@@ -278,6 +278,7 @@ export class SoundsService {
           this.currentClassicalBacktrackId = this.classicalBacktrack.play(
             `backtrack set${this.currentClassicalSet}`,
           );
+          return this.currentClassicalBacktrackId;
         } else {
           console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
           const soundTrackKey = `set${this.currentClassicalSet}rep${this.currentClassicalRep}`;
@@ -327,6 +328,7 @@ export class SoundsService {
               `backtrack set${this.currentClassicalSet}`,
             );
           }
+          return this.currentClassicalTriggerId;
         }
         break;
       case 'dance':
@@ -338,12 +340,14 @@ export class SoundsService {
           if (!this.dance.playing(this.danceBacktrackId)) {
             this.danceBacktrackId = this.dance.play('backtrack');
           }
+          return this.danceBacktrackId;
         } else {
           this.danceTriggerId = this.dance.play(`trigger${this.currentDanceTrigger}`);
           this.currentDanceTrigger += 1;
           if (this.currentDanceTrigger === 33) {
             this.currentDanceTrigger = 1;
           }
+          return this.danceTriggerId;
         }
         break;
       case 'rock':
@@ -355,12 +359,14 @@ export class SoundsService {
           if (!this.rock.playing(this.rockBacktrackId)) {
             this.rockBacktrackId = this.rock.play('backtrack');
           }
+          return this.rockBacktrackId;
         } else {
           this.rockTriggerId = this.rock.play(`rock${this.currentRockTrigger}`);
           this.currentRockTrigger += 1;
           if (this.currentRockTrigger === 17) {
             this.currentRockTrigger = 1;
           }
+          return this.rockTriggerId;
         }
         break;
       case 'surprise me!':
@@ -369,7 +375,7 @@ export class SoundsService {
         }
         if (type === 'backtrack') {
           console.log('No ambient backtrack');
-          return;
+          return null;
         } else {
           if (this.surprise.playing(this.ambientTriggerId)) {
             this.surprise.stop(this.ambientTriggerId);
@@ -379,13 +385,24 @@ export class SoundsService {
           if (this.currentAmbientTrigger === 17) {
             this.currentAmbientTrigger = 1;
           }
+          return this.ambientTriggerId;
         }
         break;
       case 'jazz':
         if (type === 'backtrack') {
-          this.playConstantDrum();
+          if (!this.isConstantDrumPlaying()) {
+            this.constantDrumId = this.drums.play('constantDrum');
+          }
+          return this.constantDrumId;
         } else {
-          this.playNextChord();
+          if (this.currentChord >= 9) {
+            this.currentChord = 1;
+          }
+          console.log(`playing CHORD ${this.currentChord}`);
+          const currentChordId = this.chords.play(`Chord ${this.currentChord}`);
+          this.currentChord += 1;
+
+          return currentChordId;
         }
     }
   }

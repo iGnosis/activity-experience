@@ -34,7 +34,7 @@ export class CheckinService {
   //   );
   // }
 
-  async getUserGenre() {
+  async getUserGenre(): Promise<Genre | void> {
     try {
       const userGenre = await this.client.req(
         gql`
@@ -57,8 +57,9 @@ export class CheckinService {
           genre,
         }),
       );
+      return genre;
     } catch (err) {
-      throw new Error('Unable to fetch genre');
+      console.log('Unable to fetch genre');
     }
   }
 
@@ -103,7 +104,7 @@ export class CheckinService {
         },
       );
 
-      return onboardingStatus.update_patient_by_pk;
+      return onboardingStatus.data.update_patient.returning[0].onboardingStatus;
     } catch (err) {
       console.log(err);
     }

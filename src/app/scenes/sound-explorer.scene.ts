@@ -60,6 +60,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   ) => {
     if (!_shape.texture) return;
 
+    // coordinates to play the success and failure animations
     const [x, y] = this.getCenter(_shape);
 
     // updating the score, if the shape is not X shape.
@@ -68,6 +69,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
 
+      // play success animation
       this.add.sprite(x, y, TextureKeys.CONFETTI).play(AnimationKeys.CONFETTI_ANIM);
       this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
 
@@ -83,9 +85,11 @@ export class SoundExplorerScene extends Phaser.Scene {
         this.playSuccessMusic('soprano');
       }
     } else {
+      // play failure animation
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
       this.music && this.playFailureMusic();
     }
+    // destroying the shape
     _shape.destroy(true);
   };
 
@@ -353,7 +357,9 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   disable(): void {
     this.enabled = false;
-    this.poseSubscription.unsubscribe();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
+    }
   }
 
   /**
