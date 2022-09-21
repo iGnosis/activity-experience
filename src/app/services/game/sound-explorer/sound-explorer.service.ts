@@ -13,6 +13,7 @@ import { game } from 'src/app/store/actions/game.actions';
 import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription, take } from 'rxjs';
+import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -95,6 +96,7 @@ export class SoundExplorerService {
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
     private soundExplorerScene: SoundExplorerScene,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
     this.handTrackerService.enable();
     this.store
@@ -847,6 +849,11 @@ export class SoundExplorerService {
           reCalibrationCount,
         };
         await this.elements.sleep(1000);
+        this.store.dispatch(game.gameCompleted());
+        this.googleAnalyticsService.sendEvent('level_end', {
+          level_name: 'sound_explorer',
+        });
+        this.gameStateService.postLoopHook();
         window.parent.postMessage(
           {
             type: 'end-game',
