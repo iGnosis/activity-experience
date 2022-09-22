@@ -32,13 +32,13 @@ export class SoundExplorerService {
   private pointsGained = 0;
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]: number[] } = {
-    'bottom-right': [-140, -110],
-    'bottom-left': [-80, -50],
-    'bottom-center': [-150, -30],
-    'left-center': [-60, 10],
-    'right-center': [-190, -130],
-    'top-left': [10, 60],
-    'top-right': [-240, -190],
+    'bottom-right': [-110, -115],
+    'bottom-left': [-70, -75],
+    'bottom-center': [-120, -70],
+    'left-center': [-70, -65],
+    'right-center': [-120, -110],
+    'top-left': [40, 50],
+    'top-right': [150, 160],
   };
   private analytics: AnalyticsDTO[] = [];
   private scoreSubscription: Subscription;
