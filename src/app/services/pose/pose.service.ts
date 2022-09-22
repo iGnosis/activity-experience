@@ -92,8 +92,6 @@ export class PoseService {
 
   private handleResults(results: Results) {
     if (results) {
-      console.log('res::');
-      console.log(results);
       this.numOfResults += 1; // increment the number till 100 only
       this.results.next(results);
     }

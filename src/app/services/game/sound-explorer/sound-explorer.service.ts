@@ -157,6 +157,7 @@ export class SoundExplorerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.enableMusic('tutorial');
         this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Use your hands to interact with the shapes you see on the screen.');
         this.elements.guide.state = {
@@ -573,6 +574,7 @@ export class SoundExplorerService {
         });
         await this.elements.sleep(3000);
         this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundExplorerScene.enableMusic('disabled');
       },
     ];
   }
@@ -630,7 +632,7 @@ export class SoundExplorerService {
     return [
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic();
+        this.soundExplorerScene.enableMusic('game');
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
 
@@ -691,6 +693,7 @@ export class SoundExplorerService {
         });
         let streak = 0;
         while (!this.isGameComplete) {
+          this.soundExplorerScene.setNextNote();
           const shapes = await this.drawShapes(difficulty);
           const promptTimestamp = Date.now();
 
@@ -779,7 +782,7 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic(false);
+        this.soundExplorerScene.enableMusic('disabled');
         this.soundExplorerScene.disable();
         this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;
