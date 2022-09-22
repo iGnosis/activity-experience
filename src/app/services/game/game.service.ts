@@ -288,10 +288,14 @@ export class GameService {
         this.ttsService.tts(
           'To resume the game, please get your whole body, from head to toe, within the red box.',
         );
-        this.elements.guide.data = {
-          title:
-            'To resume the game, please get your whole body, from head to toe, within the red box.',
-          showIndefinitely: true,
+        this.elements.guide.state = {
+          data: {
+            title: 'Ensure your whole body is in the red box to continue.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
         };
       }
     });
@@ -485,12 +489,12 @@ export class GameService {
       'To start, please get your whole body, from head to toe, within the red box.',
     );
     this.elements.guide.state = {
+      data: {
+        title: 'Ensure your whole body is in the red box to continue.',
+        titleDuration: 3000,
+      },
       attributes: {
         visibility: 'visible',
-      },
-      data: {
-        title: 'To start, please get your whole body, from head to toe, within the red box.',
-        showIndefinitely: true,
       },
     };
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);

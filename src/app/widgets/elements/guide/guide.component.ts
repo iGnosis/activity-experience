@@ -26,7 +26,7 @@ export class GuideComponent implements OnInit, OnDestroy {
   hideTitle() {
     if (this.state.data.title && !this.state.data.showIndefinitely) {
       setTimeout(() => {
-        this.guideService.data = {
+        this.state.data = {
           ...this.state.data,
           title: '',
         };
