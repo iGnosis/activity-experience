@@ -36,7 +36,7 @@ export class CalibrationScene extends Scene {
     center?: Phaser.GameObjects.Rectangle;
   } = {};
 
-  constructor(private store: Store<{ calibration: any }>) {
+  constructor() {
     super({ key: 'calibration' });
   }
 
@@ -127,11 +127,12 @@ export class CalibrationScene extends Scene {
     poseResults: Results,
     calibratedPoints: number[],
     unCalibratedPoints: number[],
+    canvasWidth: number,
+    canvasHeight: number,
   ) {
     // console.log(poseResults);
     // we can clear the exisiting pose and calibration points here, currently doing it in holistic.service!
     // this.destroyGraphics();
-    const { width, height } = this.sys.game.canvas;
     this.graphics = this.add.graphics({ fillStyle: { color: 0xffffff, alpha: 1 } });
     this.graphics.lineStyle(5, 0xffffff);
 
@@ -143,16 +144,16 @@ export class CalibrationScene extends Scene {
       this.graphics.fillStyle(0xffffff, 1);
       this.graphics.fillCircleShape(
         new Phaser.Geom.Circle(
-          width - poseResults.poseLandmarks[point].x * width,
-          poseResults.poseLandmarks[point].y * height,
+          canvasWidth - poseResults.poseLandmarks[point].x * canvasWidth,
+          poseResults.poseLandmarks[point].y * canvasHeight,
           12,
         ),
       );
       this.graphics.fillStyle(0x00bd3e, 1);
       this.graphics.fillCircleShape(
         new Phaser.Geom.Circle(
-          width - poseResults.poseLandmarks[point].x * width,
-          poseResults.poseLandmarks[point].y * height,
+          canvasWidth - poseResults.poseLandmarks[point].x * canvasWidth,
+          poseResults.poseLandmarks[point].y * canvasHeight,
           10,
         ),
       );
@@ -163,16 +164,16 @@ export class CalibrationScene extends Scene {
       this.graphics.fillStyle(0xffffff, 1);
       this.graphics.fillCircleShape(
         new Phaser.Geom.Circle(
-          width - poseResults.poseLandmarks[point].x * width,
-          poseResults.poseLandmarks[point].y * height,
+          canvasWidth - poseResults.poseLandmarks[point].x * canvasWidth,
+          poseResults.poseLandmarks[point].y * canvasHeight,
           12,
         ),
       );
       this.graphics.fillStyle(0xf73636, 1);
       this.graphics.fillCircleShape(
         new Phaser.Geom.Circle(
-          width - poseResults.poseLandmarks[point].x * width,
-          poseResults.poseLandmarks[point].y * height,
+          canvasWidth - poseResults.poseLandmarks[point].x * canvasWidth,
+          poseResults.poseLandmarks[point].y * canvasHeight,
           10,
         ),
       );
@@ -180,7 +181,7 @@ export class CalibrationScene extends Scene {
   }
 
   drawCalibrationPose(poseResults: Results, graphics: Phaser.GameObjects.Graphics) {
-    const { width, height } = this.sys.game.canvas;
+    const { width, height } = this.game.canvas;
 
     const leftShoulder = poseResults.poseLandmarks[11];
     const rightShoulder = poseResults.poseLandmarks[12];
@@ -349,7 +350,7 @@ export class CalibrationScene extends Scene {
   }
 
   drawCalibrationBox(type: CalibrationStatusType) {
-    if (!this.sys.game || !this.showCalibration) return;
+    if (!this.game || !this.showCalibration) return;
 
     const { width, height } = this.sys.game.canvas;
 

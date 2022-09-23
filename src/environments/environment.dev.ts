@@ -14,8 +14,9 @@ export const environment: Environment = {
   googleAnalyticsTrackingID: 'G-MTGG72G6ND',
   endpoint: 'https://api.dev.pointmotioncontrol.com/v1/graphql',
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
+  websocketEndpoint: 'wss://services.dev.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.dev.pointmotioncontrol.com',
-  order: ['sit_stand_achieve', 'beat_boxer'],
+  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer'],
   settings: {
     sit_stand_achieve: {
       configuration: {
@@ -31,8 +32,8 @@ export const environment: Environment = {
     },
     sound_explorer: {
       configuration: {
-        minCorrectReps: 10,
-        speed: 5000,
+        gameDuration: 3 * 60,
+        speed: 400,
       },
     },
   },

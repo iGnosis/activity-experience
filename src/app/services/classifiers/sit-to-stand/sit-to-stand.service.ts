@@ -6,8 +6,8 @@ import { PoseService } from '../../pose/pose.service';
   providedIn: 'root',
 })
 export class SitToStandService {
-  private enabled = false;
-  private currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
+  enabled = false;
+  currentClass: 'unknown' | 'disabled' | 'sit' | 'stand' = 'unknown';
   distanceThreshold: any;
   subscription: Subscription;
 

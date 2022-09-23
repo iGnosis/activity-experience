@@ -30,6 +30,12 @@ const _gameReducer = createReducer(
       ...data,
     };
   }),
+  on(game.setScore, (state, data) => {
+    return {
+      ...state,
+      repsCompleted: data.score,
+    };
+  }),
   on(game.repCompleted, (state) => {
     return {
       ...state,

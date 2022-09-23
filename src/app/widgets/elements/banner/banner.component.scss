@@ -9,7 +9,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  background: url('../../../../assets/images/backgrounds/banner-bg.png') no-repeat;
+  background: #fff url('../../../../assets/images/backgrounds/banner-bg.png') no-repeat;
   background-size: cover;
 
   h1,
@@ -34,6 +34,14 @@
       text-align: center;
       font-size: large;
       font-weight: bold;
+      width: 100%;
+    }
+  }
+  @keyframes progress {
+    0% {
+      width: 0%;
+    }
+    100% {
       width: 100%;
     }
   }

@@ -17,7 +17,7 @@ export class PoseService {
   numOfResults = 0;
   pose: Pose;
   config: 'cdn' | 'local';
-  private results = new Subject<Results>();
+  results = new Subject<Results>();
 
   constructor() {}
 
@@ -40,7 +40,6 @@ export class PoseService {
       this.pose.setOptions(this.options);
 
       this.pose.onResults((results) => {
-        // as soon as we are getting the new results we are destroying the exisiting calibration pose and points to make it look more realtime!
         this.handleResults(results);
       });
 

@@ -8,9 +8,11 @@ import {
   ActivityConfiguration,
   ActivityStage,
   CalibrationStatusType,
+  GameState,
   GameStatus,
   Genre,
   HandTrackerStatus,
+  PreferenceState,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -27,7 +29,10 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { debounceTime } from 'rxjs';
+import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
+import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -47,6 +52,9 @@ export class GameService {
     physics: {
       default: 'arcade',
       arcade: {
+        // debug: true,
+        // debugShowBody: true,
+        // debugShowVelocity: true,
         gravity: { y: 200 },
       },
     },
@@ -56,11 +64,13 @@ export class GameService {
   reCalibrationCount = 0;
   _calibrationStatus: CalibrationStatusType;
   calibrationStartTime: Date;
+  isNewGame = false;
   private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
+  private poseTrackerWorker: Worker;
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -96,16 +106,26 @@ export class GameService {
     private calibrationScene: CalibrationScene,
     private sitToStandScene: SitToStandScene,
     private beatBoxerScene: BeatBoxerScene,
+    private soundExplorerScene: SoundExplorerScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
+    private soundExplorerService: SoundExplorerService,
     private poseService: PoseService,
-    private store: Store,
+    private store: Store<{
+      game: GameState;
+      preference: PreferenceState;
+    }>,
     private gameStateService: GameStateService,
     private checkinService: CheckinService,
     private jwtService: JwtService,
     private ttsService: TtsService,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
+    window.onbeforeunload = () => {
+      if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
+      return false;
+    };
     this.store
       .select((state: any) => state.game)
       .subscribe((game) => {
@@ -125,7 +145,17 @@ export class GameService {
         audio: false,
       });
       video.srcObject = stream;
-      const box = this.uiHelperService.setBoundingBox(stream);
+      const videoTracks = stream.getTracks();
+      if (Array.isArray(videoTracks) && videoTracks.length > 0) {
+        const track = videoTracks[0];
+        const streamWidth = track.getSettings().width || 0;
+        const streamHeight = track.getSettings().height || 0;
+
+        this.uiHelperService.setBoundingBox(streamWidth, streamHeight, {
+          innerHeight: window.innerHeight,
+          innerWidth: window.innerWidth,
+        });
+      }
       this.updateDimensions(video);
       await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
@@ -161,20 +191,62 @@ export class GameService {
     return new Promise((resolve) => {
       setTimeout(() => {
         this.poseService.start(video);
+        this.startPoseTracker();
         resolve({});
       }, 1000);
     });
   }
 
+  startPoseTracker() {
+    if (typeof Worker !== 'undefined') {
+      this.poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
+        type: 'module',
+      });
+      this.poseTrackerWorker.postMessage({
+        type: 'connect',
+        websocketEndpoint: environment.websocketEndpoint,
+      });
+
+      const poseSubscription = this.poseService.results
+        .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
+        .subscribe(([poseResults, calibrationStatus]) => {
+          const { poseLandmarks } = poseResults;
+          this.store
+            .select((store) => store.game)
+            .pipe(take(1))
+            .subscribe((game) => {
+              const { id, endedAt } = game;
+              this.poseTrackerWorker.postMessage({
+                type: 'update-pose',
+                poseLandmarks,
+                timestamp: Date.now(),
+                userId: localStorage.getItem('patient'),
+                gameId: id,
+                endedAt,
+                calibrationStatus,
+              });
+            });
+        });
+      this.poseTrackerWorker.onmessage = ({ data }) => {
+        console.log(`pose tracker message: `, data);
+      };
+    }
+  }
+
   getScenes() {
-    return [this.calibrationScene, this.sitToStandScene, this.beatBoxerScene];
+    return [
+      this.calibrationScene,
+      this.sitToStandScene,
+      this.beatBoxerScene,
+      this.soundExplorerScene,
+    ];
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
-      // sound_slicer: this.sitToStandService,
+      sound_explorer: this.soundExplorerService,
     };
   }
 
@@ -213,10 +285,17 @@ export class GameService {
         this.elements.timer.data = {
           mode: 'pause',
         };
-        this.ttsService.tts('To resume the game, please get yourself within the red box.');
-        this.elements.guide.data = {
-          title: 'To resume the game, please get yourself within the red box.',
-          showIndefinitely: true,
+        this.ttsService.tts(
+          'To resume the game, please get your whole body, from head to toe, within the red box.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'Ensure your whole body is in the red box to continue.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+          },
         };
       }
     });
@@ -263,54 +342,20 @@ export class GameService {
       };
     }
 
-    // If the last game is the same as the one being currently... Return the current game.
-    console.log(
-      'If the last game is the same as the one being currently... Return the current game.',
-    );
-    if (this.gameStatus.game !== lastGame[0].game) {
-      return {
-        name: this.gameStatus.game,
-        settings: environment.settings[this.gameStatus.game],
-      };
-    }
+    const lastGameIndex = environment.order.indexOf(lastGame[0].game);
+    // last played game ended, return next game
+    let nextGameIndex = (lastGameIndex + 1) % environment.order.length;
+    const lastPlayedGame = await this.checkinService.getLastPlayedGame();
 
-    // Start the next game...
-    // find the index of the last played game
-    const index = environment.order.indexOf(lastGame[0].game);
-    if (environment.order.length === index + 1) {
-      // Person has played the last game... start the first game.
-      this.ttsService.tts('Please raise one of your hands to close the game.');
-      this.elements.guide.state = {
-        data: {
-          title: 'Please raise one of your hands to close the game.',
-          showIndefinitely: true,
-        },
-        attributes: {
-          visibility: 'visible',
-        },
-      };
-      await this.handTrackerService.waitUntilHandRaised('any-hand');
-      this.soundsService.playCalibrationSound('success');
-      this.elements.guide.attributes = {
-        visibility: 'hidden',
-      };
-      await this.elements.sleep(1000);
-      window.parent.postMessage(
-        {
-          type: 'end-game',
-        },
-        '*',
-      );
-      return {
-        name: environment.order[0],
-        settings: environment.settings[environment.order[0]],
-      };
+    if (!lastPlayedGame[0].endedAt) {
+      const lastGameIndex = environment.order.indexOf(lastPlayedGame[0].game);
+      // game not ended, return the same game
+      nextGameIndex = lastGameIndex;
     }
-
-    // Start the next game.
+    const nextGame = environment.order[nextGameIndex];
     return {
-      name: environment.order[index + 1],
-      settings: environment.settings[environment.order[index + 1]],
+      name: nextGame,
+      settings: environment.settings[nextGame],
     };
   }
 
@@ -344,16 +389,6 @@ export class GameService {
     // the game at the exact same stage.
     if (activity) {
       try {
-        const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
-          console.log(err);
-        });
-        if (response && response.insert_game_one) {
-          // will update the calibration duration before starting the next game
-          // Todo: update calibration duration after the game ends
-          if (this.calibrationStartTime) this.updateCalibrationDuration();
-          console.log('newGame:response.insert_game_one:', response.insert_game_one);
-          this.store.dispatch(game.newGame(response.insert_game_one));
-        }
         // get genre
         this.checkinService.getUserGenre();
       } catch (err) {
@@ -365,6 +400,25 @@ export class GameService {
           return;
           // throw new Error('Re-calibration occurred');
         }
+        if (remainingStages[i] === 'welcome' && !this.isNewGame) {
+          const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+            console.log(err);
+          });
+          if (response && response.insert_game_one) {
+            this.isNewGame = true;
+            // will update the calibration duration before starting the next game
+            // Todo: update calibration duration after the game ends
+            if (this.calibrationStartTime) this.updateCalibrationDuration();
+            console.log('newGame:response.insert_game_one:', response.insert_game_one);
+            this.store.dispatch(game.newGame(response.insert_game_one));
+            this.googleAnalyticsService.sendEvent('level_start', {
+              level_name: nextGame.name,
+            });
+            this.googleAnalyticsService.sendEvent('stage_start', {
+              name: remainingStages[i],
+            });
+          }
+        }
 
         if (remainingStages[i] === this.gameStatus.stage) {
           this.gameStatus = {
@@ -373,6 +427,14 @@ export class GameService {
             game: nextGame.name,
           };
         } else {
+          if (i !== 0) {
+            this.googleAnalyticsService.sendEvent('stage_end', {
+              name: remainingStages[i - 1],
+            });
+          }
+          this.googleAnalyticsService.sendEvent('stage_start', {
+            name: remainingStages[i],
+          });
           this.gameStatus = {
             stage: remainingStages[i],
             breakpoint: 0,
@@ -395,8 +457,13 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+      this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
+      this.googleAnalyticsService.sendEvent('level_end', {
+        level_name: nextGame.name,
+      });
       this.gamesCompleted.push(nextGame.name);
+      this.gameStateService.postLoopHook();
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
@@ -418,14 +485,16 @@ export class GameService {
 
   async startCalibration() {
     // TODO: Start the calibration process.
-    this.ttsService.tts('To start, please get yourself within the red box.');
+    this.ttsService.tts(
+      'To start, please get your whole body, from head to toe, within the red box.',
+    );
     this.elements.guide.state = {
+      data: {
+        title: 'Ensure your whole body is in the red box to continue.',
+        titleDuration: 3000,
+      },
       attributes: {
         visibility: 'visible',
-      },
-      data: {
-        title: 'To start, please get yourself within the red box.',
-        showIndefinitely: true,
       },
     };
     this.calibrationService.startCalibrationScene(this.game as Phaser.Game);

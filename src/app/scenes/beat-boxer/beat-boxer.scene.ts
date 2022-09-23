@@ -20,7 +20,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
-  subscription: Subscription;
+  poseSubscription: Subscription;
 
   onCollision?: (value: {
     type: BagType | 'obstacle-top' | 'obstacle-bottom';
@@ -48,6 +48,22 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   preload() {
+    // default scale of desing assets
+    const heavyBagScale = 1;
+    const speedBagScale = 0.8;
+    const handOverlayScale = 0.6;
+    const obstacleScale = 1.1;
+
+    // const { width, height } = this.game.canvas;
+
+    // if (width < 1200) {
+    //   // scale if canvas width less than 1200
+    //   heavyBagScale = 0.7;
+    //   speedBagScale = 0.4;
+    //   handOverlayScale = 0.3;
+    //   obstacleScale = 0.7;
+    // }
+
     this.load.atlas(
       'confetti',
       'assets/images/beat-boxer/confetti.png',
@@ -62,63 +78,56 @@ export class BeatBoxerScene extends Phaser.Scene {
       key: 'left_hand_overlay',
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
       key: 'right_hand_overlay',
       url: 'assets/images/beat-boxer/HAND_OVERLAY_RIGHT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
       key: 'heavy_bag_blue',
       url: 'assets/images/beat-boxer/HEAVY_BAG_BLUE.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
       key: 'heavy_bag_red',
       url: 'assets/images/beat-boxer/HEAVY_BAG_RED.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
       key: 'speed_bag_red',
       url: 'assets/images/beat-boxer/SPEED_BAG_RED.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
       key: 'speed_bag_blue',
       url: 'assets/images/beat-boxer/SPEED_BAG_BLUE.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
       key: 'obstacle_top',
       url: 'assets/images/beat-boxer/OBSTACLE_TOP.svg',
       svgConfig: {
-        scale: 1.1,
-      },
-    });
-    this.load.svg({
-      key: 'obstacle_bottom',
-      url: 'assets/images/beat-boxer/OBSTACLE_BOTTOM.svg',
-      svgConfig: {
-        scale: 1.1,
+        scale: obstacleScale,
       },
     });
     this.load.svg({
       key: 'wrong_sign',
       url: 'assets/images/beat-boxer/WRONG_HIT.svg',
       svgConfig: {
-        scale: 1,
+        scale: obstacleScale,
       },
     });
   }
@@ -135,6 +144,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
     });
     this.anims.create({
       key: 'music_anim',
@@ -146,21 +156,36 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
     });
   }
 
   enable(): void {
     this.enabled = true;
-    this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
-      if (this.blueGlove) {
-        this.blueGlove.destroy(true);
-      }
-      if (this.redGlove) {
-        this.redGlove.destroy(true);
-      }
+      this.destroyGloves();
       this.drawGloves(results);
     });
+  }
+
+  destroyGloves() {
+    if (this.blueGlove) {
+      this.blueGlove.destroy(true);
+    }
+    if (this.redGlove) {
+      this.redGlove.destroy(true);
+    }
+  }
+
+  disable(): void {
+    this.enabled = false;
+    this.enableLeft = false;
+    this.enableRight = false;
+    this.destroyGloves();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
+    }
   }
 
   /**
@@ -245,6 +270,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param object game object to destroy.
    */
   async destroyGameObjects(object?: BagType | 'obstacle' | 'wrong-sign') {
+    console.log('Destroy Game Objects::', object);
     switch (object) {
       case 'heavy-blue':
         if (this.heavyBlue) {
@@ -277,7 +303,6 @@ export class BeatBoxerScene extends Phaser.Scene {
         }
         break;
       default:
-        console.log('destroying all objects');
         if (this.heavyBlue) {
           await this.animateExit(this.heavyBlue);
         }
@@ -350,7 +375,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   /**
-   * @param bag the bag that has to be checked
    * @param point the x coordination of the bag position
    * @param level level of the bag
    * @returns it will return `newX` if it is out of bounds.
@@ -360,13 +384,11 @@ export class BeatBoxerScene extends Phaser.Scene {
     const bagWidth = 160;
 
     if (point > width || point + bagWidth > width) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: width - bagWidth - 16,
       };
     } else if (point < 0 || point - bagWidth < 0) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: bagWidth + 16,
@@ -384,7 +406,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
   showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
-    console.log(`position: ${centerOfMotion}, type: ${type}`);
+    console.log(`position: ${centerOfMotion}, type: ${type}, level: ${level}`);
     let x = 0;
     const y = 0;
     if (this.results) {
@@ -718,17 +740,8 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   playConfettiAnim(x: number, y: number) {
-    // stopping the exisiting confetti..
-    if (this.confettiAnim || this.musicAnim) {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }
-    this.confettiAnim = this.add.sprite(x, y, 'confetti').play('confetti_anim', true);
-    this.musicAnim = this.add.sprite(x, y, 'music').setScale(0.8).play('music_anim', true);
-    setTimeout(() => {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }, 1000);
+    this.add.sprite(x, y, 'confetti').play('confetti_anim');
+    this.add.sprite(x, y, 'music').play('music_anim');
   }
 
   showWrongSign(x: number, y: number) {
@@ -808,7 +821,10 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     return new Promise((resolve) => {
-      const bagHeight = bag.body.bottom - bag.body.top || 700;
+      let bagHeight = 700;
+      if (bag.body) {
+        bagHeight = bag.body.bottom - bag.body.top;
+      }
       this.tweens.addCounter({
         from: 0,
         to: -bagHeight,
@@ -886,33 +902,39 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.collisions = value;
   }
 
-  successMusic: Howl;
-  successMusicId: number;
   failureMusic: Howl;
+  successMusic: Howl;
   failureMusicId: number;
   configureMusic() {
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+    });
+
     this.successMusic = new Howl({
       src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
       sprite: audioSprites.beatBoxer,
       html5: true,
     });
+  }
 
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
-      html5: true,
-    });
+  getDurationOfNote(note: number) {
+    return audioSprites['beatBoxer'][`note_${note}`][1];
   }
 
   nextPianoNote = 1;
   playSuccessMusic() {
-    if (this.successMusic && this.successMusic.playing(this.successMusicId)) {
-      this.successMusic.stop();
-    }
-    if (this.successMusic && !this.successMusic.playing(this.successMusicId)) {
-      console.log('playing piano note, ', this.nextPianoNote);
-      this.successMusicId = this.successMusic.play(`note_${this.nextPianoNote}`);
-      this.nextPianoNote += 1;
-    }
+    const fadeOutDuration = 750;
+    const noteDuration = this.getDurationOfNote(this.nextPianoNote);
+    const durationBeforeFadeOut = noteDuration - fadeOutDuration;
+    // console.log('durationBeforeFadeOut:', durationBeforeFadeOut);
+    console.log('playing piano note, ', this.nextPianoNote);
+    this.successMusic.volume(1);
+    this.successMusic.play(`note_${this.nextPianoNote}`);
+    setTimeout(() => {
+      this.successMusic.fade(1, 0, fadeOutDuration);
+    }, durationBeforeFadeOut);
+    this.nextPianoNote += 1;
   }
 
   playFailureMusic() {

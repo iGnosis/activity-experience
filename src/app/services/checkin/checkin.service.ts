@@ -34,7 +34,7 @@ export class CheckinService {
   //   );
   // }
 
-  async getUserGenre() {
+  async getUserGenre(): Promise<Genre | void> {
     try {
       const userGenre = await this.client.req(
         gql`
@@ -57,8 +57,9 @@ export class CheckinService {
           genre,
         }),
       );
+      return genre;
     } catch (err) {
-      throw new Error('Unable to fetch genre');
+      console.log('Unable to fetch genre');
     }
   }
 
@@ -103,7 +104,7 @@ export class CheckinService {
         },
       );
 
-      return onboardingStatus.update_patient_by_pk;
+      return onboardingStatus.data.update_patient.returning[0].onboardingStatus;
     } catch (err) {
       console.log(err);
     }
@@ -119,6 +120,29 @@ export class CheckinService {
             game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _gte: $today } }) {
               id
               game
+            }
+          }
+        `,
+        { today },
+      );
+
+      return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getLastPlayedGame() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    try {
+      const lastGame = await this.client.req(
+        gql`
+          query GetLastGame($today: timestamptz = "") {
+            game(limit: 1, order_by: { createdAt: desc }, where: { createdAt: { _gte: $today } }) {
+              id
+              game
+              endedAt
             }
           }
         `,
@@ -177,5 +201,28 @@ export class CheckinService {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  getDurationForTimer(totalSeconds: number): {
+    minutes: string;
+    seconds: string;
+  } {
+    let minutes = 0;
+    if (totalSeconds >= 60) {
+      minutes = Math.floor(totalSeconds / 60);
+      totalSeconds -= 60 * minutes;
+    }
+    let time = { minutes: '0', seconds: '00' };
+    time = {
+      minutes:
+        minutes < 10
+          ? (time.minutes = '0' + minutes.toString())
+          : (time.minutes = minutes.toString()),
+      seconds:
+        totalSeconds < 10
+          ? (time.seconds = '0' + totalSeconds.toString())
+          : (time.seconds = totalSeconds.toString()),
+    };
+    return time;
   }
 }
