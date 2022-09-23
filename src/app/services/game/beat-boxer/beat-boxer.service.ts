@@ -825,13 +825,15 @@ export class BeatBoxerService {
             );
             this.bagsAvailable.right = bag;
           }
-          const bagTimeout = setTimeout(() => {
-            this.beatBoxerScene.destroyGameObjects(bag);
-            if (this.bagsAvailable.left === bag) this.bagsAvailable.left = undefined;
-            if (this.bagsAvailable.right === bag) this.bagsAvailable.right = undefined;
+          const leftBagTimeout = setTimeout(() => {
+            this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
+            this.bagsAvailable.left = undefined;
+          }, this.config.speed);
+          const rightBagTimeout = setTimeout(() => {
+            this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
+            this.bagsAvailable.right = undefined;
           }, this.config.speed);
 
-          console.log('left :', this.bagsAvailable.left, ' right :', this.bagsAvailable.right);
           let obstacleTimeout;
           if (this.bagsAvailable.left === 'obstacle') {
             obstacleTimeout = setTimeout(() => {
@@ -857,8 +859,6 @@ export class BeatBoxerService {
             this.bagsAvailable.right,
             this.config.speed,
           );
-
-          console.log('result: ', rep);
 
           const resultTimestamp = Date.now();
           this.totalReps++;
@@ -898,7 +898,8 @@ export class BeatBoxerService {
             if (rep.bagType === this.bagsAvailable.right) {
               this.bagsAvailable.right = undefined;
             }
-            clearTimeout(bagTimeout);
+            clearTimeout(leftBagTimeout);
+            clearTimeout(rightBagTimeout);
             this.successfulReps++;
             this.store.dispatch(game.repCompleted());
             this.elements.score.state = {
@@ -994,9 +995,14 @@ export class BeatBoxerService {
               this.failedReps = 0;
             }
           } else {
-            this.beatBoxerScene.destroyGameObjects();
-            this.bagsAvailable.left = undefined;
-            this.bagsAvailable.right = undefined;
+            if (this.bagsAvailable.left) {
+              this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
+              this.bagsAvailable.left = undefined;
+            }
+            if (this.bagsAvailable.right) {
+              this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
+              this.bagsAvailable.right = undefined;
+            }
           }
           await this.elements.sleep(1000);
         }
