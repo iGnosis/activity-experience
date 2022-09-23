@@ -8,22 +8,6 @@
   <h1 class="display-4 text-white">Loading...</h1>
 </div>
 
-<ng-container *ngIf="!browserSupported">
-  <div style="z-index: 200;" class="position-fixed top-1/2 start-1/2 translate-middle d-flex flex-column align-items-center bg-white shadow-xl rounded-3 py-10 px-14">
-    <img class="w-20 h-20 mb-7" src="/assets/images/exclamation.jpg" alt="exclamation">
-    <h1 class="text-primary">This browser is not supported.</h1>
-    <p class="pt-3 pb-7 font-bold text-lg" style="color: #2F51AE;">Please use Google Chrome or Mozilla Firefox to continue.</p>
-    <div class="row gx-4">
-      <div class="col-6">
-        <a href="https://www.google.com/intl/en_us/chrome" target="_blank" class="btn btn-primary px-12 py-2 text-sm text-nowrap">Download Google Chrome</a>
-      </div>
-      <div class="col-6">
-        <a href="https://www.mozilla.org/en-US/firefox/new" target="_blank" class="btn btn-primary px-12 py-2 text-sm text-nowrap">Download Mozilla Firefox</a>
-      </div>
-    </div>
-  </div>
-</ng-container>
-
 <ng-container *ngIf="cameraStatus === 'failure'">
   <div style="z-index: 200;" class="position-fixed top-1/2 start-1/2 translate-middle d-flex flex-column align-items-center bg-white shadow-xl rounded-3 p-10">
     <img class="w-20 h-20 mb-7" src="/assets/images/exclamation.jpg" alt="exclamation">

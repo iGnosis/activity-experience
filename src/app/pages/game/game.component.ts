@@ -19,7 +19,6 @@ export class GameComponent implements OnInit {
   @ViewChild('canvasElm') canvas!: ElementRef;
   @ViewChild('gameElm') gameElm!: ElementRef;
   videoAvailable = false;
-  browserSupported = false;
   cameraStatus?: 'success' | 'failure';
 
   constructor(
@@ -31,17 +30,7 @@ export class GameComponent implements OnInit {
     private store: Store,
     private gameStateService: GameStateService,
     private googleAnalyticsService: GoogleAnalyticsService,
-  ) {
-    if (
-      navigator.userAgent.indexOf('Chrome') != -1 ||
-      navigator.userAgent.indexOf('Firefox') != -1
-    ) {
-      this.browserSupported = true;
-    }
-    if (!this.browserSupported) {
-      this.googleAnalyticsService.sendEvent('browser_unsupported');
-    }
-  }
+  ) {}
   async ngOnInit(): Promise<void> {
     // Ask the parent window to send a token... we're ready, well almost.
     window.parent.postMessage(
