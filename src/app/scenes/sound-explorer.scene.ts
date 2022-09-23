@@ -171,6 +171,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     // creating a group.
     this.group = this.physics.add.group({
       collideWorldBounds: true,
+      gravityY: 40,
     });
 
     this.anims.create({
@@ -284,11 +285,21 @@ export class SoundExplorerScene extends Phaser.Scene {
       // console.log('showShapes::gameObject:', gameObject);
       gameObject.body.onWorldBounds = true;
       this.group && this.group.add(gameObject);
-      this.physics.velocityFromRotation(
-        Phaser.Math.DegToRad(angle),
-        velocity,
-        gameObject.body.velocity,
-      );
+
+      if (origin === 'top-left' || origin === 'top-right') {
+        // reducing the velocity of shapes falling from top..
+        this.physics.velocityFromRotation(
+          Phaser.Math.DegToRad(angle),
+          velocity - 150,
+          gameObject.body.velocity,
+        );
+      } else {
+        this.physics.velocityFromRotation(
+          Phaser.Math.DegToRad(angle),
+          velocity + 50,
+          gameObject.body.velocity,
+        );
+      }
     }
 
     console.log('group::children:', this.group.getChildren());
