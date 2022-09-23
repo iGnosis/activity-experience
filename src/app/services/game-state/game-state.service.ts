@@ -76,7 +76,7 @@ export class GameStateService {
     currentDate.setHours(0, 0, 0, 0);
     endDate.setHours(24, 0, 0, 0);
 
-    await this._updateRewards(startDate, endDate, userTimezone);
-    await this._gameCompleted(startDate, endDate, currentDate, userTimezone);
+    this._updateRewards(startDate, endDate, userTimezone);
+    this._gameCompleted(startDate, endDate, currentDate, userTimezone);
   }
 }
