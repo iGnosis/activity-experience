@@ -693,6 +693,9 @@ export class SoundExplorerService {
         });
         let streak = 0;
         while (!this.isGameComplete) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           this.soundExplorerScene.setNextNote();
           const shapes = await this.drawShapes(difficulty);
           const promptTimestamp = Date.now();
