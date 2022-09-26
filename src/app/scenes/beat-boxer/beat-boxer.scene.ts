@@ -2,12 +2,28 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { left } from '@popperjs/core';
 import { Howl } from 'howler';
+import { reject } from 'lodash';
 import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 
+export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
+  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
+  texture?: {
+    key: string;
+  };
+};
 export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export enum TextureKeys {
+  HEAVY_BLUE = 'heavy-blue',
+  SPEED_BLUE = 'speed-blue',
+  HEAVY_RED = 'heavy-red',
+  SPEED_RED = 'speed-red',
+  OBSTACLE = 'obstacle',
+  LEFT_HAND = 'left-hand',
+  RIGHT_HAND = 'right-hand',
+}
 
 @Injectable({
   providedIn: 'root',
@@ -16,28 +32,88 @@ export class BeatBoxerScene extends Phaser.Scene {
   enabled = false;
   collisions = false;
   collisionDetected?: {
-    bagType: BagType | 'obstacle';
+    bagType: string;
     gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
   poseSubscription: Subscription;
 
-  onCollision?: (value: {
-    type: BagType | 'obstacle-top' | 'obstacle-bottom';
-    result: 'success' | 'failure';
-  }) => void;
   music = false;
   enableLeft = false;
   enableRight = false;
   results?: Results;
 
+  blueGloveCollisionCallback = async (
+    _blueGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!_gameObject || !_gameObject.texture) {
+      return;
+    }
+    const [x, y] = this.getCenter(_gameObject);
+    const textureKey = _gameObject.texture.key;
+    const exitAnimComplete = await this.animateExit(
+      _gameObject as Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    );
+    if (exitAnimComplete) {
+      if (textureKey === TextureKeys.HEAVY_BLUE || textureKey === TextureKeys.SPEED_BLUE) {
+        console.log(`collision::blueGlove::${textureKey}`);
+        this.music && this.playSuccessMusic();
+        this.playConfettiAnim(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'blue',
+          result: 'success',
+        };
+      } else {
+        this.music && this.playFailureMusic();
+        this.showWrongSign(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'blue',
+          result: 'failure',
+        };
+      }
+    }
+  };
+
+  redGloveCollisionCallback = async (
+    _redGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!_gameObject || !_gameObject.texture) {
+      return;
+    }
+    const [x, y] = this.getCenter(_gameObject);
+    const textureKey = _gameObject.texture.key;
+    const exitAnimComplete = await this.animateExit(
+      _gameObject as Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    );
+    if (exitAnimComplete) {
+      if (textureKey === TextureKeys.HEAVY_RED || textureKey === TextureKeys.SPEED_RED) {
+        console.log(`collision::redGlove::${textureKey}`);
+        this.music && this.playSuccessMusic();
+        this.playConfettiAnim(x, y);
+
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'red',
+          result: 'success',
+        };
+      } else {
+        this.music && this.playFailureMusic();
+        this.showWrongSign(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'red',
+          result: 'failure',
+        };
+      }
+    }
+  };
+
   blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  heavyBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  heavyRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  speedRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  speedBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacle: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
 
   wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   confettiAnim?: Phaser.GameObjects.Sprite;
@@ -75,49 +151,49 @@ export class BeatBoxerScene extends Phaser.Scene {
       'assets/images/beat-boxer/music.json',
     );
     this.load.svg({
-      key: 'left_hand_overlay',
+      key: TextureKeys.LEFT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
       svgConfig: {
         scale: handOverlayScale,
       },
     });
     this.load.svg({
-      key: 'right_hand_overlay',
+      key: TextureKeys.RIGHT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_RIGHT.svg',
       svgConfig: {
         scale: handOverlayScale,
       },
     });
     this.load.svg({
-      key: 'heavy_bag_blue',
+      key: TextureKeys.HEAVY_BLUE,
       url: 'assets/images/beat-boxer/HEAVY_BAG_BLUE.svg',
       svgConfig: {
         scale: heavyBagScale,
       },
     });
     this.load.svg({
-      key: 'heavy_bag_red',
+      key: TextureKeys.HEAVY_RED,
       url: 'assets/images/beat-boxer/HEAVY_BAG_RED.svg',
       svgConfig: {
         scale: heavyBagScale,
       },
     });
     this.load.svg({
-      key: 'speed_bag_red',
+      key: TextureKeys.SPEED_RED,
       url: 'assets/images/beat-boxer/SPEED_BAG_RED.svg',
       svgConfig: {
         scale: speedBagScale,
       },
     });
     this.load.svg({
-      key: 'speed_bag_blue',
+      key: TextureKeys.SPEED_BLUE,
       url: 'assets/images/beat-boxer/SPEED_BAG_BLUE.svg',
       svgConfig: {
         scale: speedBagScale,
       },
     });
     this.load.svg({
-      key: 'obstacle_top',
+      key: TextureKeys.OBSTACLE,
       url: 'assets/images/beat-boxer/OBSTACLE_TOP.svg',
       svgConfig: {
         scale: obstacleScale,
@@ -132,8 +208,13 @@ export class BeatBoxerScene extends Phaser.Scene {
     });
   }
 
+  private group: Phaser.Physics.Arcade.StaticGroup;
+
   create() {
     // creating confetti and music anims from the sprite sheet texture/atlas.
+
+    this.group = this.physics.add.staticGroup({});
+
     this.anims.create({
       key: 'confetti_anim',
       frames: this.anims.generateFrameNames('confetti', {
@@ -271,56 +352,17 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   async destroyGameObjects(object?: BagType | 'obstacle' | 'wrong-sign') {
     console.log('Destroy Game Objects::', object);
-    switch (object) {
-      case 'heavy-blue':
-        if (this.heavyBlue) {
-          await this.animateExit(this.heavyBlue);
+    if (!object) {
+      this.group.clear(true, true);
+    } else {
+      this.group.getChildren().forEach((child: any) => {
+        if (!child || !child.texture || !child.texture.key) {
+          return;
         }
-        break;
-      case 'heavy-red':
-        if (this.heavyRed) {
-          await this.animateExit(this.heavyRed);
+        if (child.texture.key === object) {
+          this.animateExit(child);
         }
-        break;
-      case 'speed-blue':
-        if (this.speedBlue) {
-          await this.animateExit(this.speedBlue);
-        }
-        break;
-      case 'speed-red':
-        if (this.speedRed) {
-          await this.animateExit(this.speedRed);
-        }
-        break;
-      case 'obstacle':
-        if (this.obstacle) {
-          await this.animateExit(this.obstacle);
-        }
-        break;
-      case 'wrong-sign':
-        if (this.wrongSign) {
-          this.wrongSign.destroy(true);
-        }
-        break;
-      default:
-        if (this.heavyBlue) {
-          await this.animateExit(this.heavyBlue);
-        }
-        if (this.speedBlue) {
-          await this.animateExit(this.speedBlue);
-        }
-        if (this.heavyRed) {
-          await this.animateExit(this.heavyRed);
-        }
-        if (this.speedRed) {
-          await this.animateExit(this.speedRed);
-        }
-        if (this.obstacle) {
-          await this.animateExit(this.obstacle);
-        }
-        if (this.wrongSign) {
-          this.wrongSign.destroy(true);
-        }
+      });
     }
   }
 
@@ -344,7 +386,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       this.blueGlove = this.physics.add.staticImage(
         width - x * width,
         y * height,
-        'left_hand_overlay',
+        TextureKeys.LEFT_HAND,
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
@@ -355,7 +397,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       this.redGlove = this.physics.add.staticImage(
         width - x * width,
         y * height,
-        'right_hand_overlay',
+        TextureKeys.RIGHT_HAND,
       );
     }
   }
@@ -430,67 +472,20 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       x = tmpX * level;
     }
-    switch (type) {
-      case 'heavy-blue':
-        this.heavyBlue && this.heavyBlue.destroy(true);
-        const isHeavyBlueInBounds = this.isInBounds(x, level);
-        if (isHeavyBlueInBounds.isInBounds) {
-          this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(0.5, 0.1);
-        } else {
-          if (isHeavyBlueInBounds.newX) {
-            this.heavyBlue = this.physics.add
-              .staticImage(isHeavyBlueInBounds.newX, y, 'heavy_bag_blue')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.heavyBlue && this.animateEntry(this.heavyBlue);
-        this.heavyBlue && this.heavyBlue.refreshBody();
-        break;
-      case 'heavy-red':
-        this.heavyRed && this.heavyRed.destroy(true);
-        const isHeavyRedInBounds = this.isInBounds(x, level);
-        if (isHeavyRedInBounds.isInBounds) {
-          this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(0.5, 0.1);
-        } else {
-          if (isHeavyRedInBounds.newX) {
-            this.heavyRed = this.physics.add
-              .staticImage(isHeavyRedInBounds.newX, y, 'heavy_bag_red')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.heavyRed && this.animateEntry(this.heavyRed);
-        this.heavyRed && this.heavyRed.refreshBody();
-        break;
-      case 'speed-red':
-        this.speedRed && this.speedRed.destroy(true);
-        const isSpeedRedInBounds = this.isInBounds(x, level);
-        if (isSpeedRedInBounds.isInBounds) {
-          this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(0.5, 0.1);
-        } else {
-          if (isSpeedRedInBounds.newX) {
-            this.speedRed = this.physics.add
-              .staticImage(isSpeedRedInBounds.newX, y, 'speed_bag_red')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.speedRed && this.animateEntry(this.speedRed);
-        this.speedRed && this.speedRed.refreshBody();
-        break;
-      case 'speed-blue':
-        this.speedBlue && this.speedBlue.destroy(true);
-        const isSpeedBlueInBounds = this.isInBounds(x, level);
-        if (isSpeedBlueInBounds.isInBounds) {
-          this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(0.5, 0.1);
-        } else {
-          if (isSpeedBlueInBounds.newX) {
-            this.speedBlue = this.physics.add
-              .staticImage(isSpeedBlueInBounds.newX, y, 'speed_bag_blue')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.speedBlue && this.animateEntry(this.speedBlue);
-        this.speedBlue && this.speedBlue.refreshBody();
-        break;
+
+    let gameObject!: Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+    const isBagInBounds = this.isInBounds(x, level);
+    if (isBagInBounds.isInBounds) {
+      gameObject = this.physics.add.staticSprite(x, y, type).setOrigin(0.5, 0.1);
+    } else {
+      if (isBagInBounds.newX) {
+        gameObject = this.physics.add.staticSprite(isBagInBounds.newX, y, type).setOrigin(0.5, 0.1);
+      }
+    }
+    this.group && this.group.add(gameObject);
+    if (gameObject) {
+      this.animateEntry(gameObject);
+      gameObject.refreshBody();
     }
   }
 
@@ -531,210 +526,33 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       x = tmpX * level;
     }
-    this.obstacle && this.obstacle.destroy(true);
+
+    let gameObject!: Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+
     const isObstacleInBounds = this.isInBounds(x, level);
     if (isObstacleInBounds.isInBounds) {
-      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(0.5, 0.1);
+      gameObject = this.physics.add.staticSprite(x, y, TextureKeys.OBSTACLE).setOrigin(0.5, 0.1);
     } else {
       if (isObstacleInBounds.newX) {
-        this.obstacle = this.physics.add
-          .staticImage(isObstacleInBounds.newX, y, 'obstacle_top')
+        gameObject = this.physics.add
+          .staticSprite(isObstacleInBounds.newX, y, TextureKeys.OBSTACLE)
           .setOrigin(0.5, 0.1);
       }
     }
-    this.obstacle && this.animateEntry(this.obstacle);
-    this.obstacle && this.obstacle.refreshBody();
+    this.group && this.group.add(gameObject);
+    if (gameObject) {
+      this.animateEntry(gameObject);
+      gameObject.refreshBody();
+    }
   }
 
   override update(time: number, delta: number): void {
     if (this.collisions) {
-      if (this.blueGlove && this.heavyBlue) {
-        this.physics.overlap(this.blueGlove, this.heavyBlue, async (_blueGlove, _heavyBlue) => {
-          const [x, y] = this.getCenter(_heavyBlue);
-          await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-blue',
-            gloveColor: 'blue',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-blue',
-              result: 'success',
-            });
-        });
+      if (this.blueGlove && this.group) {
+        this.physics.overlap(this.blueGlove, this.group, this.blueGloveCollisionCallback);
       }
-      if (this.blueGlove && this.speedBlue) {
-        this.physics.overlap(this.blueGlove, this.speedBlue, async (_blueGlove, _speedBlue) => {
-          const [x, y] = this.getCenter(_speedBlue);
-          await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-blue',
-            gloveColor: 'blue',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-blue',
-              result: 'success',
-            });
-        });
-      }
-      if (this.redGlove && this.heavyRed) {
-        this.physics.overlap(this.redGlove, this.heavyRed, async (_redGlove, _heavyRed) => {
-          const [x, y] = this.getCenter(_heavyRed);
-          await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-red',
-            gloveColor: 'red',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-red',
-              result: 'success',
-            });
-        });
-      }
-      if (this.redGlove && this.speedRed) {
-        this.physics.overlap(this.redGlove, this.speedRed, async (_redGlove, _speedRed) => {
-          const [x, y] = this.getCenter(_speedRed);
-          await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-red',
-            gloveColor: 'red',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-red',
-              result: 'success',
-            });
-        });
-      }
-
-      if (this.redGlove && this.obstacle) {
-        this.physics.overlap(this.redGlove, this.obstacle, async (_redGlove, _obstacleTop) => {
-          const [x, y] = this.getCenter(_obstacleTop);
-          await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'obstacle',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'obstacle-top',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.blueGlove && this.obstacle) {
-        this.physics.overlap(this.blueGlove, this.obstacle, async (_blueGlove, _obstacleTop) => {
-          const [x, y] = this.getCenter(_obstacleTop);
-          await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'obstacle',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'obstacle-top',
-              result: 'failure',
-            });
-        });
-      }
-
-      // wrong collisions...
-      // punching blue bags with red glove or red bags with blue glove..
-      if (this.blueGlove && this.heavyRed) {
-        this.physics.overlap(this.blueGlove, this.heavyRed, async (_blueGlove, _heavyRed) => {
-          const [x, y] = this.getCenter(_heavyRed);
-          await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-red',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-red',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.blueGlove && this.speedRed) {
-        this.physics.overlap(this.blueGlove, this.speedRed, async (_blueGlove, _speedRed) => {
-          const [x, y] = this.getCenter(_speedRed);
-          await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-red',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-red',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.redGlove && this.heavyBlue) {
-        this.physics.overlap(this.redGlove, this.heavyBlue, async (_redGlove, _heavyBlue) => {
-          const [x, y] = this.getCenter(_heavyBlue);
-          await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-blue',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-blue',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.redGlove && this.speedBlue) {
-        this.physics.overlap(this.redGlove, this.speedBlue, async (_redGlove, _speedBlue) => {
-          this.music && this.playFailureMusic();
-          const [x, y] = this.getCenter(_speedBlue);
-          await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-blue',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-blue',
-              result: 'failure',
-            });
-        });
+      if (this.redGlove && this.group) {
+        this.physics.overlap(this.redGlove, this.group, this.redGloveCollisionCallback);
       }
     }
   }
@@ -752,15 +570,6 @@ export class BeatBoxerScene extends Phaser.Scene {
     setTimeout(() => {
       this.wrongSign && this.wrongSign.destroy(true);
     }, 1000);
-  }
-
-  setUpCallbacks(callbacks: {
-    onCollision: (value: {
-      type: BagType | 'obstacle-top' | 'obstacle-bottom';
-      result: 'success' | 'failure';
-    }) => void;
-  }) {
-    this.onCollision = callbacks.onCollision;
   }
 
   /**
@@ -820,7 +629,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param bag bag object to tween.
    */
   async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
       let bagHeight = 700;
       if (bag.body) {
         bagHeight = bag.body.bottom - bag.body.top;
@@ -838,7 +647,9 @@ export class BeatBoxerScene extends Phaser.Scene {
         onComplete: () => {
           if (bag.body) {
             bag.destroy(true);
-            resolve({});
+            resolve(true);
+          } else {
+            resolve(false);
           }
         },
       });
@@ -854,8 +665,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     bag2?: BagType | 'obstacle',
     timeout?: number,
   ): Promise<
-    | { result: undefined }
-    | { bagType: BagType | 'obstacle'; gloveColor: string; result: 'success' | 'failure' }
+    { result: undefined } | { bagType: string; gloveColor: string; result: 'success' | 'failure' }
   > {
     return new Promise((resolve) => {
       const startTime = new Date().getTime();
@@ -915,6 +725,10 @@ export class BeatBoxerScene extends Phaser.Scene {
       src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
       sprite: audioSprites.beatBoxer,
       html5: true,
+      loop: false,
+      onfade: (id) => {
+        this.successMusic.stop(id);
+      },
     });
   }
 
@@ -930,9 +744,9 @@ export class BeatBoxerScene extends Phaser.Scene {
     // console.log('durationBeforeFadeOut:', durationBeforeFadeOut);
     console.log('playing piano note, ', this.nextPianoNote);
     this.successMusic.volume(1);
-    this.successMusic.play(`note_${this.nextPianoNote}`);
+    const successToneId = this.successMusic.play(`note_${this.nextPianoNote}`);
     setTimeout(() => {
-      this.successMusic.fade(1, 0, fadeOutDuration);
+      this.successMusic.fade(1, 0, fadeOutDuration, successToneId);
     }, durationBeforeFadeOut);
     this.nextPianoNote += 1;
   }
@@ -951,5 +765,11 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   enableMusic(value = true) {
     this.music = value;
+
+    // if disabled... unload music files
+    if (!value) {
+      this.failureMusic && this.failureMusic.unload();
+      this.successMusic && this.successMusic.unload();
+    }
   }
 }
