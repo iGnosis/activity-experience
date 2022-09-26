@@ -1004,7 +1004,7 @@ export class BeatBoxerService {
               this.bagsAvailable.right = undefined;
             }
           }
-          await this.elements.sleep(1000);
+          await this.elements.sleep(this.config.speed);
         }
         this.elements.confetti.state = {
           data: {},
