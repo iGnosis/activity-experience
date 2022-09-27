@@ -3,6 +3,7 @@ import { Results } from '@mediapipe/pose';
 import { debounceTime, iif, Observable, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
+import { GameService } from '../game/game.service';
 import { PoseService } from '../pose/pose.service';
 @Injectable({
   providedIn: 'root',
@@ -157,6 +158,7 @@ export class CalibrationService {
       return { status: 'disabled' };
     }
 
+    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
     const poseLandmarkArray = results.poseLandmarks;
 
     // just a sanity check.
@@ -164,58 +166,40 @@ export class CalibrationService {
       return { status: 'error' };
     }
 
-    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
-    const unCalibratedPoints: number[] = [];
-    const calibratedPoints: number[] = [];
-    let points: number[] = [];
-
-    // all points must be visible and be within the calibration box.
     if (this.mode === 'full') {
+      const unCalibratedPoints: number[] = [];
+      const calibratedPoints: number[] = [];
       // 32 total body points -> 0, 1, 2, 3... 32.
-      points = [...Array(33).keys()];
-    } else if (this.mode === 'fast') {
-      // only the key body points must be visible.
-      points = [12, 11, 24, 23, 26, 25];
-    }
+      const points = [...Array(33).keys()];
 
-    const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
-    const invisiblePoints = keyBodyPoints.filter((point) => {
-      if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
-        return true;
-      }
-      return false;
-    });
-    if (invisiblePoints.length > 0) {
-      return { status: 'error' };
-    }
+      const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
+      const invisiblePoints = keyBodyPoints.filter((point) => {
+        if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
+          return true;
+        }
+        return false;
+      });
 
-    points.forEach((point) => {
-      const xPoint = poseLandmarkArray[point].x * canvasWidth;
-      const yPoint = poseLandmarkArray[point].y * canvasHeight;
-
-      // it's okay if user isn't within the box.
-      if (mode === 'fast') {
-        calibratedPoints.push(point);
+      if (invisiblePoints.length > 0) {
+        return { status: 'error' };
       }
 
-      // user must be within the box.
-      if (mode === 'full') {
+      points.forEach((point) => {
+        const xPoint = poseLandmarkArray[point].x * canvasWidth;
+        const yPoint = poseLandmarkArray[point].y * canvasHeight;
         if (!this._isPointWithinCalibrationBox(xPoint, yPoint, calibrationBox)) {
           // console.log(`point ${point} is out of calibration box`);
           unCalibratedPoints.push(point);
         } else {
           calibratedPoints.push(point);
         }
+      });
+
+      // allow user to play the game.
+      if (points.length === calibratedPoints.length) {
+        return { status: 'success' };
       }
-    });
 
-    // allow user to play the game.
-    if (points.length === calibratedPoints.length) {
-      // console.log(`mode: ${mode} - calibration success`);
-      return { status: 'success' };
-    }
-
-    if (this.mode === 'full') {
       // to remove if calibration points are already drawn.
       this.calibrationScene.destroyGraphics();
       // highlight points that aren't in the box.
@@ -229,7 +213,38 @@ export class CalibrationService {
       return { status: 'warning' };
     }
 
-    // don't care, as long as points are visible.
-    return { status: 'success' };
+    if (this.mode === 'fast') {
+      // subscribe to game changes -- get requiredBodyParts from game config.
+      const requiredBodyParts = {
+        ANY_SHOULDER: [11, 12], // any one of the points to be required.
+        ANY_HIP: [23, 24],
+        ANY_KNEE: [25, 26],
+      };
+
+      let count = 0;
+      for (const [_, points] of Object.entries(requiredBodyParts)) {
+        const keyBodyPoints = points.map((point) => poseLandmarkArray[point]);
+        const visiblePoints = keyBodyPoints.filter((landmark) => {
+          if (landmark && landmark.visibility && landmark.visibility >= this.visibilityThreshold) {
+            return true;
+          }
+          return false;
+        });
+
+        // at least one point required to be visible.
+        if (visiblePoints.length >= 1) {
+          count++;
+        }
+      }
+
+      if (count !== Object.keys(requiredBodyParts).length) {
+        return { status: 'error' };
+      }
+
+      return { status: 'success' };
+    }
+
+    // Unknown - something went wrong.
+    return { status: 'error' };
   }
 }
