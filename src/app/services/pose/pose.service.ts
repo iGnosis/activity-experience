@@ -21,7 +21,7 @@ export class PoseService {
 
   constructor() {}
 
-  async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'cdn') {
+  async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'local') {
     try {
       this.config = config;
       let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/';
