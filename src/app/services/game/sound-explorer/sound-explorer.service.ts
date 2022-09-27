@@ -49,6 +49,10 @@ export class SoundExplorerService {
     return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0];
   };
 
+  private getMultipleRandomItems = <T>(arr: T[], num: number) => {
+    return [...arr].sort(() => Math.random() - 0.5).slice(0, num);
+  };
+
   private drawShapes = async (
     numberOfShapes: number,
     timeoutBetweenShapes = 200,
@@ -56,10 +60,9 @@ export class SoundExplorerService {
     const randomPosition = this.getRandomItemFromArray(
       Object.keys(this.originsWithAngleRange) as Origin[],
     );
-    const shapes: Shape[] = [];
+    const shapes: Shape[] = this.getMultipleRandomItems(this.shapes, numberOfShapes);
     for (let i = 0; i < numberOfShapes; i++) {
-      const shape = this.getRandomItemFromArray(this.shapes);
-      shapes.push(shape);
+      const shape = shapes[i];
       this.soundExplorerScene.showShapes(
         [shape],
         randomPosition,
@@ -546,7 +549,6 @@ export class SoundExplorerService {
             reCalibrationCount,
           },
         };
-
         this.ttsService.tts("Your time's up");
         this.elements.ribbon.state = {
           attributes: {
