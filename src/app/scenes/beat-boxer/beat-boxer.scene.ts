@@ -283,8 +283,20 @@ export class BeatBoxerScene extends Phaser.Scene {
     position: CenterOfMotion,
   ): { shoulderX: number; wristX: number; maxReach: number } {
     const { width, height } = this.game.canvas;
+
+    // if results or results.poseLandmarks are not present.. return default values.
+    if (!results || !Array.isArray(results.poseLandmarks)) {
+      return {
+        wristX: 250,
+        shoulderX: width / 2,
+        maxReach: 200,
+      };
+    }
+
     if (
       position === 'left' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[11] &&
       results.poseLandmarks[13] &&
       results.poseLandmarks[15]
@@ -312,6 +324,8 @@ export class BeatBoxerScene extends Phaser.Scene {
       };
     } else if (
       position === 'right' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[12] &&
       results.poseLandmarks[14] &&
       results.poseLandmarks[16]
@@ -338,6 +352,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         maxReach,
       };
     }
+
     return {
       wristX: 250,
       shoulderX: width / 2,
