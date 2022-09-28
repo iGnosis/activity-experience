@@ -464,6 +464,7 @@ export class GameService {
       });
       this.gamesCompleted.push(nextGame.name);
       this.gameStateService.postLoopHook();
+      console.log('game.service:gameCompleted:', nextGame.name);
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
