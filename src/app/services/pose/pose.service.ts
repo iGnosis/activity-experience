@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { IsMediaPipeReady, Options, Pose, Results } from '@mediapipe/pose';
+import { Options, Pose, Results } from '@mediapipe/pose';
 import { Observable, Subject } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-
+import { IsMediaPipeReady } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
