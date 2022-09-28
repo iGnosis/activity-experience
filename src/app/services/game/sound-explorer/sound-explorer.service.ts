@@ -129,13 +129,53 @@ export class SoundExplorerService {
     this.soundExplorerScene.enableCollisionDetection();
     this.soundExplorerScene.enableLeftHand();
     this.soundExplorerScene.enableRightHand();
-    this.soundExplorerScene.configureMusic();
   }
 
   welcome() {
     return [
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.scene.start('soundExplorer');
+
+        console.log('Waiting for assets to Load');
+        console.time('Waiting for assets to Load');
+        try {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
+          <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+            <h1 class="pt-4 display-3">Loading Game...</h1>
+            <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
+          </div>
+          `,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
+            },
+          };
+          await this.soundExplorerScene.waitForAssetsToLoad();
+          console.log('Design Assets and Music files are Loaded!!');
+        } catch (err) {
+          console.error(err);
+          // this.soundExplorerScene.scene.restart();
+        }
+        console.timeEnd('Waiting for assets to Load');
+
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {

@@ -55,6 +55,11 @@ export class SoundExplorerScene extends Phaser.Scene {
   private currentNote = 1;
   private music: 'tutorial' | 'game' | 'disabled' = 'disabled';
 
+  designAssetsLoaded = false;
+  musicFilesLoaded = 0;
+  totalMusicFiles = 5;
+  loadError = false;
+
   private collisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _shape: GameObjectWithBodyAndTexture,
@@ -149,6 +154,80 @@ export class SoundExplorerScene extends Phaser.Scene {
       'assets/images/sound-slicer/burst.png',
       'assets/images/sound-slicer/burst.json',
     );
+
+    this.load.once('complete', (_id: any, _completed: number, failed: number) => {
+      // no game asset is failed.
+      if (failed === 0) {
+        this.designAssetsLoaded = true;
+      } else {
+        console.log('Design Assets Failed to Load::', failed);
+        this.loadError = true;
+      }
+    });
+
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.alto = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Alto.mp3',
+      sprite: audioSprites.soundExplorer.alto,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.bass = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Bass.mp3',
+      sprite: audioSprites.soundExplorer.bass,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.soprano = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Soprano.mp3',
+      sprite: audioSprites.soundExplorer.soprano,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.tenor = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Tenor.mp3',
+      sprite: audioSprites.soundExplorer.tenor,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+  }
+
+  onLoadCallback = () => {
+    this.musicFilesLoaded += 1;
+  };
+
+  onLoadErrorCallback = () => {
+    this.loadError = true;
+  };
+
+  checkIfAssetsAreLoaded() {
+    return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
+  }
+
+  async waitForAssetsToLoad() {
+    return new Promise<void>((resolve, reject) => {
+      const intervalId = setInterval(() => {
+        if (this.checkIfAssetsAreLoaded()) {
+          clearInterval(intervalId);
+          resolve();
+          return;
+        }
+        if (this.loadError) {
+          clearInterval(intervalId);
+          reject('Failed to load some design assets.');
+          return;
+        }
+      }, 200);
+    });
   }
 
   enable(): void {
@@ -437,32 +516,6 @@ export class SoundExplorerScene extends Phaser.Scene {
   bassId: number;
   tenorId: number;
   failureMusicId: number;
-  configureMusic(): void {
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
-      html5: true,
-    });
-    this.alto = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Alto.mp3',
-      sprite: audioSprites.soundExplorer.alto,
-      html5: true,
-    });
-    this.bass = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Bass.mp3',
-      sprite: audioSprites.soundExplorer.bass,
-      html5: true,
-    });
-    this.soprano = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Soprano.mp3',
-      sprite: audioSprites.soundExplorer.soprano,
-      html5: true,
-    });
-    this.tenor = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Tenor.mp3',
-      sprite: audioSprites.soundExplorer.tenor,
-      html5: true,
-    });
-  }
 
   playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor' | 'tutorial'): void {
     switch (type) {
