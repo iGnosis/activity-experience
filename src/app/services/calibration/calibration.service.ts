@@ -164,7 +164,7 @@ export class CalibrationService {
       return { status: 'error' };
     }
 
-    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
+    // Refer: https://mediapipe.dev/images/mobile/pose_tracking_full_body_landmarks.png
     const unCalibratedPoints: number[] = [];
     const calibratedPoints: number[] = [];
     let points: number[] = [];
