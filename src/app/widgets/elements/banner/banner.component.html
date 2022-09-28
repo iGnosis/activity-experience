@@ -1,9 +1,9 @@
 <div [@animate-banner]="{value: bannerAnimationState}" *ngIf="attributes && attributes.visibility === 'visible'"
-  class="banner">
+  class="banner" [class.loader]="state.type === 'loader'" [class.status]="state.type === 'status'">
   <div class="pt-4" [innerHTML]="state.htmlStr | safeHtml"></div>
   <div class="row pt-6">
     <div class="col-12 pt-2" *ngFor="let button of state.buttons">
-      <div class="progress" style="height: 40px; width: 85%;">
+      <div class="progress">
         <div class="progress-bar bg-success" [style.animation]="progressBarAnimationState === 'progress' ? 'progress '+ progressDuration +'s linear' : null" (click)="onButtonClick(button)" role="progressbar"
           [@animate-progress-bar]="{value: progressBarAnimationState, params: { duration: progressDuration }}"><span>{{ button.title }}</span></div>
       </div>

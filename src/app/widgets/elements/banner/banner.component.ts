@@ -47,7 +47,9 @@ export class BannerComponent implements OnInit, OnDestroy {
           this.bannerAnimationState = 'end';
           setTimeout(() => {
             this.state.buttons?.forEach((button) => {
-              this.animateProgressBar(button.progressDurationMs || 3000);
+              if (!button.infiniteProgress) {
+                this.animateProgressBar(button.progressDurationMs || 3000);
+              }
             });
           }, 500);
         }, 100);
