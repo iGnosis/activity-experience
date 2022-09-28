@@ -156,10 +156,67 @@ export class GameService {
           innerWidth: window.innerWidth,
         });
       }
+
+      this.poseService.getMediapipeStatus().subscribe({
+        next: async (res) => {
+          console.log('this.poseService.getMediapipeStatus:res', res);
+          if (res.isMediaPipeReady) {
+            await this.setPhaserDimensions(canvas);
+            this.startCalibration();
+            this.elements.banner.state.attributes.visibility = 'hidden';
+          } else {
+            this.elements.banner.state = {
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount: -1,
+              },
+              data: {
+                type: 'loader',
+                htmlStr: `
+                <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+                  <h1 class="pt-4 display-3">Starting Session</h1>
+                  <h3 class="pt-8 pb-4">Setting up the best experience for you. Take a deep breath and we'll be ready to begin.</h3>
+                </div>
+                `,
+                buttons: [
+                  {
+                    infiniteProgress: true,
+                  },
+                ],
+              },
+            };
+
+            if (res.downloadSource == 'cdn') {
+              this.elements.banner.data.htmlStr = `
+                <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+                  <h1 class="pt-4 display-3">Starting Session</h1>
+                  <h3 class="pt-8 pb-4">Getting ready... please be patient...</h3>
+                </div>
+              `;
+            }
+          }
+        },
+        error: (err) => {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+            },
+            data: {
+              type: 'status',
+              htmlStr: `
+              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18">
+                <img src="assets/images/error.png" class="p-2 h-32 w-32" alt="error" />
+                <h1 class="pt-4 display-5 text-nowrap">${err.status}</h1>
+                <h3 class="pt-8 pb-4">Please try again by refreshing the page.</h3>
+              </div>
+              `,
+            },
+          };
+        },
+      });
+
       this.updateDimensions(video);
-      await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.startCalibration();
       return 'success';
     } catch (err: any) {
       console.log(err);

@@ -5,7 +5,7 @@ import { ElementAttributes } from './pointmotion';
 export class GameElement<T, M> {
   _state: { data: T; attributes: M & ElementAttributes };
   _subject: Subject<{ data: T; attributes: M & ElementAttributes }>;
-  reCalibrationCount: number | undefined;
+  reCalibrationCount: number | undefined = -1;
 
   constructor(calibrationService: CalibrationService) {
     calibrationService.reCalibrationCount.subscribe((count: number) => {
@@ -43,7 +43,6 @@ export class GameElement<T, M> {
       console.error(this._state.data);
       console.error(this._state.attributes);
       throw new Error('Recalibration count changed');
-      return;
     }
     this._state = Object.assign(this._state, state);
     this._subject.next(this._state);
