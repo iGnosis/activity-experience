@@ -304,6 +304,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   enable(): void {
+    // alert('beat boxer scene enabled');
     this.enabled = true;
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
