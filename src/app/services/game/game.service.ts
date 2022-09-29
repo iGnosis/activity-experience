@@ -126,8 +126,9 @@ export class GameService {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
       return false;
     };
+    this.handTrackerService.enable();
     this.store
-      .select((state: any) => state.game)
+      .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
           // Update the game state whenever redux state changes

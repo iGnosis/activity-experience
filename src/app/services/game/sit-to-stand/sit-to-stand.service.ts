@@ -23,7 +23,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
-  _handTrackerStatus: HandTrackerStatus;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private successfulReps = 0;
   private failedReps = 0;
@@ -48,7 +48,9 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
-  ) {
+  ) {}
+
+  setup() {
     this.store
       .select((state) => state.game)
       .subscribe((game) => {
@@ -72,12 +74,17 @@ export class SitToStandService implements ActivityBase {
     this.sit2StandService.enable();
     // Register this service with with something...
 
-    calibrationService.reCalibrationCount.subscribe((count) => {
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
   }
 
   welcome() {
+    if (!this.isServiceSetup) {
+      this.setup();
+      this.isServiceSetup = true;
+    }
+
     console.log('running welcome');
     return [
       async (reCalibrationCount: number) => {

@@ -19,6 +19,7 @@ import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.
   providedIn: 'root',
 })
 export class SoundExplorerService {
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private config = {
@@ -101,16 +102,6 @@ export class SoundExplorerService {
     private soundExplorerScene: SoundExplorerScene,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {
-    this.handTrackerService.enable();
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          //Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
@@ -124,14 +115,14 @@ export class SoundExplorerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
-
-    this.soundExplorerScene.enable();
-    this.soundExplorerScene.enableCollisionDetection();
-    this.soundExplorerScene.enableLeftHand();
-    this.soundExplorerScene.enableRightHand();
   }
 
   welcome() {
+    if (!this.isServiceSetup) {
+      this.soundExplorerScene.enable();
+      this.isServiceSetup = true;
+    }
+
     return [
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.scene.start('soundExplorer');

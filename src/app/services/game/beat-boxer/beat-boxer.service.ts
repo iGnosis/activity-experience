@@ -21,6 +21,7 @@ import { take } from 'rxjs';
   providedIn: 'root',
 })
 export class BeatBoxerService {
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
@@ -79,7 +80,9 @@ export class BeatBoxerService {
     private calibrationService: CalibrationService,
     private gameStateService: GameStateService,
     private beatBoxerScene: BeatBoxerScene,
-  ) {
+  ) {}
+
+  setup() {
     this.handTrackerService.enable();
     this.store
       .select((state) => state.game)
@@ -101,7 +104,7 @@ export class BeatBoxerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
-    calibrationService.reCalibrationCount.subscribe((count) => {
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
     this.beatBoxerScene.enable();
@@ -111,6 +114,11 @@ export class BeatBoxerService {
   }
 
   welcome() {
+    if (!this.isServiceSetup) {
+      this.setup();
+      this.isServiceSetup = true;
+    }
+
     return [
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.scene.start('beatBoxer');
