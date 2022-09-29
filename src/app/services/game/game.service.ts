@@ -131,9 +131,17 @@ export class GameService {
       .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
-          // Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
+          // use a specific query to update analytics -- since analytics are stored as JSONB array
+          if (game.analytics) {
+            // game.analytics[0] is an ugly-workaround - there will always an array of length 1
+            this.gameStateService.updateAnalytics(game.id, game.analytics[0]);
+          }
+
+          // generic update query for fields which aren't JSONB
+          else {
+            const { id, ...gameState } = game;
+            this.gameStateService.updateGame(id, gameState);
+          }
         }
       });
   }
@@ -191,7 +199,7 @@ export class GameService {
               this.elements.banner.data.htmlStr = `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
-                  <h3 class="pt-8 pb-4">Getting ready... please be patient...</h3>
+                  <h3 class="pt-8 pb-4">It's taking longer that usual. Please stick around.</h3>
                 </div>
               `;
             }

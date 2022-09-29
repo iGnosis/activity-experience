@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AnalyticsDTO, GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  AnalyticsDTO,
+  AnalyticsResultDTO,
+  GameState,
+  Genre,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -12,7 +18,7 @@ import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
-import { Subscription, take } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 
 @Injectable({
@@ -102,9 +108,6 @@ export class SoundExplorerService {
     private soundExplorerScene: SoundExplorerScene,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {
-    this.calibrationService.reCalibrationCount.subscribe((count) => {
-      this.globalReCalibrationCount = count;
-    });
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -115,6 +118,9 @@ export class SoundExplorerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
+      this.globalReCalibrationCount = count;
+    });
   }
 
   welcome() {
@@ -750,33 +756,33 @@ export class SoundExplorerService {
             this.successfulReps++;
           }
           // if continously high points, increase difficulty
-          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) difficulty++;
+          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) {
+            difficulty++;
+          }
+
           // Todo: replace placeholder analytics values.
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-                timestamp: promptTimestamp,
-                data: {
-                  shapes,
-                },
-              },
-              reaction: {
-                type: 'slice',
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime:
-                  this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
-              },
-              result: {
-                type: this.pointsGained <= 0 ? 'failure' : 'success',
-                timestamp: resultTimestamp,
-                score: this.pointsGained,
+          const analyticsObj = {
+            prompt: {
+              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
+              timestamp: promptTimestamp,
+              data: {
+                shapes,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: 'slice',
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime:
+                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
+            },
+            result: {
+              type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
+              timestamp: resultTimestamp,
+              score: this.pointsGained,
+            },
+          };
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (this.pointsGained === 0) {
             console.log('%c Not changed! ', 'background: #222; color: red');
           }

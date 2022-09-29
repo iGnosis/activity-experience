@@ -306,6 +306,9 @@ export class BeatBoxerScene extends Phaser.Scene {
   enable(): void {
     // alert('beat boxer scene enabled');
     this.enabled = true;
+    this.enableLeftHand();
+    this.enableRightHand();
+    this.enableCollisionDetection();
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
       this.destroyGloves();

@@ -6,7 +6,6 @@ import {
   AnalyticsDTO,
   GameState,
   Genre,
-  HandTrackerStatus,
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -50,19 +49,7 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
-  ) {}
-
-  setup() {
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          // Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
-
+  ) {
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -71,14 +58,13 @@ export class SitToStandService implements ActivityBase {
           this.soundsService.loadMusicFiles(this.genre);
         }
       });
-
-    this.handTrackerService.enable();
-    this.sit2StandService.enable();
-    // Register this service with with something...
-
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  setup() {
+    this.sit2StandService.enable();
   }
 
   welcome() {
@@ -785,32 +771,29 @@ export class SitToStandService implements ActivityBase {
             this.analytics.length > 0
               ? this.analytics.slice(-1)[0].reaction.type !== userState
               : true;
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: promptClass,
-                timestamp: promptTimestamp,
-                data: {
-                  number: promptNum,
-                },
-              },
-              reaction: {
-                type: userState,
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime: hasUserStateChanged
-                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                  : null, // seconds between reaction and result if user state changed
-              },
-              result: {
-                type: res.result,
-                timestamp: resultTimestamp,
-                score: res.result === 'success' ? 1 : 0,
+          const analyticsObj = {
+            prompt: {
+              type: promptClass,
+              timestamp: promptTimestamp,
+              data: {
+                number: promptNum,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: userState,
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserStateChanged
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user state changed
+            },
+            result: {
+              type: res.result,
+              timestamp: resultTimestamp,
+              score: res.result === 'success' ? 1 : 0,
+            },
+          };
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (res.result === 'success') {
             this.sit2StandScene.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {
@@ -824,7 +807,7 @@ export class SitToStandService implements ActivityBase {
             };
             this.successfulReps += 1;
             this.failedReps = 0;
-            this.store.dispatch(game.repCompleted());
+            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
             this.elements.score.state = {
               data: {
                 label: 'Motion',
