@@ -16,7 +16,9 @@ export class GuideService extends GameElement<GuideElementState, object> {
         title: '',
         titleDuration: 2000,
       },
-      attributes: {},
+      attributes: {
+        reCalibrationCount: -1,
+      },
     };
   }
 }

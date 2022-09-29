@@ -231,6 +231,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   enable(): void {
+    // alert('sound explorer scene enabled');
     this.enabled = true;
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       // this.results = results;

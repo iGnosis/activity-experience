@@ -248,7 +248,9 @@ export class GameService {
     return new Promise((resolve) => {
       setTimeout(() => {
         this.poseService.start(video);
-        this.startPoseTracker();
+        if (environment.stageName !== 'local') {
+          this.startPoseTracker();
+        }
         resolve({});
       }, 1000);
     });
