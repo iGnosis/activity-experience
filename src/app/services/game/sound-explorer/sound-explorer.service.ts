@@ -42,6 +42,7 @@ export class SoundExplorerService {
   };
   private analytics: AnalyticsDTO[] = [];
   private scoreSubscription: Subscription;
+  private isServiceSetup = false;
   private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
   };
@@ -131,51 +132,55 @@ export class SoundExplorerService {
     this.soundExplorerScene.enableRightHand();
   }
 
-  welcome() {
-    return [
-      async (reCalibrationCount: number) => {
-        this.soundExplorerScene.scene.start('soundExplorer');
+  async setup() {
+    this.soundExplorerScene.scene.start('soundExplorer');
 
-        console.log('Waiting for assets to Load');
-        console.time('Waiting for assets to Load');
-        try {
-          this.elements.banner.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              type: 'loader',
-              htmlStr: `
+    console.log('Waiting for assets to Load');
+    console.time('Waiting for assets to Load');
+    try {
+      this.elements.banner.state = {
+        attributes: {
+          visibility: 'visible',
+        },
+        data: {
+          type: 'loader',
+          htmlStr: `
           <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
             <h1 class="pt-4 display-3">Loading Game...</h1>
             <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
           </div>
           `,
-              buttons: [
-                {
-                  title: '',
-                  infiniteProgress: true,
-                },
-              ],
+          buttons: [
+            {
+              title: '',
+              infiniteProgress: true,
             },
-          };
-          await this.soundExplorerScene.waitForAssetsToLoad();
-          console.log('Design Assets and Music files are Loaded!!');
-        } catch (err) {
-          console.error(err);
-          // this.soundExplorerScene.scene.restart();
-        }
-        console.timeEnd('Waiting for assets to Load');
+          ],
+        },
+      };
+      await this.soundExplorerScene.waitForAssetsToLoad();
+      console.log('Design Assets and Music files are Loaded!!');
+    } catch (err) {
+      console.error(err);
+      // this.soundExplorerScene.scene.restart();
+    }
+    console.timeEnd('Waiting for assets to Load');
 
-        this.elements.banner.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
+    this.elements.banner.state = {
+      data: {},
+      attributes: {
+        visibility: 'hidden',
+      },
+    };
+  }
 
+  welcome() {
+    if (!this.isServiceSetup) {
+      this.setup();
+      this.isServiceSetup = true;
+    }
+    return [
+      async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {

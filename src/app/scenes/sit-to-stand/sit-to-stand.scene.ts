@@ -151,9 +151,10 @@ export class SitToStandScene extends Phaser.Scene {
 
   async waitForAssetsToLoad(genre: Genre) {
     return new Promise<void>((resolve, reject) => {
+      const startTime = new Date().getTime();
       this.loadMusicFiles(genre);
       const intervalId = setInterval(() => {
-        if (this.checkIfAssetsAreLoaded(genre)) {
+        if (this.checkIfAssetsAreLoaded(genre) && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
           resolve();
           return;

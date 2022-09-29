@@ -215,8 +215,9 @@ export class SoundExplorerScene extends Phaser.Scene {
 
   async waitForAssetsToLoad() {
     return new Promise<void>((resolve, reject) => {
+      const startTime = new Date().getTime();
       const intervalId = setInterval(() => {
-        if (this.checkIfAssetsAreLoaded()) {
+        if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
           resolve();
           return;
