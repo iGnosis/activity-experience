@@ -56,7 +56,7 @@ export class SelectGenreComponent implements OnInit {
 
   playMusic(genre: string) {
     this.playState = 'play';
-    this.soundsService.playGenreSound(genre as Genre);
+    // this.soundsService.playGenreSound(genre as Genre);
   }
 
   stopMusic(genre?: string) {
@@ -66,7 +66,7 @@ export class SelectGenreComponent implements OnInit {
   }
 
   selectGenre(mood: { title: string; selected?: boolean }) {
-    this.soundsService.stopGenreSound(mood.title as Genre);
+    // this.soundsService.stopGenreSound(mood.title as Genre);
     mood.selected = true;
     this.store.dispatch(session.setGenre({ genre: mood.title as Genre }));
     setTimeout(() => {

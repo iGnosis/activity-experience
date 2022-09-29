@@ -19,6 +19,7 @@ import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { CalibrationService } from '../../calibration/calibration.service';
+import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 @Injectable({
   providedIn: 'root',
 })
@@ -48,6 +49,7 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
+    private sit2StandScene: SitToStandScene,
   ) {
     this.store
       .select((state) => state.game)
@@ -81,6 +83,45 @@ export class SitToStandService implements ActivityBase {
     console.log('running welcome');
     return [
       async (reCalibrationCount: number) => {
+        console.log('Waiting for assets to Load');
+        console.time('Waiting for assets to Load');
+        try {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
+          <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+            <h1 class="pt-4 display-3">Loading Game...</h1>
+            <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
+          </div>
+          `,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
+            },
+          };
+          await this.sit2StandScene.waitForAssetsToLoad(this.genre);
+          console.log('Design Assets and Music files are Loaded!!');
+        } catch (err) {
+          console.error(err);
+        }
+        console.timeEnd('Waiting for assets to Load');
+
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
@@ -649,7 +690,7 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        this.soundsService.playMusic(this.genre, 'backtrack');
+        this.sit2StandScene.playMusic(this.genre, 'backtrack');
         this.elements.score.state = {
           data: {
             label: 'Motion',
@@ -764,7 +805,7 @@ export class SitToStandService implements ActivityBase {
           ];
           this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
           if (res.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.sit2StandScene.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,
@@ -916,7 +957,7 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         // this.soundsService.stopGenreSound();
-        this.soundsService.stopBacktrack(this.genre);
+        this.sit2StandScene.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({
