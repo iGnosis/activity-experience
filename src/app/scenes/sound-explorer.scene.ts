@@ -112,6 +112,8 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   preload() {
+    this.designAssetsLoaded = false;
+
     // preloading design assets
     this.load.image({
       key: TextureKeys.CIRCLE,

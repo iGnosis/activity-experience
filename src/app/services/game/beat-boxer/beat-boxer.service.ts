@@ -111,54 +111,61 @@ export class BeatBoxerService {
   }
 
   async setup() {
-    this.beatBoxerScene.scene.start('beatBoxer');
+    return new Promise<void>(async (resolve, reject) => {
+      this.beatBoxerScene.scene.start('beatBoxer');
 
-    console.log('Waiting for assets to Load');
-    console.time('Waiting for assets to Load');
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.beatBoxerScene.waitForAssetsToLoad();
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        // this.soundExplorerScene.scene.restart();
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
+  }
 
-    try {
-      this.elements.banner.state = {
-        attributes: {
-          visibility: 'visible',
-        },
-        data: {
-          type: 'loader',
-          htmlStr: `
+  welcome() {
+    return [
+      async (reCalibrationCount: number) => {
+        if (!this.isServiceSetup) {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
           <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
             <h1 class="pt-4 display-3">Loading Game...</h1>
             <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
           </div>
           `,
-          buttons: [
-            {
-              title: '',
-              infiniteProgress: true,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
             },
-          ],
-        },
-      };
-      await this.beatBoxerScene.waitForAssetsToLoad();
-      console.log('Design Assets and Music files are Loaded!!');
-    } catch (err) {
-      console.error(err);
-      // this.beatBoxerScene.scene.restart();
-    }
-    console.timeEnd('Waiting for assets to Load');
+          };
+          await this.setup();
 
-    this.elements.banner.state = {
-      data: {},
-      attributes: {
-        visibility: 'hidden',
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
+        }
       },
-    };
-  }
-
-  welcome() {
-    if (!this.isServiceSetup) {
-      this.setup();
-      this.isServiceSetup = true;
-    }
-    return [
       async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {

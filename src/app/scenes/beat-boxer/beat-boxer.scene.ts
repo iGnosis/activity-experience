@@ -129,6 +129,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   preload() {
+    this.designAssetsLoaded = false;
     // default scale of desing assets
     const heavyBagScale = 1;
     const speedBagScale = 0.8;
