@@ -8,19 +8,18 @@ import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/p
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import {
   CenterOfMotion,
   BagType,
   BeatBoxerScene,
 } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
-import { take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BeatBoxerService {
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
@@ -65,7 +64,6 @@ export class BeatBoxerService {
   private successfulReps = 0;
   private failedReps = 0;
   private totalReps = 0;
-  private isServiceSetup = false;
 
   constructor(
     private store: Store<{
@@ -78,19 +76,8 @@ export class BeatBoxerService {
     private checkinService: CheckinService,
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
-    private gameStateService: GameStateService,
     private beatBoxerScene: BeatBoxerScene,
   ) {
-    this.handTrackerService.enable();
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          //Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -101,16 +88,13 @@ export class BeatBoxerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
-    calibrationService.reCalibrationCount.subscribe((count) => {
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
-    this.beatBoxerScene.enable();
-    this.beatBoxerScene.enableLeftHand();
-    this.beatBoxerScene.enableRightHand();
-    this.beatBoxerScene.enableCollisionDetection();
   }
 
   async setup() {
+    this.beatBoxerScene.enable();
     return new Promise<void>(async (resolve, reject) => {
       this.beatBoxerScene.scene.start('beatBoxer');
 
@@ -917,33 +901,30 @@ export class BeatBoxerService {
           this.totalReps++;
           // Todo: replace placeholder values with actual values
           const hasUserInteracted: boolean = rep.result !== undefined;
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: 'bag',
-                timestamp: promptTimestamp,
-                data: {
-                  leftBag: this.bagsAvailable.left,
-                  rightBag: this.bagsAvailable.right,
-                },
-              },
-              reaction: {
-                type: 'punch',
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime: hasUserInteracted
-                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                  : null, // seconds between reaction and result if user interacted with the bag
-              },
-              result: {
-                type: rep.result || 'failure',
-                timestamp: resultTimestamp,
-                score: rep.result === 'success' ? 1 : 0,
+          const analyticsObj = {
+            prompt: {
+              type: 'bag',
+              timestamp: promptTimestamp,
+              data: {
+                leftBag: this.bagsAvailable.left,
+                rightBag: this.bagsAvailable.right,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: 'punch',
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserInteracted
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user interacted with the bag
+            },
+            result: {
+              type: rep.result || 'failure',
+              timestamp: resultTimestamp,
+              score: rep.result === 'success' ? 1 : 0,
+            },
+          };
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (rep.result === 'success') {
             if (rep.bagType === this.bagsAvailable.left) {
               this.bagsAvailable.left = undefined;
@@ -954,7 +935,7 @@ export class BeatBoxerService {
             clearTimeout(leftBagTimeout);
             clearTimeout(rightBagTimeout);
             this.successfulReps++;
-            this.store.dispatch(game.repCompleted());
+            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
             this.elements.score.state = {
               data: {
                 label: 'Punches',
