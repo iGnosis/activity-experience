@@ -58,6 +58,8 @@ export class SoundExplorerService {
     numberOfShapes: number,
     timeoutBetweenShapes = 200,
   ): Promise<Shape[]> => {
+    this.soundExplorerScene.setNextNote();
+
     const randomPosition = this.getRandomItemFromArray(
       Object.keys(this.originsWithAngleRange) as Origin[],
     );
@@ -214,7 +216,7 @@ export class SoundExplorerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic('tutorial');
+        this.soundExplorerScene.enableMusic();
         this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Use your hands to interact with the shapes you see on the screen.');
         this.elements.guide.state = {
@@ -237,12 +239,7 @@ export class SoundExplorerService {
           const randomPosition = this.getRandomItemFromArray(
             Object.keys(this.originsWithAngleRange) as Origin[],
           );
-          this.soundExplorerScene.showShapes(
-            [this.getRandomItemFromArray(this.shapes)],
-            randomPosition,
-            this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-            500,
-          );
+          this.drawShapes(1, 500);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
         }
@@ -630,7 +627,8 @@ export class SoundExplorerService {
         });
         await this.elements.sleep(3000);
         this.soundsService.pauseActivityInstructionSound(this.genre);
-        this.soundExplorerScene.enableMusic('disabled');
+        this.soundExplorerScene.enableMusic(false);
+        this.soundExplorerScene.resetNotes();
       },
     ];
   }
@@ -688,7 +686,7 @@ export class SoundExplorerService {
     return [
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic('game');
+        this.soundExplorerScene.enableMusic();
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
 
@@ -752,7 +750,6 @@ export class SoundExplorerService {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          this.soundExplorerScene.setNextNote();
           const shapes = await this.drawShapes(difficulty);
           const promptTimestamp = Date.now();
 
@@ -841,7 +838,7 @@ export class SoundExplorerService {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic('disabled');
+        this.soundExplorerScene.enableMusic(false);
         this.soundExplorerScene.disable();
         this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;

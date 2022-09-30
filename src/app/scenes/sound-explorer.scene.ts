@@ -53,7 +53,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   private leftHand: Phaser.GameObjects.Arc;
   private rightHand: Phaser.GameObjects.Arc;
   private currentNote = 1;
-  private music: 'tutorial' | 'game' | 'disabled' = 'disabled';
+  private music = false;
 
   designAssetsLoaded = false;
   musicFilesLoaded = 0;
@@ -82,11 +82,9 @@ export class SoundExplorerScene extends Phaser.Scene {
       // to play success music based on the shape
       console.log('play successMusic', _shape.texture.key);
 
-      if (this.music === 'disabled') return;
-      if (this.music === 'tutorial') {
-        this.playSuccessMusic('tutorial');
-      }
-      if (this.music === 'game') {
+      if (!this.music) return;
+
+      if (this.music) {
         if (_shape.texture.key === TextureKeys.CIRCLE) {
           this.playSuccessMusic('bass');
         } else if (_shape.texture.key === TextureKeys.TRIANGLE) {
@@ -100,7 +98,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     } else {
       // play failure animation
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
-      this.music !== 'disabled' && this.playFailureMusic();
+      this.music && this.playFailureMusic();
     }
     // destroying the shape
     _shape.destroy(true);
@@ -510,6 +508,10 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
+  resetNotes() {
+    this.currentNote = 1;
+  }
+
   alto: Howl;
   soprano: Howl;
   bass: Howl;
@@ -521,7 +523,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   tenorId: number;
   failureMusicId: number;
 
-  playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor' | 'tutorial'): void {
+  playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
     switch (type) {
       case 'alto':
         if (this.alto && this.alto.playing(this.altoId)) {
@@ -555,13 +557,6 @@ export class SoundExplorerScene extends Phaser.Scene {
           this.tenorId = this.tenor.play(`Tenor_${this.currentNote}`);
         }
         break;
-      case 'tutorial':
-        const tutorialSuccessMusic = new Howl({
-          src: 'assets/sounds/soundscapes/Sound Health Soundscape_calibrated.mp3',
-          html5: true,
-        });
-        tutorialSuccessMusic.play();
-        break;
     }
   }
 
@@ -577,7 +572,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   /**
    * @param value default `true`.
    */
-  enableMusic(value: 'tutorial' | 'game' | 'disabled') {
+  enableMusic(value = true) {
     this.music = value;
   }
 }
