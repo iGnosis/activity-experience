@@ -47,7 +47,6 @@ export class SoundExplorerService {
     'top-left': [40, 50],
     'top-right': [150, 160],
   };
-  private analytics: AnalyticsDTO[] = [];
   private scoreSubscription: Subscription;
   private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
@@ -123,19 +122,31 @@ export class SoundExplorerService {
     });
   }
 
-  welcome() {
-    if (!this.isServiceSetup) {
-      this.soundExplorerScene.enable();
-      this.isServiceSetup = true;
-    }
+  async setup() {
+    this.soundExplorerScene.enable();
+    return new Promise<void>(async (resolve, reject) => {
+      this.soundExplorerScene.scene.start('soundExplorer');
 
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.soundExplorerScene.waitForAssetsToLoad();
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        // this.soundExplorerScene.scene.restart();
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
+  }
+
+  welcome() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.scene.start('soundExplorer');
-
-        console.log('Waiting for assets to Load');
-        console.time('Waiting for assets to Load');
-        try {
+        if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
@@ -157,22 +168,19 @@ export class SoundExplorerService {
               ],
             },
           };
-          await this.soundExplorerScene.waitForAssetsToLoad();
-          console.log('Design Assets and Music files are Loaded!!');
-        } catch (err) {
-          console.error(err);
-          // this.soundExplorerScene.scene.restart();
+          await this.setup();
+
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
         }
-        console.timeEnd('Waiting for assets to Load');
+      },
 
-        this.elements.banner.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
+      async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -876,6 +884,7 @@ export class SoundExplorerService {
         await this.elements.sleep(12000);
       },
       async (reCalibrationCount: number) => {
+        this.store.dispatch(game.gameCompleted());
         this.ttsService.tts('Please raise one of your hands to close the game.');
         this.elements.guide.state = {
           data: {
@@ -894,7 +903,6 @@ export class SoundExplorerService {
           reCalibrationCount,
         };
         await this.elements.sleep(1000);
-        this.store.dispatch(game.gameCompleted());
         this.googleAnalyticsService.sendEvent('level_end', {
           level_name: 'sound_explorer',
         });

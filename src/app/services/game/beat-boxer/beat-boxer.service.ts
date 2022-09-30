@@ -93,24 +93,31 @@ export class BeatBoxerService {
     });
   }
 
-  setup() {
+  async setup() {
     this.beatBoxerScene.enable();
+    return new Promise<void>(async (resolve, reject) => {
+      this.beatBoxerScene.scene.start('beatBoxer');
+
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.beatBoxerScene.waitForAssetsToLoad();
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        // this.soundExplorerScene.scene.restart();
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
   }
 
   welcome() {
-    if (!this.isServiceSetup) {
-      this.setup();
-      this.isServiceSetup = true;
-    }
-
     return [
       async (reCalibrationCount: number) => {
-        this.beatBoxerScene.scene.start('beatBoxer');
-
-        console.log('Waiting for assets to Load');
-        console.time('Waiting for assets to Load');
-
-        try {
+        if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
@@ -132,22 +139,18 @@ export class BeatBoxerService {
               ],
             },
           };
-          await this.beatBoxerScene.waitForAssetsToLoad();
-          console.log('Design Assets and Music files are Loaded!!');
-        } catch (err) {
-          console.error(err);
-          // this.beatBoxerScene.scene.restart();
+          await this.setup();
+
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
         }
-        console.timeEnd('Waiting for assets to Load');
-
-        this.elements.banner.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
+      },
+      async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {

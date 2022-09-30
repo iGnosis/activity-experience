@@ -63,22 +63,30 @@ export class SitToStandService implements ActivityBase {
     });
   }
 
-  setup() {
+  async setup() {
     this.sit2StandService.enable();
+    return new Promise<void>(async (resolve, reject) => {
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.sit2StandScene.waitForAssetsToLoad(this.genre);
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
   }
 
   welcome() {
-    if (!this.isServiceSetup) {
-      this.setup();
-      this.isServiceSetup = true;
-    }
-
     console.log('running welcome');
+
     return [
       async (reCalibrationCount: number) => {
-        console.log('Waiting for assets to Load');
-        console.time('Waiting for assets to Load');
-        try {
+        if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
@@ -100,21 +108,17 @@ export class SitToStandService implements ActivityBase {
               ],
             },
           };
-          await this.sit2StandScene.waitForAssetsToLoad(this.genre);
-          console.log('Design Assets and Music files are Loaded!!');
-        } catch (err) {
-          console.error(err);
+          await this.setup();
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
         }
-        console.timeEnd('Waiting for assets to Load');
-
-        this.elements.banner.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
+      },
+      async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
