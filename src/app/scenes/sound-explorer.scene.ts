@@ -236,6 +236,10 @@ export class SoundExplorerScene extends Phaser.Scene {
   enable(): void {
     // alert('sound explorer scene enabled');
     this.enabled = true;
+    this.enableCollisionDetection();
+    this.enableLeftHand();
+    this.enableRightHand();
+
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       // this.results = results;
       if (this.leftHand) {

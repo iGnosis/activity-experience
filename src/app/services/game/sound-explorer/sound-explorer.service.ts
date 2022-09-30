@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AnalyticsDTO, GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  AnalyticsDTO,
+  AnalyticsResultDTO,
+  GameState,
+  Genre,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -12,13 +18,14 @@ import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
-import { Subscription, take } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SoundExplorerService {
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private config = {
@@ -40,9 +47,7 @@ export class SoundExplorerService {
     'top-left': [40, 50],
     'top-right': [150, 160],
   };
-  private analytics: AnalyticsDTO[] = [];
   private scoreSubscription: Subscription;
-  private isServiceSetup = false;
   private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
   };
@@ -102,19 +107,6 @@ export class SoundExplorerService {
     private soundExplorerScene: SoundExplorerScene,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {
-    this.handTrackerService.enable();
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          //Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
-    this.calibrationService.reCalibrationCount.subscribe((count) => {
-      this.globalReCalibrationCount = count;
-    });
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -125,14 +117,13 @@ export class SoundExplorerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
-
-    this.soundExplorerScene.enable();
-    this.soundExplorerScene.enableCollisionDetection();
-    this.soundExplorerScene.enableLeftHand();
-    this.soundExplorerScene.enableRightHand();
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
+      this.globalReCalibrationCount = count;
+    });
   }
 
   async setup() {
+    this.soundExplorerScene.enable();
     return new Promise<void>(async (resolve, reject) => {
       this.soundExplorerScene.scene.start('soundExplorer');
 
@@ -773,33 +764,33 @@ export class SoundExplorerService {
             this.successfulReps++;
           }
           // if continously high points, increase difficulty
-          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) difficulty++;
+          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) {
+            difficulty++;
+          }
+
           // Todo: replace placeholder analytics values.
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-                timestamp: promptTimestamp,
-                data: {
-                  shapes,
-                },
-              },
-              reaction: {
-                type: 'slice',
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime:
-                  this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
-              },
-              result: {
-                type: this.pointsGained <= 0 ? 'failure' : 'success',
-                timestamp: resultTimestamp,
-                score: this.pointsGained,
+          const analyticsObj = {
+            prompt: {
+              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
+              timestamp: promptTimestamp,
+              data: {
+                shapes,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: 'slice',
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime:
+                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
+            },
+            result: {
+              type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
+              timestamp: resultTimestamp,
+              score: this.pointsGained,
+            },
+          };
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (this.pointsGained === 0) {
             console.log('%c Not changed! ', 'background: #222; color: red');
           }
@@ -893,6 +884,7 @@ export class SoundExplorerService {
         await this.elements.sleep(12000);
       },
       async (reCalibrationCount: number) => {
+        this.store.dispatch(game.gameCompleted());
         this.ttsService.tts('Please raise one of your hands to close the game.');
         this.elements.guide.state = {
           data: {
@@ -911,7 +903,6 @@ export class SoundExplorerService {
           reCalibrationCount,
         };
         await this.elements.sleep(1000);
-        this.store.dispatch(game.gameCompleted());
         this.googleAnalyticsService.sendEvent('level_end', {
           level_name: 'sound_explorer',
         });

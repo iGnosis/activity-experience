@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'graphql-request';
-import { GameState } from 'src/app/types/pointmotion';
+import { AnalyticsDTO, AnalyticsResultDTO, GameState } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
 
 @Injectable({
@@ -36,6 +36,20 @@ export class GameStateService {
       {
         id,
         game,
+      },
+    );
+  }
+
+  async updateAnalytics(gameId: string, analytics: AnalyticsDTO) {
+    return this.client.req(
+      `mutation UpdateAnalytics($analytics: jsonb!, $gameId: uuid!) {
+        update_game_by_pk(pk_columns: { id: $gameId }, _append: { analytics: $analytics }) {
+          id
+        }
+      }`,
+      {
+        gameId,
+        analytics,
       },
     );
   }
