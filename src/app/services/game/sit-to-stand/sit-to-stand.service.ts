@@ -6,7 +6,6 @@ import {
   AnalyticsDTO,
   GameState,
   Genre,
-  HandTrackerStatus,
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -19,11 +18,12 @@ import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { CalibrationService } from '../../calibration/calibration.service';
+import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 @Injectable({
   providedIn: 'root',
 })
 export class SitToStandService implements ActivityBase {
-  _handTrackerStatus: HandTrackerStatus;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private successfulReps = 0;
   private failedReps = 0;
@@ -44,21 +44,12 @@ export class SitToStandService implements ActivityBase {
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
+    private sit2StandScene: SitToStandScene,
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
   ) {
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          // Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
-
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -67,19 +58,66 @@ export class SitToStandService implements ActivityBase {
           this.soundsService.loadMusicFiles(this.genre);
         }
       });
-
-    this.handTrackerService.enable();
-    this.sit2StandService.enable();
-    // Register this service with with something...
-
-    calibrationService.reCalibrationCount.subscribe((count) => {
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
+    });
+  }
+
+  async setup() {
+    this.sit2StandService.enable();
+    return new Promise<void>(async (resolve, reject) => {
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.sit2StandScene.waitForAssetsToLoad(this.genre);
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
     });
   }
 
   welcome() {
     console.log('running welcome');
+
     return [
+      async (reCalibrationCount: number) => {
+        if (!this.isServiceSetup) {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
+          <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+            <h1 class="pt-4 display-3">Loading Game...</h1>
+            <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
+          </div>
+          `,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
+            },
+          };
+          await this.setup();
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
+        }
+      },
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
           attributes: {
@@ -649,7 +687,7 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        this.soundsService.playMusic(this.genre, 'backtrack');
+        this.sit2StandScene.playMusic(this.genre, 'backtrack');
         this.elements.score.state = {
           data: {
             label: 'Motion',
@@ -737,34 +775,32 @@ export class SitToStandService implements ActivityBase {
             this.analytics.length > 0
               ? this.analytics.slice(-1)[0].reaction.type !== userState
               : true;
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: promptClass,
-                timestamp: promptTimestamp,
-                data: {
-                  number: promptNum,
-                },
-              },
-              reaction: {
-                type: userState,
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime: hasUserStateChanged
-                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                  : null, // seconds between reaction and result if user state changed
-              },
-              result: {
-                type: res.result,
-                timestamp: resultTimestamp,
-                score: res.result === 'success' ? 1 : 0,
+          const analyticsObj = {
+            prompt: {
+              type: promptClass,
+              timestamp: promptTimestamp,
+              data: {
+                number: promptNum,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: userState,
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserStateChanged
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user state changed
+            },
+            result: {
+              type: res.result,
+              timestamp: resultTimestamp,
+              score: res.result === 'success' ? 1 : 0,
+            },
+          };
+          this.analytics.push(analyticsObj);
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (res.result === 'success') {
-            this.soundsService.playMusic(this.genre, 'trigger');
+            this.sit2StandScene.playMusic(this.genre, 'trigger');
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,
@@ -776,7 +812,7 @@ export class SitToStandService implements ActivityBase {
             };
             this.successfulReps += 1;
             this.failedReps = 0;
-            this.store.dispatch(game.repCompleted());
+            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
             this.elements.score.state = {
               data: {
                 label: 'Motion',
@@ -916,7 +952,7 @@ export class SitToStandService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         // this.soundsService.stopGenreSound();
-        this.soundsService.stopBacktrack(this.genre);
+        this.sit2StandScene.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.checkinService.updateOnboardingStatus({

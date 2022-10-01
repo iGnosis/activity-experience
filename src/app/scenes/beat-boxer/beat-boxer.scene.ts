@@ -119,11 +119,17 @@ export class BeatBoxerScene extends Phaser.Scene {
   confettiAnim?: Phaser.GameObjects.Sprite;
   musicAnim?: Phaser.GameObjects.Sprite;
 
+  designAssetsLoaded = false;
+  musicFilesLoaded = 0;
+  totalMusicFiles = 2;
+  loadError = false;
+
   constructor(private poseService: PoseService) {
     super({ key: 'beatBoxer' });
   }
 
   preload() {
+    this.designAssetsLoaded = false;
     // default scale of desing assets
     const heavyBagScale = 1;
     const speedBagScale = 0.8;
@@ -206,6 +212,64 @@ export class BeatBoxerScene extends Phaser.Scene {
         scale: obstacleScale,
       },
     });
+
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    this.successMusic = new Howl({
+      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
+      sprite: audioSprites.beatBoxer,
+      html5: true,
+      loop: false,
+      onfade: (id) => {
+        this.successMusic.stop(id);
+      },
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    this.load.once('complete', (_id: any, _completed: number, failed: number) => {
+      if (failed === 0) {
+        this.designAssetsLoaded = true;
+      } else {
+        console.log('Design Assets Failed to Load', failed);
+        this.loadError = true;
+      }
+    });
+  }
+
+  onLoadCallback = () => {
+    this.musicFilesLoaded += 1;
+  };
+
+  onLoadErrorCallback = () => {
+    this.loadError = true;
+  };
+
+  checkIfAssetsAreLoaded() {
+    return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
+  }
+
+  async waitForAssetsToLoad() {
+    return new Promise<void>((resolve, reject) => {
+      const startTime = new Date().getTime();
+      const intervalId = setInterval(() => {
+        if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
+          clearInterval(intervalId);
+          resolve();
+          return;
+        }
+        if (this.loadError) {
+          clearInterval(intervalId);
+          reject('Failed to load some design assets.');
+          return;
+        }
+      }, 200);
+    });
   }
 
   private group: Phaser.Physics.Arcade.StaticGroup;
@@ -242,7 +306,11 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   enable(): void {
+    // alert('beat boxer scene enabled');
     this.enabled = true;
+    this.enableLeftHand();
+    this.enableRightHand();
+    this.enableCollisionDetection();
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       this.results = results;
       this.destroyGloves();
@@ -283,8 +351,20 @@ export class BeatBoxerScene extends Phaser.Scene {
     position: CenterOfMotion,
   ): { shoulderX: number; wristX: number; maxReach: number } {
     const { width, height } = this.game.canvas;
+
+    // if results or results.poseLandmarks are not present.. return default values.
+    if (!results || !Array.isArray(results.poseLandmarks)) {
+      return {
+        wristX: 250,
+        shoulderX: width / 2,
+        maxReach: 200,
+      };
+    }
+
     if (
       position === 'left' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[11] &&
       results.poseLandmarks[13] &&
       results.poseLandmarks[15]
@@ -312,6 +392,8 @@ export class BeatBoxerScene extends Phaser.Scene {
       };
     } else if (
       position === 'right' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[12] &&
       results.poseLandmarks[14] &&
       results.poseLandmarks[16]
@@ -338,6 +420,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         maxReach,
       };
     }
+
     return {
       wristX: 250,
       shoulderX: width / 2,
@@ -715,22 +798,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   failureMusic: Howl;
   successMusic: Howl;
   failureMusicId: number;
-  configureMusic() {
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
-      html5: true,
-    });
-
-    this.successMusic = new Howl({
-      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
-      sprite: audioSprites.beatBoxer,
-      html5: true,
-      loop: false,
-      onfade: (id) => {
-        this.successMusic.stop(id);
-      },
-    });
-  }
 
   getDurationOfNote(note: number) {
     return audioSprites['beatBoxer'][`note_${note}`][1];

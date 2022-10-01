@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Options, Pose, Results } from '@mediapipe/pose';
 import { Observable, Subject } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-
+import { IsMediaPipeReady } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
@@ -18,11 +18,19 @@ export class PoseService {
   pose: Pose;
   config: 'cdn' | 'local';
   results = new Subject<Results>();
+  isReady = new Subject<IsMediaPipeReady>();
+  totalPoseFiles = 0;
 
   constructor() {}
 
-  async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'cdn') {
+  async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'local') {
     try {
+      // mediapipe isn't ready yet.
+      this.isReady.next({
+        isMediaPipeReady: false,
+        downloadSource: config,
+      });
+
       this.config = config;
       let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/';
       if (config === 'local') {
@@ -30,6 +38,7 @@ export class PoseService {
       }
       this.pose = new Pose({
         locateFile: (file) => {
+          this.totalPoseFiles++;
           console.log('loading holistic file:', file);
           // stick to v0.5 as to avoid breaking changes.
           return baseUrl + file;
@@ -51,6 +60,12 @@ export class PoseService {
       // do something
       console.log('holistic files must be loaded by now');
 
+      // emit an event when mediapipe is ready.
+      this.isReady.next({
+        isMediaPipeReady: true,
+        downloadSource: config,
+      });
+
       // This implementation may be faulty!
       // Shoudn't we read frames every (displayFPSRate * 1000) milliseconds?
       this.interval = setInterval(() => {
@@ -67,6 +82,10 @@ export class PoseService {
     clearInterval(this.interval);
   }
 
+  getMediapipeStatus() {
+    return this.isReady;
+  }
+
   getPose() {
     return this.results;
   }
@@ -77,14 +96,17 @@ export class PoseService {
         // Sometimes a few frames are received before it fails
         this.stop(); // stop sending the frames.
 
-        if (this.config == 'local') {
+        if (this.config == 'cdn') {
           // Cloud didn't work, local didn't work...
           // let the user know now...
           this.results.error({
             status: 'error',
           });
+          this.isReady.error({
+            status: 'Failed to download mediapipe.',
+          });
         } else {
-          this.start(this.videoElm as HTMLVideoElement, 25, 'local');
+          this.start(this.videoElm as HTMLVideoElement, 25, 'cdn');
         }
       }
     }, 15000); // 15 seconds

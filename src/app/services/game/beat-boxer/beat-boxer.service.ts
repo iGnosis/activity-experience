@@ -8,19 +8,18 @@ import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/p
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import {
   CenterOfMotion,
   BagType,
   BeatBoxerScene,
 } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
-import { take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BeatBoxerService {
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
@@ -77,20 +76,8 @@ export class BeatBoxerService {
     private checkinService: CheckinService,
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
-    private gameStateService: GameStateService,
     private beatBoxerScene: BeatBoxerScene,
   ) {
-    this.handTrackerService.enable();
-    this.store
-      .select((state) => state.game)
-      .subscribe((game) => {
-        if (game.id) {
-          //Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
-        }
-      });
-    this.beatBoxerScene.configureMusic();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -101,19 +88,69 @@ export class BeatBoxerService {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
-    calibrationService.reCalibrationCount.subscribe((count) => {
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  async setup() {
     this.beatBoxerScene.enable();
-    this.beatBoxerScene.enableLeftHand();
-    this.beatBoxerScene.enableRightHand();
-    this.beatBoxerScene.enableCollisionDetection();
+    return new Promise<void>(async (resolve, reject) => {
+      this.beatBoxerScene.scene.start('beatBoxer');
+
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.beatBoxerScene.waitForAssetsToLoad();
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        // this.soundExplorerScene.scene.restart();
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
   }
 
   welcome() {
     return [
       async (reCalibrationCount: number) => {
-        this.beatBoxerScene.scene.start('beatBoxer');
+        if (!this.isServiceSetup) {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
+          <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+            <h1 class="pt-4 display-3">Loading Game...</h1>
+            <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
+          </div>
+          `,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
+            },
+          };
+          await this.setup();
+
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
+        }
+      },
+      async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
@@ -864,33 +901,30 @@ export class BeatBoxerService {
           this.totalReps++;
           // Todo: replace placeholder values with actual values
           const hasUserInteracted: boolean = rep.result !== undefined;
-          this.analytics = [
-            ...this.analytics,
-            {
-              prompt: {
-                type: 'bag',
-                timestamp: promptTimestamp,
-                data: {
-                  leftBag: this.bagsAvailable.left,
-                  rightBag: this.bagsAvailable.right,
-                },
-              },
-              reaction: {
-                type: 'punch',
-                timestamp: Date.now(),
-                startTime: Date.now(),
-                completionTime: hasUserInteracted
-                  ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                  : null, // seconds between reaction and result if user interacted with the bag
-              },
-              result: {
-                type: rep.result || 'failure',
-                timestamp: resultTimestamp,
-                score: rep.result === 'success' ? 1 : 0,
+          const analyticsObj = {
+            prompt: {
+              type: 'bag',
+              timestamp: promptTimestamp,
+              data: {
+                leftBag: this.bagsAvailable.left,
+                rightBag: this.bagsAvailable.right,
               },
             },
-          ];
-          this.store.dispatch(game.pushAnalytics({ analytics: this.analytics }));
+            reaction: {
+              type: 'punch',
+              timestamp: Date.now(),
+              startTime: Date.now(),
+              completionTime: hasUserInteracted
+                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+                : null, // seconds between reaction and result if user interacted with the bag
+            },
+            result: {
+              type: rep.result || 'failure',
+              timestamp: resultTimestamp,
+              score: rep.result === 'success' ? 1 : 0,
+            },
+          };
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (rep.result === 'success') {
             if (rep.bagType === this.bagsAvailable.left) {
               this.bagsAvailable.left = undefined;
@@ -901,7 +935,7 @@ export class BeatBoxerService {
             clearTimeout(leftBagTimeout);
             clearTimeout(rightBagTimeout);
             this.successfulReps++;
-            this.store.dispatch(game.repCompleted());
+            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
             this.elements.score.state = {
               data: {
                 label: 'Punches',
