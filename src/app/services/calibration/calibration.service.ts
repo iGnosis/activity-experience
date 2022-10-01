@@ -164,7 +164,7 @@ export class CalibrationService {
       return { status: 'error' };
     }
 
-    // Refer: https://google.github.io/mediapipe/images/mobile/pose_tracking_full_body_landmarks.png
+    // Refer: https://mediapipe.dev/images/mobile/pose_tracking_full_body_landmarks.png
     const unCalibratedPoints: number[] = [];
     const calibratedPoints: number[] = [];
     let points: number[] = [];
@@ -172,7 +172,9 @@ export class CalibrationService {
     // all points must be visible and be within the calibration box.
     if (this.mode === 'full') {
       // 32 total body points -> 0, 1, 2, 3... 32.
-      points = [...Array(33).keys()];
+      // points = [...Array(33).keys()];
+      // only consider point 9 to 28 (https://stackoverflow.com/a/28247338/1234007)
+      points = Array.from({ length: 20 }, (v, k) => k + 9);
     } else if (this.mode === 'fast') {
       // only the key body points must be visible.
       points = [12, 11, 24, 23, 26, 25];

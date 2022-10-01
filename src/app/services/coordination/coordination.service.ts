@@ -482,7 +482,7 @@ export class CoordinationService {
           // playing chord
           if (res.result === 'success') {
             this.currentPromptIdx += 1;
-            this.soundService.playMusic(this.genre, 'trigger');
+            // this.soundService.playMusic(this.genre, 'trigger');
             this.store.dispatch(session.addRep());
             this.store.dispatch(
               guide.sendPrompt({
@@ -540,9 +540,9 @@ export class CoordinationService {
   async prePlaySit2Stand() {
     try {
       this.activityStage = 'preLoop';
-      if (!this.soundService.isBacktrackPlaying(this.genre)) {
-        this.soundService.playMusic(this.genre, 'backtrack');
-      }
+      // if (!this.soundService.isBacktrackPlaying(this.genre)) {
+      //   this.soundService.playMusic(this.genre, 'backtrack');
+      // }
       await this.step(this.activityStage, 'updateAvatar', { name: 'mila', position: 'center' });
       await this.step(this.activityStage, 'sendMessage', {
         text: 'STAND up when you are ready to start...',
@@ -632,7 +632,7 @@ export class CoordinationService {
       position: 'center',
     });
 
-    this.soundService.pauseBacktrack(this.genre);
+    // this.soundService.pauseBacktrack(this.genre);
     this.store.dispatch(session.setSessionEnded());
     this.soundService.playRewardSound();
     await this.step('postLoop', 'sleep', 5000);
@@ -1084,16 +1084,16 @@ export class CoordinationService {
       if (this.activityStage === 'preLoop' || this.activityStage === 'postLoop') {
         // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
-        if (!this.soundService.isBacktrackPlaying(this.genre)) {
-          this.soundService.playMusic(this.genre, 'backtrack');
-        }
+        // if (!this.soundService.isBacktrackPlaying(this.genre)) {
+        //   this.soundService.playMusic(this.genre, 'backtrack');
+        // }
         this.playSit2Stand(this.activityStage);
       } else if (this.activityStage === 'loop') {
         // this.soundService.pauseActivityInstructionSound();
         this.clearPrompts();
-        if (!this.soundService.isBacktrackPlaying(this.genre)) {
-          this.soundService.playMusic(this.genre, 'backtrack');
-        }
+        // if (!this.soundService.isBacktrackPlaying(this.genre)) {
+        //   this.soundService.playMusic(this.genre, 'backtrack');
+        // }
         this.isRecalibrated = true;
         this.runConfig.id += 1;
         console.log('ID updated for the runConfig', this.runConfig.id);
@@ -1135,7 +1135,7 @@ export class CoordinationService {
       this.activityStage === 'loop' ||
       this.activityStage === 'postLoop'
     ) {
-      this.soundService.pauseBacktrack(this.genre);
+      // this.soundService.pauseBacktrack(this.genre);
     }
 
     this.clearPrompts();

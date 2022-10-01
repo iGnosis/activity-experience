@@ -605,6 +605,11 @@ export interface CalibrationState {
   poseHash?: number;
 }
 
+export interface IsMediaPipeReady {
+  isMediaPipeReady: boolean;
+  downloadSource: 'local' | 'cdn';
+}
+
 export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
@@ -1026,6 +1031,11 @@ export type BannerButton = {
    * Set duration in ms for a progress bar.
    */
   progressDurationMs?: number;
+
+  /**
+   * Show infinite progress bar.
+   */
+  infiniteProgress?: boolean;
 };
 
 export type BannerElementState = {
@@ -1043,8 +1053,10 @@ export type BannerElementState = {
    * Sets the type of banner.
    * * intro are to be rendered before starting an activity.
    * * outro are to be rendered after completion of an activity.
+   * * loader are to be rendered while loading an activity.
+   * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro';
+  type?: 'intro' | 'outro' | 'loader' | 'status';
 };
 
 export type GuideElementState = {

@@ -6,7 +6,7 @@ export const game = {
   updateGame: createAction('[Game] Update Game', props<GameState>()),
   pushAnalytics: createAction('[Game] Pushes analytics to server', props<GameState>()),
   setScore: createAction('[Game] Set reps', props<{ score: number }>()),
-  repCompleted: createAction('[Game] Rep Completed'),
+  repCompleted: createAction('[Game] Rep Completed', props<GameState>()),
   setCalibrationDuration: createAction('[Game] Set Calibration Duration', props<GameState>()),
   setTotalElapsedTime: createAction('[Game] Set Total Duration', props<GameState>()),
   gameCompleted: createAction('[Game] Game Completed'),

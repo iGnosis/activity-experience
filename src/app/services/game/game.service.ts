@@ -126,13 +126,22 @@ export class GameService {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
       return false;
     };
+    this.handTrackerService.enable();
     this.store
-      .select((state: any) => state.game)
+      .select((state) => state.game)
       .subscribe((game) => {
         if (game.id) {
-          // Update the game state whenever redux state changes
-          const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
+          // use a specific query to update analytics -- since analytics are stored as JSONB array
+          if (game.analytics) {
+            // game.analytics[0] is an ugly-workaround - there will always an array of length 1
+            this.gameStateService.updateAnalytics(game.id, game.analytics[0]);
+          }
+
+          // generic update query for fields which aren't JSONB
+          else {
+            const { id, ...gameState } = game;
+            this.gameStateService.updateGame(id, gameState);
+          }
         }
       });
   }
@@ -156,10 +165,67 @@ export class GameService {
           innerWidth: window.innerWidth,
         });
       }
+
+      this.poseService.getMediapipeStatus().subscribe({
+        next: async (res) => {
+          console.log('this.poseService.getMediapipeStatus:res', res);
+          if (res.isMediaPipeReady) {
+            await this.setPhaserDimensions(canvas);
+            this.startCalibration();
+            this.elements.banner.state.attributes.visibility = 'hidden';
+          } else {
+            this.elements.banner.state = {
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount: -1,
+              },
+              data: {
+                type: 'loader',
+                htmlStr: `
+                <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+                  <h1 class="pt-4 display-3">Starting Session</h1>
+                  <h3 class="pt-8 pb-4">Setting up the best experience for you. Take a deep breath and we'll be ready to begin.</h3>
+                </div>
+                `,
+                buttons: [
+                  {
+                    infiniteProgress: true,
+                  },
+                ],
+              },
+            };
+
+            if (res.downloadSource == 'cdn') {
+              this.elements.banner.data.htmlStr = `
+                <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+                  <h1 class="pt-4 display-3">Starting Session</h1>
+                  <h3 class="pt-8 pb-4">It's taking longer that usual. Please stick around.</h3>
+                </div>
+              `;
+            }
+          }
+        },
+        error: (err) => {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+            },
+            data: {
+              type: 'status',
+              htmlStr: `
+              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18">
+                <img src="assets/images/error.png" class="p-2 h-32 w-32" alt="error" />
+                <h1 class="pt-4 display-5 text-nowrap">${err.status}</h1>
+                <h3 class="pt-8 pb-4">Please try again by refreshing the page.</h3>
+              </div>
+              `,
+            },
+          };
+        },
+      });
+
       this.updateDimensions(video);
-      await this.setPhaserDimensions(canvas);
       await this.startPoseDetection(video);
-      this.startCalibration();
       return 'success';
     } catch (err: any) {
       console.log(err);
@@ -191,7 +257,9 @@ export class GameService {
     return new Promise((resolve) => {
       setTimeout(() => {
         this.poseService.start(video);
-        this.startPoseTracker();
+        if (environment.stageName !== 'local') {
+          this.startPoseTracker();
+        }
         resolve({});
       }, 1000);
     });
@@ -464,6 +532,7 @@ export class GameService {
       });
       this.gamesCompleted.push(nextGame.name);
       this.gameStateService.postLoopHook();
+      console.log('game.service:gameCompleted:', nextGame.name);
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
