@@ -61,7 +61,6 @@ export class TtsPreloader {
         'And when you see a blue punching bag on the screen, use your left hand.',
       ],
 
-      // TODO: Populate these
       sound_explorer: [
         "Raise one of your hands when you're ready to start.",
         'Use your hands to interact with the shapes you see on the screen.',
