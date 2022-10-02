@@ -4,6 +4,7 @@ import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from '../services/pose/pose.service';
 import { audioSprites } from '../services/sounds/audio-sprites';
+import { TtsService } from '../services/tts/tts.service';
 
 export enum TextureKeys {
   CIRCLE = 'circle_shape',
@@ -106,7 +107,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     _shape.destroy(true);
   };
 
-  constructor(private poseService: PoseService) {
+  constructor(private poseService: PoseService, private ttsService: TtsService) {
     super({ key: 'soundExplorer' });
     this.score.subscribe((score) => (this.currentScore = score));
   }
@@ -216,6 +217,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   async waitForAssetsToLoad() {
+    await this.ttsService.preLoadTts('sound_explorer');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
       const intervalId = setInterval(() => {

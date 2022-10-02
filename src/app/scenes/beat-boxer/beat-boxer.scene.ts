@@ -6,6 +6,7 @@ import { reject } from 'lodash';
 import { max, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { TtsService } from 'src/app/services/tts/tts.service';
 
 export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
   body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
@@ -124,7 +125,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   totalMusicFiles = 2;
   loadError = false;
 
-  constructor(private poseService: PoseService) {
+  constructor(private poseService: PoseService, private ttsService: TtsService) {
     super({ key: 'beatBoxer' });
   }
 
@@ -255,6 +256,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   async waitForAssetsToLoad() {
+    await this.ttsService.preLoadTts('beat_boxer');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
       const intervalId = setInterval(() => {
