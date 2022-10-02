@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { VideoService } from 'src/app/services/video/video.service';
-import { Observable } from 'rxjs';
-import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { Genre } from 'src/app/types/pointmotion';
 import { Howl } from 'howler';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { TtsService } from 'src/app/services/tts/tts.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +11,7 @@ export class SitToStandScene extends Phaser.Scene {
   musicFilesLoaded = 0;
   loadError = false;
 
-  constructor() {
+  constructor(private ttsService: TtsService) {
     super({ key: 'sit2stand' });
   }
 
@@ -150,6 +147,7 @@ export class SitToStandScene extends Phaser.Scene {
   }
 
   async waitForAssetsToLoad(genre: Genre) {
+    await this.ttsService.preLoadTts('sit_stand_achieve');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
       this.loadMusicFiles(genre);
