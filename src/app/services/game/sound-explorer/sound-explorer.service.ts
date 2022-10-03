@@ -20,6 +20,7 @@ import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer
 import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable({
   providedIn: 'root',
@@ -768,6 +769,7 @@ export class SoundExplorerService {
           // Todo: replace placeholder analytics values.
           const analyticsObj = {
             prompt: {
+              id: uuidv4(),
               type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
               timestamp: promptTimestamp,
               data: {

@@ -19,6 +19,8 @@ import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
+import { v4 as uuidv4 } from 'uuid';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -777,6 +779,7 @@ export class SitToStandService implements ActivityBase {
               : true;
           const analyticsObj = {
             prompt: {
+              id: uuidv4(),
               type: promptClass,
               timestamp: promptTimestamp,
               data: {

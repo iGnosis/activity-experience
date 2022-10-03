@@ -873,6 +873,7 @@ export type AnalyticsDTO = {
 };
 
 export type AnalyticsPromptDTO = {
+  id: string;
   type: string;
   timestamp: number;
   data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;

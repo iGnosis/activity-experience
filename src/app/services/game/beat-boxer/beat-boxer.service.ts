@@ -14,6 +14,7 @@ import {
   BeatBoxerScene,
 } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable({
   providedIn: 'root',
@@ -903,6 +904,7 @@ export class BeatBoxerService {
           const hasUserInteracted: boolean = rep.result !== undefined;
           const analyticsObj = {
             prompt: {
+              id: uuidv4(),
               type: 'bag',
               timestamp: promptTimestamp,
               data: {
