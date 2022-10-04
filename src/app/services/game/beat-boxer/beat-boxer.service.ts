@@ -916,9 +916,9 @@ export class BeatBoxerService {
               type: 'punch',
               timestamp: Date.now(),
               startTime: Date.now(),
-              completionTime: hasUserInteracted
-                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
-                : null, // seconds between reaction and result if user interacted with the bag
+              completionTimeInMs: hasUserInteracted
+                ? Math.abs(resultTimestamp - promptTimestamp)
+                : null, // milliseconds between reaction and result if user interacted with the bag
             },
             result: {
               type: rep.result || 'failure',

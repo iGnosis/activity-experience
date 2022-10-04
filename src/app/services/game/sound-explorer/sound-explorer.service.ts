@@ -780,8 +780,8 @@ export class SoundExplorerService {
               type: 'slice',
               timestamp: Date.now(),
               startTime: Date.now(),
-              completionTime:
-                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
+              completionTimeInMs:
+                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) : null, // seconds between reaction and result if user interacted with the shapes
             },
             result: {
               type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),

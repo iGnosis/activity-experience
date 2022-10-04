@@ -790,8 +790,8 @@ export class SitToStandService implements ActivityBase {
               type: userState,
               timestamp: Date.now(),
               startTime: Date.now(),
-              completionTime: hasUserStateChanged
-                ? Math.abs(resultTimestamp - promptTimestamp) / 1000
+              completionTimeInMs: hasUserStateChanged
+                ? Math.abs(resultTimestamp - promptTimestamp)
                 : null, // seconds between reaction and result if user state changed
             },
             result: {
