@@ -127,7 +127,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
           data: {
-            titles: ['Starting Sit, Stand, Achieve'],
+            titles: ['A Guide to Sit, Stand, Achieve'],
           },
         };
         await this.elements.sleep(2500);
@@ -265,7 +265,7 @@ export class SitToStandService implements ActivityBase {
         };
 
         this.ttsService.tts(
-          'An Odd number is any number ending with 1 3 5 7 9. Stand up when you see an Odd Number.',
+          'When you see an odd number on your screen. You stand up from your seat.',
         );
 
         await this.elements.sleep(8000);
