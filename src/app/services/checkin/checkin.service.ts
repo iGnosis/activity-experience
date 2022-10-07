@@ -110,6 +110,49 @@ export class CheckinService {
     }
   }
 
+  async getBenchmarkConfig(id: string): Promise<any> {
+    try {
+      const result = await this.client.req(
+        gql`
+          query GetBenchmarkConfig($id: uuid = "") {
+            game_benchmark_config_by_pk(id: $id) {
+              originalGameId
+              rawVideoUrl
+            }
+          }
+        `,
+        {
+          id,
+        },
+      );
+
+      return result.game_benchmark_config_by_pk;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async saveAutoBenchmark(gameId: string, analytics: any[], systemSpec?: any) {
+    try {
+      const result = await this.client.req(
+        gql`
+          mutation SaveAutoBenchmark($analytics: jsonb!, $gameId: uuid!, $systemSpec: jsonb = {}) {
+            insert_game_benchmarks_one(
+              object: { analytics: $analytics, gameId: $gameId, systemSpec: $systemSpec }
+            ) {
+              id
+            }
+          }
+        `,
+        { gameId, analytics, systemSpec },
+      );
+
+      return result.insert_game_benchmarks_one;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async getLastGame() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -150,6 +193,27 @@ export class CheckinService {
       );
 
       return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getBenchmarkGame(id: string) {
+    try {
+      const nextGame = await this.client.req(
+        gql`
+          query GetBenchmarkGame($id: uuid = "") {
+            game_by_pk(id: $id) {
+              analytics
+              game
+              id
+            }
+          }
+        `,
+        { id },
+      );
+
+      return nextGame.game_by_pk;
     } catch (err) {
       console.log(err);
     }

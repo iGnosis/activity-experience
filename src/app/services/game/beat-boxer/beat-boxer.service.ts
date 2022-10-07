@@ -30,6 +30,15 @@ export class BeatBoxerService {
   private negativeLevel = [0.5]; // left side of the screen  <---> left-wrist
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
+
+  private gameStartTime: number | null;
+  private firstPromptTime: number | null;
+  private loopStartTime: number | null;
+
+  private leftBagTimeout: any;
+  private rightBagTimeout: any;
+  private obstacleTimeout: any;
+
   private isGameComplete = false;
   private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
@@ -118,6 +127,7 @@ export class BeatBoxerService {
   welcome() {
     return [
       async (reCalibrationCount: number) => {
+        this.gameStartTime = Date.now();
         if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
@@ -747,6 +757,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(7000);
+        this.loopStartTime = Date.now();
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");
         this.elements.guide.state = {
           data: {
@@ -759,6 +770,7 @@ export class BeatBoxerService {
           },
         };
         await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.attributes = {
           visibility: 'hidden',
@@ -779,6 +791,206 @@ export class BeatBoxerService {
         await this.elements.sleep(3000);
       },
     ];
+  }
+
+  async showPrompt(promptDetails: any, promptId: string, reCalibrationCount?: number) {
+    if (promptDetails.shouldShowObstacle) {
+      if (!this.bagsAvailable.left && this.bagsAvailable.right !== 'obstacle') {
+        this.beatBoxerScene.showObstacle('left', promptDetails.leftBagPosition);
+        this.bagsAvailable.left = 'obstacle';
+      }
+      if (!this.bagsAvailable.right && this.bagsAvailable.left !== 'obstacle') {
+        this.beatBoxerScene.showObstacle('right', promptDetails.rightBagPosition);
+        this.bagsAvailable.right = 'obstacle';
+      }
+    }
+    let bag: BagType;
+    if (!this.bagsAvailable.left) {
+      bag = promptDetails.leftBagType;
+      this.beatBoxerScene.showBag('left', bag, promptDetails.leftBagPosition);
+      this.bagsAvailable.left = bag;
+    }
+
+    if (!this.bagsAvailable.right) {
+      bag = promptDetails.rightBagType;
+      this.beatBoxerScene.showBag('right', bag, promptDetails.rightBagPosition);
+      this.bagsAvailable.right = bag;
+    }
+    this.leftBagTimeout = setTimeout(() => {
+      this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
+      this.bagsAvailable.left = undefined;
+    }, this.config.speed);
+    this.rightBagTimeout = setTimeout(() => {
+      this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
+      this.bagsAvailable.right = undefined;
+    }, this.config.speed);
+
+    if (this.bagsAvailable.left === 'obstacle') {
+      this.obstacleTimeout = setTimeout(() => {
+        if (this.bagsAvailable.left === 'obstacle') {
+          this.beatBoxerScene.destroyGameObjects('obstacle');
+          this.bagsAvailable.left = undefined;
+        }
+      }, this.config.speed);
+    }
+
+    if (this.bagsAvailable.right === 'obstacle') {
+      this.obstacleTimeout = setTimeout(() => {
+        if (this.bagsAvailable.right === 'obstacle') {
+          this.beatBoxerScene.destroyGameObjects('obstacle');
+          this.bagsAvailable.right = undefined;
+        }
+      }, this.config.speed);
+    }
+    const promptTimestamp = Date.now();
+
+    const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(
+      this.bagsAvailable.left,
+      this.bagsAvailable.right,
+      this.config.speed,
+    );
+
+    const resultTimestamp = Date.now();
+    this.totalReps++;
+    // Todo: replace placeholder values with actual values
+    const hasUserInteracted: boolean = rep.result !== undefined;
+    const analyticsObj = {
+      prompt: {
+        id: promptId,
+        type: 'bag',
+        timestamp: promptTimestamp,
+        data: {
+          ...promptDetails,
+          leftBag: this.bagsAvailable.left,
+          rightBag: this.bagsAvailable.right,
+        },
+      },
+      reaction: {
+        type: 'punch',
+        timestamp: Date.now(),
+        startTime: Date.now(),
+        completionTimeInMs: hasUserInteracted ? Math.abs(resultTimestamp - promptTimestamp) : null,
+      },
+      result: {
+        type: rep.result || 'failure',
+        timestamp: resultTimestamp,
+        score: rep.result === 'success' ? 1 : 0,
+      },
+    };
+    if (rep.result === 'success') {
+      if (rep.bagType === this.bagsAvailable.left) {
+        this.bagsAvailable.left = undefined;
+      }
+      if (rep.bagType === this.bagsAvailable.right) {
+        this.bagsAvailable.right = undefined;
+      }
+      clearTimeout(this.leftBagTimeout);
+      clearTimeout(this.rightBagTimeout);
+      this.successfulReps++;
+      this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
+      this.elements.score.state = {
+        data: {
+          label: 'Punches',
+          value: this.successfulReps,
+        },
+        attributes: {
+          visibility: 'visible',
+          reCalibrationCount,
+        },
+      };
+      this.failedReps = 0;
+    } else if (rep.result === 'failure') {
+      clearTimeout(this.obstacleTimeout);
+      if (rep.bagType === this.bagsAvailable.left) {
+        this.bagsAvailable.left = undefined;
+      }
+      if (rep.bagType === this.bagsAvailable.right) {
+        this.bagsAvailable.right = undefined;
+      }
+      this.failedReps++;
+      if (this.failedReps >= 3) {
+        this.elements.timer.state = {
+          data: {
+            mode: 'pause',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        await this.elements.sleep(2000);
+        this.elements.video.state = {
+          data: {
+            type: 'gif',
+            title: 'Right hand for red',
+            description: 'Use your right hand to punch the red punching bags.',
+            src: 'assets/images/beat-boxer/red-bag.png',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts(
+          'Remember to use your right hand when you see a red punching bag on the screen.',
+        );
+        await this.elements.sleep(8000);
+        this.elements.video.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
+        await this.elements.sleep(3000);
+        this.elements.video.state = {
+          data: {
+            type: 'gif',
+            title: 'Left hand for blue',
+            description: 'Use your left hand to punch the blue punching bags.',
+            src: 'assets/images/beat-boxer/blue-bag.png',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts(
+          'And when you see a blue punching bag on the screen, use your left hand.',
+        );
+        await this.elements.sleep(8000);
+        this.elements.video.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
+        await this.elements.sleep(3000);
+        this.elements.timer.state = {
+          data: {
+            mode: 'resume',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.failedReps = 0;
+      }
+    } else {
+      if (this.bagsAvailable.left) {
+        this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
+        this.bagsAvailable.left = undefined;
+      }
+      if (this.bagsAvailable.right) {
+        this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
+        this.bagsAvailable.right = undefined;
+      }
+    }
+    return { analyticsObj };
   }
 
   loop() {
@@ -812,6 +1024,33 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(5000);
+
+        const startResult: 'success' | 'failure' = 'success';
+        const startPrompt = {
+          prompt: {
+            id: uuidv4(),
+            type: 'start',
+            timestamp: Date.now(),
+            data: {
+              gameStartTime: this.gameStartTime,
+              loopStartTime: this.loopStartTime,
+              firstPromptTime: this.firstPromptTime,
+            },
+          },
+          reaction: {
+            type: 'start',
+            timestamp: Date.now(),
+            startTime: Date.now(),
+            completionTimeInMs: 0,
+          },
+          result: {
+            type: startResult,
+            timestamp: Date.now(),
+            score: 0,
+          },
+        };
+        this.analytics.push(startPrompt);
+        this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
       },
       async (reCalibrationCount: number) => {
         this.beatBoxerScene.enableMusic();
@@ -822,224 +1061,29 @@ export class BeatBoxerService {
           }
 
           const shouldShowObstacle = Math.random() > 0.5;
-
-          if (shouldShowObstacle) {
-            if (!this.bagsAvailable.left && this.bagsAvailable.right !== 'obstacle') {
-              this.beatBoxerScene.showObstacle(
-                'left',
-                this.getRandomItemFromArray(this.negativeLevel),
-              );
-              this.bagsAvailable.left = 'obstacle';
-            }
-            if (!this.bagsAvailable.right && this.bagsAvailable.left !== 'obstacle') {
-              this.beatBoxerScene.showObstacle(
-                'right',
-                this.getRandomItemFromArray(this.positiveLevel),
-              );
-              this.bagsAvailable.right = 'obstacle';
-            }
-          }
-          let bag: BagType;
-          if (!this.bagsAvailable.left) {
-            bag = this.getRandomItemFromArray(
-              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.right || ''),
-            );
-            this.beatBoxerScene.showBag(
-              'left',
-              bag,
-              this.getRandomItemFromArray(this.negativeLevel),
-            );
-            this.bagsAvailable.left = bag;
-          }
-
-          if (!this.bagsAvailable.right) {
-            bag = this.getRandomItemFromArray(
-              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
-            );
-            this.beatBoxerScene.showBag(
-              'right',
-              bag,
-              this.getRandomItemFromArray(this.positiveLevel),
-            );
-            this.bagsAvailable.right = bag;
-          }
-          const leftBagTimeout = setTimeout(() => {
-            this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
-            this.bagsAvailable.left = undefined;
-          }, this.config.speed);
-          const rightBagTimeout = setTimeout(() => {
-            this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
-            this.bagsAvailable.right = undefined;
-          }, this.config.speed);
-
-          let obstacleTimeout;
-          if (this.bagsAvailable.left === 'obstacle') {
-            obstacleTimeout = setTimeout(() => {
-              if (this.bagsAvailable.left === 'obstacle') {
-                this.beatBoxerScene.destroyGameObjects('obstacle');
-                this.bagsAvailable.left = undefined;
-              }
-            }, this.config.speed);
-          }
-
-          if (this.bagsAvailable.right === 'obstacle') {
-            obstacleTimeout = setTimeout(() => {
-              if (this.bagsAvailable.right === 'obstacle') {
-                this.beatBoxerScene.destroyGameObjects('obstacle');
-                this.bagsAvailable.right = undefined;
-              }
-            }, this.config.speed);
-          }
-          const promptTimestamp = Date.now();
-
-          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout(
-            this.bagsAvailable.left,
-            this.bagsAvailable.right,
-            this.config.speed,
+          const leftBagType = this.getRandomItemFromArray(
+            this.bagTypes.filter((bag) => bag !== this.bagsAvailable.right || ''),
           );
+          const rightBagType = this.getRandomItemFromArray(
+            this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
+          );
+          const leftBagPosition = this.getRandomItemFromArray(this.negativeLevel);
+          const rightBagPosition = this.getRandomItemFromArray(this.positiveLevel);
 
-          const resultTimestamp = Date.now();
-          this.totalReps++;
-          // Todo: replace placeholder values with actual values
-          const hasUserInteracted: boolean = rep.result !== undefined;
-          const analyticsObj = {
-            prompt: {
-              id: uuidv4(),
-              type: 'bag',
-              timestamp: promptTimestamp,
-              data: {
-                leftBag: this.bagsAvailable.left,
-                rightBag: this.bagsAvailable.right,
-              },
+          const promptId = uuidv4();
+          const { analyticsObj } = await this.showPrompt(
+            {
+              shouldShowObstacle,
+              leftBagType,
+              rightBagType,
+              leftBagPosition,
+              rightBagPosition,
             },
-            reaction: {
-              type: 'punch',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTimeInMs: hasUserInteracted
-                ? Math.abs(resultTimestamp - promptTimestamp)
-                : null, // milliseconds between reaction and result if user interacted with the bag
-            },
-            result: {
-              type: rep.result || 'failure',
-              timestamp: resultTimestamp,
-              score: rep.result === 'success' ? 1 : 0,
-            },
-          };
+            promptId,
+            reCalibrationCount,
+          );
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
-          if (rep.result === 'success') {
-            if (rep.bagType === this.bagsAvailable.left) {
-              this.bagsAvailable.left = undefined;
-            }
-            if (rep.bagType === this.bagsAvailable.right) {
-              this.bagsAvailable.right = undefined;
-            }
-            clearTimeout(leftBagTimeout);
-            clearTimeout(rightBagTimeout);
-            this.successfulReps++;
-            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
-            this.elements.score.state = {
-              data: {
-                label: 'Punches',
-                value: this.successfulReps,
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-            this.failedReps = 0;
-          } else if (rep.result === 'failure') {
-            clearTimeout(obstacleTimeout);
-            if (rep.bagType === this.bagsAvailable.left) {
-              this.bagsAvailable.left = undefined;
-            }
-            if (rep.bagType === this.bagsAvailable.right) {
-              this.bagsAvailable.right = undefined;
-            }
-            this.failedReps++;
-            if (this.failedReps >= 3) {
-              this.elements.timer.state = {
-                data: {
-                  mode: 'pause',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              await this.elements.sleep(2000);
-              this.elements.video.state = {
-                data: {
-                  type: 'gif',
-                  title: 'Right hand for red',
-                  description: 'Use your right hand to punch the red punching bags.',
-                  src: 'assets/images/beat-boxer/red-bag.png',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              this.ttsService.tts(
-                'Remember to use your right hand when you see a red punching bag on the screen.',
-              );
-              await this.elements.sleep(8000);
-              this.elements.video.state = {
-                data: {},
-                attributes: {
-                  visibility: 'hidden',
-                  reCalibrationCount,
-                },
-              };
 
-              await this.elements.sleep(3000);
-              this.elements.video.state = {
-                data: {
-                  type: 'gif',
-                  title: 'Left hand for blue',
-                  description: 'Use your left hand to punch the blue punching bags.',
-                  src: 'assets/images/beat-boxer/blue-bag.png',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              this.ttsService.tts(
-                'And when you see a blue punching bag on the screen, use your left hand.',
-              );
-              await this.elements.sleep(8000);
-              this.elements.video.state = {
-                data: {},
-                attributes: {
-                  visibility: 'hidden',
-                  reCalibrationCount,
-                },
-              };
-
-              await this.elements.sleep(3000);
-              this.elements.timer.state = {
-                data: {
-                  mode: 'resume',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              this.failedReps = 0;
-            }
-          } else {
-            if (this.bagsAvailable.left) {
-              this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.left);
-              this.bagsAvailable.left = undefined;
-            }
-            if (this.bagsAvailable.right) {
-              this.beatBoxerScene.destroyGameObjects(this.bagsAvailable.right);
-              this.bagsAvailable.right = undefined;
-            }
-          }
           await this.elements.sleep(this.config.speed);
         }
         this.elements.confetti.state = {

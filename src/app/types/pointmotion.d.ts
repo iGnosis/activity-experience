@@ -876,7 +876,11 @@ export type AnalyticsPromptDTO = {
   id: string;
   type: string;
   timestamp: number;
-  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;
+  data:
+    | Sit2StandAnalyticsDTO
+    | BeatboxerAnalyticsDTO
+    | SoundExplorerAnalyticsDTO
+    | GameStartAnalyticsDTO;
 };
 
 export type AnalyticsReactionDTO = {
@@ -904,6 +908,12 @@ export type BeatboxerAnalyticsDTO = {
 
 export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
+};
+
+export type GameStartAnalyticsDTO = {
+  gameStartTime: number | null;
+  loopStartTime: number | null;
+  firstPromptTime: number | null;
 };
 
 export type PreferenceState = {
