@@ -232,7 +232,7 @@ export class BenchmarkService {
     if (!loopStartTime || !gameStartTime || !firstPromptTime)
       return { status: 'failure', message: 'Game start time not set' };
 
-    const preGameWaitTime = loopStartTime - gameStartTime;
+    const preGameWaitTime = loopStartTime - gameStartTime + 1000;
     await this.elements.sleep(preGameWaitTime);
 
     this.ttsService.tts("Raise one of your hands when you're ready to start.");
