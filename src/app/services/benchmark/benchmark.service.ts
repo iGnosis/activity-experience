@@ -298,7 +298,11 @@ export class BenchmarkService {
       analytics.push(analyticsObj);
     }
 
-    const result = await this.checkinService.saveAutoBenchmark(this.gameId, analytics);
+    const result = await this.checkinService.saveAutoBenchmark(
+      this.gameId,
+      this.originalGameId,
+      analytics,
+    );
     console.log(result);
 
     await this.elements.sleep(1000);

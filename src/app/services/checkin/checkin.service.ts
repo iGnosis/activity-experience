@@ -133,19 +133,34 @@ export class CheckinService {
     }
   }
 
-  async saveAutoBenchmark(gameId: string, analytics: any[], systemSpec?: any) {
+  async saveAutoBenchmark(
+    gameId: string,
+    originalGameId: string,
+    analytics: any[],
+    systemSpec?: any,
+  ) {
     try {
       const result = await this.client.req(
         gql`
-          mutation SaveAutoBenchmark($analytics: jsonb!, $gameId: uuid!, $systemSpec: jsonb = {}) {
+          mutation SaveAutoBenchmark(
+            $analytics: jsonb!
+            $gameId: uuid!
+            $systemSpec: jsonb = {}
+            $originalGameId: uuid = ""
+          ) {
             insert_game_benchmarks_one(
-              object: { analytics: $analytics, gameId: $gameId, systemSpec: $systemSpec }
+              object: {
+                analytics: $analytics
+                gameId: $gameId
+                systemSpec: $systemSpec
+                originalGameId: $originalGameId
+              }
             ) {
               id
             }
           }
         `,
-        { gameId, analytics, systemSpec },
+        { gameId, analytics, systemSpec, originalGameId },
       );
 
       return result.insert_game_benchmarks_one;
