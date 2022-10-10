@@ -196,6 +196,7 @@ export class BenchmarkService {
 
     await this.elements.sleep(1000);
     this.video.play();
+    await this.elements.sleep(1000);
 
     const response = await this.gameStateService.newGame(nextGame).catch((err: any) => {
       console.log(err);
@@ -204,6 +205,19 @@ export class BenchmarkService {
       this.gameId = response.insert_game_one.id;
       this.store.dispatch(game.newGame(response.insert_game_one));
     }
+  }
+
+  private downloadReport(report: Blob) {
+    if (!report) return;
+    const url = window.URL.createObjectURL(report);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'report.xlsx');
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   /**
@@ -232,7 +246,7 @@ export class BenchmarkService {
     if (!loopStartTime || !gameStartTime || !firstPromptTime)
       return { status: 'failure', message: 'Game start time not set' };
 
-    const preGameWaitTime = loopStartTime - gameStartTime + 1000;
+    const preGameWaitTime = loopStartTime - gameStartTime;
     await this.elements.sleep(preGameWaitTime);
 
     this.ttsService.tts("Raise one of your hands when you're ready to start.");
@@ -303,6 +317,9 @@ export class BenchmarkService {
       },
     };
     this.store.dispatch(game.gameCompleted());
+
+    const report: any = await this.checkinService.generateBenchmarkReport(benchmarkId, this.gameId);
+    this.downloadReport(report);
 
     return { status: 'success', message: 'Benchmarking completed' };
   }

@@ -4,6 +4,7 @@ import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
 import { Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -150,6 +151,24 @@ export class CheckinService {
       return result.insert_game_benchmarks_one;
     } catch (err) {
       console.log(err);
+    }
+  }
+
+  async generateBenchmarkReport(benchmarkId: string, gameId: string) {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        headers: {
+          responseType: 'arraybuffer',
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const url = `${environment.apiEndpoint}/game-benchmarking/report?newGameId=${gameId}&benchmarkConfigId=${benchmarkId}`;
+
+      return fetch(url, headers).then((res: any) => res.blob());
+    } catch (err) {
+      console.log(err);
+      return err;
     }
   }
 
