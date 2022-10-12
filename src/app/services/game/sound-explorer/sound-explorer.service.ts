@@ -82,8 +82,9 @@ export class SoundExplorerService {
     const shapes: Shape[] =
       promptDetails?.shapes || this.getMultipleRandomItems(this.shapes, numberOfShapes);
     const randomAngle: number =
-      promptDetails?.angle ||
-      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+      typeof promptDetails?.angle === 'number'
+        ? promptDetails?.angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
     for (let i = 0; i < numberOfShapes; i++) {
       const shape = shapes[i];
       this.soundExplorerScene.showShapes([shape], randomPosition, randomAngle, this.config.speed);
@@ -92,16 +93,15 @@ export class SoundExplorerService {
     return { angle: randomAngle, shapes, position: randomPosition };
   };
 
-  private drawObstacle = async () => {
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
-    this.soundExplorerScene.showShapes(
-      ['wrong'],
-      randomPosition,
-      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-      this.config.speed,
-    );
+  private drawObstacle = async (position?: Origin, angle?: number) => {
+    const randomPosition =
+      position || this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+    const randomAngle =
+      typeof angle === 'number'
+        ? angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+    this.soundExplorerScene.showShapes(['wrong'], randomPosition, randomAngle, this.config.speed);
+    return { obstacleAngle: randomAngle, obstaclePosition: randomPosition };
   };
 
   constructor(
@@ -688,13 +688,21 @@ export class SoundExplorerService {
   }
 
   async showPrompt(promptDetails: any, promptId: string) {
+    const isPromptFromBenchmark: boolean = Object.keys(promptDetails).length > 1;
     const currentPromptDetails = await this.drawShapes(
       this.difficulty,
-      Object.keys(promptDetails).length ? 0 : 200,
+      isPromptFromBenchmark ? 0 : 200,
       promptDetails,
     );
+
     const promptTimestamp = Date.now();
-    if (promptDetails.showObstacle) this.drawObstacle();
+
+    let obstaclePromptDetails;
+    if (promptDetails.showObstacle)
+      obstaclePromptDetails = await this.drawObstacle(
+        promptDetails.obstaclePosition,
+        promptDetails.obstacleAngle,
+      );
 
     await this.soundExplorerScene.waitForCollisionOrTimeout();
     const resultTimestamp = Date.now();
@@ -722,6 +730,7 @@ export class SoundExplorerService {
         data: {
           ...promptDetails,
           ...currentPromptDetails,
+          ...obstaclePromptDetails,
         },
       },
       reaction: {
