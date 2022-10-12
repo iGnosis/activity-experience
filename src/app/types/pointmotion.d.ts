@@ -1057,7 +1057,7 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
 };
 
 export type GuideElementState = {
