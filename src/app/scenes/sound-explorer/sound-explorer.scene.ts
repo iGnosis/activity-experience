@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { PoseService } from '../services/pose/pose.service';
-import { audioSprites } from '../services/sounds/audio-sprites';
-import { TtsService } from '../services/tts/tts.service';
+import { PoseService } from 'src/app/services/pose/pose.service';
+import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { TtsService } from 'src/app/services/tts/tts.service';
 
 export enum TextureKeys {
   CIRCLE = 'circle_shape',

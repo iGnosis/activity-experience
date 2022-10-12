@@ -31,9 +31,10 @@ import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
-import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 import { MovingTonesService } from './moving-tones/moving-tones.service';
+import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -108,6 +109,7 @@ export class GameService {
     private sitToStandScene: SitToStandScene,
     private beatBoxerScene: BeatBoxerScene,
     private soundExplorerScene: SoundExplorerScene,
+    private movingTonesScene: MovingTonesScene,
     private sitToStandService: SitToStandService,
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
@@ -303,12 +305,13 @@ export class GameService {
     }
   }
 
-  getScenes() {
+  getScenes(): Phaser.Scene[] {
     return [
       this.calibrationScene,
       this.sitToStandScene,
       this.beatBoxerScene,
       this.soundExplorerScene,
+      this.movingTonesScene,
     ];
   }
 

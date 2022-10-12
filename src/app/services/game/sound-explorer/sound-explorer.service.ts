@@ -16,7 +16,11 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
-import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import {
+  Origin,
+  Shape,
+  SoundExplorerScene,
+} from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';

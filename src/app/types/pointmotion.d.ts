@@ -1,7 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Shape } from '../scenes/sound-explorer.scene';
+import { Shape } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 
 declare global {
   interface Window {

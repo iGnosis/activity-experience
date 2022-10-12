@@ -18,6 +18,7 @@ import { TtsService } from '../../tts/tts.service';
 import { CheckinService } from '../../checkin/checkin.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
+import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 
 @Injectable({
   providedIn: 'root',
@@ -46,6 +47,7 @@ export class MovingTonesService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
+    private movingTonesScene: MovingTonesScene,
   ) {
     this.store
       .select((state) => state.preference)
@@ -60,8 +62,63 @@ export class MovingTonesService implements ActivityBase {
     });
   }
 
+  async setup() {
+    this.movingTonesScene.enable();
+    return new Promise<void>(async (resolve, reject) => {
+      this.movingTonesScene.scene.start('movingTones');
+
+      console.log('Waiting for assets to Load');
+      console.time('Waiting for assets to Load');
+      try {
+        await this.movingTonesScene.waitForAssetsToLoad();
+        console.log('Design Assets and Music files are Loaded!!');
+      } catch (err) {
+        console.error(err);
+        // this.soundExplorerScene.scene.restart();
+        reject();
+      }
+      console.timeEnd('Waiting for assets to Load');
+      this.isServiceSetup = true;
+      resolve();
+    });
+  }
+
   welcome() {
     return [
+      async (reCalibrationCount: number) => {
+        if (!this.isServiceSetup) {
+          this.elements.banner.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              type: 'loader',
+              htmlStr: `
+          <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
+            <h1 class="pt-4 display-3">Loading Game...</h1>
+            <h3 class="pt-8 pb-4">Please wait while we download the audio and video files for the game. It should take less than a minute.</h3>
+          </div>
+          `,
+              buttons: [
+                {
+                  title: '',
+                  infiniteProgress: true,
+                },
+              ],
+            },
+          };
+          await this.setup();
+
+          this.elements.banner.state = {
+            data: {},
+            attributes: {
+              reCalibrationCount,
+              visibility: 'hidden',
+            },
+          };
+        }
+      },
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Last activity. Moving Tones.');
         this.elements.banner.state = {
