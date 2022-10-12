@@ -33,6 +33,7 @@ import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
+import { MovingTonesService } from './moving-tones/moving-tones.service';
 
 @Injectable({
   providedIn: 'root',
@@ -111,6 +112,7 @@ export class GameService {
     private soundsService: SoundsService,
     private beatBoxerService: BeatBoxerService,
     private soundExplorerService: SoundExplorerService,
+    private movingTonesService: MovingTonesService,
     private poseService: PoseService,
     private store: Store<{
       game: GameState;
@@ -315,6 +317,7 @@ export class GameService {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
       sound_explorer: this.soundExplorerService,
+      moving_tones: this.movingTonesService,
     };
   }
 

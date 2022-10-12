@@ -12,7 +12,7 @@ export const environment: Environment = {
   apiEndpoint: 'https://services.prod.pointmotioncontrol.com',
   websocketEndpoint: 'wss://services.prod.pointmotioncontrol.com',
   postSessionRedirectEndpoint: 'https://provider.prod.pointmotioncontrol.com',
-  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer'],
+  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer', 'moving_tones'],
   settings: {
     sit_stand_achieve: {
       configuration: {
@@ -27,6 +27,12 @@ export const environment: Environment = {
       },
     },
     sound_explorer: {
+      configuration: {
+        gameDuration: 3 * 60,
+        speed: 400,
+      },
+    },
+    moving_tones: {
       configuration: {
         gameDuration: 3 * 60,
         speed: 400,
