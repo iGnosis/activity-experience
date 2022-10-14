@@ -225,11 +225,11 @@ export class BenchmarkService {
    *
    * @param {string} benchmarkId - benchmark config id
    *
-   * @returns {Promise<{ status: 'success' | 'failure'; message: string }>} - 'success' or 'failure'
+   * @returns {Promise<{ status: 'success' | 'failure'; message: string; id?: string }>} - 'success' or 'failure'
    */
   async benchmark(
     benchmarkId: string,
-  ): Promise<{ status: 'success' | 'failure'; message: string }> {
+  ): Promise<{ status: 'success' | 'failure'; message: string; gameBenchmarkId?: string }> {
     const config = await this.apiService.getBenchmarkConfig(benchmarkId);
     if (!config) return { status: 'failure', message: 'Benchmark config not found' };
 
@@ -325,6 +325,15 @@ export class BenchmarkService {
     const report: any = await this.apiService.generateBenchmarkReport(benchmarkId, this.gameId);
     this.downloadReport(report);
 
-    return { status: 'success', message: 'Benchmarking completed' };
+    const gameBenchmarkId =
+      result.insert_benchmark_one && result.insert_benchmark_one.id
+        ? result.insert_benchmark_one.id
+        : '';
+
+    return {
+      status: 'success',
+      message: 'Benchmarking completed',
+      gameBenchmarkId,
+    };
   }
 }

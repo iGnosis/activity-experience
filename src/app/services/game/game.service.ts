@@ -93,7 +93,15 @@ export class GameService {
             };
           }
           if (this.benchmarkId) {
-            this.benchmarkService.benchmark(this.benchmarkId);
+            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+              window.parent.postMessage(
+                {
+                  type: 'end-game',
+                  ...result,
+                },
+                '*',
+              );
+            });
           } else {
             this.startGame();
           }
@@ -364,7 +372,15 @@ export class GameService {
           this.calibrationStartTime = new Date();
         } else {
           if (this.benchmarkId) {
-            this.benchmarkService.benchmark(this.benchmarkId);
+            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+              window.parent.postMessage(
+                {
+                  type: 'end-game',
+                  ...result,
+                },
+                '*',
+              );
+            });
           } else {
             this.startGame();
           }
