@@ -966,6 +966,10 @@ export type ScoreElementState = {
    */
   label?: string;
   /**
+   * Inputs the file path for an icon to be displayed in the score element
+   */
+  icon?: string;
+  /**
    * Inputs a number or string as the current score
    */
   value?: number | string;

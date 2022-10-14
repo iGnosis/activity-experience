@@ -31,6 +31,7 @@ export class MovingTonesService implements ActivityBase {
   private failedReps = 0;
   private totalReps = 0;
   private globalReCalibrationCount: number;
+  private isGameComplete = false;
   private config = {
     gameDuration: environment.settings['moving_tones'].configuration.gameDuration,
     speed: environment.settings['moving_tones'].configuration.speed,
@@ -66,7 +67,7 @@ export class MovingTonesService implements ActivityBase {
     });
   }
 
-  replayOrTimeout(timeout = 10000) {
+  private replayOrTimeout(timeout = 10000) {
     return new Promise(async (resolve, reject) => {
       this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
       setTimeout(() => resolve(false), timeout);
@@ -189,6 +190,7 @@ export class MovingTonesService implements ActivityBase {
       },
     ];
   }
+
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
@@ -379,10 +381,6 @@ export class MovingTonesService implements ActivityBase {
         });
         await this.elements.sleep(3000);
       },
-    ];
-  }
-  preLoop() {
-    return [
       async (reCalibrationCount: number) => {
         this.ttsService.tts("You're ready to start collecting some music coins.");
         this.elements.guide.state = {
@@ -411,6 +409,11 @@ export class MovingTonesService implements ActivityBase {
       },
     ];
   }
+
+  preLoop() {
+    return [];
+  }
+
   loop() {
     return [
       async (reCalibrationCount: number) => {
@@ -426,6 +429,16 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(3000);
+        this.elements.score.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            icon: '/assets/images/moving_tones/coin.png',
+            value: this.coinsCollected,
+          },
+        };
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
@@ -438,6 +451,25 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(7000);
+
+        const updateElapsedTime = (elapsedTime: number) => {
+          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
+          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+        };
+        this.elements.timer.state = {
+          data: {
+            mode: 'start',
+            isCountdown: true,
+            duration: this.config.gameDuration! * 1000,
+            onPause: updateElapsedTime,
+            onComplete: updateElapsedTime,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
         // game starts
       },
       async (reCalibrationCount: number) => {
@@ -489,9 +521,14 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
+        this.elements.score.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
       },
     ];
   }
+
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
