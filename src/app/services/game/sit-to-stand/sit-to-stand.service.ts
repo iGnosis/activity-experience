@@ -10,13 +10,12 @@ import {
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
@@ -43,14 +42,13 @@ export class SitToStandService implements ActivityBase {
       preference: PreferenceState;
     }>,
     private elements: ElementsService,
-    private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
     private sit2StandScene: SitToStandScene,
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -652,7 +650,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Guide completed');
         await this.elements.sleep(3400);
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
         this.soundsService.pauseActivityInstructionSound(this.genre);
@@ -958,7 +956,7 @@ export class SitToStandService implements ActivityBase {
         this.sit2StandScene.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             sit_stand_achieve: false,
           });
         }
@@ -969,7 +967,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.store.pipe(take(1)).subscribe(async (state) => {
           totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime('sit_stand_achieve');
+          const fastestTimeInSecs = await this.apiService.getFastestTime('sit_stand_achieve');
           console.log('fastest: ', fastestTimeInSecs);
           const fastestTime = this.sit2StandService.updateTimer(
             Math.min(fastestTimeInSecs || Number.MAX_VALUE, state.game.totalDuration!),

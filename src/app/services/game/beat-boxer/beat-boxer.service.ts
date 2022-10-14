@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ElementsService } from '../../elements/elements.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { TtsService } from '../../tts/tts.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { Store } from '@ngrx/store';
 import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
@@ -74,7 +74,7 @@ export class BeatBoxerService {
     private elements: ElementsService,
     private handTrackerService: HandTrackerService,
     private ttsService: TtsService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
@@ -711,7 +711,7 @@ export class BeatBoxerService {
           },
         };
         await this.elements.sleep(3000);
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           beat_boxer: true,
         });
         this.soundsService.pauseActivityInstructionSound(this.genre);
@@ -1062,7 +1062,7 @@ export class BeatBoxerService {
         this.beatBoxerScene.scene.stop('beatBoxer');
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             beat_boxer: false,
           });
         }
@@ -1083,7 +1083,7 @@ export class BeatBoxerService {
           minutes: string;
           seconds: string;
         } = this.updateTimer(this.config.gameDuration!);
-        const highScore = await this.checkinService.getHighScore('beat_boxer');
+        const highScore = await this.apiService.getHighScore('beat_boxer');
 
         this.elements.banner.state = {
           attributes: {

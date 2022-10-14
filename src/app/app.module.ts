@@ -3,25 +3,11 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { WelcomeComponent } from './pages/welcome/welcome.component';
-import { SessionComponent } from './pages/session/session.component';
 import { GuideComponent } from './widgets/elements/guide/guide.component';
 import { ConfettiComponent } from './widgets/elements/confetti/confetti.component';
-import { SpotlightComponent } from './widgets/spotlight/spotlight.component';
-import { VideoComponent } from './widgets/video/video.component';
-import { CalibrationComponent } from './widgets/calibration/calibration.component';
 import { StoreModule } from '@ngrx/store';
 import { gameReducer } from './store/reducers/game.reducer';
-import { guideReducer } from './store/reducers/guide.reducer';
-import { sessionReducer } from './store/reducers/session.reducer';
-import { spotlightReducer } from './store/reducers/spotlight.reducer';
-import { AnnouncementComponent } from './widgets/announcement/announcement.component';
-import { PreSessionSurveyComponent } from './widgets/pre-session-survey/pre-session-survey.component';
-import { SelectGenreComponent } from './widgets/select-genre/select-genre.component';
-import { FinishedComponent } from './pages/finished/finished.component';
-import { TestComponent } from './pages/test/test.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { announcementReducer } from './store/reducers/annoucement.reducer';
 import { SafePipeModule } from 'safe-pipe';
 import { ElementsComponent } from './widgets/elements/elements.component';
 import { GameComponent } from './pages/game/game.component';
@@ -45,20 +31,10 @@ export let AppInjector: Injector;
 @NgModule({
   declarations: [
     AppComponent,
-    WelcomeComponent,
-    SessionComponent,
     GuideComponent,
     ToastComponent,
     ConfettiComponent,
-    SpotlightComponent,
     VideoElementComponent,
-    VideoComponent,
-    CalibrationComponent,
-    AnnouncementComponent,
-    PreSessionSurveyComponent,
-    SelectGenreComponent,
-    FinishedComponent,
-    TestComponent,
     ElementsComponent,
     GameComponent,
     ScoreComponent,
@@ -77,10 +53,6 @@ export let AppInjector: Injector;
     BrowserAnimationsModule,
     StoreModule.forRoot({
       game: gameReducer, // Main game state
-      guide: guideReducer, // Updating the guide
-      session: sessionReducer, // Top level session
-      spotlight: spotlightReducer, // spotlight component
-      announcement: announcementReducer,
       preference: preferenceReducer,
     }),
     StoreDevtoolsModule.instrument({

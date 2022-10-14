@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Store } from '@ngrx/store';
 import { Howl } from 'howler';
-import { Observable, retry } from 'rxjs';
-import { Genre, SessionState } from 'src/app/types/pointmotion';
+import { Genre } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { JwtService } from '../jwt/jwt.service';
-import { audioSprites } from './audio-sprites';
 
 @Injectable({
   providedIn: 'root',

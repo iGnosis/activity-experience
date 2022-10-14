@@ -2,8 +2,8 @@ import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { take } from 'rxjs';
+import { ApiService } from 'src/app/services/checkin/api.service';
 import { ElementsService } from 'src/app/services/elements/elements.service';
-import { GameStateService } from 'src/app/services/game-state/game-state.service';
 import { GameService } from 'src/app/services/game/game.service';
 import { GoogleAnalyticsService } from 'src/app/services/google-analytics/google-analytics.service';
 import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
@@ -28,7 +28,7 @@ export class GameComponent implements OnInit {
     private userService: UserService,
     private route: ActivatedRoute,
     private store: Store,
-    private gameStateService: GameStateService,
+    private apiService: ApiService,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {}
   async ngOnInit(): Promise<void> {
@@ -81,7 +81,7 @@ export class GameComponent implements OnInit {
       .subscribe((game) => {
         if (game.id) {
           const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
+          this.apiService.updateGame(id, gameState);
         }
       });
     return false;
