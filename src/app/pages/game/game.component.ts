@@ -52,6 +52,7 @@ export class GameComponent implements OnInit {
           this.cameraStatus = await this.gameService.bootstrap(
             this.video.nativeElement,
             this.canvas.nativeElement,
+            data.data.benchmarkId,
           );
           this.videoAvailable = true;
           if (this.cameraStatus === 'failure') {

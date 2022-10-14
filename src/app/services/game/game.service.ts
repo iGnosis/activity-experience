@@ -31,12 +31,14 @@ import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
+import { BenchmarkService } from '../benchmark/benchmark.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
   game?: Phaser.Game;
+  benchmarkId?: string | null;
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -90,7 +92,11 @@ export class GameService {
               mode: 'resume',
             };
           }
-          this.startGame();
+          if (this.benchmarkId) {
+            this.benchmarkService.benchmark(this.benchmarkId);
+          } else {
+            this.startGame();
+          }
         });
       }
     }
@@ -119,6 +125,7 @@ export class GameService {
     private jwtService: JwtService,
     private ttsService: TtsService,
     private googleAnalyticsService: GoogleAnalyticsService,
+    private benchmarkService: BenchmarkService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -144,14 +151,27 @@ export class GameService {
       });
   }
 
-  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
     this.checkAuth();
+    this.benchmarkId = benchmarkId;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
       });
-      video.srcObject = stream;
+
+      if (this.benchmarkId) {
+        this.benchmarkService.setVideo(video);
+
+        const config = await this.apiService.getBenchmarkConfig(this.benchmarkId);
+        if (config && config.rawVideoUrl)
+          await this.benchmarkService.loadRawVideo(config.rawVideoUrl);
+      } else {
+        video.srcObject = stream;
+        video.muted = true;
+        video.autoplay = true;
+      }
+
       const videoTracks = stream.getTracks();
       if (Array.isArray(videoTracks) && videoTracks.length > 0) {
         const track = videoTracks[0];
@@ -343,7 +363,11 @@ export class GameService {
           };
           this.calibrationStartTime = new Date();
         } else {
-          this.startGame();
+          if (this.benchmarkId) {
+            this.benchmarkService.benchmark(this.benchmarkId);
+          } else {
+            this.startGame();
+          }
         }
       }
       if (this.calibrationStatus === 'error') {
@@ -540,7 +564,7 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
-      this.startGame();
+      if (!this.benchmarkId) this.startGame();
     }
 
     // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.

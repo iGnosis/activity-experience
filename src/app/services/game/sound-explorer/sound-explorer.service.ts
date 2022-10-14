@@ -33,7 +33,16 @@ export class SoundExplorerService {
     gameDuration: environment.settings['sound_explorer'].configuration.gameDuration,
     speed: environment.settings['sound_explorer'].configuration.speed,
   };
+
+  private gameStartTime: number | null;
+  private firstPromptTime: number | null;
+  private loopStartTime: number | null;
+
   private isGameComplete = false;
+
+  private difficulty = 1;
+  private streak = 0;
+
   private successfulReps = 0;
   private totalReps = 0;
   private currentScore = 0;
@@ -63,36 +72,36 @@ export class SoundExplorerService {
   private drawShapes = async (
     numberOfShapes: number,
     timeoutBetweenShapes = 200,
-  ): Promise<Shape[]> => {
+    promptDetails?: { angle: number; shapes: Shape[]; position: Origin },
+  ): Promise<{ angle: number; shapes: Shape[]; position: Origin }> => {
     this.soundExplorerScene.setNextNote();
 
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
-    const shapes: Shape[] = this.getMultipleRandomItems(this.shapes, numberOfShapes);
+    const randomPosition =
+      promptDetails?.position ||
+      this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+    const shapes: Shape[] =
+      promptDetails?.shapes || this.getMultipleRandomItems(this.shapes, numberOfShapes);
+    const randomAngle: number =
+      typeof promptDetails?.angle === 'number'
+        ? promptDetails?.angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
     for (let i = 0; i < numberOfShapes; i++) {
       const shape = shapes[i];
-      this.soundExplorerScene.showShapes(
-        [shape],
-        randomPosition,
-        this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-        this.config.speed,
-      );
+      this.soundExplorerScene.showShapes([shape], randomPosition, randomAngle, this.config.speed);
       await this.elements.sleep(timeoutBetweenShapes);
     }
-    return shapes;
+    return { angle: randomAngle, shapes, position: randomPosition };
   };
 
-  private drawObstacle = async () => {
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
-    this.soundExplorerScene.showShapes(
-      ['wrong'],
-      randomPosition,
-      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-      this.config.speed,
-    );
+  private drawObstacle = async (position?: Origin, angle?: number) => {
+    const randomPosition =
+      position || this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+    const randomAngle =
+      typeof angle === 'number'
+        ? angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+    this.soundExplorerScene.showShapes(['wrong'], randomPosition, randomAngle, this.config.speed);
+    return { obstacleAngle: randomAngle, obstaclePosition: randomPosition };
   };
 
   constructor(
@@ -149,6 +158,8 @@ export class SoundExplorerService {
   welcome() {
     return [
       async (reCalibrationCount: number) => {
+        // start recording
+        this.gameStartTime = Date.now();
         if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
@@ -653,6 +664,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(7000);
+        this.loopStartTime = Date.now();
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -665,6 +677,7 @@ export class SoundExplorerService {
           },
         };
         await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.attributes = {
           visibility: 'hidden',
@@ -672,6 +685,68 @@ export class SoundExplorerService {
         };
       },
     ];
+  }
+
+  async showPrompt(promptDetails: any, promptId: string) {
+    const isPromptFromBenchmark: boolean = Object.keys(promptDetails).length > 1;
+    const currentPromptDetails = await this.drawShapes(
+      this.difficulty,
+      isPromptFromBenchmark ? 0 : 200,
+      promptDetails,
+    );
+
+    const promptTimestamp = Date.now();
+
+    let obstaclePromptDetails;
+    if (promptDetails.showObstacle)
+      obstaclePromptDetails = await this.drawObstacle(
+        promptDetails.obstaclePosition,
+        promptDetails.obstacleAngle,
+      );
+
+    await this.soundExplorerScene.waitForCollisionOrTimeout();
+    const resultTimestamp = Date.now();
+    this.totalReps++;
+
+    // if low points, reset difficulty
+    if (this.pointsGained < this.difficulty / 2) {
+      this.difficulty = 1;
+      this.streak = 0;
+    } else {
+      this.streak++;
+      this.successfulReps++;
+    }
+    // if continously high points, increase difficulty
+    if (this.streak !== 0 && this.streak % 3 === 0 && this.difficulty < 4) {
+      this.difficulty++;
+    }
+
+    // Todo: replace placeholder analytics values.
+    const analyticsObj = {
+      prompt: {
+        id: promptId,
+        type: this.difficulty === 1 ? 'single' : this.difficulty === 2 ? 'harmony' : 'chord',
+        timestamp: promptTimestamp,
+        data: {
+          ...promptDetails,
+          ...currentPromptDetails,
+          ...obstaclePromptDetails,
+        },
+      },
+      reaction: {
+        type: 'slice',
+        timestamp: Date.now(),
+        startTime: Date.now(),
+        completionTimeInMs:
+          this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) : null, // seconds between reaction and result if user interacted with the shapes
+      },
+      result: {
+        type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
+        timestamp: resultTimestamp,
+        score: this.pointsGained,
+      },
+    };
+    return { analyticsObj };
   }
 
   loop() {
@@ -720,7 +795,6 @@ export class SoundExplorerService {
 
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
-        let difficulty = 1;
         this.soundExplorerScene.score.next(this.currentScore);
         this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
           this.elements.score.state = {
@@ -737,62 +811,43 @@ export class SoundExplorerService {
           this.currentScore = score;
           this.store.dispatch(game.setScore({ score }));
         });
-        let streak = 0;
+
+        const startResult: 'success' | 'failure' = 'success';
+        const startPrompt = {
+          prompt: {
+            id: uuidv4(),
+            type: 'start',
+            timestamp: Date.now(),
+            data: {
+              gameStartTime: this.gameStartTime,
+              loopStartTime: this.loopStartTime,
+              firstPromptTime: this.firstPromptTime,
+            },
+          },
+          reaction: {
+            type: 'start',
+            timestamp: Date.now(),
+            startTime: Date.now(),
+            completionTimeInMs: 0,
+          },
+          result: {
+            type: startResult,
+            timestamp: Date.now(),
+            score: 0,
+          },
+        };
+        this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
+
         while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          const shapes = await this.drawShapes(difficulty);
-          const promptTimestamp = Date.now();
 
           const showObstacle = Math.random() > 0.5;
-          if (showObstacle) this.drawObstacle();
-
-          await this.soundExplorerScene.waitForCollisionOrTimeout();
-          const resultTimestamp = Date.now();
+          const promptId = uuidv4();
+          const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
           await this.elements.sleep(100);
-          this.totalReps++;
-
-          // if low points, reset difficulty
-          if (this.pointsGained < difficulty / 2) {
-            difficulty = 1;
-            streak = 0;
-          } else {
-            streak++;
-            this.successfulReps++;
-          }
-          // if continously high points, increase difficulty
-          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) {
-            difficulty++;
-          }
-
-          // Todo: replace placeholder analytics values.
-          const analyticsObj = {
-            prompt: {
-              id: uuidv4(),
-              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-              timestamp: promptTimestamp,
-              data: {
-                shapes,
-              },
-            },
-            reaction: {
-              type: 'slice',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTimeInMs:
-                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) : null, // seconds between reaction and result if user interacted with the shapes
-            },
-            result: {
-              type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
-              timestamp: resultTimestamp,
-              score: this.pointsGained,
-            },
-          };
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
-          if (this.pointsGained === 0) {
-            console.log('%c Not changed! ', 'background: #222; color: red');
-          }
         }
       },
 

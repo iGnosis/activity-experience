@@ -4,6 +4,7 @@ import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
 import { AnalyticsDTO, GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -165,6 +166,82 @@ export class ApiService {
     }
   }
 
+  async getBenchmarkConfig(id: string): Promise<any> {
+    try {
+      const result = await this.client.req(
+        gql`
+          query GetBenchmarkConfig($id: uuid = "") {
+            game_benchmark_config_by_pk(id: $id) {
+              originalGameId
+              rawVideoUrl
+            }
+          }
+        `,
+        {
+          id,
+        },
+      );
+
+      return result.game_benchmark_config_by_pk;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async saveAutoBenchmark(
+    gameId: string,
+    originalGameId: string,
+    analytics: any[],
+    systemSpec?: any,
+  ) {
+    try {
+      const result = await this.client.req(
+        gql`
+          mutation SaveAutoBenchmark(
+            $analytics: jsonb!
+            $gameId: uuid!
+            $systemSpec: jsonb = {}
+            $originalGameId: uuid = ""
+          ) {
+            insert_game_benchmarks_one(
+              object: {
+                analytics: $analytics
+                gameId: $gameId
+                systemSpec: $systemSpec
+                originalGameId: $originalGameId
+              }
+            ) {
+              id
+            }
+          }
+        `,
+        { gameId, analytics, systemSpec, originalGameId },
+      );
+
+      return result.insert_game_benchmarks_one;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async generateBenchmarkReport(benchmarkId: string, gameId: string) {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        headers: {
+          responseType: 'arraybuffer',
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const url = `${environment.apiEndpoint}/game-benchmarking/report?newGameId=${gameId}&benchmarkConfigId=${benchmarkId}`;
+
+      return fetch(url, headers).then((res: any) => res.blob());
+    } catch (err) {
+      console.log(err);
+      return err;
+    }
+  }
+
   async getLastGame() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -205,6 +282,27 @@ export class ApiService {
       );
 
       return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getBenchmarkGame(id: string) {
+    try {
+      const nextGame = await this.client.req(
+        gql`
+          query GetBenchmarkGame($id: uuid = "") {
+            game_by_pk(id: $id) {
+              analytics
+              game
+              id
+            }
+          }
+        `,
+        { id },
+      );
+
+      return nextGame.game_by_pk;
     } catch (err) {
       console.log(err);
     }
