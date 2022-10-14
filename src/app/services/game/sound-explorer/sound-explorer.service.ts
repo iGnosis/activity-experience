@@ -8,7 +8,7 @@ import {
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
@@ -112,7 +112,7 @@ export class SoundExplorerService {
     private elements: ElementsService,
     private gameStateService: GameStateService,
     private calibrationService: CalibrationService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private ttsService: TtsService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
@@ -625,7 +625,7 @@ export class SoundExplorerService {
             titleDuration: 2000,
           },
         };
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           sound_explorer: true,
         });
         await this.elements.sleep(3000);
@@ -891,7 +891,7 @@ export class SoundExplorerService {
         this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             sound_explorer: false,
           });
         }
@@ -899,13 +899,13 @@ export class SoundExplorerService {
           `Your score is ${this.currentScore}, time completed ${this.config
             .gameDuration!} seconds.`,
         );
-        const highScore = await this.checkinService.getHighScore('sound_explorer');
+        const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
           minutes: string;
           seconds: string;
         };
         // eslint-disable-next-line prefer-const
-        totalDuration = this.checkinService.getDurationForTimer(this.config.gameDuration!);
+        totalDuration = this.apiService.getDurationForTimer(this.config.gameDuration!);
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',

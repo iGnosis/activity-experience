@@ -4,7 +4,7 @@ import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { PreferenceState } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
 
-import { CheckinService } from './checkin.service';
+import { ApiService } from './api.service';
 import { of } from 'rxjs';
 
 interface InititalState {
@@ -12,8 +12,8 @@ interface InititalState {
   mood?: string;
 }
 
-describe('CheckinService', () => {
-  let service: CheckinService;
+describe('ApiService', () => {
+  let service: ApiService;
   let store: MockStore<InititalState>;
 
   const checkinServiceStub = {
@@ -44,13 +44,13 @@ describe('CheckinService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        { provide: CheckinService, useValue: checkinServiceStub },
+        { provide: ApiService, useValue: checkinServiceStub },
         provideMockStore({
           initialState,
         }),
       ],
     });
-    service = TestBed.inject(CheckinService);
+    service = TestBed.inject(ApiService);
     store = TestBed.inject(MockStore);
   });
 

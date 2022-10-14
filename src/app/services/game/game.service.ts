@@ -10,8 +10,6 @@ import {
   CalibrationStatusType,
   GameState,
   GameStatus,
-  Genre,
-  HandTrackerStatus,
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
@@ -23,7 +21,7 @@ import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
-import { CheckinService } from '../checkin/checkin.service';
+import { ApiService } from '../checkin/api.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
@@ -123,7 +121,7 @@ export class GameService {
       preference: PreferenceState;
     }>,
     private gameStateService: GameStateService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private jwtService: JwtService,
     private ttsService: TtsService,
     private googleAnalyticsService: GoogleAnalyticsService,
@@ -141,13 +139,13 @@ export class GameService {
           // use a specific query to update analytics -- since analytics are stored as JSONB array
           if (game.analytics) {
             // game.analytics[0] is an ugly-workaround - there will always an array of length 1
-            this.gameStateService.updateAnalytics(game.id, game.analytics[0]);
+            this.apiService.updateAnalytics(game.id, game.analytics[0]);
           }
 
           // generic update query for fields which aren't JSONB
           else {
             const { id, ...gameState } = game;
-            this.gameStateService.updateGame(id, gameState);
+            this.apiService.updateGame(id, gameState);
           }
         }
       });
@@ -423,7 +421,7 @@ export class GameService {
     // will be called in two cases...
     // once one game is finished
     // second when the user is calibrated (again)
-    const lastGame = await this.checkinService.getLastGame();
+    const lastGame = await this.apiService.getLastGame();
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
@@ -437,7 +435,7 @@ export class GameService {
     const lastGameIndex = environment.order.indexOf(lastGame[0].game);
     // last played game ended, return next game
     let nextGameIndex = (lastGameIndex + 1) % environment.order.length;
-    const lastPlayedGame = await this.checkinService.getLastPlayedGame();
+    const lastPlayedGame = await this.apiService.getLastPlayedGame();
 
     if (!lastPlayedGame[0].endedAt) {
       const lastGameIndex = environment.order.indexOf(lastPlayedGame[0].game);
@@ -453,7 +451,7 @@ export class GameService {
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
     let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    const onboardingStatus = await this.apiService.getOnboardingStatus();
     if (
       onboardingStatus &&
       onboardingStatus.length > 0 &&
@@ -482,7 +480,7 @@ export class GameService {
     if (activity) {
       try {
         // get genre
-        this.checkinService.getUserGenre();
+        this.apiService.getUserGenre();
       } catch (err) {
         console.log(err);
       }
@@ -493,7 +491,7 @@ export class GameService {
           // throw new Error('Re-calibration occurred');
         }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
-          const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+          const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
           });
           if (response && response.insert_game_one) {

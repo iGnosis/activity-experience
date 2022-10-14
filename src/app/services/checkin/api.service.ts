@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
-import { Genre, PreferenceState } from 'src/app/types/pointmotion';
+import { AnalyticsDTO, GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CheckinService {
+export class ApiService {
   constructor(
     private store: Store<{
       preference: PreferenceState;
@@ -17,23 +17,78 @@ export class CheckinService {
     private client: GqlClientService,
   ) {}
 
-  // * Mood is not being used ATM
-  // async getUserGenreAndMood() {
-  //   const userGenreAndMood = await this.client.req(
-  //     gql`
-  //       query GetCheckinData {
-  //         genre: checkin(limit: 1, order_by: { createdAt: desc }, where: { type: { _eq: genre } }) {
-  //           type
-  //           value
-  //         }
-  //         mood: checkin(limit: 1, order_by: { createdAt: desc }, where: { type: { _eq: mood } }) {
-  //           type
-  //           value
-  //         }
-  //       }
-  //     `,
-  //   );
-  // }
+  async newGame(game: string) {
+    return this.client.req(
+      gql`
+        mutation newGame($game: game_name_enum = sit_stand_achieve) {
+          insert_game_one(object: { game: $game }) {
+            id
+          }
+        }
+      `,
+      {
+        game,
+      },
+    );
+  }
+
+  async updateGame(id: string, game: GameState) {
+    return this.client.req(
+      gql`
+        mutation UpdateGame($id: uuid!, $game: game_set_input = {}) {
+          update_game_by_pk(pk_columns: { id: $id }, _set: $game) {
+            id
+          }
+        }
+      `,
+      {
+        id,
+        game,
+      },
+    );
+  }
+
+  async updateAnalytics(gameId: string, analytics: AnalyticsDTO) {
+    return this.client.req(
+      gql`
+        mutation UpdateAnalytics($analytics: jsonb!, $gameId: uuid!) {
+          update_game_by_pk(pk_columns: { id: $gameId }, _append: { analytics: $analytics }) {
+            id
+          }
+        }
+      `,
+      {
+        gameId,
+        analytics,
+      },
+    );
+  }
+
+  // called after completion of a game.
+  async updateRewards(startDate: Date, endDate: Date, userTimezone: string) {
+    // unlocks rewards based on recent user activity.
+    this.client.req(
+      gql`
+        mutation UpdateRewards($startDate: String!, $endDate: String!, $userTimezone: String!) {
+          updateRewards(startDate: $startDate, endDate: $endDate, userTimezone: $userTimezone) {
+            status
+          }
+        }
+      `,
+      { startDate, endDate, userTimezone },
+    );
+  }
+
+  async gameCompleted(startDate: Date, endDate: Date, currentDate: Date, userTimezone: string) {
+    this.client.req(
+      `mutation GameCompleted($startDate: String!, $endDate: String!, $currentDate: String!, $userTimezone: String!) {
+      gameCompleted(startDate: $startDate, endDate: $endDate, currentDate: $currentDate, userTimezone: $userTimezone) {
+        status
+      }
+    }`,
+      { startDate, endDate, currentDate, userTimezone },
+    );
+  }
 
   async getUserGenre(): Promise<Genre | void> {
     try {

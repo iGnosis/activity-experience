@@ -6,7 +6,7 @@
     [src]="state.src | safe: 'resourceUrl'" allow="autoplay; encrypted-media; picture-in-picture" [frameBorder]="0"
     allowfullscreen></iframe>
 
-  <video *ngIf="state && state.type === 'video' && state.src" class="video rounded-3" controls [autoplay]="true" muted
+  <video *ngIf="state && state.type === 'video' && state.src" class="video rounded-3" controls [autoplay]="true" [muted]="true"
     loop>
     <source [src]="state.src" type="video/mp4">
   </video>
