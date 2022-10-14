@@ -5,7 +5,7 @@ import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene'
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
 import { game } from 'src/app/store/actions/game.actions';
 import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
-import { CheckinService } from '../checkin/checkin.service';
+import { ApiService } from '../checkin/api.service';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../elements/elements.service';
 import { GameStateService } from '../game-state/game-state.service';
@@ -34,7 +34,7 @@ export class BenchmarkService {
     private beatBoxerScene: BeatBoxerScene,
     private soundExplorerService: SoundExplorerService,
     private soundExplorerScene: SoundExplorerScene,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private ttsService: TtsService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
@@ -198,7 +198,7 @@ export class BenchmarkService {
     this.video.play();
     await this.elements.sleep(1000);
 
-    const response = await this.gameStateService.newGame(nextGame).catch((err: any) => {
+    const response = await this.apiService.newGame(nextGame).catch((err: any) => {
       console.log(err);
     });
     if (response.insert_game_one) {
@@ -230,12 +230,12 @@ export class BenchmarkService {
   async benchmark(
     benchmarkId: string,
   ): Promise<{ status: 'success' | 'failure'; message: string }> {
-    const config = await this.checkinService.getBenchmarkConfig(benchmarkId);
+    const config = await this.apiService.getBenchmarkConfig(benchmarkId);
     if (!config) return { status: 'failure', message: 'Benchmark config not found' };
 
     this.originalGameId = config.originalGameId;
 
-    const nextGame = await this.checkinService.getBenchmarkGame(this.originalGameId);
+    const nextGame = await this.apiService.getBenchmarkGame(this.originalGameId);
 
     if (!nextGame.analytics || !nextGame.analytics.length)
       return { status: 'failure', message: 'No analytics found' };
@@ -298,7 +298,7 @@ export class BenchmarkService {
       analytics.push(analyticsObj);
     }
 
-    const result = await this.checkinService.saveAutoBenchmark(
+    const result = await this.apiService.saveAutoBenchmark(
       this.gameId,
       this.originalGameId,
       analytics,
@@ -322,7 +322,7 @@ export class BenchmarkService {
     };
     this.store.dispatch(game.gameCompleted());
 
-    const report: any = await this.checkinService.generateBenchmarkReport(benchmarkId, this.gameId);
+    const report: any = await this.apiService.generateBenchmarkReport(benchmarkId, this.gameId);
     this.downloadReport(report);
 
     return { status: 'success', message: 'Benchmarking completed' };

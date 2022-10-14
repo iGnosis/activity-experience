@@ -163,7 +163,7 @@ export class GameService {
       if (this.benchmarkId) {
         this.benchmarkService.setVideo(video);
 
-        const config = await this.checkinService.getBenchmarkConfig(this.benchmarkId);
+        const config = await this.apiService.getBenchmarkConfig(this.benchmarkId);
         if (config && config.rawVideoUrl)
           await this.benchmarkService.loadRawVideo(config.rawVideoUrl);
       } else {
