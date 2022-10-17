@@ -10,6 +10,13 @@ enum TextureKeys {
   MUSIC_CIRCLE = 'music_circle',
   BLUE_DONE = 'blue_done',
   RED_DONE = 'red_done',
+  RED_BLUE_RIPPLE = 'red_blue_ripple',
+  GREEN_BUBBLES = 'green_bubbles',
+}
+
+enum AnimationKeys {
+  RED_BLUE_RIPPLE_ANIM = 'red_blue_ripple_anim',
+  GREEN_BUBBLES_ANIM = 'green_bubbles_anim',
 }
 
 interface TweenData {
@@ -17,11 +24,6 @@ interface TweenData {
   remainingDuration?: number;
   totalTimeElapsed: number;
   tween?: Phaser.Tweens.Tween;
-}
-
-enum AnimationKeys {
-  BLUE_DONE = 'blue_done_anim',
-  RED_DONE = 'red_done_anim',
 }
 
 type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
@@ -44,6 +46,7 @@ export class MovingTonesScene extends Phaser.Scene {
   private poseSubscription: Subscription;
   private music = false;
   private group: Phaser.Physics.Arcade.StaticGroup;
+  private defaultScale = 0.6;
 
   designAssetsLoaded = false;
   musicFilesLoaded = 0;
@@ -117,6 +120,28 @@ export class MovingTonesScene extends Phaser.Scene {
           graphics.destroy(true);
           redTween.remove();
           gameObject.destroy(true);
+
+          if (type === 'start') {
+            const sprite = this.add.sprite(x, y, TextureKeys.RED_DONE);
+            this.tweens.addCounter({
+              ease: 'Linear',
+              duration: 300,
+              from: 1,
+              to: 1.1,
+              onUpdate: (tween) => {
+                sprite.setScale(tween.getValue());
+              },
+              onComplete: (tween) => {
+                tween.remove();
+                sprite.destroy(true);
+              },
+            });
+          } else {
+            this.add
+              .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+              .setScale(this.defaultScale)
+              .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+          }
         });
       }
     }
@@ -176,6 +201,28 @@ export class MovingTonesScene extends Phaser.Scene {
           graphics.destroy(true);
           blueTween.remove();
           gameObject.destroy(true);
+
+          if (type === 'start') {
+            const sprite = this.add.sprite(x, y, TextureKeys.BLUE_DONE);
+            this.tweens.addCounter({
+              ease: 'Linear',
+              duration: 300,
+              from: 1,
+              to: 1.1,
+              onUpdate: (tween) => {
+                sprite.setScale(tween.getValue());
+              },
+              onComplete: (tween) => {
+                tween.remove();
+                sprite.destroy(true);
+              },
+            });
+          } else {
+            this.add
+              .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+              .setScale(this.defaultScale)
+              .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+          }
         });
       }
     }
@@ -215,6 +262,12 @@ export class MovingTonesScene extends Phaser.Scene {
       },
     });
 
+    this.load.atlas(
+      TextureKeys.RED_BLUE_RIPPLE,
+      'assets/images/moving-tones/ripple/blue-red-ripple.png',
+      'assets/images/moving-tones/ripple/blue-red-ripple.json',
+    );
+
     this.load.once('complete', (_id: any, _completed: number, failed: number) => {
       if (failed === 0) {
         this.designAssetsLoaded = true;
@@ -225,25 +278,23 @@ export class MovingTonesScene extends Phaser.Scene {
     });
   }
   create() {
-    this.group = this.physics.add.staticGroup({});
-
     this.anims.create({
-      key: AnimationKeys.BLUE_DONE,
-      // frames: TextureKeys.BLUE_DONE,
-      defaultTextureKey: TextureKeys.BLUE_DONE,
+      key: AnimationKeys.RED_BLUE_RIPPLE_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.RED_BLUE_RIPPLE, {
+        start: 5,
+        end: 35,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      // skipMissedFrames: true,
       duration: 1000,
       hideOnComplete: true,
     });
 
-    this.anims.create({
-      key: AnimationKeys.RED_DONE,
-      // frames: TextureKeys.RED_DONE,
-      duration: 500,
-      defaultTextureKey: TextureKeys.RED_DONE,
-      hideOnComplete: true,
-    });
-    console.log('created anims');
+    this.group = this.physics.add.staticGroup({});
   }
+
   override update(time: number, delta: number): void {
     if (this.collisions) {
       if (this.leftHand && this.group && this.group.getLength() >= 1) {
