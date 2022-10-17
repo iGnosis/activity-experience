@@ -19,6 +19,7 @@ import { CheckinService } from '../../checkin/checkin.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
+import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -26,10 +27,11 @@ import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene
 export class MovingTonesService implements ActivityBase {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
-  private successfulReps = 0;
+  private coinsCollected = 0;
   private failedReps = 0;
   private totalReps = 0;
   private globalReCalibrationCount: number;
+  private isGameComplete = false;
   private config = {
     gameDuration: environment.settings['moving_tones'].configuration.gameDuration,
     speed: environment.settings['moving_tones'].configuration.speed,
@@ -48,6 +50,7 @@ export class MovingTonesService implements ActivityBase {
     private calibrationService: CalibrationService,
     private checkinService: CheckinService,
     private movingTonesScene: MovingTonesScene,
+    private googleAnalyticsService: GoogleAnalyticsService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -55,10 +58,19 @@ export class MovingTonesService implements ActivityBase {
         if (preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
           this.soundsService.loadMusicFiles(this.genre);
+        } else {
+          this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
         }
       });
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
+    });
+  }
+
+  private replayOrTimeout(timeout = 10000) {
+    return new Promise(async (resolve, reject) => {
+      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
+      setTimeout(() => resolve(false), timeout);
     });
   }
 
@@ -120,6 +132,7 @@ export class MovingTonesService implements ActivityBase {
         }
       },
       async (reCalibrationCount: number) => {
+        this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Last activity. Moving Tones.');
         this.elements.banner.state = {
           attributes: {
@@ -147,9 +160,6 @@ export class MovingTonesService implements ActivityBase {
         await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts(
-          'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
-        );
         this.elements.overlay.state = {
           attributes: {
             visibility: 'visible',
@@ -158,25 +168,29 @@ export class MovingTonesService implements ActivityBase {
           data: {
             cards: [
               {
-                icon: '/assets/images/overlay_icons/no-chair.png',
+                icon: '/assets/images/overlay_icons/hand.png',
                 message: 'Fingers stretched wide',
               },
               {
-                icon: '/assets/images/overlay_icons/space-to-move.png',
+                icon: '/assets/images/overlay_icons/dorsal.png',
                 message: 'Posture upright and big',
               },
               {
-                icon: '/assets/images/overlay_icons/stand-up.png',
+                icon: '/assets/images/overlay_icons/width.png',
                 message: 'Move feet to reach objects',
               },
             ],
-            transitionDuration: 4000,
+            transitionDuration: 3500,
           },
         };
-        await this.elements.sleep(18000);
+        this.ttsService.tts(
+          'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
+        );
+        await this.elements.sleep(17000);
       },
     ];
   }
+
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
@@ -197,7 +211,52 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
+        this.soundsService.pauseActivityInstructionSound(this.genre);
         await this.elements.sleep(2000);
+      },
+      async (reCalibrationCount: number) => {
+        this.ttsService.tts(
+          'The objective of this game is to collect as many green coins as you can.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'The objective of this game is to collect the green coins.',
+            titleDuration: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        await this.elements.sleep(6000);
+        this.elements.video.state = {
+          data: {
+            type: 'gif',
+            title: 'Collect the Coins!',
+            description: `Follow your hand over the green coins to collect as many as you can within ${
+              (this.config.gameDuration || 3) / 60
+            } minutes.`,
+            src: 'assets/videos/moving-tones/first-collect.gif',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts(
+          `Move your hands over the green coins to collect as many as you can in ${
+            (this.config.gameDuration || 3) / 60
+          } minutes.`,
+        );
+        await this.elements.sleep(6000);
+        this.elements.video.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+        await this.elements.sleep(1000);
       },
       async (reCalibrationCount: number) => {
         this.elements.video.state = {
@@ -206,7 +265,7 @@ export class MovingTonesService implements ActivityBase {
             title: 'Red for Right Hand',
             description:
               'Hold the right hand over the red circle when it first appears on the screen to load the music coins.',
-            src: 'assets/images/beat-boxer/red-bag.png',
+            src: 'assets/videos/moving-tones/red-right.gif',
           },
           attributes: {
             visibility: 'visible',
@@ -245,7 +304,7 @@ export class MovingTonesService implements ActivityBase {
             title: 'Blue for Left Hand',
             description:
               'Hold the left hand over the blue circle when it first appears on the screen to load the music coins.',
-            src: 'assets/images/beat-boxer/red-bag.png',
+            src: 'assets/videos/moving-tones/blue-left.gif',
           },
           attributes: {
             visibility: 'visible',
@@ -287,7 +346,7 @@ export class MovingTonesService implements ActivityBase {
             title: 'Collect the Coins!',
             description:
               'Follow your hand over the music coins to collect them and finish on the same colour you started with.',
-            src: 'assets/images/beat-boxer/red-bag.png',
+            src: 'assets/videos/moving-tones/second-collect.gif',
           },
           attributes: {
             visibility: 'visible',
@@ -317,12 +376,11 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
+        await this.checkinService.updateOnboardingStatus({
+          moving_tones: true,
+        });
         await this.elements.sleep(3000);
       },
-    ];
-  }
-  preLoop() {
-    return [
       async (reCalibrationCount: number) => {
         this.ttsService.tts("You're ready to start collecting some music coins.");
         this.elements.guide.state = {
@@ -351,6 +409,11 @@ export class MovingTonesService implements ActivityBase {
       },
     ];
   }
+
+  preLoop() {
+    return [];
+  }
+
   loop() {
     return [
       async (reCalibrationCount: number) => {
@@ -366,8 +429,48 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(3000);
+        this.elements.score.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            icon: '/assets/images/moving_tones/coin.png',
+            value: this.coinsCollected,
+          },
+        };
+        this.elements.ribbon.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            titles: ['3', '2', '1', "Let's Go!"],
+            titleDuration: 1000,
+            tts: true,
+          },
+        };
+        await this.elements.sleep(7000);
+
+        const updateElapsedTime = (elapsedTime: number) => {
+          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
+          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+        };
+        this.elements.timer.state = {
+          data: {
+            mode: 'start',
+            isCountdown: true,
+            duration: this.config.gameDuration! * 1000,
+            onPause: updateElapsedTime,
+            onComplete: updateElapsedTime,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
         // game starts
-        // times up banner element
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts(
@@ -383,16 +486,49 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        // await this.handTrackerService.waitUntilHandRaised('both-hands');
-        this.soundsService.playCalibrationSound('success');
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'action',
+            htmlStr: `
+              <div class="text-center row">
+                <h1 class="pt-4 display-3">Times Up!</h1>
+                <h2 class="pb-8 display-6">Want to improve your score?</h2>
+                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
+              <div>
+            `,
+            buttons: [
+              {
+                title: 'Continue',
+                progressDurationMs: 9000,
+              },
+            ],
+          },
+        };
+        const shouldReplay = await this.replayOrTimeout(10000);
+        if (shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+          // replay
+        }
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         this.elements.guide.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        await this.elements.sleep(5000);
+        this.elements.score.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
       },
     ];
   }
+
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
@@ -408,6 +544,20 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(3000);
+      },
+      async (reCalibrationCount: number) => {
+        const achievementRatio = this.coinsCollected / this.totalReps;
+        if (achievementRatio < 0.6) {
+          await this.checkinService.updateOnboardingStatus({
+            moving_tones: false,
+          });
+        }
+
+        const totalDuration: {
+          minutes: string;
+          seconds: string;
+        } = this.checkinService.getDurationForTimer(this.config.gameDuration!);
+        const highScore = await this.checkinService.getHighScore('moving_tones');
 
         this.ttsService.tts(`Coins collected: 1, time completed: 3 minutes.`);
         this.elements.banner.state = {
@@ -420,9 +570,9 @@ export class MovingTonesService implements ActivityBase {
             htmlStr: `
           <div class="pl-10 text-start px-14" style="padding-left: 20px;">
             <h1 class="pt-8 display-3">Moving Tones</h1>
-            <h2 class="pt-7">Coins Collected: 1 (placeholder)</h2>
-            <h2 class="pt-5">High Score:  1 Coins (placeholder)</h2>
-            <h2 class="pt-5">Time Completed: 3:00 minutes (placeholder)</h2>
+            <h2 class="pt-7">Coins Collected: ${this.coinsCollected}</h2>
+            <h2 class="pt-5">High Score:  ${highScore} Coins</h2>
+            <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
           <div>
           `,
             buttons: [
@@ -433,6 +583,12 @@ export class MovingTonesService implements ActivityBase {
             ],
           },
         };
+
+        this.store.dispatch(game.gameCompleted());
+        this.googleAnalyticsService.sendEvent('level_end', {
+          level_name: 'moving_tones',
+        });
+        this.gameStateService.postLoopHook();
 
         await this.elements.sleep(12000);
         this.elements.banner.attributes = {
@@ -452,6 +608,7 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(4000);
+
         window.parent.postMessage(
           {
             type: 'end-game',

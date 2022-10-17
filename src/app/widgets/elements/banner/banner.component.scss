@@ -57,6 +57,10 @@
     }
   }
 
+  &.action {
+    height: 350px;
+  }
+
   @keyframes progress {
     0% {
       width: 0%;
