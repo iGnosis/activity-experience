@@ -5,10 +5,24 @@ import { PoseService } from 'src/app/services/pose/pose.service';
 import { TtsService } from 'src/app/services/tts/tts.service';
 
 enum TextureKeys {
-  CIRCLE = 'circle_shape',
+  RED_CIRCLE = 'red_circle',
+  BLUE_CIRCLE = 'blue_circle',
+  MUSIC_CIRCLE = 'music_circle',
+  BLUE_DONE = 'blue_done',
+  RED_DONE = 'red_done',
 }
 
-enum AnimationKeys {}
+interface TweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+enum AnimationKeys {
+  BLUE_DONE = 'blue_done_anim',
+  RED_DONE = 'red_done_anim',
+}
 
 type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
   body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
@@ -36,12 +50,135 @@ export class MovingTonesScene extends Phaser.Scene {
   totalMusicFiles = 0;
   loadError = false;
 
-  private collisionCallback = (
+  private isBlueHeld = false;
+  private isRedHeld = false;
+
+  private redTween: TweenData = {
+    stoppedAt: undefined,
+    remainingDuration: undefined,
+    totalTimeElapsed: 0,
+  };
+
+  private blueTween: TweenData = {
+    stoppedAt: undefined,
+    remainingDuration: undefined,
+    totalTimeElapsed: 0,
+  };
+
+  private rightCollisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    _gameObject: GameObjectWithBodyAndTexture,
+    gameObject: GameObjectWithBodyAndTexture,
   ) => {
-    if (!_gameObject.texture) return;
-    _gameObject.destroy(true);
+    if (!gameObject.texture) return;
+    if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) return;
+
+    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      gameObject.destroy();
+    }
+
+    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) {
+      const [type, color]: ['start' | 'end', number] = gameObject.getData(['type', 'color']);
+
+      if (this.isRedHeld === false) {
+        this.isRedHeld = true;
+        const { x, y } = gameObject.body.center;
+        const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
+        const { tween: redTween, graphics } =
+          this.redTween.remainingDuration === undefined || this.redTween.stoppedAt === undefined
+            ? this.animateHeld(x, y, circleRadius, color)
+            : this.animateHeld(
+                x,
+                y,
+                circleRadius,
+                color,
+                this.redTween.stoppedAt,
+                this.redTween.remainingDuration,
+              );
+
+        redTween.on('update', (tween: Phaser.Tweens.Tween) => {
+          if (!this.isRedHeld) {
+            this.redTween = {
+              stoppedAt: tween.getValue(),
+              remainingDuration: tween.duration - tween.elapsed,
+              totalTimeElapsed: this.redTween.totalTimeElapsed + tween.elapsed,
+            };
+            console.log(this.redTween.totalTimeElapsed);
+            graphics.destroy(true);
+            tween.stop();
+          }
+        });
+
+        redTween.once('complete', () => {
+          this.redTween = {
+            remainingDuration: undefined,
+            stoppedAt: undefined,
+            totalTimeElapsed: 0,
+          };
+          graphics.destroy(true);
+          redTween.remove();
+          gameObject.destroy(true);
+        });
+      }
+    }
+  };
+
+  private leftCollisionCallback = (
+    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!gameObject.texture) return;
+
+    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
+
+    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      gameObject.destroy();
+    }
+
+    if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) {
+      const [type, color]: ['start' | 'end', number] = gameObject.getData(['type', 'color']);
+
+      if (this.isBlueHeld === false) {
+        this.isBlueHeld = true;
+
+        const { x, y } = gameObject.body.center;
+        const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
+
+        const { tween: blueTween, graphics } =
+          this.blueTween.remainingDuration === undefined || this.blueTween.stoppedAt === undefined
+            ? this.animateHeld(x, y, circleRadius, color)
+            : this.animateHeld(
+                x,
+                y,
+                circleRadius,
+                color,
+                this.blueTween.stoppedAt,
+                this.blueTween.remainingDuration,
+              );
+
+        blueTween.on('update', (tween: Phaser.Tweens.Tween) => {
+          if (!this.isBlueHeld) {
+            this.blueTween = {
+              stoppedAt: tween.getValue(),
+              remainingDuration: tween.duration - tween.elapsed,
+              totalTimeElapsed: this.blueTween.totalTimeElapsed + tween.elapsed,
+            };
+            graphics.destroy(true);
+            tween.stop();
+          }
+        });
+
+        blueTween.once('complete', () => {
+          this.blueTween = {
+            remainingDuration: undefined,
+            stoppedAt: undefined,
+            totalTimeElapsed: 0,
+          };
+          graphics.destroy(true);
+          blueTween.remove();
+          gameObject.destroy(true);
+        });
+      }
+    }
   };
 
   constructor(private ttsService: TtsService, private poseService: PoseService) {
@@ -50,8 +187,32 @@ export class MovingTonesScene extends Phaser.Scene {
 
   preload() {
     this.load.image({
-      key: TextureKeys.CIRCLE,
-      url: 'assets/images/sound-slicer/Circle shape.png',
+      key: TextureKeys.RED_CIRCLE,
+      url: 'assets/images/moving-tones/red-circle.svg',
+    });
+
+    this.load.image({
+      key: TextureKeys.BLUE_CIRCLE,
+      url: 'assets/images/moving-tones/blue-circle.svg',
+    });
+    this.load.image({
+      key: TextureKeys.MUSIC_CIRCLE,
+      url: 'assets/images/moving-tones/music-circle.svg',
+    });
+    this.load.svg({
+      key: TextureKeys.BLUE_DONE,
+      url: 'assets/images/moving-tones/done-blue.svg',
+      svgConfig: {
+        scale: 0.6,
+      },
+    });
+
+    this.load.svg({
+      key: TextureKeys.RED_DONE,
+      url: 'assets/images/moving-tones/done-red.svg',
+      svgConfig: {
+        scale: 0.6,
+      },
     });
 
     this.load.once('complete', (_id: any, _completed: number, failed: number) => {
@@ -65,19 +226,131 @@ export class MovingTonesScene extends Phaser.Scene {
   }
   create() {
     this.group = this.physics.add.staticGroup({});
+
+    this.anims.create({
+      key: AnimationKeys.BLUE_DONE,
+      // frames: TextureKeys.BLUE_DONE,
+      defaultTextureKey: TextureKeys.BLUE_DONE,
+      duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.RED_DONE,
+      // frames: TextureKeys.RED_DONE,
+      duration: 500,
+      defaultTextureKey: TextureKeys.RED_DONE,
+      hideOnComplete: true,
+    });
+    console.log('created anims');
   }
   override update(time: number, delta: number): void {
     if (this.collisions) {
       if (this.leftHand && this.group && this.group.getLength() >= 1) {
-        this.physics.overlap(this.leftHand, this.group, this.collisionCallback);
+        if (!this.physics.overlap(this.leftHand, this.group, this.leftCollisionCallback)) {
+          this.isBlueHeld = false;
+        }
       }
       if (this.rightHand && this.group && this.group.getLength() >= 1) {
-        this.physics.overlap(this.rightHand, this.group, this.collisionCallback);
+        if (!this.physics.overlap(this.rightHand, this.group, this.rightCollisionCallback)) {
+          this.isRedHeld = false;
+        }
       }
     }
   }
 
-  showHoldPoseCircle(x: number, y: number) {}
+  showHoldCircle(x: number, y: number, textureColor: 'red' | 'blue', type: 'start' | 'end') {
+    const scale = 0.7;
+    const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
+    const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
+    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(scale);
+    if (gameObject && this.group) {
+      gameObject.setData({
+        type,
+        color,
+      });
+      gameObject.refreshBody();
+      this.group.add(gameObject);
+    }
+  }
+
+  showMusicCircle(x: number, y: number) {
+    const scale = 0.7;
+    const gameObject = this.physics.add
+      .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
+      .setScale(scale);
+    if (gameObject && this.group) {
+      // gameObject.setData({});
+      gameObject.refreshBody();
+      this.group.add(gameObject);
+    }
+  }
+
+  async destroyGameObjects(object?: TextureKeys.MUSIC_CIRCLE) {
+    console.log('Destroy Game Objects::', object || 'ALL');
+    if (!object) {
+      this.group.clear(true, true);
+    } else {
+      this.group.getChildren().forEach((child: any) => {
+        if (!child || !child.texture || !child.texture.key) return;
+        if (child.texture.key === object) {
+          child.destroy(true);
+        }
+      });
+    }
+  }
+
+  waitForCollisionOrTimeout(timeout?: number): Promise<void> {
+    return new Promise<void>((resolve, _reject) => {
+      const startTime = new Date().getTime();
+      const interval = setInterval(() => {
+        // if timeout...
+        if (timeout && new Date().getTime() - startTime > timeout) {
+          resolve();
+          clearInterval(interval);
+        }
+        // if collision detected...
+        if (this.group && this.group.getLength() === 0) {
+          resolve();
+          clearInterval(interval);
+        }
+      }, 300);
+    });
+  }
+
+  animateHeld(
+    x: number,
+    y: number,
+    radius: number,
+    color: number,
+    startAngle = 0,
+    duration = 4000,
+  ) {
+    const graphics: Phaser.GameObjects.Graphics = this.add.graphics().setDepth(-1);
+
+    const tween = this.tweens.addCounter({
+      from: startAngle,
+      to: 360,
+      duration: duration,
+      ease: 'Linear',
+      useFrames: false,
+      onUpdate: function (tween) {
+        const angle = tween.getValue();
+        graphics.clear();
+        graphics.fillStyle(color, 1);
+        graphics.slice(
+          x,
+          y,
+          radius + 8,
+          Phaser.Math.DegToRad(0),
+          Phaser.Math.DegToRad(angle),
+          false,
+        );
+        graphics.fillPath();
+      },
+    });
+    return { tween, graphics };
+  }
 
   checkIfAssetsAreLoaded() {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
@@ -158,6 +431,9 @@ export class MovingTonesScene extends Phaser.Scene {
    * @param results Pose Results
    */
   drawHands(results: Results): void {
+    const handObjectRadius = 20;
+    const handObjectColor = 0xffffff;
+    const handObjectOpacity = 0.5;
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
@@ -168,7 +444,13 @@ export class MovingTonesScene extends Phaser.Scene {
       const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
 
       this.leftHand = this.physics.add.existing(
-        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+        this.add.circle(
+          width - x * width,
+          y * height,
+          handObjectRadius,
+          handObjectColor,
+          handObjectOpacity,
+        ),
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
@@ -178,7 +460,13 @@ export class MovingTonesScene extends Phaser.Scene {
 
       // this.rightHand = this.add.arc(width - x * width, y * height, 25, 0, 360, false, 0xffffff, 0.5);
       this.rightHand = this.physics.add.existing(
-        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+        this.add.circle(
+          width - x * width,
+          y * height,
+          handObjectRadius,
+          handObjectColor,
+          handObjectOpacity,
+        ),
       );
     }
   }
