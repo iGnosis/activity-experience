@@ -325,10 +325,7 @@ export class BenchmarkService {
     const report: any = await this.apiService.generateBenchmarkReport(benchmarkId, this.gameId);
     this.downloadReport(report);
 
-    const gameBenchmarkId =
-      result.insert_benchmark_one && result.insert_benchmark_one.id
-        ? result.insert_benchmark_one.id
-        : '';
+    const gameBenchmarkId = result && result.id ? result.id : '';
 
     return {
       status: 'success',
