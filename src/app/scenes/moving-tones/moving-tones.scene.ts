@@ -12,11 +12,15 @@ enum TextureKeys {
   RED_DONE = 'red_done',
   RED_BLUE_RIPPLE = 'red_blue_ripple',
   GREEN_BUBBLES = 'green_bubbles',
+  GREEN_RIPPLE = 'green_ripple',
+  GREEN_BLAST = 'green_blast',
 }
 
 enum AnimationKeys {
   RED_BLUE_RIPPLE_ANIM = 'red_blue_ripple_anim',
   GREEN_BUBBLES_ANIM = 'green_bubbles_anim',
+  GREEN_RIPPLE_ANIM = 'green_ripple_anim',
+  GREEN_BLAST_ANIM = 'green_blast_anim',
 }
 
 interface TweenData {
@@ -292,8 +296,24 @@ export class MovingTonesScene extends Phaser.Scene {
 
     this.load.atlas(
       TextureKeys.RED_BLUE_RIPPLE,
-      'assets/images/moving-tones/ripple/blue-red-ripple.png',
-      'assets/images/moving-tones/ripple/blue-red-ripple.json',
+      'assets/images/moving-tones/spritesheets/blue-red-ripple.png',
+      'assets/images/moving-tones/spritesheets/blue-red-ripple.json',
+    );
+    this.load.atlas(
+      TextureKeys.GREEN_RIPPLE,
+      'src/assets/images/moving-tones/spritesheets/green-ripple.png',
+      'src/assets/images/moving-tones/spritesheets/green-ripple.json',
+    );
+
+    this.load.atlas(
+      TextureKeys.GREEN_BUBBLES,
+      'src/assets/images/moving-tones/spritesheets/green-bubble.png',
+      'src/assets/images/moving-tones/spritesheets/green-bubble.json',
+    );
+    this.load.atlas(
+      TextureKeys.GREEN_BLAST,
+      'src/assets/images/moving-tones/spritesheets/green-blast.png',
+      'src/assets/images/moving-tones/spritesheets/green-blast.json',
     );
 
     this.load.once('complete', (_id: any, _completed: number, failed: number) => {
@@ -306,6 +326,8 @@ export class MovingTonesScene extends Phaser.Scene {
     });
   }
   create() {
+    this.group = this.physics.add.staticGroup({});
+
     this.anims.create({
       key: AnimationKeys.RED_BLUE_RIPPLE_ANIM,
       frames: this.anims.generateFrameNames(TextureKeys.RED_BLUE_RIPPLE, {
@@ -315,12 +337,48 @@ export class MovingTonesScene extends Phaser.Scene {
         zeroPad: 2,
         suffix: '.png',
       }),
-      // skipMissedFrames: true,
       duration: 1000,
       hideOnComplete: true,
     });
 
-    this.group = this.physics.add.staticGroup({});
+    this.anims.create({
+      key: AnimationKeys.GREEN_RIPPLE_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.GREEN_RIPPLE, {
+        start: 0,
+        end: 15,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.GREEN_BUBBLES_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.GREEN_BUBBLES, {
+        start: 0,
+        end: 63,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.GREEN_BLAST_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.GREEN_BLAST, {
+        start: 13,
+        end: 26,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
   }
 
   override update(time: number, delta: number): void {

@@ -452,10 +452,10 @@
   "meta": {
     "app": "https://www.codeandweb.com/texturepacker",
     "version": "1.0",
-    "image": "bubbles.png",
+    "image": "green-bubble.png",
     "format": "RGBA8888",
     "size": { "w": 4000, "h": 4000 },
     "scale": "1",
-    "smartupdate": "$TexturePacker:SmartUpdate:26c1fdb90e99f14911d3eb5a43701e68:ab224484f336b57d89cc5c7757a4021f:bca2200893a80f12811007d61ceaffd1$"
+    "smartupdate": "$TexturePacker:SmartUpdate:52dc1bb7e1040924860aabf7723e7b7a:ab224484f336b57d89cc5c7757a4021f:d1d3d45b8d8aedf127fb1d0982ed201a$"
   }
 }
