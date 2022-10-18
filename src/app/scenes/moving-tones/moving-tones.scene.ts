@@ -204,6 +204,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
       const { x, y } = gameObject.body.center;
 
+      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
       gameObject.destroy(true);
       this.add
         .sprite(x, y, TextureKeys.GREEN_BUBBLES)
@@ -406,20 +407,28 @@ export class MovingTonesScene extends Phaser.Scene {
     this.holdSuccessMusic = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_calibrated.mp3',
       html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
     });
     this.holdEntrySound = new Howl({
       src: 'assets/images/moving-tones/music/hold_entry_sound.mp3',
       html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
     });
 
     this.holdSound = new Howl({
       src: 'assets/images/moving-tones/music/hold_sound.mp3',
       html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
     });
 
     this.greenEntrySound = new Howl({
       src: 'assets/images/moving-tones/music/green_entry_sound.mp3',
       html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
     });
   }
   create() {
