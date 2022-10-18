@@ -81,8 +81,20 @@ export class MovingTonesScene extends Phaser.Scene {
     if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
-      // TODO: Add animation before destroying
+      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+      rippleAnim.destroy(true);
+
+      const { x, y } = gameObject.body.center;
+
       gameObject.destroy(true);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BLAST)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BLAST_ANIM);
     }
 
     if (gameObject.texture.key === TextureKeys.RED_CIRCLE) {
@@ -175,8 +187,20 @@ export class MovingTonesScene extends Phaser.Scene {
     if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
-      // TODO: Add animation before destroying
+      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+      rippleAnim.destroy(true);
+
+      const { x, y } = gameObject.body.center;
+
       gameObject.destroy(true);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BLAST)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BLAST_ANIM);
     }
 
     if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) {
@@ -301,19 +325,19 @@ export class MovingTonesScene extends Phaser.Scene {
     );
     this.load.atlas(
       TextureKeys.GREEN_RIPPLE,
-      'src/assets/images/moving-tones/spritesheets/green-ripple.png',
-      'src/assets/images/moving-tones/spritesheets/green-ripple.json',
+      'assets/images/moving-tones/spritesheets/green-ripple.png',
+      'assets/images/moving-tones/spritesheets/green-ripple.json',
     );
 
     this.load.atlas(
       TextureKeys.GREEN_BUBBLES,
-      'src/assets/images/moving-tones/spritesheets/green-bubble.png',
-      'src/assets/images/moving-tones/spritesheets/green-bubble.json',
+      'assets/images/moving-tones/spritesheets/green-bubble.png',
+      'assets/images/moving-tones/spritesheets/green-bubble.json',
     );
     this.load.atlas(
       TextureKeys.GREEN_BLAST,
-      'src/assets/images/moving-tones/spritesheets/green-blast.png',
-      'src/assets/images/moving-tones/spritesheets/green-blast.json',
+      'assets/images/moving-tones/spritesheets/green-blast.png',
+      'assets/images/moving-tones/spritesheets/green-blast.json',
     );
 
     this.load.once('complete', (_id: any, _completed: number, failed: number) => {
@@ -345,12 +369,13 @@ export class MovingTonesScene extends Phaser.Scene {
       key: AnimationKeys.GREEN_RIPPLE_ANIM,
       frames: this.anims.generateFrameNames(TextureKeys.GREEN_RIPPLE, {
         start: 0,
-        end: 15,
+        end: 10,
         prefix: 'tile0',
         zeroPad: 2,
         suffix: '.png',
       }),
-      duration: 1000,
+      repeat: -1,
+      duration: 600,
       hideOnComplete: true,
     });
 
@@ -358,12 +383,12 @@ export class MovingTonesScene extends Phaser.Scene {
       key: AnimationKeys.GREEN_BUBBLES_ANIM,
       frames: this.anims.generateFrameNames(TextureKeys.GREEN_BUBBLES, {
         start: 0,
-        end: 63,
+        end: 24,
         prefix: 'tile0',
         zeroPad: 2,
         suffix: '.png',
       }),
-      duration: 1000,
+      duration: 300,
       hideOnComplete: true,
     });
 
@@ -376,7 +401,8 @@ export class MovingTonesScene extends Phaser.Scene {
         zeroPad: 2,
         suffix: '.png',
       }),
-      duration: 1000,
+      delay: 200,
+      duration: 100,
       hideOnComplete: true,
     });
   }
@@ -423,7 +449,16 @@ export class MovingTonesScene extends Phaser.Scene {
       .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
       .setScale(this.circleScale);
     if (gameObject && this.group) {
-      // gameObject.setData({});
+      const anim = this.add
+        .sprite(x, y, TextureKeys.GREEN_RIPPLE)
+        .play(AnimationKeys.GREEN_RIPPLE_ANIM)
+        .setScale(0.44)
+        .setDepth(-1);
+
+      gameObject.setData({
+        rippleAnim: anim,
+      });
+
       gameObject.refreshBody();
       this.group.add(gameObject);
     }
