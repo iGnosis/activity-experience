@@ -325,14 +325,14 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
+  private getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
     return [
       (gameObject.body.right + gameObject.body.left) / 2,
       (gameObject.body.top + gameObject.body.bottom) / 2,
     ];
   }
 
-  getTextureKey(shape: Shape): string {
+  private getTextureKey(shape: Shape): string {
     switch (shape) {
       case 'circle':
         return TextureKeys.CIRCLE;

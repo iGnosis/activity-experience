@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
+import { Howl } from 'howler';
 import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
+import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
 
 enum TextureKeys {
@@ -52,11 +54,12 @@ export class MovingTonesScene extends Phaser.Scene {
   private group: Phaser.Physics.Arcade.StaticGroup;
   private circleScale = 0.6;
   private holdDuration = 4000;
+  private currentNote = 1;
 
-  designAssetsLoaded = false;
-  musicFilesLoaded = 0;
-  totalMusicFiles = 0;
-  loadError = false;
+  private designAssetsLoaded = false;
+  private musicFilesLoaded = 0;
+  private totalMusicFiles = 9;
+  private loadError = false;
 
   private isBlueHeld = false;
   private isRedHeld = false;
@@ -73,6 +76,8 @@ export class MovingTonesScene extends Phaser.Scene {
     totalTimeElapsed: 0,
   };
 
+  private musicTypes = ['alto', 'soprano', 'tenor', 'bass'];
+
   private rightCollisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     gameObject: GameObjectWithBodyAndTexture,
@@ -81,11 +86,15 @@ export class MovingTonesScene extends Phaser.Scene {
     if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+      if (interactableWith === 'blue') return;
+
       const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
       rippleAnim.destroy(true);
 
       const { x, y } = gameObject.body.center;
 
+      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
       gameObject.destroy(true);
       this.add
         .sprite(x, y, TextureKeys.GREEN_BUBBLES)
@@ -187,6 +196,9 @@ export class MovingTonesScene extends Phaser.Scene {
     if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+      if (interactableWith === 'red') return;
+
       const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
       rippleAnim.destroy(true);
 
@@ -284,6 +296,14 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   };
 
+  private onLoadCallback = () => {
+    this.musicFilesLoaded += 1;
+  };
+
+  private onLoadErrorCallback = () => {
+    this.loadError = true;
+  };
+
   constructor(private ttsService: TtsService, private poseService: PoseService) {
     super({ key: 'movingTones' });
   }
@@ -347,6 +367,59 @@ export class MovingTonesScene extends Phaser.Scene {
         console.log('Design Assets Failed to Load', failed);
         this.loadError = true;
       }
+    });
+
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.alto = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Alto.mp3',
+      sprite: audioSprites.soundExplorer.alto,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.bass = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Bass.mp3',
+      sprite: audioSprites.soundExplorer.bass,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.soprano = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Soprano.mp3',
+      sprite: audioSprites.soundExplorer.soprano,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.tenor = new Howl({
+      src: 'assets/sounds/soundsprites/sound-explorer/piano/Tenor.mp3',
+      sprite: audioSprites.soundExplorer.tenor,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.holdSuccessMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_calibrated.mp3',
+      html5: true,
+    });
+    this.holdEntrySound = new Howl({
+      src: 'assets/images/moving-tones/music/hold_entry_sound.mp3',
+      html5: true,
+    });
+
+    this.holdSound = new Howl({
+      src: 'assets/images/moving-tones/music/hold_sound.mp3',
+      html5: true,
+    });
+
+    this.greenEntrySound = new Howl({
+      src: 'assets/images/moving-tones/music/green_entry_sound.mp3',
+      html5: true,
     });
   }
   create() {
@@ -434,6 +507,12 @@ export class MovingTonesScene extends Phaser.Scene {
     const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
     const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(scale);
     if (gameObject && this.group) {
+      if (type === 'start') {
+        this.playHoldCircleMusic('entry');
+        this.setNextNote();
+      } else {
+        this.playMusicCirlceEntryMusic();
+      }
       gameObject.setData({
         type,
         color,
@@ -444,11 +523,13 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
-  showMusicCircle(x: number, y: number) {
+  showMusicCircle(x: number, y: number, interactableWith: 'red' | 'blue') {
     const gameObject = this.physics.add
       .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
       .setScale(this.circleScale);
     if (gameObject && this.group) {
+      this.playMusicCirlceEntryMusic();
+
       const anim = this.add
         .sprite(x, y, TextureKeys.GREEN_RIPPLE)
         .play(AnimationKeys.GREEN_RIPPLE_ANIM)
@@ -457,6 +538,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
       gameObject.setData({
         rippleAnim: anim,
+        interactableWith,
       });
 
       gameObject.refreshBody();
@@ -496,7 +578,7 @@ export class MovingTonesScene extends Phaser.Scene {
     });
   }
 
-  animateHeld(
+  private animateHeld(
     x: number,
     y: number,
     radius: number,
@@ -529,7 +611,7 @@ export class MovingTonesScene extends Phaser.Scene {
     return { tween, graphics };
   }
 
-  checkIfAssetsAreLoaded() {
+  private checkIfAssetsAreLoaded() {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
@@ -561,7 +643,7 @@ export class MovingTonesScene extends Phaser.Scene {
     this.subscribe();
   }
 
-  subscribe() {
+  private subscribe() {
     this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       if (this.leftHand) {
         this.leftHand.destroy(true);
@@ -578,7 +660,7 @@ export class MovingTonesScene extends Phaser.Scene {
     this.unsubscribe();
   }
 
-  unsubscribe() {
+  private unsubscribe() {
     if (this.poseSubscription) {
       this.poseSubscription.unsubscribe();
     }
@@ -607,7 +689,7 @@ export class MovingTonesScene extends Phaser.Scene {
   /**
    * @param results Pose Results
    */
-  drawHands(results: Results): void {
+  private drawHands(results: Results): void {
     const handObjectRadius = 20;
     const handObjectColor = 0xffffff;
     const handObjectOpacity = 0.5;
@@ -651,12 +733,95 @@ export class MovingTonesScene extends Phaser.Scene {
   /**
    * @returns midpoint of (x1, y1) and (x2, y2).
    */
-  midPoint(x1: number, y1: number, x2: number, y2: number) {
+  private midPoint(x1: number, y1: number, x2: number, y2: number) {
     return [(x1 + x2) / 2, (y1 + y2) / 2];
   }
 
-  playSuccessMusic() {}
-  playFailureMusic() {}
+  setNextNote() {
+    if (this.currentNote === 16) {
+      this.currentNote = 1;
+    } else {
+      this.currentNote += 1;
+    }
+  }
+
+  resetNotes() {
+    this.currentNote = 1;
+  }
+
+  private alto: Howl;
+  private soprano: Howl;
+  private bass: Howl;
+  private tenor: Howl;
+  private failureMusic: Howl;
+  private holdSuccessMusic: Howl;
+  private holdEntrySound: Howl;
+  private greenEntrySound: Howl;
+  private holdSound: Howl;
+  private altoId: number;
+  private sopranoId: number;
+  private bassId: number;
+  private tenorId: number;
+  private failureMusicId: number;
+
+  private playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
+    switch (type) {
+      case 'alto':
+        if (this.alto && this.alto.playing(this.altoId)) {
+          this.alto.stop();
+        }
+        if (this.alto && !this.alto.playing(this.altoId)) {
+          this.altoId = this.alto.play(`Alto_${this.currentNote}`);
+        }
+        break;
+      case 'bass':
+        if (this.bass && this.bass.playing(this.bassId)) {
+          this.bass.stop();
+        }
+        if (this.bass && !this.bass.playing(this.bassId)) {
+          this.bassId = this.bass.play(`Bass_${this.currentNote}`);
+        }
+        break;
+      case 'soprano':
+        if (this.soprano && this.soprano.playing(this.sopranoId)) {
+          this.soprano.stop();
+        }
+        if (this.soprano && !this.soprano.playing(this.sopranoId)) {
+          this.sopranoId = this.soprano.play(`Soprano_${this.currentNote}`);
+        }
+        break;
+      case 'tenor':
+        if (this.tenor && this.tenor.playing(this.tenorId)) {
+          this.tenor.stop();
+        }
+        if (this.tenor && !this.tenor.playing(this.tenorId)) {
+          this.tenorId = this.tenor.play(`Tenor_${this.currentNote}`);
+        }
+        break;
+    }
+  }
+
+  private playFailureMusic(): void {
+    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusic.stop();
+    }
+    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
+      this.failureMusicId = this.failureMusic.play();
+    }
+  }
+
+  private playHoldCircleMusic(type: 'entry' | 'exit') {
+    if (type === 'exit') {
+      this.holdSuccessMusic && this.holdSuccessMusic.play();
+    } else {
+      this.holdEntrySound && this.holdEntrySound.play();
+    }
+  }
+
+  private playMusicCirlceEntryMusic() {
+    this.greenEntrySound && this.greenEntrySound.play();
+  }
+
   /**
    * @param value default `true`.
    */
