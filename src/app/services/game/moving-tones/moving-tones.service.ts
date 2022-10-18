@@ -6,7 +6,10 @@ import {
   AnalyticsDTO,
   GameState,
   Genre,
+  Coordinate,
   PreferenceState,
+  MovingTonesCurve,
+  MovingTonesConfiguration,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
@@ -35,6 +38,12 @@ export class MovingTonesService implements ActivityBase {
   private config = {
     gameDuration: environment.settings['moving_tones'].configuration.gameDuration,
     speed: environment.settings['moving_tones'].configuration.speed,
+  };
+
+  private center: Coordinate;
+  private updateElapsedTime = (elapsedTime: number) => {
+    if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
+    this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
   constructor(
@@ -67,6 +76,401 @@ export class MovingTonesService implements ActivityBase {
     });
   }
 
+  private getCoordinates(
+    start: Coordinate,
+    end: Coordinate,
+    curveType: MovingTonesCurve,
+    pointsInBetween: number,
+  ): Coordinate[] {
+    const coordinates: Coordinate[] = [];
+    pointsInBetween = pointsInBetween + 1;
+
+    const xDiff = end.x - start.x;
+    const yDiff = end.y - start.y;
+
+    if (curveType === 'line') {
+      coordinates.push(start);
+
+      for (let i = 1; i <= pointsInBetween; i++) {
+        coordinates.push({
+          x: start.x + (xDiff * i) / pointsInBetween,
+          y: start.y + (yDiff * i) / pointsInBetween,
+        });
+      }
+    } else if (curveType === 'semicircle') {
+      const isPointOnLeft = start.x <= this.center.x && end.x <= this.center.x;
+
+      if (isPointOnLeft) {
+        start.x = 2 * this.center.x - start.x;
+        end.x = 2 * this.center.x - end.x;
+      }
+
+      const angle =
+        this.getAngleBetweenPoints(start.x, start.y, end.x, end.y) * (isPointOnLeft ? 1 : -1);
+      const radius = Math.sqrt(
+        Math.pow(this.center.x - start.x, 2) + Math.pow(this.center.y - start.y, 2),
+      );
+
+      const angleFromCenter =
+        this.getAngleBetweenPoints(start.x, start.y, this.center.x, 0) * (isPointOnLeft ? 1 : -1) +
+        (90 * Math.PI) / 180;
+
+      for (let i = 0; i <= pointsInBetween; i++) {
+        coordinates.push({
+          x: this.center.x + radius * Math.cos((angle * i) / pointsInBetween - angleFromCenter),
+          y: this.center.y + radius * Math.sin((angle * i) / pointsInBetween - angleFromCenter),
+        });
+      }
+    } else if (curveType === 'zigzag') {
+      coordinates.push(start);
+
+      coordinates.push({ x: end.x, y: start.y });
+      coordinates.push({ x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 });
+      coordinates.push({ x: start.x, y: end.y });
+
+      coordinates.push(end);
+    } else if (curveType === 'triangle') {
+      coordinates.push(start);
+
+      const distanceBetweenPoints = Math.sqrt(
+        Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2),
+      );
+
+      const isPointOnLeft = end.x < start.x;
+      const isPointOnBottom = end.y > start.y;
+
+      coordinates.push(
+        this.getThirdPointInTriangle(
+          start,
+          end,
+          (distanceBetweenPoints * 2) / 3,
+          isPointOnLeft,
+          isPointOnBottom,
+        ),
+      );
+
+      coordinates.push(end);
+    }
+
+    return coordinates;
+  }
+
+  private async showCircles({ left, right }: { left?: Coordinate[]; right?: Coordinate[] }) {
+    const n: number = Math.max(left?.length || 0, right?.length || 0);
+
+    for (let i = 0; i < n; i++) {
+      if (i == 0 || i == n - 1) {
+        if (left?.length) {
+          this.movingTonesScene.showHoldCircle(
+            left[i].x,
+            left[i].y,
+            'blue',
+            i == 0 ? 'start' : 'end',
+          );
+        }
+        if (right?.length) {
+          this.movingTonesScene.showHoldCircle(
+            right[i].x,
+            right[i].y,
+            'red',
+            i == 0 ? 'start' : 'end',
+          );
+        }
+      } else {
+        if (left?.length) this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
+        if (right?.length) this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
+      }
+      await this.elements.sleep(150);
+    }
+  }
+
+  private getRandomConfiguration(): MovingTonesConfiguration {
+    const configurations = [
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: 50,
+        },
+        endLeft: {
+          x: 50,
+          y: this.center.y - 100,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: 50,
+        },
+        endRight: {
+          x: 2 * this.center.x - 50,
+          y: this.center.y - 100,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 2,
+      }, // quadrants - top to side
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: 2 * this.center.y - 150,
+        },
+        endLeft: {
+          x: 50,
+          y: this.center.y - 200,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: 2 * this.center.y - 150,
+        },
+        endRight: {
+          x: 2 * this.center.x - 50,
+          y: this.center.y - 200,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 2,
+      }, // bottom to side
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: this.center.y + 200,
+        },
+        endLeft: {
+          x: this.center.x - 300,
+          y: this.center.y,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: this.center.y - 200,
+        },
+        endRight: {
+          x: this.center.x + 300,
+          y: this.center.y,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 1,
+      }, // opposite hand
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: this.center.y - 200,
+        },
+        endLeft: {
+          x: this.center.x - 300,
+          y: this.center.y,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: this.center.y + 200,
+        },
+        endRight: {
+          x: this.center.x + 300,
+          y: this.center.y,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 1,
+      }, // opposite hand
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: 100,
+        },
+        endLeft: {
+          x: this.center.x - 100,
+          y: 2 * this.center.y - 100,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: 100,
+        },
+        endRight: {
+          x: this.center.x + 100,
+          y: 2 * this.center.y - 100,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 2,
+      }, // semicircles - top to bottom
+      {
+        endLeft: {
+          x: this.center.x - 100,
+          y: 100,
+        },
+        startLeft: {
+          x: this.center.x - 100,
+          y: 2 * this.center.y - 100,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: 100,
+        },
+        endRight: {
+          x: this.center.x + 100,
+          y: 2 * this.center.y - 100,
+        },
+        curveType: 'semicircle',
+        pointsInBetween: 2,
+      }, // opposite hand
+      {
+        startLeft: {
+          x: this.center.x / 2 - 50,
+          y: this.center.y - 100,
+        },
+        endLeft: {
+          x: this.center.x / 2 + 50,
+          y: this.center.y - 250,
+        },
+        startRight: {
+          x: this.center.x + this.center.x / 2 + 50,
+          y: this.center.y - 100,
+        },
+        endRight: {
+          x: this.center.x + this.center.x / 2 - 50,
+          y: this.center.y - 250,
+        },
+        curveType: 'triangle',
+        pointsInBetween: 1,
+      }, // triangles - top
+      {
+        startLeft: {
+          x: this.center.x / 2 - 50,
+          y: this.center.y,
+        },
+        endLeft: {
+          x: this.center.x / 2 + 50,
+          y: this.center.y + 150,
+        },
+        startRight: {
+          x: this.center.x + this.center.x / 2 + 50,
+          y: this.center.y,
+        },
+        endRight: {
+          x: this.center.x + this.center.x / 2 - 50,
+          y: this.center.y + 150,
+        },
+        curveType: 'triangle',
+        pointsInBetween: 1,
+      }, // bottom
+      {
+        startRight: {
+          x: this.center.x,
+          y: this.center.y - 250,
+        },
+        endRight: {
+          x: this.center.x + 200,
+          y: this.center.y + 100,
+        },
+        curveType: 'zigzag',
+        pointsInBetween: 3,
+      }, // zigzag - middle to right
+      {
+        startRight: {
+          x: this.center.x + 200,
+          y: this.center.y - 250,
+        },
+        endRight: {
+          x: this.center.x,
+          y: this.center.y + 100,
+        },
+        curveType: 'zigzag',
+        pointsInBetween: 3,
+      }, // zigzag - right to middle
+      {
+        startLeft: {
+          x: this.center.x,
+          y: this.center.y - 250,
+        },
+        endLeft: {
+          x: this.center.x - 200,
+          y: this.center.y + 100,
+        },
+        curveType: 'zigzag',
+        pointsInBetween: 3,
+      }, // middle to left
+      {
+        startLeft: {
+          x: this.center.x - 200,
+          y: this.center.y - 250,
+        },
+        endLeft: {
+          x: this.center.x,
+          y: this.center.y + 100,
+        },
+        curveType: 'zigzag',
+        pointsInBetween: 3,
+      }, // left to middle
+      {
+        startLeft: {
+          x: this.center.x - 100,
+          y: this.center.y - 250,
+        },
+        endLeft: {
+          x: this.center.x - 100,
+          y: this.center.y + 250,
+        },
+        startRight: {
+          x: this.center.x + 100,
+          y: this.center.y - 250,
+        },
+        endRight: {
+          x: this.center.x + 100,
+          y: this.center.y + 250,
+        },
+        curveType: 'line',
+        pointsInBetween: 2,
+      }, // line
+    ];
+
+    const randomConfiguration = configurations[Math.floor(Math.random() * configurations.length)];
+    return randomConfiguration as MovingTonesConfiguration;
+  }
+
+  private async game() {
+    while (!this.isGameComplete) {
+      const { startLeft, endLeft, startRight, endRight, curveType, pointsInBetween } =
+        this.getRandomConfiguration();
+
+      let leftCoordinates: Coordinate[] = [];
+      let rightCoordinates: Coordinate[] = [];
+
+      if (startLeft && endLeft) {
+        leftCoordinates = this.getCoordinates(startLeft, endLeft, curveType, pointsInBetween);
+      }
+      if (startRight && endRight) {
+        rightCoordinates = this.getCoordinates(startRight, endRight, curveType, pointsInBetween);
+      }
+
+      const shouldReverse = Math.random() > 0.5;
+
+      if (shouldReverse) {
+        leftCoordinates = leftCoordinates.reverse();
+        rightCoordinates = rightCoordinates.reverse();
+      }
+
+      await this.showCircles({ left: leftCoordinates, right: rightCoordinates });
+      const result = await this.movingTonesScene.waitForCollisionOrTimeout();
+
+      // Todo: store in analytics
+    }
+  }
+
+  private getAngleBetweenPoints(x1: number, y1: number, x2: number, y2: number): number {
+    const angle1 = Math.atan2(y1 - this.center.y, x1 - this.center.x);
+    const angle2 = Math.atan2(y2 - this.center.y, x2 - this.center.x);
+    return angle1 - angle2;
+  }
+
+  private getThirdPointInTriangle(
+    A: Coordinate,
+    B: Coordinate,
+    dist: number,
+    left = true,
+    bottom = false,
+  ) {
+    const nx = B.x - A.x;
+    const ny = B.y - A.y;
+    dist /= Math.sqrt(nx * nx + ny * ny) * (left ? -1 : 1) * (bottom ? -1 : 1);
+    return {
+      x: A.x + nx / 2 - ny * dist,
+      y: A.y + ny / 2 + nx * dist,
+    };
+  }
+
   private replayOrTimeout(timeout = 10000) {
     return new Promise(async (resolve, reject) => {
       this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
@@ -76,6 +480,7 @@ export class MovingTonesService implements ActivityBase {
 
   async setup() {
     this.movingTonesScene.enable();
+    this.center = this.movingTonesScene.center();
     return new Promise<void>(async (resolve, reject) => {
       this.movingTonesScene.scene.start('movingTones');
 
@@ -283,7 +688,10 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        // Todo: 1 rep right hand
+
+        this.movingTonesScene.showHoldCircle(this.center.x + 100, 100, 'red', 'start');
+        await this.movingTonesScene.waitForCollisionOrTimeout();
+        this.soundsService.playCalibrationSound('success');
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts("Now let's try the other hand.");
@@ -322,7 +730,10 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        // Todo: 1 rep left hand
+
+        this.movingTonesScene.showHoldCircle(this.center.x - 100, 100, 'blue', 'start');
+        await this.movingTonesScene.waitForCollisionOrTimeout();
+        this.soundsService.playCalibrationSound('success');
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts("Let's try with both hands now.");
@@ -337,7 +748,12 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(4000);
-        // 1 rep both hands
+
+        this.movingTonesScene.showHoldCircle(this.center.x - 100, 100, 'blue', 'start');
+        this.movingTonesScene.showHoldCircle(this.center.x + 100, 100, 'red', 'start');
+
+        await this.movingTonesScene.waitForCollisionOrTimeout();
+        this.soundsService.playCalibrationSound('success');
       },
       async (reCalibrationCount: number) => {
         this.elements.video.state = {
@@ -364,8 +780,31 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        // 1 full rep both hands
+
+        const startLeft = {
+          x: this.center.x - 100,
+          y: 50,
+        };
+        const endLeft = {
+          x: 50,
+          y: this.center.y - 100,
+        };
+        const startRight = {
+          x: this.center.x + 100,
+          y: 50,
+        };
+        const endRight = {
+          x: 2 * this.center.x - 50,
+          y: this.center.y - 100,
+        };
+        const leftCoordinates = this.getCoordinates(startLeft, endLeft, 'semicircle', 2);
+        const rightCoordinates = this.getCoordinates(startRight, endRight, 'semicircle', 2);
+
+        this.showCircles({ left: leftCoordinates, right: rightCoordinates });
+
+        await this.movingTonesScene.waitForCollisionOrTimeout();
         this.ttsService.tts('Well done!');
+
         this.elements.guide.state = {
           data: {
             title: 'Well done!',
@@ -376,6 +815,7 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
+
         await this.checkinService.updateOnboardingStatus({
           moving_tones: true,
         });
@@ -451,18 +891,16 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(7000);
-
-        const updateElapsedTime = (elapsedTime: number) => {
-          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-        };
+      },
+      async (reCalibrationCount: number) => {
+        // game starts
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
             duration: this.config.gameDuration! * 1000,
-            onPause: updateElapsedTime,
-            onComplete: updateElapsedTime,
+            onPause: this.updateElapsedTime,
+            onComplete: this.updateElapsedTime,
           },
           attributes: {
             visibility: 'visible',
@@ -470,7 +908,7 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
-        // game starts
+        await this.game();
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts(
@@ -509,10 +947,6 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         const shouldReplay = await this.replayOrTimeout(10000);
-        if (shouldReplay) {
-          this.soundsService.playCalibrationSound('success');
-          // replay
-        }
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -521,6 +955,27 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
+        if (shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+
+          this.isGameComplete = false;
+
+          this.elements.timer.state = {
+            data: {
+              mode: 'start',
+              isCountdown: true,
+              duration: 30_000,
+              onPause: this.updateElapsedTime,
+              onComplete: this.updateElapsedTime,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+
+          await this.game();
+        }
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -571,7 +1026,7 @@ export class MovingTonesService implements ActivityBase {
           <div class="pl-10 text-start px-14" style="padding-left: 20px;">
             <h1 class="pt-8 display-3">Moving Tones</h1>
             <h2 class="pt-7">Coins Collected: ${this.coinsCollected}</h2>
-            <h2 class="pt-5">High Score:  ${highScore} Coins</h2>
+            <h2 class="pt-5">High Score: ${highScore} Coins</h2>
             <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
           <div>
           `,

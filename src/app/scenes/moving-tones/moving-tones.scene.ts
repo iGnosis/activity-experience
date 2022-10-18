@@ -837,4 +837,9 @@ export class MovingTonesScene extends Phaser.Scene {
   enableMusic(value = true) {
     this.music = value;
   }
+
+  center() {
+    const { width, height } = this.game.canvas;
+    return { x: width / 2, y: height / 2 };
+  }
 }

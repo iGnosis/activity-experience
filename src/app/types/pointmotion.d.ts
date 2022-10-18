@@ -906,6 +906,22 @@ export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
 };
 
+export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
+
+export type Coordinate = {
+  x: number;
+  y: number;
+};
+
+export type MovingTonesConfiguration = {
+  startLeft?: Coordinate;
+  endLeft?: Coordinate;
+  startRight?: Coordinate;
+  endRight?: Coordinate;
+  curveType: MovingTonesCurve;
+  pointsInBetween: number;
+};
+
 export type PreferenceState = {
   /**
    * Genre preferred by the patient.
