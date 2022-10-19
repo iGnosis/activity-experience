@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -56,6 +56,8 @@ export class MovingTonesScene extends Phaser.Scene {
   private holdDuration = 4000;
   private currentNote = 1;
 
+  score = new BehaviorSubject<number>(0);
+
   private designAssetsLoaded = false;
   private musicFilesLoaded = 0;
   private totalMusicFiles = 9;
@@ -87,7 +89,11 @@ export class MovingTonesScene extends Phaser.Scene {
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
       const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'blue') return;
+      if (interactableWith === 'blue') {
+        this.score.next(-1);
+      } else {
+        this.score.next(1);
+      }
 
       const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
       rippleAnim.destroy(true);
@@ -197,7 +203,11 @@ export class MovingTonesScene extends Phaser.Scene {
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
       const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'red') return;
+      if (interactableWith === 'red') {
+        this.score.next(-1);
+      } else {
+        this.score.next(1);
+      }
 
       const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
       rippleAnim.destroy(true);
@@ -580,6 +590,22 @@ export class MovingTonesScene extends Phaser.Scene {
         }
         // if collision detected...
         if (this.group && this.group.getLength() === 0) {
+          resolve();
+          clearInterval(interval);
+        }
+      }, 300);
+    });
+  }
+
+  waitForFirstInteraction(color: 'blue' | 'red'): Promise<void> {
+    return new Promise<void>((resolve, _reject) => {
+      const interval = setInterval(() => {
+        // if collision detected...
+        if (color === 'blue' && this.isBlueHeld) {
+          resolve();
+          clearInterval(interval);
+        }
+        if (color === 'red' && this.isRedHeld) {
           resolve();
           clearInterval(interval);
         }
