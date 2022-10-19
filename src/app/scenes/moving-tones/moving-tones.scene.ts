@@ -525,44 +525,50 @@ export class MovingTonesScene extends Phaser.Scene {
     const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
     const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
     const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(scale);
-    if (gameObject && this.group) {
-      if (type === 'start') {
-        this.playHoldCircleMusic('entry');
-        this.setNextNote();
-      } else {
-        this.playMusicCirlceEntryMusic();
-      }
-      gameObject.setData({
-        type,
-        color,
-        startFromBeginning,
-      });
-      gameObject.refreshBody();
-      this.group.add(gameObject);
+    if (!gameObject || !this.group) return;
+
+    if (type === 'start') {
+      this.playHoldCircleMusic('entry');
+      this.setNextNote();
+    } else {
+      this.playMusicCirlceEntryMusic();
     }
+    gameObject.setData({
+      type,
+      color,
+      startFromBeginning,
+    });
+    gameObject && gameObject.refreshBody();
+    this.group.add(gameObject);
+    return gameObject;
   }
 
   showMusicCircle(x: number, y: number, interactableWith: 'red' | 'blue') {
     const gameObject = this.physics.add
       .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
       .setScale(this.circleScale);
+
+    if (!gameObject || !this.group) return;
+
+    this.playMusicCirlceEntryMusic();
+    const anim = this.add
+      .sprite(x, y, TextureKeys.GREEN_RIPPLE)
+      .play(AnimationKeys.GREEN_RIPPLE_ANIM)
+      .setScale(0.4)
+      .setDepth(-1)
+      .setAlpha(0.5);
+    gameObject.setData({
+      rippleAnim: anim,
+      interactableWith,
+    });
+    gameObject.refreshBody();
+    this.group.add(gameObject);
+    return gameObject;
+  }
+
+  destroy(gameObject: any) {
     if (gameObject && this.group) {
-      this.playMusicCirlceEntryMusic();
-
-      const anim = this.add
-        .sprite(x, y, TextureKeys.GREEN_RIPPLE)
-        .play(AnimationKeys.GREEN_RIPPLE_ANIM)
-        .setScale(0.4)
-        .setDepth(-1)
-        .setAlpha(0.5);
-
-      gameObject.setData({
-        rippleAnim: anim,
-        interactableWith,
-      });
-
-      gameObject.refreshBody();
-      this.group.add(gameObject);
+      this.group.remove(gameObject, true, true);
     }
   }
 
