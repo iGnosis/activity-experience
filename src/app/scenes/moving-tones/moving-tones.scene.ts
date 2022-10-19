@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
+import { Game } from 'phaser';
 import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
@@ -132,7 +133,7 @@ export class MovingTonesScene extends Phaser.Scene {
             if (startFromBeginning) {
               graphics.destroy(true);
               redTween.remove();
-              this.destroyGameObjects(TextureKeys.MUSIC_CIRCLE);
+              this.destroyGameObjects('allExceptStartCircles');
               this.redTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
@@ -243,7 +244,7 @@ export class MovingTonesScene extends Phaser.Scene {
             if (startFromBeginning) {
               graphics.destroy(true);
               blueTween.remove();
-              this.destroyGameObjects(TextureKeys.MUSIC_CIRCLE);
+              this.destroyGameObjects('allExceptStartCircles');
               this.blueTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
@@ -542,8 +543,9 @@ export class MovingTonesScene extends Phaser.Scene {
       const anim = this.add
         .sprite(x, y, TextureKeys.GREEN_RIPPLE)
         .play(AnimationKeys.GREEN_RIPPLE_ANIM)
-        .setScale(0.44)
-        .setDepth(-1);
+        .setScale(0.4)
+        .setDepth(-1)
+        .setAlpha(0.5);
 
       gameObject.setData({
         rippleAnim: anim,
@@ -555,17 +557,56 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
-  async destroyGameObjects(object?: string) {
+  destroyGameObjects(object?: 'music_circle' | 'allExceptStartCircles') {
     console.log('Destroy Game Objects::', object || 'ALL');
     if (!object) {
       this.group.clear(true, true);
     } else {
-      this.group.getChildren().forEach((child: any) => {
-        if (!child || !child.texture || !child.texture.key) return;
-        if (child.texture.key === object) {
-          child.destroy(true);
-        }
-      });
+      if (object === 'music_circle') {
+        const idxList: number[] = [];
+        (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child, idx) => {
+          if (!child || !child.texture || !child.texture.key) {
+            idxList.push(idx);
+          } else if (child.texture.key === TextureKeys.MUSIC_CIRCLE) {
+            const rippleAnim = child.getData('rippleAnim');
+            rippleAnim && rippleAnim.destroy(true);
+            idxList.push(idx);
+          }
+        });
+        idxList.sort(function (a, b) {
+          return b - a;
+        });
+        idxList.forEach((idx) => {
+          const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
+          child && child.destroy(true);
+        });
+      } else {
+        const idxList: number[] = [];
+        (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child, idx) => {
+          if (!child || !child.texture || !child.texture.key) {
+            idxList.push(idx);
+          } else if (child.texture.key === TextureKeys.MUSIC_CIRCLE) {
+            const rippleAnim = child.getData('rippleAnim');
+            rippleAnim && rippleAnim.destroy(true);
+            idxList.push(idx);
+          } else if (
+            child.texture.key === TextureKeys.BLUE_CIRCLE ||
+            child.texture.key === TextureKeys.RED_CIRCLE
+          ) {
+            const type: 'start' | 'end' = child.getData('type');
+            if (type === 'end') {
+              idxList.push(idx);
+            }
+          }
+        });
+        idxList.sort(function (a, b) {
+          return b - a;
+        });
+        idxList.forEach((idx) => {
+          const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
+          child && child.destroy(true);
+        });
+      }
     }
   }
 
