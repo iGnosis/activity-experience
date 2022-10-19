@@ -30,9 +30,16 @@ export class SitToStandService implements ActivityBase {
   private failedReps = 0;
   private totalReps = 0;
   private globalReCalibrationCount: number;
+
+  // init default config values.
+  private minSpeed = 0;
+  private maxSpeed = 10000; /* assumption: 10seconds will be max timeout. */
+  private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
   private config = {
-    minCorrectReps: environment.settings['sit_stand_achieve'].configuration.minCorrectReps,
-    speed: environment.settings['sit_stand_achieve'].configuration.speed,
+    minCorrectReps:
+      environment.settings['sit_stand_achieve'].levels[this.currentLevel].configuration
+        .minCorrectReps,
+    speed: environment.settings['sit_stand_achieve'].levels[this.currentLevel].configuration.speed,
   };
 
   private gameStartTime: number | null;
@@ -68,7 +75,40 @@ export class SitToStandService implements ActivityBase {
     });
   }
 
+  // TODO: config should be updated on the database when the game ends.
+  optimizeSpeed(pastNPromptsToConsider = 1) {
+    const pastNPrompts = this.analytics.slice(this.analytics.length - pastNPromptsToConsider);
+
+    if (pastNPrompts.length < pastNPromptsToConsider) {
+      return;
+    }
+
+    const numOfSuccessPrompts = pastNPrompts.filter(
+      (prompt) => prompt.result.type === 'success',
+    ).length;
+    const avgSuccess = numOfSuccessPrompts / pastNPrompts.length;
+
+    // ...so that it's harder to play
+    if (avgSuccess > 0.6) {
+      this.maxSpeed = this.config.speed;
+    } else {
+      // ...so that it's easier to play
+      this.minSpeed = this.config.speed + 500;
+    }
+    this.config.speed = (this.minSpeed + this.maxSpeed) / 2;
+  }
+
   async setup() {
+    // setup game config
+    const settings = await this.apiService.getGameSettings('sit_stand_achieve');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.currentLevel = settings.settings.currentLevel;
+      this.config.minCorrectReps =
+        settings.settings[this.currentLevel].configuration.minCorrectReps;
+      this.config.speed = settings.settings[this.currentLevel].configuration.speed;
+      console.log('setup::config::', this.config);
+    }
+
     this.sit2StandService.enable();
     return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
@@ -732,7 +772,7 @@ export class SitToStandService implements ActivityBase {
         startTime: Date.now(),
         completionTimeInMs: hasUserStateChanged
           ? Math.abs(resultTimestamp - promptTimestamp)
-          : null, // seconds between reaction and result if user state changed
+          : null, // milliseconds between reaction and result if user state changed
       },
       result: {
         type: res.result,
@@ -850,6 +890,15 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           );
           this.analytics.push(analyticsObj);
+
+          if (
+            this.analytics.length >= 2 &&
+            this.analytics.slice(this.analytics.length - 2)[0].prompt.type !=
+              this.analytics.slice(this.analytics.length - 2)[1].prompt.type
+          ) {
+            this.optimizeSpeed();
+          }
+
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (res.result === 'success') {
             this.sit2StandScene.playMusic(this.genre, 'trigger');

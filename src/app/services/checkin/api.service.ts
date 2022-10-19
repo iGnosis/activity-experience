@@ -2,7 +2,14 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
-import { AnalyticsDTO, GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  Activities,
+  ActivityLevel,
+  AnalyticsDTO,
+  GameState,
+  Genre,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
 
@@ -239,6 +246,27 @@ export class ApiService {
     } catch (err) {
       console.log(err);
       return err;
+    }
+  }
+
+  async getGameSettings(gameName: Activities) {
+    try {
+      const gameSettings = await this.client.req(
+        gql`
+          query getGameSettings($gameName: game_name_enum!) {
+            game_settings(where: { gameName: { _eq: $gameName } }) {
+              gameName
+              createdAt
+              updatedAt
+              settings: configuration
+            }
+          }
+        `,
+        { gameName },
+      );
+      return gameSettings.game_settings[0];
+    } catch (err) {
+      console.log(err);
     }
   }
 

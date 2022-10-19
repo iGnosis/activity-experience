@@ -442,9 +442,17 @@ export class GameService {
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
       console.log('no game played today. returning the first game as per config.');
+      const settings = await this.apiService.getGameSettings(environment.order[0]);
+      console.log('getGameSettings:settings:', settings);
+      if (!settings) {
+        return {
+          name: environment.order[0],
+          settings: environment.settings[environment.order[0]],
+        };
+      }
       return {
         name: environment.order[0],
-        settings: environment.settings[environment.order[0]],
+        settings: settings.settings,
       };
     }
 
@@ -459,9 +467,17 @@ export class GameService {
       nextGameIndex = lastGameIndex;
     }
     const nextGame = environment.order[nextGameIndex];
+    const settings = await this.apiService.getGameSettings(nextGame);
+    console.log('getGameSettings:settings:', settings);
+    if (!settings) {
+      return {
+        name: nextGame,
+        settings: environment.settings[nextGame],
+      };
+    }
     return {
       name: nextGame,
-      settings: environment.settings[nextGame],
+      settings: settings.settings,
     };
   }
 

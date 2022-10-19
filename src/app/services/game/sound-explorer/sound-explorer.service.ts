@@ -29,9 +29,11 @@ export class SoundExplorerService {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
+  private currentLevel = environment.settings['sound_explorer'].currentLevel;
   private config = {
-    gameDuration: environment.settings['sound_explorer'].configuration.gameDuration,
-    speed: environment.settings['sound_explorer'].configuration.speed,
+    gameDuration:
+      environment.settings['sound_explorer'].levels[this.currentLevel].configuration.gameDuration,
+    speed: environment.settings['sound_explorer'].levels[this.currentLevel].configuration.speed,
   };
 
   private gameStartTime: number | null;
