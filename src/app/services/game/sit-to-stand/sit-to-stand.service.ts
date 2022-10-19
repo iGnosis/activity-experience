@@ -34,12 +34,11 @@ export class SitToStandService implements ActivityBase {
   // init default config values.
   private minSpeed = 0;
   private maxSpeed = 10000; /* assumption: 10seconds will be max timeout. */
+  private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
   private config = {
-    minCorrectReps:
-      environment.settings['sit_stand_achieve'].levels[this.currentLevel].configuration
-        .minCorrectReps,
-    speed: environment.settings['sit_stand_achieve'].levels[this.currentLevel].configuration.speed,
+    minCorrectReps: this.gameSettings.levels[this.currentLevel].configuration.minCorrectReps,
+    speed: this.gameSettings.levels[this.currentLevel].configuration.speed,
   };
 
   private gameStartTime: number | null;
@@ -102,10 +101,11 @@ export class SitToStandService implements ActivityBase {
     // setup game config
     const settings = await this.apiService.getGameSettings('sit_stand_achieve');
     if (settings && settings.settings && settings.settings.currentLevel) {
+      this.gameSettings = settings.settings;
       this.currentLevel = settings.settings.currentLevel;
       this.config.minCorrectReps =
-        settings.settings[this.currentLevel].configuration.minCorrectReps;
-      this.config.speed = settings.settings[this.currentLevel].configuration.speed;
+        settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
+      this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
     }
 
@@ -1060,6 +1060,10 @@ export class SitToStandService implements ActivityBase {
             sit_stand_achieve: false,
           });
         }
+
+        // update game config.
+        this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         let totalDuration: {
           minutes: string;

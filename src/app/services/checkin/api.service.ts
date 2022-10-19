@@ -4,6 +4,7 @@ import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
 import {
   Activities,
+  ActivityConfiguration,
   ActivityLevel,
   AnalyticsDTO,
   GameState,
@@ -253,7 +254,7 @@ export class ApiService {
     try {
       const gameSettings = await this.client.req(
         gql`
-          query getGameSettings($gameName: game_name_enum!) {
+          query GetGameSettings($gameName: game_name_enum!) {
             game_settings(where: { gameName: { _eq: $gameName } }) {
               gameName
               createdAt
@@ -265,6 +266,27 @@ export class ApiService {
         { gameName },
       );
       return gameSettings.game_settings[0];
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateGameSettings(gameName: Activities, settings: ActivityConfiguration) {
+    try {
+      const updateSettingsResp = await this.client.req(
+        gql`
+          mutation UpdateGameSettings($gameName: game_name_enum!, $configuration: jsonb!) {
+            update_game_settings(
+              where: { gameName: { _eq: $gameName } }
+              _set: { configuration: $configuration }
+            ) {
+              affected_rows
+            }
+          }
+        `,
+        { gameName, configuration: settings },
+      );
+      return updateSettingsResp;
     } catch (err) {
       console.log(err);
     }
