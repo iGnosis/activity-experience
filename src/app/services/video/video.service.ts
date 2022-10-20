@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { frame } from 'src/app/store/actions/frame.actions';
 
 @Injectable({
   providedIn: 'root',
@@ -55,11 +54,5 @@ export class VideoService {
   _extractFrame(stream: MediaStream, video: HTMLVideoElement, canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');
     context?.drawImage(video, 0, 0, this.width, this.height);
-    // const data = context?.getImageData(0, 0, this.width, this.height).data
-    const data = canvas.toDataURL('jpg');
-    if (data) {
-      const update = { frame: data };
-      this.store.dispatch(frame.send(update));
-    }
   }
 }

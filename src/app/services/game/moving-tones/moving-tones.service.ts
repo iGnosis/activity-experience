@@ -17,7 +17,7 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
@@ -57,7 +57,7 @@ export class MovingTonesService implements ActivityBase {
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {
@@ -893,7 +893,7 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           moving_tones: true,
         });
         await this.elements.sleep(3000);
@@ -1090,7 +1090,7 @@ export class MovingTonesService implements ActivityBase {
         const achievementRatio = this.coinsCollected / totalReps;
 
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             moving_tones: false,
           });
         }
@@ -1098,8 +1098,8 @@ export class MovingTonesService implements ActivityBase {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.checkinService.getDurationForTimer(this.gameDuration);
-        const highScore = await this.checkinService.getHighScore('moving_tones');
+        } = this.apiService.getDurationForTimer(this.gameDuration);
+        const highScore = await this.apiService.getHighScore('moving_tones');
 
         this.ttsService.tts(
           `Coins collected: ${this.coinsCollected}, time completed: ${this.gameDuration} minutes.`,

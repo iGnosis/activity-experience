@@ -10,13 +10,12 @@ import {
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import { SitToStandService as Sit2StandService } from '../../classifiers/sit-to-stand/sit-to-stand.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { TtsService } from '../../tts/tts.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
@@ -35,6 +34,11 @@ export class SitToStandService implements ActivityBase {
     minCorrectReps: environment.settings['sit_stand_achieve'].configuration.minCorrectReps,
     speed: environment.settings['sit_stand_achieve'].configuration.speed,
   };
+
+  private gameStartTime: number | null;
+  private firstPromptTime: number | null;
+  private loopStartTime: number | null;
+
   private analytics: AnalyticsDTO[] = [];
 
   constructor(
@@ -43,14 +47,13 @@ export class SitToStandService implements ActivityBase {
       preference: PreferenceState;
     }>,
     private elements: ElementsService,
-    private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private sit2StandService: Sit2StandService,
     private sit2StandScene: SitToStandScene,
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -88,6 +91,8 @@ export class SitToStandService implements ActivityBase {
 
     return [
       async (reCalibrationCount: number) => {
+        // start recording
+        this.gameStartTime = Date.now();
         if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
@@ -652,7 +657,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Guide completed');
         await this.elements.sleep(3400);
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
         this.soundsService.pauseActivityInstructionSound(this.genre);
@@ -664,9 +669,85 @@ export class SitToStandService implements ActivityBase {
     return [];
   }
 
+  async showPrompt(
+    promptNum: number,
+    promptId: string,
+    analytics: any[],
+    reCalibrationCount?: number,
+  ) {
+    const promptClass = promptNum % 2 === 0 ? 'sit' : 'stand';
+
+    this.elements.prompt.state = {
+      data: {
+        value: promptNum,
+      },
+      attributes: {
+        visibility: 'visible',
+        ...(typeof reCalibrationCount === 'number' && { reCalibrationCount }),
+      },
+    };
+    const promptTimestamp = Date.now();
+    this.ttsService.tts(promptNum.toString());
+    this.elements.timeout.state = {
+      data: {
+        mode: 'start',
+        timeout: this.config.speed,
+      },
+      attributes: {
+        visibility: 'visible',
+        ...(typeof reCalibrationCount === 'number' && { reCalibrationCount }),
+      },
+    };
+    const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+      promptClass,
+      this.config.speed,
+    );
+    const resultTimestamp = Date.now();
+    this.totalReps += 1;
+    this.elements.timeout.state = {
+      data: {
+        mode: 'stop',
+      },
+      attributes: {
+        visibility: 'hidden',
+        ...(typeof reCalibrationCount === 'number' && { reCalibrationCount }),
+      },
+    };
+    const userState =
+      res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
+    const hasUserStateChanged: boolean =
+      analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== userState : true;
+    const analyticsObj = {
+      prompt: {
+        id: promptId,
+        type: promptClass,
+        timestamp: promptTimestamp,
+        data: {
+          number: promptNum,
+        },
+      },
+      reaction: {
+        type: userState,
+        timestamp: Date.now(),
+        startTime: Date.now(),
+        completionTimeInMs: hasUserStateChanged
+          ? Math.abs(resultTimestamp - promptTimestamp)
+          : null, // seconds between reaction and result if user state changed
+      },
+      result: {
+        type: res.result,
+        timestamp: resultTimestamp,
+        score: res.result === 'success' ? 1 : 0,
+      },
+    };
+
+    return { res, analyticsObj };
+  }
+
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.loopStartTime = Date.now();
         this.elements.guide.state = {
           data: {
             showIndefinitely: true,
@@ -679,6 +760,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Raise one of your hands to move further');
         await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
           data: {},
@@ -715,6 +797,33 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
+
+        const startResult: 'success' | 'failure' = 'success';
+        const startPrompt = {
+          prompt: {
+            id: uuidv4(),
+            type: 'start',
+            timestamp: Date.now(),
+            data: {
+              gameStartTime: this.gameStartTime,
+              loopStartTime: this.loopStartTime,
+              firstPromptTime: this.firstPromptTime,
+            },
+          },
+          reaction: {
+            type: 'start',
+            timestamp: Date.now(),
+            startTime: Date.now(),
+            completionTimeInMs: 0,
+          },
+          result: {
+            type: startResult,
+            timestamp: Date.now(),
+            score: 0,
+          },
+        };
+        this.analytics.push(startPrompt);
+        this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
       },
       async (reCalibrationCount: number) => {
         while (this.successfulReps < this.config.minCorrectReps!) {
@@ -733,73 +842,13 @@ export class SitToStandService implements ActivityBase {
                 : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
             }
           }
-          const promptClass = promptNum % 2 === 0 ? 'sit' : 'stand';
-
-          this.elements.prompt.state = {
-            data: {
-              value: promptNum,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          const promptTimestamp = Date.now();
-          this.ttsService.tts(promptNum.toString());
-          this.elements.timeout.state = {
-            data: {
-              mode: 'start',
-              timeout: this.config.speed,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
-            promptClass,
-            this.config.speed,
+          const promptId = uuidv4();
+          const { res, analyticsObj } = await this.showPrompt(
+            promptNum,
+            promptId,
+            this.analytics,
+            reCalibrationCount,
           );
-          const resultTimestamp = Date.now();
-          this.totalReps += 1;
-          this.elements.timeout.state = {
-            data: {
-              mode: 'stop',
-            },
-            attributes: {
-              visibility: 'hidden',
-              reCalibrationCount,
-            },
-          };
-          const userState =
-            res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
-          const hasUserStateChanged: boolean =
-            this.analytics.length > 0
-              ? this.analytics.slice(-1)[0].reaction.type !== userState
-              : true;
-          const analyticsObj = {
-            prompt: {
-              id: uuidv4(),
-              type: promptClass,
-              timestamp: promptTimestamp,
-              data: {
-                number: promptNum,
-              },
-            },
-            reaction: {
-              type: userState,
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTimeInMs: hasUserStateChanged
-                ? Math.abs(resultTimestamp - promptTimestamp)
-                : null, // seconds between reaction and result if user state changed
-            },
-            result: {
-              type: res.result,
-              timestamp: resultTimestamp,
-              score: res.result === 'success' ? 1 : 0,
-            },
-          };
           this.analytics.push(analyticsObj);
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (res.result === 'success') {
@@ -958,7 +1007,7 @@ export class SitToStandService implements ActivityBase {
         this.sit2StandScene.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             sit_stand_achieve: false,
           });
         }
@@ -969,7 +1018,7 @@ export class SitToStandService implements ActivityBase {
         };
         this.store.pipe(take(1)).subscribe(async (state) => {
           totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.checkinService.getFastestTime('sit_stand_achieve');
+          const fastestTimeInSecs = await this.apiService.getFastestTime('sit_stand_achieve');
           console.log('fastest: ', fastestTimeInSecs);
           const fastestTime = this.sit2StandService.updateTimer(
             Math.min(fastestTimeInSecs || Number.MAX_VALUE, state.game.totalDuration!),

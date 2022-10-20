@@ -10,8 +10,6 @@ import {
   CalibrationStatusType,
   GameState,
   GameStatus,
-  Genre,
-  HandTrackerStatus,
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
@@ -23,7 +21,7 @@ import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
-import { CheckinService } from '../checkin/checkin.service';
+import { ApiService } from '../checkin/api.service';
 import { JwtService } from '../jwt/jwt.service';
 import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
@@ -35,12 +33,14 @@ import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
 import { MovingTonesService } from './moving-tones/moving-tones.service';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
+import { BenchmarkService } from '../benchmark/benchmark.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
   game?: Phaser.Game;
+  benchmarkId?: string | null;
   config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -94,7 +94,19 @@ export class GameService {
               mode: 'resume',
             };
           }
-          this.startGame();
+          if (this.benchmarkId) {
+            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+              window.parent.postMessage(
+                {
+                  type: 'end-game',
+                  ...result,
+                },
+                '*',
+              );
+            });
+          } else {
+            this.startGame();
+          }
         });
       }
     }
@@ -121,10 +133,11 @@ export class GameService {
       preference: PreferenceState;
     }>,
     private gameStateService: GameStateService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private jwtService: JwtService,
     private ttsService: TtsService,
     private googleAnalyticsService: GoogleAnalyticsService,
+    private benchmarkService: BenchmarkService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -138,26 +151,39 @@ export class GameService {
           // use a specific query to update analytics -- since analytics are stored as JSONB array
           if (game.analytics) {
             // game.analytics[0] is an ugly-workaround - there will always an array of length 1
-            this.gameStateService.updateAnalytics(game.id, game.analytics[0]);
+            this.apiService.updateAnalytics(game.id, game.analytics[0]);
           }
 
           // generic update query for fields which aren't JSONB
           else {
             const { id, ...gameState } = game;
-            this.gameStateService.updateGame(id, gameState);
+            this.apiService.updateGame(id, gameState);
           }
         }
       });
   }
 
-  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
     this.checkAuth();
+    this.benchmarkId = benchmarkId;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
       });
-      video.srcObject = stream;
+
+      if (this.benchmarkId) {
+        this.benchmarkService.setVideo(video);
+
+        const config = await this.apiService.getBenchmarkConfig(this.benchmarkId);
+        if (config && config.rawVideoUrl)
+          await this.benchmarkService.loadRawVideo(config.rawVideoUrl);
+      } else {
+        video.srcObject = stream;
+        video.muted = true;
+        video.autoplay = true;
+      }
+
       const videoTracks = stream.getTracks();
       if (Array.isArray(videoTracks) && videoTracks.length > 0) {
         const track = videoTracks[0];
@@ -351,7 +377,19 @@ export class GameService {
           };
           this.calibrationStartTime = new Date();
         } else {
-          this.startGame();
+          if (this.benchmarkId) {
+            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+              window.parent.postMessage(
+                {
+                  type: 'end-game',
+                  ...result,
+                },
+                '*',
+              );
+            });
+          } else {
+            this.startGame();
+          }
         }
       }
       if (this.calibrationStatus === 'error') {
@@ -405,7 +443,7 @@ export class GameService {
     // will be called in two cases...
     // once one game is finished
     // second when the user is calibrated (again)
-    const lastGame = await this.checkinService.getLastGame();
+    const lastGame = await this.apiService.getLastGame();
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
@@ -419,7 +457,7 @@ export class GameService {
     const lastGameIndex = environment.order.indexOf(lastGame[0].game);
     // last played game ended, return next game
     let nextGameIndex = (lastGameIndex + 1) % environment.order.length;
-    const lastPlayedGame = await this.checkinService.getLastPlayedGame();
+    const lastPlayedGame = await this.apiService.getLastPlayedGame();
 
     if (!lastPlayedGame[0].endedAt) {
       const lastGameIndex = environment.order.indexOf(lastPlayedGame[0].game);
@@ -435,7 +473,7 @@ export class GameService {
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
     let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
-    const onboardingStatus = await this.checkinService.getOnboardingStatus();
+    const onboardingStatus = await this.apiService.getOnboardingStatus();
     if (
       onboardingStatus &&
       onboardingStatus.length > 0 &&
@@ -464,7 +502,7 @@ export class GameService {
     if (activity) {
       try {
         // get genre
-        this.checkinService.getUserGenre();
+        this.apiService.getUserGenre();
       } catch (err) {
         console.log(err);
       }
@@ -475,7 +513,7 @@ export class GameService {
           // throw new Error('Re-calibration occurred');
         }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
-          const response = await this.gameStateService.newGame(nextGame.name).catch((err) => {
+          const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
           });
           if (response && response.insert_game_one) {
@@ -548,7 +586,7 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
-      this.startGame();
+      if (!this.benchmarkId) this.startGame();
     }
 
     // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.

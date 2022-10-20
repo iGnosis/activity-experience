@@ -880,7 +880,8 @@ export type AnalyticsPromptDTO = {
     | Sit2StandAnalyticsDTO
     | BeatboxerAnalyticsDTO
     | SoundExplorerAnalyticsDTO
-    | MovingTonesAnalyticsDTO;
+    | MovingTonesAnalyticsDTO
+    | GameStartAnalyticsDTO;
 };
 
 export type AnalyticsReactionDTO = {
@@ -929,6 +930,12 @@ export type MovingTonesConfiguration = {
   endRight?: Coordinate;
   curveType: MovingTonesCurve;
   pointsInBetween: number;
+};
+
+export type GameStartAnalyticsDTO = {
+  gameStartTime: number | null;
+  loopStartTime: number | null;
+  firstPromptTime: number | null;
 };
 
 export type PreferenceState = {

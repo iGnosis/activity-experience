@@ -30,7 +30,7 @@ export class GoogleAnalyticsService {
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
     
-      gtag('config', '${environment.googleAnalyticsTrackingID}', {send_page_view: false});`;
+      gtag('config', '${environment.googleAnalyticsTrackingID}', {send_page_view: false, cookie_flags: 'secure;samesite=none'});`;
       document.body.appendChild(script);
     }, 500);
   }
