@@ -38,11 +38,12 @@ export class MovingTonesService implements ActivityBase {
     gameDuration: environment.settings['moving_tones'].configuration.gameDuration,
     speed: environment.settings['moving_tones'].configuration.speed,
   };
-  private gameDuration = environment.settings['moving_tones'].configuration.gameDuration || 0;
+  private gameDuration = this.config.gameDuration || 0;
+  private totalDuration = this.config.gameDuration || 0;
 
   private center: Coordinate;
   private updateElapsedTime = (elapsedTime: number) => {
-    if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
+    if (elapsedTime >= this.gameDuration!) this.isGameComplete = true;
     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
@@ -222,7 +223,7 @@ export class MovingTonesService implements ActivityBase {
   }
 
   private getRandomConfiguration(): MovingTonesConfiguration {
-    const configurations = [
+    const configurations: MovingTonesConfiguration[] = [
       {
         startLeft: {
           x: this.center.x - 50,
@@ -434,7 +435,7 @@ export class MovingTonesService implements ActivityBase {
     ];
 
     const randomConfiguration = configurations[Math.floor(Math.random() * configurations.length)];
-    return randomConfiguration as MovingTonesConfiguration;
+    return randomConfiguration;
   }
 
   private async game(reCalibrationCount?: number) {
@@ -452,15 +453,20 @@ export class MovingTonesService implements ActivityBase {
 
       if (startLeft && endLeft) {
         leftCoordinates = this.getCoordinates(startLeft, endLeft, curveType, pointsInBetween);
-
-        const shouldReverseOneSide = Math.random() > 0.5;
-
-        if (shouldReverseOneSide && curveType === 'semicircle') {
-          leftCoordinates.reverse();
-        }
       }
       if (startRight && endRight) {
         rightCoordinates = this.getCoordinates(startRight, endRight, curveType, pointsInBetween);
+      }
+
+      const isSemicircle =
+        endLeft && endLeft.x === this.center.x - 100 && endLeft.y === this.center.y + 150;
+
+      if (isSemicircle) {
+        const shouldReverseOneSide = Math.random() > 0.5;
+
+        if (shouldReverseOneSide) {
+          leftCoordinates = leftCoordinates.reverse();
+        }
       }
 
       const shouldReverse = Math.random() > 0.5;
@@ -947,6 +953,8 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(3000);
 
+        this.movingTonesScene.score.next(0);
+
         this.movingTonesScene.score.subscribe((score) => {
           if (score == 1) this.coinsCollected++;
           else if (score == -1) this.failedReps++;
@@ -982,7 +990,7 @@ export class MovingTonesService implements ActivityBase {
           data: {
             mode: 'start',
             isCountdown: true,
-            duration: this.config.gameDuration! * 1000,
+            duration: this.gameDuration! * 1000,
             onPause: this.updateElapsedTime,
             onComplete: this.updateElapsedTime,
           },
@@ -1057,10 +1065,15 @@ export class MovingTonesService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          this.gameDuration += 30;
+          this.gameDuration = 30;
+          this.totalDuration += 30;
 
           await this.game(reCalibrationCount);
         }
+        this.elements.timer.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1098,11 +1111,11 @@ export class MovingTonesService implements ActivityBase {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.apiService.getDurationForTimer(this.gameDuration);
+        } = this.apiService.getDurationForTimer(this.totalDuration);
         const highScore = await this.apiService.getHighScore('moving_tones');
 
         this.ttsService.tts(
-          `Coins collected: ${this.coinsCollected}, time completed: ${this.gameDuration} minutes.`,
+          `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} minutes.`,
         );
         this.elements.banner.state = {
           attributes: {
