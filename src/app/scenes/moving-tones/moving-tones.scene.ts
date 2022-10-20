@@ -90,34 +90,18 @@ export class MovingTonesScene extends Phaser.Scene {
     if (!gameObject.texture) return;
     if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) return;
 
-    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
-      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'blue') {
-        this.score.next(-1);
-      } else {
-        this.score.next(1);
+    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) {
+      const type: 'start' | 'end' | undefined = gameObject.getData('type');
+      if (type === 'end') {
+        if (this.checkIfStartCircleExists(this.group, TextureKeys.RED_CIRCLE)) {
+          return;
+        }
       }
 
-      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
-      rippleAnim.destroy(true);
-
-      const { x, y } = gameObject.body.center;
-
-      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
-      gameObject.destroy(true);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BLAST)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BLAST_ANIM);
-    }
-
-    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) {
-      const [type, color, startFromBeginning]: ['start' | 'end', number, boolean] =
-        gameObject.getData(['type', 'color', 'startFromBeginning']);
+      const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
+        'color',
+        'startFromBeginning',
+      ]);
 
       if (this.isRedHeld === false) {
         this.isRedHeld = true;
@@ -142,7 +126,9 @@ export class MovingTonesScene extends Phaser.Scene {
             if (startFromBeginning) {
               graphics.destroy(true);
               redTween.remove();
-              this.destroyGameObjects('allExceptStartCircles');
+              if (type === 'start') {
+                this.destroyGameObjects('allExceptStartCircles');
+              }
               this.redTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
@@ -195,19 +181,14 @@ export class MovingTonesScene extends Phaser.Scene {
         });
       }
     }
-  };
-
-  private leftCollisionCallback = (
-    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    gameObject: GameObjectWithBodyAndTexture,
-  ) => {
-    if (!gameObject.texture) return;
-
-    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.RED_CIRCLE);
+      console.log('startCirclesExist::', startCirclesExist);
+      if (startCirclesExist) return;
+
       const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'red') {
+      if (interactableWith === 'blue') {
         this.score.next(-1);
       } else {
         this.score.next(1);
@@ -229,10 +210,28 @@ export class MovingTonesScene extends Phaser.Scene {
         .setScale(this.circleScale)
         .play(AnimationKeys.GREEN_BLAST_ANIM);
     }
+  };
+
+  private leftCollisionCallback = (
+    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!gameObject.texture) return;
+
+    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
 
     if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) {
-      const [type, color, startFromBeginning]: ['start' | 'end', number, boolean] =
-        gameObject.getData(['type', 'color', 'startFromBeginning']);
+      const type: 'start' | 'end' | undefined = gameObject.getData('type');
+      if (type === 'end') {
+        if (this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE)) {
+          return;
+        }
+      }
+
+      const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
+        'color',
+        'startFromBeginning',
+      ]);
 
       if (this.isBlueHeld === false) {
         this.isBlueHeld = true;
@@ -258,7 +257,9 @@ export class MovingTonesScene extends Phaser.Scene {
             if (startFromBeginning) {
               graphics.destroy(true);
               blueTween.remove();
-              this.destroyGameObjects('allExceptStartCircles');
+              if (type === 'start') {
+                this.destroyGameObjects('allExceptStartCircles');
+              }
               this.blueTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
@@ -309,6 +310,35 @@ export class MovingTonesScene extends Phaser.Scene {
           }
         });
       }
+    }
+
+    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
+      const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE);
+      console.log('startCirclesExist::', startCirclesExist);
+      if (startCirclesExist) return;
+
+      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+      if (interactableWith === 'red') {
+        this.score.next(-1);
+      } else {
+        this.score.next(1);
+      }
+
+      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+      rippleAnim.destroy(true);
+
+      const { x, y } = gameObject.body.center;
+
+      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
+      gameObject.destroy(true);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BLAST)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BLAST_ANIM);
     }
   };
 
@@ -446,6 +476,7 @@ export class MovingTonesScene extends Phaser.Scene {
       onloaderror: this.onLoadErrorCallback,
     });
   }
+
   create() {
     this.group = this.physics.add.staticGroup({});
 
@@ -579,12 +610,12 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
-  destroyGameObjects(object?: 'music_circle' | 'allExceptStartCircles') {
+  destroyGameObjects(object?: TextureKeys.MUSIC_CIRCLE | 'allExceptStartCircles') {
     console.log('Destroy Game Objects::', object || 'ALL');
     if (!object) {
       this.group.clear(true, true);
     } else {
-      if (object === 'music_circle') {
+      if (object === TextureKeys.MUSIC_CIRCLE) {
         const idxList: number[] = [];
         (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child, idx) => {
           if (!child || !child.texture || !child.texture.key) {
@@ -632,6 +663,32 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
+  checkIfStartCircleExists(group: Phaser.Physics.Arcade.StaticGroup, textureKey: string) {
+    for (const child of group.getChildren() as GameObjectWithBodyAndTexture[]) {
+      if (child && child.texture && child.texture.key === textureKey) {
+        const type: 'start' | 'end' = child.getData('type');
+        if (type === 'start') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  checkIfAnyHoldCirclesExist(group: Phaser.Physics.Arcade.StaticGroup) {
+    for (const child of group.getChildren() as GameObjectWithBodyAndTexture[]) {
+      if (
+        child &&
+        child.texture &&
+        (child.texture.key === TextureKeys.BLUE_CIRCLE ||
+          child.texture.key === TextureKeys.RED_CIRCLE)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   waitForCollisionOrTimeout(timeout?: number): Promise<void> {
     return new Promise<void>((resolve, _reject) => {
       const startTime = new Date().getTime();
@@ -642,7 +699,11 @@ export class MovingTonesScene extends Phaser.Scene {
           clearInterval(interval);
         }
         // if collision detected...
-        if (this.group && this.group.getLength() === 0) {
+        if (
+          (this.group && this.group.getLength() === 0) ||
+          !this.checkIfAnyHoldCirclesExist(this.group)
+        ) {
+          this.destroyGameObjects(TextureKeys.MUSIC_CIRCLE);
           resolve();
           clearInterval(interval);
         }
