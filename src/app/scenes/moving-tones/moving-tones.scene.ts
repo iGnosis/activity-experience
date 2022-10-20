@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -66,6 +66,9 @@ export class MovingTonesScene extends Phaser.Scene {
   private isBlueHeld = false;
   private isRedHeld = false;
 
+  blueHoldState = new Subject<boolean>();
+  redHoldState = new Subject<boolean>();
+
   private redTween: TweenData = {
     stoppedAt: undefined,
     remainingDuration: undefined,
@@ -118,6 +121,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
       if (this.isRedHeld === false) {
         this.isRedHeld = true;
+        if (type === 'start') this.redHoldState.next(true);
         const { x, y } = gameObject.body.center;
         const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
 
@@ -232,6 +236,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
       if (this.isBlueHeld === false) {
         this.isBlueHeld = true;
+        if (type === 'start') this.blueHoldState.next(true);
 
         const { x, y } = gameObject.body.center;
         const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
@@ -504,11 +509,13 @@ export class MovingTonesScene extends Phaser.Scene {
       if (this.leftHand && this.group && this.group.getLength() >= 1) {
         if (!this.physics.overlap(this.leftHand, this.group, this.leftCollisionCallback)) {
           this.isBlueHeld = false;
+          this.blueHoldState.next(false);
         }
       }
       if (this.rightHand && this.group && this.group.getLength() >= 1) {
         if (!this.physics.overlap(this.rightHand, this.group, this.rightCollisionCallback)) {
           this.isRedHeld = false;
+          this.redHoldState.next(false);
         }
       }
     }
@@ -636,22 +643,6 @@ export class MovingTonesScene extends Phaser.Scene {
         }
         // if collision detected...
         if (this.group && this.group.getLength() === 0) {
-          resolve();
-          clearInterval(interval);
-        }
-      }, 300);
-    });
-  }
-
-  waitForFirstInteraction(color: 'blue' | 'red'): Promise<void> {
-    return new Promise<void>((resolve, _reject) => {
-      const interval = setInterval(() => {
-        // if collision detected...
-        if (color === 'blue' && this.isBlueHeld) {
-          resolve();
-          clearInterval(interval);
-        }
-        if (color === 'red' && this.isRedHeld) {
           resolve();
           clearInterval(interval);
         }

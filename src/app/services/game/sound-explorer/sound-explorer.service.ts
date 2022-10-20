@@ -632,7 +632,7 @@ export class SoundExplorerService {
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Last activity. Sound Explorer.');
+        this.ttsService.tts('Next activity. Sound Explorer.');
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -642,7 +642,7 @@ export class SoundExplorerService {
             type: 'intro',
             htmlStr: `
             <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Last Activity</h2>
+              <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Sound Explorer</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
               <h1 class="py-2">Range of Motion and Balance</h2>
@@ -877,7 +877,7 @@ export class SoundExplorerService {
           `,
             buttons: [
               {
-                title: 'Back to Homepage',
+                title: 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],
@@ -885,37 +885,7 @@ export class SoundExplorerService {
         };
 
         await this.elements.sleep(12000);
-      },
-      async (reCalibrationCount: number) => {
         this.store.dispatch(game.gameCompleted());
-        this.ttsService.tts('Please raise one of your hands to close the game.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Please raise one of your hands to close the game.',
-            showIndefinitely: true,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
-        this.googleAnalyticsService.sendEvent('level_end', {
-          level_name: 'sound_explorer',
-        });
-        this.gameStateService.postLoopHook();
-        window.parent.postMessage(
-          {
-            type: 'end-game',
-          },
-          '*',
-        );
       },
     ];
   }

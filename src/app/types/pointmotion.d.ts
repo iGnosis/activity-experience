@@ -876,7 +876,11 @@ export type AnalyticsPromptDTO = {
   id: string;
   type: string;
   timestamp: number;
-  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;
+  data:
+    | Sit2StandAnalyticsDTO
+    | BeatboxerAnalyticsDTO
+    | SoundExplorerAnalyticsDTO
+    | MovingTonesAnalyticsDTO;
 };
 
 export type AnalyticsReactionDTO = {
@@ -904,6 +908,11 @@ export type BeatboxerAnalyticsDTO = {
 
 export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
+};
+
+export type MovingTonesAnalyticsDTO = {
+  leftCoordinates: Coordinate[];
+  rightCoordinates: Coordinate[];
 };
 
 export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';

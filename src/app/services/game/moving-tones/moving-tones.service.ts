@@ -22,6 +22,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
+import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -72,6 +73,16 @@ export class MovingTonesService implements ActivityBase {
       });
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
+    });
+  }
+
+  private async waitForCollisionOrRecalibration(reCalibrationCount?: number) {
+    return new Promise((resolve, reject) => {
+      setInterval(() => {
+        if (reCalibrationCount !== this.globalReCalibrationCount) resolve('recalibrated');
+      }, 100);
+
+      this.movingTonesScene.waitForCollisionOrTimeout().then((result) => resolve(result), reject);
     });
   }
 
@@ -161,12 +172,13 @@ export class MovingTonesService implements ActivityBase {
   private async showCircles({
     left,
     right,
-    reCalibrationCount,
   }: {
     left?: Coordinate[];
     right?: Coordinate[];
-    reCalibrationCount?: number;
-  }) {
+  }): Promise<{
+    blueSubscription: Subscription | undefined;
+    redSubscription: Subscription | undefined;
+  }> {
     if (left?.length) {
       this.movingTonesScene.showHoldCircle(left[0].x, left[0].y, 'blue', 'start');
     }
@@ -174,15 +186,13 @@ export class MovingTonesService implements ActivityBase {
       this.movingTonesScene.showHoldCircle(right[0].x, right[0].y, 'red', 'start');
     }
 
+    let blueSubscription: Subscription | undefined;
+    let redSubscription: Subscription | undefined;
+
     if (left?.length) {
-      this.movingTonesScene
-        .waitForFirstInteraction('blue')
-        .then(async () => {
+      blueSubscription = this.movingTonesScene.blueHoldState.subscribe(async (state) => {
+        if (state) {
           for (let i = 1; i < left.length; i++) {
-            if (reCalibrationCount !== this.globalReCalibrationCount) {
-              this.movingTonesScene.destroyGameObjects();
-              throw new Error('reCalibrationCount changed');
-            }
             if (i === left.length - 1) {
               this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
             } else {
@@ -190,18 +200,13 @@ export class MovingTonesService implements ActivityBase {
             }
             await this.elements.sleep(150);
           }
-        })
-        .catch((err: any) => console.error(err));
+        }
+      });
     }
     if (right?.length) {
-      this.movingTonesScene
-        .waitForFirstInteraction('red')
-        .then(async () => {
+      redSubscription = this.movingTonesScene.redHoldState.subscribe(async (state) => {
+        if (state) {
           for (let i = 1; i < right.length; i++) {
-            if (reCalibrationCount !== this.globalReCalibrationCount) {
-              this.movingTonesScene.destroyGameObjects();
-              throw new Error('reCalibrationCount changed');
-            }
             if (i === right.length - 1) {
               this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
             } else {
@@ -209,9 +214,11 @@ export class MovingTonesService implements ActivityBase {
             }
             await this.elements.sleep(150);
           }
-        })
-        .catch((err: any) => console.error(err));
+        }
+      });
     }
+
+    return { blueSubscription, redSubscription };
   }
 
   private getRandomConfiguration(): MovingTonesConfiguration {
@@ -463,16 +470,51 @@ export class MovingTonesService implements ActivityBase {
         rightCoordinates.reverse();
       }
 
-      await this.showCircles({
+      const subscriptions = await this.showCircles({
         left: leftCoordinates,
         right: rightCoordinates,
-        reCalibrationCount,
       });
+      const promptTimestamp = Date.now();
 
-      const result = await this.movingTonesScene.waitForCollisionOrTimeout();
+      const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
+
+      subscriptions.blueSubscription?.unsubscribe();
+      subscriptions.redSubscription?.unsubscribe();
+
+      if (result === 'recalibrated') {
+        this.movingTonesScene.destroyGameObjects();
+        throw new Error('reCalibrationCount changed');
+      }
+
+      const resultTimestamp = Date.now();
       this.store.dispatch(game.setScore({ score: this.coinsCollected }));
 
+      const resultStatus: 'success' | 'failure' = 'success';
+
       // Todo: store in analytics
+      const analyticsObj = {
+        prompt: {
+          id: uuidv4(),
+          type: 'circles',
+          timestamp: promptTimestamp,
+          data: {
+            leftCoordinates,
+            rightCoordinates,
+          },
+        },
+        reaction: {
+          type: 'interact',
+          timestamp: Date.now(),
+          startTime: Date.now(),
+          completionTimeInMs: Math.abs(resultTimestamp - promptTimestamp),
+        },
+        result: {
+          type: resultStatus,
+          timestamp: resultTimestamp,
+          score: 1,
+        },
+      };
+      this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
     }
   }
 
@@ -615,10 +657,11 @@ export class MovingTonesService implements ActivityBase {
             transitionDuration: 3500,
           },
         };
+        await this.elements.sleep(2000);
         this.ttsService.tts(
           'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
         );
-        await this.elements.sleep(17000);
+        await this.elements.sleep(15000);
       },
     ];
   }
@@ -827,9 +870,16 @@ export class MovingTonesService implements ActivityBase {
         const leftCoordinates = this.getCoordinates(startLeft, endLeft, 'semicircle', 2);
         const rightCoordinates = this.getCoordinates(startRight, endRight, 'semicircle', 2);
 
-        this.showCircles({ left: leftCoordinates, right: rightCoordinates });
+        const subscriptions = await this.showCircles({
+          left: leftCoordinates,
+          right: rightCoordinates,
+        });
 
         await this.movingTonesScene.waitForCollisionOrTimeout();
+
+        subscriptions.blueSubscription?.unsubscribe();
+        subscriptions.redSubscription?.unsubscribe();
+
         this.ttsService.tts('Well done!');
 
         this.elements.guide.state = {
@@ -1078,12 +1128,6 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
-        this.store.dispatch(game.gameCompleted());
-        this.googleAnalyticsService.sendEvent('level_end', {
-          level_name: 'moving_tones',
-        });
-        this.gameStateService.postLoopHook();
-
         await this.elements.sleep(12000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
@@ -1102,6 +1146,12 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(4000);
+
+        this.store.dispatch(game.gameCompleted());
+        this.googleAnalyticsService.sendEvent('level_end', {
+          level_name: 'moving_tones',
+        });
+        await this.gameStateService.postLoopHook();
 
         window.parent.postMessage(
           {
