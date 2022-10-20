@@ -48,25 +48,6 @@ export class BeatBoxerService {
     right?: undefined | BagType | 'obstacle';
   } = {};
 
-  private updateTimer(totalSeconds: number) {
-    let minutes = 0;
-    if (totalSeconds >= 60) {
-      minutes = Math.floor(totalSeconds / 60);
-      totalSeconds -= 60 * minutes;
-    }
-    let time = { minutes: '0', seconds: '00' };
-    time = {
-      minutes:
-        minutes < 10
-          ? (time.minutes = '0' + minutes.toString())
-          : (time.minutes = minutes.toString()),
-      seconds:
-        totalSeconds < 10
-          ? (time.seconds = '0' + totalSeconds.toString())
-          : (time.seconds = totalSeconds.toString()),
-    };
-    return time;
-  }
   private config = {
     gameDuration: environment.settings['beat_boxer'].configuration.gameDuration,
     speed: environment.settings['beat_boxer'].configuration.speed,
@@ -1126,7 +1107,7 @@ export class BeatBoxerService {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.updateTimer(this.config.gameDuration!);
+        } = this.apiService.getDurationForTimer(this.config.gameDuration!);
         const highScore = await this.apiService.getHighScore('beat_boxer');
 
         this.elements.banner.state = {
