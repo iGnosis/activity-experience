@@ -55,7 +55,7 @@ export class MovingTonesScene extends Phaser.Scene {
   private music = false;
   private group: Phaser.Physics.Arcade.StaticGroup;
   private circleScale = 0.6;
-  private holdDuration = 4000;
+  private holdDuration = 2500;
   private currentNote = 1;
 
   score = new BehaviorSubject<number>(0);
@@ -244,7 +244,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
         const { tween: blueTween, graphics } =
           this.blueTween.remainingDuration === undefined || this.blueTween.stoppedAt === undefined
-            ? this.animateHeld(x, y, circleRadius, color)
+            ? this.animateHeld(x, y, circleRadius, color, this.holdDuration)
             : this.animateHeld(
                 x,
                 y,
@@ -745,7 +745,7 @@ export class MovingTonesScene extends Phaser.Scene {
     radius: number,
     color: number,
     startAngle = 0,
-    duration = 4000,
+    duration = 2500,
   ) {
     const graphics: Phaser.GameObjects.Graphics = this.add.graphics().setDepth(-1);
     const tween = this.tweens.addCounter({
