@@ -74,7 +74,6 @@ export class SitToStandService implements ActivityBase {
     });
   }
 
-  // TODO: config should be updated on the database when the game ends.
   optimizeSpeed(pastNPromptsToConsider = 1) {
     const pastNPrompts = this.analytics.slice(this.analytics.length - pastNPromptsToConsider);
 
@@ -88,7 +87,7 @@ export class SitToStandService implements ActivityBase {
     const avgSuccess = numOfSuccessPrompts / pastNPrompts.length;
 
     // ...so that it's harder to play
-    if (avgSuccess > 0.6) {
+    if (avgSuccess > 0.5) {
       this.maxSpeed = this.config.speed;
     } else {
       // ...so that it's easier to play
@@ -937,6 +936,8 @@ export class SitToStandService implements ActivityBase {
             };
             this.failedReps += 1;
             if (this.failedReps >= 3) {
+              // increase timeout duration by 1 second.
+              this.config.speed += 1000;
               this.elements.timer.state = {
                 data: {
                   mode: 'pause',
