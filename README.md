@@ -1,5 +1,8 @@
 # Activities
 
+
+![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.4.
 
 ## Development server
