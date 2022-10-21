@@ -355,13 +355,17 @@ export class SoundExplorerScene extends Phaser.Scene {
    */
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
     if (!this.group) return;
-    const shapeScale = 0.04;
+    let shapeScale = 0.04;
 
     // this.setNextNote();
 
     // const velocityX = velocity * Math.cos(angle);
     // const velocityY = -velocity * Math.sin(angle);
     for (const shape of shapes) {
+      if (shape === 'wrong') {
+        shapeScale = 0.048;
+      }
+
       const [originX, originY] = this.getOrigin(origin);
       const textureKey = this.getTextureKey(shape);
 
