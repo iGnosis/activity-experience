@@ -1,7 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Shape } from '../scenes/sound-explorer.scene';
+import { Shape } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 
 declare global {
   interface Window {
@@ -743,12 +743,12 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
 
 export type GameLevels = 'level1' | 'level2' | 'level3';
 
 export type ActivityLevel = {
-  [key: string]: {
+  [level: string]: {
     configuration: {
       /**
        * Number of correct reps required for an activity to end.
@@ -889,6 +889,7 @@ export type AnalyticsPromptDTO = {
     | Sit2StandAnalyticsDTO
     | BeatboxerAnalyticsDTO
     | SoundExplorerAnalyticsDTO
+    | MovingTonesAnalyticsDTO
     | GameStartAnalyticsDTO;
 };
 
@@ -917,6 +918,27 @@ export type BeatboxerAnalyticsDTO = {
 
 export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
+};
+
+export type MovingTonesAnalyticsDTO = {
+  leftCoordinates: Coordinate[];
+  rightCoordinates: Coordinate[];
+};
+
+export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
+
+export type Coordinate = {
+  x: number;
+  y: number;
+};
+
+export type MovingTonesConfiguration = {
+  startLeft?: Coordinate;
+  endLeft?: Coordinate;
+  startRight?: Coordinate;
+  endRight?: Coordinate;
+  curveType: MovingTonesCurve;
+  pointsInBetween: number;
 };
 
 export type GameStartAnalyticsDTO = {
@@ -984,6 +1006,10 @@ export type ScoreElementState = {
    * Inputs a string that appears as label for the score element
    */
   label?: string;
+  /**
+   * Inputs the file path for an icon to be displayed in the score element
+   */
+  icon?: string;
   /**
    * Inputs a number or string as the current score
    */
@@ -1076,7 +1102,7 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
 };
 
 export type GuideElementState = {

@@ -91,9 +91,10 @@ export class SitToStandService implements ActivityBase {
       this.maxSpeed = this.config.speed;
     } else {
       // ...so that it's easier to play
-      this.minSpeed = this.config.speed + 500;
+      this.minSpeed = this.config.speed + 250;
     }
     this.config.speed = (this.minSpeed + this.maxSpeed) / 2;
+    console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
   }
 
   async setup() {
@@ -936,8 +937,8 @@ export class SitToStandService implements ActivityBase {
             };
             this.failedReps += 1;
             if (this.failedReps >= 3) {
-              // increase timeout duration by 1 second.
-              this.config.speed += 1000;
+              // for better user experience - increase timeout duration by 2 second.
+              this.config.speed += 2000;
               this.elements.timer.state = {
                 data: {
                   mode: 'pause',

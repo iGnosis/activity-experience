@@ -16,7 +16,7 @@ export const environment: Environment = {
   apiEndpoint: 'https://services.dev.pointmotioncontrol.com',
   websocketEndpoint: 'ws://localhost:9000',
   postSessionRedirectEndpoint: 'http://localhost:4200',
-  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer'],
+  order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer', 'moving_tones'],
   settings: {
     sit_stand_achieve: {
       currentLevel: 'level1',
@@ -47,6 +47,17 @@ export const environment: Environment = {
       },
     },
     sound_explorer: {
+      currentLevel: 'level1',
+      levels: {
+        level1: {
+          configuration: {
+            gameDuration: 3 * 60,
+            speed: 400,
+          },
+        },
+      },
+    },
+    moving_tones: {
       currentLevel: 'level1',
       levels: {
         level1: {

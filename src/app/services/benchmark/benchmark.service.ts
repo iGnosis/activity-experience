@@ -2,7 +2,7 @@ import { ElementRef, Injectable, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
-import { SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { game } from 'src/app/store/actions/game.actions';
 import { GameState, Genre, PreferenceState } from 'src/app/types/pointmotion';
 import { ApiService } from '../checkin/api.service';
