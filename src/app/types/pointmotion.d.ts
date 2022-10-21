@@ -610,6 +610,11 @@ export interface IsMediaPipeReady {
   downloadSource: 'local' | 'cdn';
 }
 
+export interface IsHandsModelReady {
+  isHandsModelReady: boolean;
+  downloadSource: 'local' | 'cdn';
+}
+
 export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
