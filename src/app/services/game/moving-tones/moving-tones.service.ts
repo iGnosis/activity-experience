@@ -226,20 +226,20 @@ export class MovingTonesService implements ActivityBase {
     const configurations: MovingTonesConfiguration[] = [
       {
         startLeft: {
-          x: this.center.x - 50,
+          x: this.center.x - 100,
           y: this.center.y - 270,
         },
         endLeft: {
           x: 50,
-          y: this.center.y,
+          y: this.center.y + 100,
         },
         startRight: {
-          x: this.center.x + 50,
+          x: this.center.x + 100,
           y: this.center.y - 270,
         },
         endRight: {
           x: 2 * this.center.x - 50,
-          y: this.center.y,
+          y: this.center.y + 100,
         },
         curveType: 'semicircle',
         pointsInBetween: 2,
@@ -419,7 +419,7 @@ export class MovingTonesService implements ActivityBase {
         },
         endLeft: {
           x: this.center.x - 100,
-          y: this.center.y + 250,
+          y: this.center.y + 170,
         },
         startRight: {
           x: this.center.x + 100,
@@ -427,7 +427,7 @@ export class MovingTonesService implements ActivityBase {
         },
         endRight: {
           x: this.center.x + 100,
-          y: this.center.y + 250,
+          y: this.center.y + 170,
         },
         curveType: 'line',
         pointsInBetween: 2,
@@ -521,6 +521,7 @@ export class MovingTonesService implements ActivityBase {
         },
       };
       this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+      await this.elements.sleep(200);
     }
   }
 
@@ -859,19 +860,19 @@ export class MovingTonesService implements ActivityBase {
 
         const startLeft = {
           x: this.center.x - 100,
-          y: 50,
+          y: this.center.y - 270,
         };
         const endLeft = {
           x: 50,
-          y: this.center.y - 100,
+          y: this.center.y + 100,
         };
         const startRight = {
           x: this.center.x + 100,
-          y: 50,
+          y: this.center.y - 270,
         };
         const endRight = {
           x: 2 * this.center.x - 50,
-          y: this.center.y - 100,
+          y: this.center.y + 100,
         };
         const leftCoordinates = this.getCoordinates(startLeft, endLeft, 'semicircle', 2);
         const rightCoordinates = this.getCoordinates(startRight, endRight, 'semicircle', 2);
