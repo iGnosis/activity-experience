@@ -19,27 +19,47 @@ export const environment: Environment = {
   order: ['sit_stand_achieve', 'beat_boxer', 'sound_explorer', 'moving_tones'],
   settings: {
     sit_stand_achieve: {
-      configuration: {
-        minCorrectReps: 10,
-        speed: 5000,
+      currentLevel: 'level1',
+      levels: {
+        level1: {
+          configuration: {
+            minCorrectReps: 10,
+            speed: 5000,
+          },
+        },
       },
     },
     beat_boxer: {
-      configuration: {
-        gameDuration: 3 * 60,
-        speed: 2500,
+      currentLevel: 'level1',
+      levels: {
+        level1: {
+          configuration: {
+            gameDuration: 3 * 60,
+            speed: 2500,
+          },
+        },
       },
     },
     sound_explorer: {
-      configuration: {
-        gameDuration: 3 * 60,
-        speed: 400,
+      currentLevel: 'level1',
+      levels: {
+        level1: {
+          configuration: {
+            gameDuration: 3 * 60,
+            speed: 400,
+          },
+        },
       },
     },
     moving_tones: {
-      configuration: {
-        gameDuration: 3 * 60,
-        speed: 400,
+      currentLevel: 'level1',
+      levels: {
+        level1: {
+          configuration: {
+            gameDuration: 3 * 60,
+            speed: 400,
+          },
+        },
       },
     },
   },

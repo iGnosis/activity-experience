@@ -744,22 +744,31 @@ export type Patient = {
 };
 
 export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
-export interface ActivityConfiguration {
-  configuration: {
-    /**
-     * Number of correct reps required for an activity to end.
-     */
-    minCorrectReps?: number;
-    /**
-     * Duration for which the game should run.
-     */
-    gameDuration?: number;
-    /**
-     * Defines speed in milliseconds at which the activity should be run.
-     */
-    speed: number;
+
+export type GameLevels = 'level1' | 'level2' | 'level3';
+
+export type ActivityLevel = {
+  [level: string]: {
+    configuration: {
+      /**
+       * Number of correct reps required for an activity to end.
+       */
+      minCorrectReps?: number;
+      /**
+       * Duration for which the game should run.
+       */
+      gameDuration?: number;
+      /**
+       * Defines speed in milliseconds at which the activity should be run.
+       */
+      speed: number;
+    };
   };
-  handler?: any;
+};
+
+export interface ActivityConfiguration {
+  currentLevel: GameLevels;
+  levels: ActivityLevel;
 }
 
 export interface Environment {
