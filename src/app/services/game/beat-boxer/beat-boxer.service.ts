@@ -48,9 +48,11 @@ export class BeatBoxerService {
     right?: undefined | BagType | 'obstacle';
   } = {};
 
+  private currentLevel = environment.settings['beat_boxer'].currentLevel;
   private config = {
-    gameDuration: environment.settings['beat_boxer'].configuration.gameDuration,
-    speed: environment.settings['beat_boxer'].configuration.speed,
+    gameDuration:
+      environment.settings['beat_boxer'].levels[this.currentLevel].configuration.gameDuration,
+    speed: environment.settings['beat_boxer'].levels[this.currentLevel].configuration.speed,
   };
   private successfulReps = 0;
   private failedReps = 0;

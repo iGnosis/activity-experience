@@ -34,9 +34,11 @@ export class MovingTonesService implements ActivityBase {
   private failedReps = 0;
   private globalReCalibrationCount: number;
   private isGameComplete = false;
+  private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
-    gameDuration: environment.settings['moving_tones'].configuration.gameDuration,
-    speed: environment.settings['moving_tones'].configuration.speed,
+    gameDuration:
+      environment.settings['moving_tones'].levels[this.currentLevel].configuration.gameDuration,
+    speed: environment.settings['moving_tones'].levels[this.currentLevel].configuration.speed,
   };
   private gameDuration = this.config.gameDuration || 0;
   private totalDuration = this.config.gameDuration || 0;
