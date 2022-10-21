@@ -16,6 +16,8 @@ enum TextureKeys {
   GREEN_BUBBLES = 'green_bubbles',
   GREEN_RIPPLE = 'green_ripple',
   GREEN_BLAST = 'green_blast',
+  LEFT_HAND = 'left-hand',
+  RIGHT_HAND = 'right-hand',
 }
 
 enum AnimationKeys {
@@ -46,8 +48,8 @@ export class MovingTonesScene extends Phaser.Scene {
   private enableLeft = false;
   private enableRight = false;
   private collisions = false;
-  private leftHand: Phaser.GameObjects.Arc;
-  private rightHand: Phaser.GameObjects.Arc;
+  private leftHand: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private rightHand: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   private enabled = false;
   private poseSubscription: Subscription;
   private music = false;
@@ -355,6 +357,21 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.svg({
+      key: TextureKeys.LEFT_HAND,
+      url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
+      svgConfig: {
+        scale: 0.5,
+      },
+    });
+    this.load.svg({
+      key: TextureKeys.RIGHT_HAND,
+      url: 'assets/images/beat-boxer/HAND_OVERLAY_RIGHT.svg',
+      svgConfig: {
+        scale: 0.5,
+      },
+    });
+
     this.load.image({
       key: TextureKeys.RED_CIRCLE,
       url: 'assets/images/moving-tones/red-circle.svg',
@@ -835,14 +852,10 @@ export class MovingTonesScene extends Phaser.Scene {
       const leftIndex = results.poseLandmarks[19];
       const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
 
-      this.leftHand = this.physics.add.existing(
-        this.add.circle(
-          width - x * width,
-          y * height,
-          handObjectRadius,
-          handObjectColor,
-          handObjectOpacity,
-        ),
+      this.leftHand = this.physics.add.staticImage(
+        width - x * width,
+        y * height,
+        TextureKeys.LEFT_HAND,
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
@@ -851,14 +864,10 @@ export class MovingTonesScene extends Phaser.Scene {
       const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
 
       // this.rightHand = this.add.arc(width - x * width, y * height, 25, 0, 360, false, 0xffffff, 0.5);
-      this.rightHand = this.physics.add.existing(
-        this.add.circle(
-          width - x * width,
-          y * height,
-          handObjectRadius,
-          handObjectColor,
-          handObjectOpacity,
-        ),
+      this.rightHand = this.physics.add.staticImage(
+        width - x * width,
+        y * height,
+        TextureKeys.RIGHT_HAND,
       );
     }
   }
