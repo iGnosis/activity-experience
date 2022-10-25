@@ -12,6 +12,7 @@ export class HandsService {
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5,
     modelComplexity: 1,
+    selfieMode: true,
   };
 
   interval: any;

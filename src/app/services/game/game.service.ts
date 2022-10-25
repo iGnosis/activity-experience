@@ -34,6 +34,8 @@ import { GoogleAnalyticsService } from '../google-analytics/google-analytics.ser
 import { MovingTonesService } from './moving-tones/moving-tones.service';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { BenchmarkService } from '../benchmark/benchmark.service';
+import { HandsService } from '../hands/hands.service';
+import { HandClassifierService } from '../classifiers/hand-classifier/hand-classifier.service';
 
 @Injectable({
   providedIn: 'root',
@@ -138,6 +140,8 @@ export class GameService {
     private ttsService: TtsService,
     private googleAnalyticsService: GoogleAnalyticsService,
     private benchmarkService: BenchmarkService,
+    private handsService: HandsService,
+    private handClassifierService: HandClassifierService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -256,6 +260,8 @@ export class GameService {
 
       this.updateDimensions(video);
       await this.startPoseDetection(video);
+      await this.startHandDetection(video);
+
       return 'success';
     } catch (err: any) {
       console.log(err);
@@ -290,6 +296,15 @@ export class GameService {
         if (environment.stageName !== 'local') {
           this.startPoseTracker();
         }
+        resolve({});
+      }, 1000);
+    });
+  }
+
+  startHandDetection(video: HTMLVideoElement) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        this.handsService.start(video);
         resolve({});
       }, 1000);
     });
