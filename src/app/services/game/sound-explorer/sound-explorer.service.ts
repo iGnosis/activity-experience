@@ -723,7 +723,7 @@ export class SoundExplorerService {
       this.successfulReps++;
     }
     // if continously high points, increase difficulty
-    if (this.streak !== 0 && this.streak % 3 === 0 && this.difficulty < 4) {
+    if (this.streak !== 0 && this.streak % 3 === 0 && this.difficulty <= 4) {
       this.difficulty++;
     }
 
@@ -752,6 +752,9 @@ export class SoundExplorerService {
         score: this.pointsGained,
       },
     };
+
+    this.pointsGained = 0;
+
     return { analyticsObj };
   }
 
@@ -813,7 +816,7 @@ export class SoundExplorerService {
               value: score,
             },
           };
-          this.pointsGained = score - this.currentScore; // points obtained in current rep
+          this.pointsGained += score - this.currentScore; // points obtained in current rep
           this.currentScore = score;
           this.store.dispatch(game.setScore({ score }));
         });
