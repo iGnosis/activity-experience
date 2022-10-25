@@ -205,29 +205,33 @@ export class MovingTonesService implements ActivityBase {
     let redSubscription: Subscription | undefined;
 
     if (left?.length) {
+      const sleepTime = 2500 / (left.length - 1);
+
       blueSubscription = this.movingTonesScene.blueHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < left.length; i++) {
+            await this.elements.sleep(sleepTime);
             if (i === left.length - 1) {
               this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
             } else {
               this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
             }
-            await this.elements.sleep(150);
           }
         }
       });
     }
     if (right?.length) {
+      const sleepTime = 2500 / (right.length - 1);
+
       redSubscription = this.movingTonesScene.redHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < right.length; i++) {
+            await this.elements.sleep(sleepTime);
             if (i === right.length - 1) {
               this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
             } else {
               this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
             }
-            await this.elements.sleep(150);
           }
         }
       });
