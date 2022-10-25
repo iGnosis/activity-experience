@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Options, Pose, Results } from '@mediapipe/pose';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, take } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { IsMediaPipeReady } from 'src/app/types/pointmotion';
+import { Coordinate, IsMediaPipeReady } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
@@ -123,4 +123,32 @@ export class PoseService {
    * Tests whether mediapipe has loaded, if not, it uses an alternative configuration and try loading it...
    */
   test() {}
+
+  async getHeightRatio(): Promise<number> {
+    const windowHeight = window.innerHeight;
+    const playerHeight = await this.getHeightFromPose();
+
+    return playerHeight / windowHeight;
+  }
+
+  private getHeightFromPose(): Promise<number> {
+    return new Promise((resolve) => {
+      this.results.pipe(take(1)).subscribe((results) => {
+        const eye = {
+          x: window.innerWidth * results.poseLandmarks[1].x,
+          y: window.innerHeight * results.poseLandmarks[1].y,
+        };
+        const leg = {
+          x: window.innerWidth * results.poseLandmarks[27].x,
+          y: window.innerHeight * results.poseLandmarks[27].y,
+        };
+
+        const playerHeight: number = Math.sqrt(
+          Math.pow(leg.x - eye.x, 2) + Math.pow(leg.y - eye.y, 2),
+        );
+
+        resolve(playerHeight);
+      });
+    });
+  }
 }
