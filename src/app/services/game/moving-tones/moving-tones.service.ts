@@ -493,7 +493,7 @@ export class MovingTonesService implements ActivityBase {
 
       const shouldReverse = Math.random() > 0.5;
 
-      if (shouldReverse) {
+      if (shouldReverse && curveType !== 'zigzag') {
         leftCoordinates.reverse();
         rightCoordinates.reverse();
       }
