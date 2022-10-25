@@ -141,7 +141,6 @@ export class GameService {
     private googleAnalyticsService: GoogleAnalyticsService,
     private benchmarkService: BenchmarkService,
     private handsService: HandsService,
-    private handClassifierService: HandClassifierService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HandsService } from '../../hands/hands.service';
 import { Subscription } from 'rxjs';
 import { Results } from '@mediapipe/hands';
-import { Landmark } from 'src/assets/@mediapipe/hands';
+import { Landmark } from '@mediapipe/hands';
 
 @Injectable({
   providedIn: 'root',
