@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { BehaviorSubject, Subject, Subscription, take } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } from 'rxjs';
+import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -55,7 +56,6 @@ export class MovingTonesScene extends Phaser.Scene {
   private poseSubscription: Subscription;
   private music = false;
   private group: Phaser.Physics.Arcade.StaticGroup;
-  private circleScale = 0.6;
   private holdDuration = 2500;
   private currentNote = 1;
 
@@ -71,6 +71,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   blueHoldState = new Subject<boolean>();
   redHoldState = new Subject<boolean>();
+  circleScale = 0.6;
 
   private redTween: TweenData = {
     stoppedAt: undefined,
@@ -101,88 +102,96 @@ export class MovingTonesScene extends Phaser.Scene {
         }
       }
 
-      const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
-        'color',
-        'startFromBeginning',
-      ]);
+      const handSubscription = this.handTrackerService.openHandStatus
+        .pipe(distinctUntilChanged())
+        .subscribe((status) => {
+          const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
+            'color',
+            'startFromBeginning',
+          ]);
+          if (this.isRedHeld && status && !['right-hand', 'both-hands'].includes(status)) {
+            this.isRedHeld = false;
+            if (type === 'start') this.redHoldState.next(false);
+          }
+          if (this.isRedHeld === false && status && ['right-hand', 'both-hands'].includes(status)) {
+            this.isRedHeld = true;
+            if (type === 'start') this.redHoldState.next(true);
+            const { x, y } = gameObject.body.center;
+            const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
 
-      if (this.isRedHeld === false) {
-        this.isRedHeld = true;
-        if (type === 'start') this.redHoldState.next(true);
-        const { x, y } = gameObject.body.center;
-        const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
+            const { tween: redTween, graphics } =
+              this.redTween.remainingDuration === undefined || this.redTween.stoppedAt === undefined
+                ? this.animateHeld(x, y, circleRadius, color, 0, this.holdDuration)
+                : this.animateHeld(
+                    x,
+                    y,
+                    circleRadius,
+                    color,
+                    this.redTween.stoppedAt,
+                    this.redTween.remainingDuration,
+                  );
 
-        const { tween: redTween, graphics } =
-          this.redTween.remainingDuration === undefined || this.redTween.stoppedAt === undefined
-            ? this.animateHeld(x, y, circleRadius, color, 0, this.holdDuration)
-            : this.animateHeld(
-                x,
-                y,
-                circleRadius,
-                color,
-                this.redTween.stoppedAt,
-                this.redTween.remainingDuration,
-              );
-
-        redTween.on('update', (tween: Phaser.Tweens.Tween) => {
-          if (!this.isRedHeld) {
-            if (startFromBeginning) {
-              graphics.destroy(true);
-              redTween.remove();
-              if (type === 'start') {
-                this.destroyGameObjects('allExceptStartCircle', TextureKeys.RED_CIRCLE);
+            redTween.on('update', (tween: Phaser.Tweens.Tween) => {
+              if (!this.isRedHeld) {
+                if (startFromBeginning) {
+                  graphics.destroy(true);
+                  redTween.remove();
+                  if (type === 'start') {
+                    this.destroyGameObjects('allExceptStartCircle', TextureKeys.RED_CIRCLE);
+                  }
+                  this.redTween = {
+                    remainingDuration: undefined,
+                    stoppedAt: undefined,
+                    totalTimeElapsed: 0,
+                  };
+                } else {
+                  this.redTween = {
+                    stoppedAt: tween.getValue(),
+                    remainingDuration: tween.duration - tween.elapsed,
+                    totalTimeElapsed: this.redTween.totalTimeElapsed + tween.elapsed,
+                  };
+                  console.log(this.redTween.totalTimeElapsed);
+                  graphics.destroy(true);
+                  tween.remove();
+                }
               }
+            });
+
+            redTween.once('complete', () => {
               this.redTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
                 totalTimeElapsed: 0,
               };
-            } else {
-              this.redTween = {
-                stoppedAt: tween.getValue(),
-                remainingDuration: tween.duration - tween.elapsed,
-                totalTimeElapsed: this.redTween.totalTimeElapsed + tween.elapsed,
-              };
-              console.log(this.redTween.totalTimeElapsed);
               graphics.destroy(true);
-              tween.remove();
-            }
-          }
-        });
+              redTween.remove();
+              gameObject.destroy(true);
 
-        redTween.once('complete', () => {
-          this.redTween = {
-            remainingDuration: undefined,
-            stoppedAt: undefined,
-            totalTimeElapsed: 0,
-          };
-          graphics.destroy(true);
-          redTween.remove();
-          gameObject.destroy(true);
-
-          if (type === 'start') {
-            const sprite = this.add.sprite(x, y, TextureKeys.RED_DONE);
-            this.tweens.addCounter({
-              ease: 'Linear',
-              duration: 300,
-              from: 1,
-              to: 1.1,
-              onUpdate: (tween) => {
-                sprite.setScale(tween.getValue());
-              },
-              onComplete: (tween) => {
-                tween.remove();
-                sprite.destroy(true);
-              },
+              if (type === 'start') {
+                const sprite = this.add.sprite(x, y, TextureKeys.RED_DONE);
+                this.tweens.addCounter({
+                  ease: 'Linear',
+                  duration: 300,
+                  from: 1,
+                  to: 1.1,
+                  onUpdate: (tween) => {
+                    sprite.setScale(tween.getValue());
+                  },
+                  onComplete: (tween) => {
+                    tween.remove();
+                    sprite.destroy(true);
+                  },
+                });
+              } else {
+                this.add
+                  .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+                  .setScale(this.circleScale)
+                  .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+              }
             });
-          } else {
-            this.add
-              .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
-              .setScale(this.circleScale)
-              .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
           }
         });
-      }
+      handSubscription.unsubscribe();
     }
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
@@ -235,84 +244,93 @@ export class MovingTonesScene extends Phaser.Scene {
         'color',
         'startFromBeginning',
       ]);
+      const handSubscription = this.handTrackerService.openHandStatus
+        .pipe(distinctUntilChanged())
+        .subscribe((status) => {
+          if (this.isBlueHeld && !['left-hand', 'both-hands'].includes(status || '')) {
+            this.isBlueHeld = false;
+            if (type === 'start') this.blueHoldState.next(false);
+          }
+          if (this.isBlueHeld === false && ['left-hand', 'both-hands'].includes(status || '')) {
+            this.isBlueHeld = true;
+            if (type === 'start') this.blueHoldState.next(true);
 
-      if (this.isBlueHeld === false) {
-        this.isBlueHeld = true;
-        if (type === 'start') this.blueHoldState.next(true);
+            const { x, y } = gameObject.body.center;
+            const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
 
-        const { x, y } = gameObject.body.center;
-        const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
+            const { tween: blueTween, graphics } =
+              this.blueTween.remainingDuration === undefined ||
+              this.blueTween.stoppedAt === undefined
+                ? this.animateHeld(x, y, circleRadius, color, this.holdDuration)
+                : this.animateHeld(
+                    x,
+                    y,
+                    circleRadius,
+                    color,
+                    this.blueTween.stoppedAt,
+                    this.blueTween.remainingDuration,
+                  );
 
-        const { tween: blueTween, graphics } =
-          this.blueTween.remainingDuration === undefined || this.blueTween.stoppedAt === undefined
-            ? this.animateHeld(x, y, circleRadius, color, this.holdDuration)
-            : this.animateHeld(
-                x,
-                y,
-                circleRadius,
-                color,
-                this.blueTween.stoppedAt,
-                this.blueTween.remainingDuration,
-              );
-
-        blueTween.on('update', (tween: Phaser.Tweens.Tween) => {
-          if (!this.isBlueHeld) {
-            if (startFromBeginning) {
-              graphics.destroy(true);
-              blueTween.remove();
-              if (type === 'start') {
-                this.destroyGameObjects('allExceptStartCircle', TextureKeys.BLUE_CIRCLE);
+            blueTween.on('update', (tween: Phaser.Tweens.Tween) => {
+              if (!this.isBlueHeld || (status && !['left-hand', 'both-hands'].includes(status))) {
+                if (startFromBeginning) {
+                  graphics.destroy(true);
+                  blueTween.remove();
+                  if (type === 'start') {
+                    this.destroyGameObjects('allExceptStartCircle', TextureKeys.BLUE_CIRCLE);
+                  }
+                  this.blueTween = {
+                    remainingDuration: undefined,
+                    stoppedAt: undefined,
+                    totalTimeElapsed: 0,
+                  };
+                } else {
+                  this.blueTween = {
+                    stoppedAt: tween.getValue(),
+                    remainingDuration: tween.duration - tween.elapsed,
+                    totalTimeElapsed: this.blueTween.totalTimeElapsed + tween.elapsed,
+                  };
+                  graphics.destroy(true);
+                  tween.remove();
+                }
               }
+            });
+
+            blueTween.once('complete', () => {
               this.blueTween = {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
                 totalTimeElapsed: 0,
               };
-            } else {
-              this.blueTween = {
-                stoppedAt: tween.getValue(),
-                remainingDuration: tween.duration - tween.elapsed,
-                totalTimeElapsed: this.blueTween.totalTimeElapsed + tween.elapsed,
-              };
               graphics.destroy(true);
-              tween.remove();
-            }
-          }
-        });
+              blueTween.remove();
+              gameObject.destroy(true);
 
-        blueTween.once('complete', () => {
-          this.blueTween = {
-            remainingDuration: undefined,
-            stoppedAt: undefined,
-            totalTimeElapsed: 0,
-          };
-          graphics.destroy(true);
-          blueTween.remove();
-          gameObject.destroy(true);
-
-          if (type === 'start') {
-            const sprite = this.add.sprite(x, y, TextureKeys.BLUE_DONE);
-            this.tweens.addCounter({
-              ease: 'Linear',
-              duration: 300,
-              from: 1,
-              to: 1.1,
-              onUpdate: (tween) => {
-                sprite.setScale(tween.getValue());
-              },
-              onComplete: (tween) => {
-                tween.remove();
-                sprite.destroy(true);
-              },
+              if (type === 'start') {
+                const sprite = this.add.sprite(x, y, TextureKeys.BLUE_DONE);
+                this.tweens.addCounter({
+                  ease: 'Linear',
+                  duration: 300,
+                  from: 1,
+                  to: 1.1,
+                  onUpdate: (tween) => {
+                    sprite.setScale(tween.getValue());
+                  },
+                  onComplete: (tween) => {
+                    tween.remove();
+                    sprite.destroy(true);
+                  },
+                });
+              } else {
+                this.add
+                  .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+                  .setScale(this.circleScale)
+                  .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+              }
             });
-          } else {
-            this.add
-              .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
-              .setScale(this.circleScale)
-              .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
           }
         });
-      }
+      handSubscription.unsubscribe();
     }
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
@@ -353,7 +371,11 @@ export class MovingTonesScene extends Phaser.Scene {
     this.loadError = true;
   };
 
-  constructor(private ttsService: TtsService, private poseService: PoseService) {
+  constructor(
+    private ttsService: TtsService,
+    private poseService: PoseService,
+    private handTrackerService: HandTrackerService,
+  ) {
     super({ key: 'movingTones' });
   }
 
@@ -577,10 +599,9 @@ export class MovingTonesScene extends Phaser.Scene {
     type: 'start' | 'end',
     startFromBeginning = true,
   ) {
-    const scale = 0.7;
     const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
     const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
-    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(scale);
+    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(this.circleScale);
     if (!gameObject || !this.group) return;
 
     if (type === 'start') {
@@ -610,7 +631,7 @@ export class MovingTonesScene extends Phaser.Scene {
     const anim = this.add
       .sprite(x, y, TextureKeys.GREEN_RIPPLE)
       .play(AnimationKeys.GREEN_RIPPLE_ANIM)
-      .setScale(0.4)
+      .setScale((0.4 * this.circleScale) / 0.6)
       .setDepth(-1)
       .setAlpha(0.5);
     gameObject.setData({

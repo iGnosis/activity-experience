@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-import { debounceTime, Subject, Subscription } from 'rxjs';
-import { Coordinate, HandTrackerStatus } from 'src/app/types/pointmotion';
+import { BehaviorSubject, debounceTime, Subject, Subscription } from 'rxjs';
+import { Coordinate, HandTrackerStatus, OpenHandStatus } from 'src/app/types/pointmotion';
 import { PoseService } from '../../pose/pose.service';
 import { Results as HandResults } from '@mediapipe/hands';
 import { HandsService } from '../../hands/hands.service';
@@ -18,6 +18,7 @@ export class HandTrackerService {
   result = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
   debouncedStatus: HandTrackerStatus = undefined;
+  openHandStatus = new BehaviorSubject<OpenHandStatus>(undefined);
 
   constructor(private poseService: PoseService, private handsService: HandsService) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
@@ -39,6 +40,7 @@ export class HandTrackerService {
 
     this.handSubscription = this.handsService.getHands().subscribe((results) => {
       const newStatus = this.checkIfHandsAreOpen(results);
+      this.openHandStatus.next(newStatus);
       console.log('Check If Hands Are Open::', newStatus);
     });
   }
@@ -187,18 +189,16 @@ export class HandTrackerService {
     };
   }
 
-  // the values 160 and 30 have to be finetuned by trail/error.
+  // the values 160 and 20 have to be finetuned by trail/error.
   private checkIfFingerIsOpen(a: Coordinate, b: Coordinate, c: Coordinate) {
     return this.getAngle(a, b, c) > 160;
   }
 
   private checkIfFingersAreWide(a: Coordinate, b: Coordinate, c: Coordinate) {
-    return this.getAngle(a, b, c) > 30;
+    return this.getAngle(a, b, c) > 20;
   }
 
-  private checkIfHandsAreOpen(
-    results: HandResults,
-  ): 'both-hands' | 'left-hand' | 'right-hand' | 'none' | 'unknown' | undefined {
+  private checkIfHandsAreOpen(results: HandResults): OpenHandStatus {
     const status: { [key: string]: boolean } = {};
 
     if (results.multiHandLandmarks) {
