@@ -255,7 +255,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
-  async waitForAssetsToLoad() {
+  async loadAssets() {
     await this.ttsService.preLoadTts('beat_boxer');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();

@@ -645,7 +645,6 @@ export class MovingTonesService implements ActivityBase {
         }
       },
       async (reCalibrationCount: number) => {
-        this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Last activity. Moving Tones.');
         this.elements.banner.state = {
           attributes: {
@@ -708,6 +707,7 @@ export class MovingTonesService implements ActivityBase {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Raise one of your hands to start the tutorial.');
         this.elements.guide.state = {
           data: {
@@ -725,7 +725,6 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        this.soundsService.pauseActivityInstructionSound(this.genre);
         await this.elements.sleep(2000);
       },
       async (reCalibrationCount: number) => {
@@ -962,6 +961,8 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(3000);
+
+        this.soundsService.pauseActivityInstructionSound(this.genre);
       },
     ];
   }

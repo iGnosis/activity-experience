@@ -94,7 +94,7 @@ export class BeatBoxerService {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.beatBoxerScene.waitForAssetsToLoad();
+        await this.beatBoxerScene.loadAssets();
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);

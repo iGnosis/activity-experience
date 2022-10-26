@@ -214,7 +214,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
-  async waitForAssetsToLoad() {
+  async loadAssets() {
     await this.ttsService.preLoadTts('sound_explorer');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
