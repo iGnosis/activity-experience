@@ -55,7 +55,6 @@ export class MovingTonesScene extends Phaser.Scene {
   private poseSubscription: Subscription;
   private music = false;
   private group: Phaser.Physics.Arcade.StaticGroup;
-  private circleScale = 0.6;
   private holdDuration = 2500;
   private currentNote = 1;
 
@@ -71,6 +70,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   blueHoldState = new Subject<boolean>();
   redHoldState = new Subject<boolean>();
+  circleScale = 0.6;
 
   private redTween: TweenData = {
     stoppedAt: undefined,
@@ -577,10 +577,9 @@ export class MovingTonesScene extends Phaser.Scene {
     type: 'start' | 'end',
     startFromBeginning = true,
   ) {
-    const scale = 0.7;
     const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
     const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
-    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(scale);
+    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(this.circleScale);
     if (!gameObject || !this.group) return;
 
     if (type === 'start') {
@@ -610,7 +609,7 @@ export class MovingTonesScene extends Phaser.Scene {
     const anim = this.add
       .sprite(x, y, TextureKeys.GREEN_RIPPLE)
       .play(AnimationKeys.GREEN_RIPPLE_ANIM)
-      .setScale(0.4)
+      .setScale(this.circleScale)
       .setDepth(-1)
       .setAlpha(0.5);
     gameObject.setData({

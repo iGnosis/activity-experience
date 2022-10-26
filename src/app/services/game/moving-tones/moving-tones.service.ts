@@ -578,6 +578,8 @@ export class MovingTonesService implements ActivityBase {
 
   async setup() {
     this.movingTonesScene.enable();
+    const heightRatio = await this.poseService.getHeightRatio();
+    this.movingTonesScene.circleScale *= heightRatio;
     this.center = this.movingTonesScene.center();
     return new Promise<void>(async (resolve, reject) => {
       this.movingTonesScene.scene.start('movingTones');
