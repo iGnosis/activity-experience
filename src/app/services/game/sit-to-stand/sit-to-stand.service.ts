@@ -811,7 +811,7 @@ export class SitToStandService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        this.sit2StandScene.playMusic(this.genre, 'backtrack');
+        this.sit2StandScene.playBacktrack(this.genre);
         this.elements.score.state = {
           data: {
             label: 'Motion',
@@ -901,7 +901,7 @@ export class SitToStandService implements ActivityBase {
 
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           if (res.result === 'success') {
-            this.sit2StandScene.playMusic(this.genre, 'trigger');
+            this.sit2StandScene.playTrigger(this.genre);
             this.elements.prompt.state = {
               data: {
                 repStatus: res.result,

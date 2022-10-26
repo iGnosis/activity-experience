@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Genre } from 'src/app/types/pointmotion';
 import { Howl } from 'howler';
-import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { AudioSprite, audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
 
 @Injectable({
@@ -15,103 +15,93 @@ export class SitToStandScene extends Phaser.Scene {
     super({ key: 'sit2stand' });
   }
 
-  jazzTrigger: Howl;
-  jazzBacktrack: Howl;
-
   surprise: Howl;
   dance: Howl;
   rock: Howl;
   jazz: Howl;
-  classicalBacktrack: Howl;
-  classicalTrigger: Howl;
-  classicalInstructionsSound: Howl;
-  rockInstructionsSound: Howl;
-  jazzInstructionsSound: Howl;
-  danceInstructionsSound: Howl;
-  surpriseInstructionsSound: Howl;
-  currentClassicalSet = 1;
-  currentClassicalRep = 1;
-  currentClassicalBacktrackId: number;
-  currentClassicalTriggerId: number;
-  danceBacktrackId: number;
-  danceTriggerId: number;
-  currentDanceTrigger = 1;
-  rockBacktrackId: number;
-  rockTriggerId: number;
-  currentRockTrigger = 1;
-  ambientTriggerId: number;
-  currentAmbientTrigger = 1;
+  classical: Howl;
+  classicalBacktrackId!: number;
+  danceBacktrackId!: number;
+  rockBacktrackId!: number;
+  surpriseBacktrackId!: number;
+  jazzBacktrackId!: number;
+  classicalTriggerId!: number;
+  danceTriggerId!: number;
+  rockTriggerId!: number;
+  surpriseTriggerId!: number;
+  jazzTriggerId!: number;
+
+  currentSet!: number;
 
   preload() {}
 
+  src: { [key in Genre]: string[] } = {
+    classical: [
+      'assets/sounds/soundsprites/sit-stand-achieve/classical/set1/classical-set1.mp3',
+      'assets/sounds/soundsprites/sit-stand-achieve/classical/set2/classical-set2.mp3',
+    ],
+    jazz: [
+      'assets/sounds/soundsprites/sit-stand-achieve/jazz/set1/jazz-set1.mp3',
+      'assets/sounds/soundsprites/sit-stand-achieve/jazz/set2/jazz-set2.mp3',
+    ],
+    dance: [
+      'assets/sounds/soundsprites/sit-stand-achieve/dance/set1/dance-set1.mp3',
+      'assets/sounds/soundsprites/sit-stand-achieve/dance/set2/dance-set2.mp3',
+    ],
+    rock: [
+      'assets/sounds/soundsprites/sit-stand-achieve/rock/set1/rock-set1.mp3',
+      'assets/sounds/soundsprites/sit-stand-achieve/rock/set2/rock-set2.mp3',
+    ],
+    'surprise me!': [
+      'assets/sounds/soundsprites/sit-stand-achieve/ambient/set1/ambient-set1.mp3',
+      'assets/sounds/soundsprites/sit-stand-achieve/ambient/set2/ambient-set2.mp3',
+    ],
+  };
+
   loadMusicFiles(genre: Genre) {
     console.log('loading ', genre, ' files');
+
+    const randomSet = Math.floor(Math.random() * 2);
+    this.currentSet = randomSet;
+    const src = this.src[genre][randomSet];
+
     switch (genre) {
       case 'surprise me!':
         this.surprise = new Howl({
-          src: 'assets/sounds/soundsprites/ambient/ambientSprite.mp3',
-          sprite: audioSprites.surpriseSprite,
+          src,
+          sprite: audioSprites.ambientSprite[randomSet],
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
         break;
       case 'dance':
         this.dance = new Howl({
-          src: 'assets/sounds/soundsprites/dance/danceSprite.mp3',
-          sprite: audioSprites.danceSprite,
+          src,
+          sprite: audioSprites.danceSprite[randomSet],
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
         break;
       case 'rock':
         this.rock = new Howl({
-          src: 'assets/sounds/soundsprites/rock/rockSprite.mp3',
-          sprite: audioSprites.rockSprite,
+          src,
+          sprite: audioSprites.rockSprite[randomSet],
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
         break;
       case 'classical':
-        this.classicalBacktrack = new Howl({
-          src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: audioSprites.classicalBacktrackSprite,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-
-        this.classicalTrigger = new Howl({
-          src: 'assets/sounds/soundsprites/classical/classicalSprite.mp3',
-          sprite: audioSprites.classicalSprite,
+        this.classical = new Howl({
+          src,
+          sprite: audioSprites.classicalSprite[randomSet],
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
         break;
       case 'jazz':
-        this.jazzTrigger = new Howl({
-          src: 'assets/sounds/soundsprites/chordsSprite.mp3',
-          sprite: {
-            'Chord 1': [0, 8071.8367346938785],
-            'Chord 2': [10000, 8071.8367346938785],
-            'Chord 3': [20000, 8071.8367346938785],
-            'Chord 4': [30000, 8071.836734693875],
-            'Chord 5': [40000, 8071.836734693875],
-            'Chord 6': [50000, 8071.836734693875],
-            'Chord 7': [60000, 8071.836734693875],
-            'Chord 8': [70000, 8071.836734693875],
-            'Chord 9': [80000, 8071.836734693875],
-          },
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-
-        this.jazzBacktrack = new Howl({
-          src: ['assets/sounds/soundsprites/drumsSprite.mp3'],
-          sprite: {
-            constantDrum: [0, 65567.34693877552, true],
-            endingDrum: [67000, 4257.9591836734635],
-            inactiveDrum: [73000, 8071.836734693875],
-            successDrum: [83000, 574.6938775510273],
-          },
+        this.jazz = new Howl({
+          src,
+          sprite: audioSprites.jazzSprite[randomSet],
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -127,23 +117,8 @@ export class SitToStandScene extends Phaser.Scene {
     this.loadError = true;
   };
 
-  getTotalMusicFiles(genre: Genre) {
-    switch (genre) {
-      case 'surprise me!':
-        return 1;
-      case 'classical':
-        return 2;
-      case 'jazz':
-        return 2;
-      case 'rock':
-        return 1;
-      case 'dance':
-        return 1;
-    }
-  }
-
   checkIfAssetsAreLoaded(genre: Genre) {
-    return this.musicFilesLoaded === this.getTotalMusicFiles(genre);
+    return this.musicFilesLoaded === 1;
   }
 
   async waitForAssetsToLoad(genre: Genre) {
@@ -173,11 +148,8 @@ export class SitToStandScene extends Phaser.Scene {
   pauseBacktrack(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (
-          this.currentClassicalBacktrackId &&
-          this.classicalBacktrack.playing(this.currentClassicalBacktrackId)
-        ) {
-          this.classicalBacktrack.pause(this.currentClassicalBacktrackId);
+        if (this.classicalBacktrackId && this.classical.playing(this.classicalBacktrackId)) {
+          this.classical.pause(this.classicalBacktrackId);
         }
         break;
       case 'dance':
@@ -191,69 +163,96 @@ export class SitToStandScene extends Phaser.Scene {
         }
         break;
       case 'surprise me!':
-        return;
+        if (this.surpriseBacktrackId && this.surprise.playing(this.surpriseBacktrackId)) {
+          this.surprise.pause(this.surpriseBacktrackId);
+        }
+        break;
       case 'jazz':
-        this.pauseConstantDrum();
+        if (this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
+          this.jazz.pause(this.jazzBacktrackId);
+        }
+        break;
     }
   }
 
-  classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
   isBacktrackPlaying(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (this.currentClassicalBacktrackId) {
-          return this.classicalBacktrack.playing(this.currentClassicalBacktrackId);
-        }
-        return false;
+        return this.classical.playing(this.classicalBacktrackId);
       case 'dance':
-        if (this.danceBacktrackId) {
-          return this.dance.playing(this.danceBacktrackId);
-        }
-        return false;
+        return this.dance.playing(this.danceBacktrackId);
       case 'rock':
-        if (this.rockBacktrackId) {
-          return this.rock.playing(this.rockBacktrackId);
-        }
-        return false;
+        return this.rock.playing(this.rockBacktrackId);
       case 'surprise me!':
-        return false;
+        return this.surprise.playing(this.surpriseBacktrackId);
       case 'jazz':
-        return this.isConstantDrumPlaying();
-      default:
-        return false;
+        return this.jazz.playing(this.jazzBacktrackId);
     }
   }
 
-  playMusic(genre: Genre, type: 'backtrack' | 'trigger') {
+  playBacktrack(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (!this.classicalBacktrack || !this.classicalTrigger) {
-          return;
-        }
-        if (type === 'backtrack') {
-          console.log(`playing backtrack set${this.currentClassicalSet}`);
-          if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
-            this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
+        if (this.currentSet === 0) {
+          if (!this.classical.playing(this.classicalBacktrackId)) {
+            this.classicalBacktrackId = this.classical.play(
+              `classicalBacktrack${this.currentClassicalSet}`,
+            );
           }
-          this.currentClassicalBacktrackId = this.classicalBacktrack.play(
-            `backtrack set${this.currentClassicalSet}`,
-          );
-          return this.currentClassicalBacktrackId;
+          return this.classicalBacktrackId;
         } else {
-          console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
-          const soundTrackKey = `set${this.currentClassicalSet}rep${this.currentClassicalRep}`;
-          if (this.classicalTrigger.playing(this.currentClassicalTriggerId)) {
-            this.classicalTrigger.stop(this.currentClassicalTriggerId);
+          if (!this.classical.playing(this.classicalBacktrackId)) {
+            this.classicalBacktrackId = this.classical.play('classicalBacktrack');
           }
-          this.classicalTrigger.volume(0.7);
-          this.currentClassicalTriggerId = this.classicalTrigger.play(soundTrackKey);
-          this.classicalTrigger.fade(0, 0.7, 1500, this.currentClassicalTriggerId);
+          return this.classicalBacktrackId;
+        }
+      case 'dance':
+        if (!this.dance.playing(this.danceBacktrackId)) {
+          this.danceBacktrackId = this.dance.play('danceBacktrack');
+        }
+        return this.danceBacktrackId;
+      case 'rock':
+        if (!this.rock.playing(this.rockBacktrackId)) {
+          this.rockBacktrackId = this.rock.play('rockBacktrack');
+        }
+        return this.rockBacktrackId;
+      case 'surprise me!':
+        if (!this.surprise.playing(this.surpriseBacktrackId)) {
+          this.surpriseBacktrackId = this.surprise.play('ambientBacktrack');
+        }
+        return this.surpriseBacktrackId;
+      case 'jazz':
+        if (!this.jazz.playing(this.jazzBacktrackId)) {
+          this.jazzBacktrackId = this.jazz.play('jazzBacktrack');
+        }
+        return this.jazzBacktrackId;
+    }
+  }
+
+  currentTrigger = 1;
+  currentClassicalRep = 1;
+  currentClassicalSet = 1;
+  classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
+
+  playTrigger(genre: Genre) {
+    switch (genre) {
+      case 'classical':
+        // classical set 0 has weird music logic
+        if (this.currentSet === 0) {
+          console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
+          const soundTrackKey = `set${this.currentClassicalSet}classical${this.currentClassicalRep}`;
+          if (this.classicalTriggerId && this.classical.playing(this.classicalTriggerId)) {
+            this.classical.stop(this.classicalTriggerId);
+          }
+          this.classical.volume(0.7, this.classicalTriggerId);
+          this.classicalTriggerId = this.classical.play(soundTrackKey);
+          this.classical.fade(0, 0.7, 1500, this.classicalTriggerId);
           setTimeout(() => {
-            this.classicalTrigger.fade(
+            this.classical.fade(
               0.7,
               0,
               this.classicTriggerFadeoutDuration,
-              this.currentClassicalTriggerId,
+              this.classicalTriggerId,
             );
           }, 1500);
           this.currentClassicalRep += 1;
@@ -261,167 +260,91 @@ export class SitToStandScene extends Phaser.Scene {
             console.log('set 1 ended, starting set 2, resetting reps to 0');
             this.currentClassicalSet = 2;
             this.currentClassicalRep = 1;
-            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
-              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
+            if (this.classical.playing(this.classicalBacktrackId)) {
+              this.classical.stop(this.classicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
-              `backtrack set${this.currentClassicalSet}`,
+            this.classicalBacktrackId = this.classical.play(
+              `classicalBacktrack${this.currentClassicalSet}`,
             );
           } else if (this.currentClassicalSet === 2 && this.currentClassicalRep === 12) {
             console.log('set 2 ended, starting set 3, resetting reps to 0');
             this.currentClassicalSet = 3;
             this.currentClassicalRep = 1;
-            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
-              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
+            if (this.classical.playing(this.classicalBacktrackId)) {
+              this.classical.stop(this.classicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
-              `backtrack set${this.currentClassicalSet}`,
+            this.classicalBacktrackId = this.classical.play(
+              `classicalBacktrack${this.currentClassicalSet}`,
             );
           } else if (this.currentClassicalSet === 3 && this.currentClassicalRep === 14) {
             console.log('set 3 ended, starting set 1, resetting reps to 0');
             this.currentClassicalSet = 1;
             this.currentClassicalRep = 1;
-            if (this.classicalBacktrack.playing(this.currentClassicalBacktrackId)) {
-              this.classicalBacktrack.stop(this.currentClassicalBacktrackId);
+            if (this.classical.playing(this.classicalBacktrackId)) {
+              this.classical.stop(this.classicalBacktrackId);
             }
-            this.currentClassicalBacktrackId = this.classicalBacktrack.play(
-              `backtrack set${this.currentClassicalSet}`,
+            this.classicalBacktrackId = this.classical.play(
+              `classicalBacktrack${this.currentClassicalSet}`,
             );
           }
-          return this.currentClassicalTriggerId;
+          return this.classicalTriggerId;
+        } else {
+          this.classicalTriggerId = this.classical.play(`classical${this.currentTrigger}`);
+          this.currentTrigger += 1;
+          if (this.currentTrigger === 10) {
+            this.currentTrigger = 1;
+          }
+          return this.classicalTriggerId;
         }
         break;
       case 'dance':
-        if (!this.dance) {
-          return;
+        this.danceTriggerId = this.dance.play(`dance${this.currentTrigger}`);
+        this.currentTrigger += 1;
+        if (this.currentTrigger === 10) {
+          this.currentTrigger = 1;
         }
-        if (type === 'backtrack') {
-          console.log('playing dance backtrack');
-          if (!this.dance.playing(this.danceBacktrackId)) {
-            this.danceBacktrackId = this.dance.play('backtrack');
-          }
-          return this.danceBacktrackId;
-        } else {
-          this.danceTriggerId = this.dance.play(`trigger${this.currentDanceTrigger}`);
-          this.currentDanceTrigger += 1;
-          if (this.currentDanceTrigger === 33) {
-            this.currentDanceTrigger = 1;
-          }
-          return this.danceTriggerId;
-        }
-        break;
+        return this.danceTriggerId;
       case 'rock':
-        if (!this.rock) {
-          return;
+        this.rockTriggerId = this.rock.play(`rock${this.currentTrigger}`);
+        this.currentTrigger += 1;
+        if (this.currentTrigger === 10) {
+          this.currentTrigger = 1;
         }
-        if (type === 'backtrack') {
-          console.log('playing rock backtrack');
-          if (!this.rock.playing(this.rockBacktrackId)) {
-            this.rockBacktrackId = this.rock.play('backtrack');
-          }
-          return this.rockBacktrackId;
-        } else {
-          this.rockTriggerId = this.rock.play(`rock${this.currentRockTrigger}`);
-          this.currentRockTrigger += 1;
-          if (this.currentRockTrigger === 17) {
-            this.currentRockTrigger = 1;
-          }
-          return this.rockTriggerId;
-        }
-        break;
+        return this.rockTriggerId;
       case 'surprise me!':
-        if (!this.surprise) {
-          return;
+        this.surpriseTriggerId = this.surprise.play(`ambient${this.currentTrigger}`);
+        this.currentTrigger += 1;
+        if (this.currentTrigger === 10) {
+          this.currentTrigger = 1;
         }
-        if (type === 'backtrack') {
-          console.log('No ambient backtrack');
-          return null;
-        } else {
-          if (this.surprise.playing(this.ambientTriggerId)) {
-            this.surprise.stop(this.ambientTriggerId);
-          }
-          this.ambientTriggerId = this.surprise.play(`ambient ${this.currentAmbientTrigger}`);
-          this.currentAmbientTrigger += 1;
-          if (this.currentAmbientTrigger === 17) {
-            this.currentAmbientTrigger = 1;
-          }
-          return this.ambientTriggerId;
-        }
-        break;
+        return this.surpriseTriggerId;
       case 'jazz':
-        if (type === 'backtrack') {
-          if (!this.isConstantDrumPlaying()) {
-            this.constantDrumId = this.jazzBacktrack.play('constantDrum');
-          }
-          return this.constantDrumId;
-        } else {
-          if (this.currentChord >= 9) {
-            this.currentChord = 1;
-          }
-          console.log(`playing CHORD ${this.currentChord}`);
-          const currentChordId = this.jazzTrigger.play(`Chord ${this.currentChord}`);
-          this.currentChord += 1;
-
-          return currentChordId;
+        this.jazzTriggerId = this.jazz.play(`jazz${this.currentTrigger}`);
+        this.currentTrigger += 1;
+        if (this.currentTrigger === 10) {
+          this.currentTrigger = 1;
         }
+        return this.jazzTriggerId;
     }
   }
 
   stopBacktrack(genre: Genre) {
+    const endFadeoutDuration = 5000;
     switch (genre) {
       case 'classical':
-        this.classicalBacktrack && this.classicalBacktrack.fade(100, 0, 5000);
+        this.classical && this.classical.fade(100, 0, endFadeoutDuration);
         break;
       case 'dance':
-        this.dance && this.dance.fade(100, 0, 5000);
+        this.dance && this.dance.fade(100, 0, endFadeoutDuration);
         break;
       case 'rock':
-        this.rock && this.rock.fade(100, 0, 500);
+        this.rock && this.rock.fade(100, 0, endFadeoutDuration);
         break;
       case 'surprise me!':
+        this.surprise && this.surprise.fade(100, 0, endFadeoutDuration);
         return;
       case 'jazz':
-        this.jazzBacktrack && this.jazzBacktrack.fade(100, 0, 500);
+        this.jazz && this.jazz.fade(100, 0, endFadeoutDuration);
     }
-  }
-
-  constantDrumId?: number;
-  currentChord = 1;
-  fadeDrums(
-    from: number,
-    to: number,
-    duration: number,
-    id: number = this.constantDrumId as number,
-  ) {
-    this.jazzBacktrack.fade(from, to, duration, id);
-  }
-
-  playNextChord() {
-    if (this.currentChord >= 9) {
-      this.currentChord = 1;
-    }
-    console.log(`playing CHORD ${this.currentChord}`);
-    this.jazzTrigger.play(`Chord ${this.currentChord}`);
-    this.currentChord += 1;
-  }
-
-  endConstantDrum() {
-    // this.drums.fade(1.0, 0, 2, this.constantDrumId);
-    this.jazzBacktrack.stop(this.constantDrumId);
-    this.jazzBacktrack.play('endingDrum');
-  }
-
-  playConstantDrum() {
-    if (!this.isConstantDrumPlaying()) {
-      this.constantDrumId = this.jazzBacktrack.play('constantDrum');
-    }
-  }
-
-  pauseConstantDrum() {
-    this.jazzBacktrack.pause(this.constantDrumId);
-  }
-
-  isConstantDrumPlaying() {
-    return this.jazzBacktrack.playing(this.constantDrumId);
   }
 }

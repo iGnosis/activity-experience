@@ -62,8 +62,7 @@ export class BenchmarkService {
           analytics,
           1,
         );
-        if (sit2StandResult.res.result === 'success')
-          this.sit2StandScene.playMusic(this.genre, 'trigger');
+        if (sit2StandResult.res.result === 'success') this.sit2StandScene.playTrigger(this.genre);
         else this.soundsService.playCalibrationSound('error');
         this.elements.prompt.state = {
           data: {
@@ -140,7 +139,7 @@ export class BenchmarkService {
 
     if (nextGame === 'sit_stand_achieve') {
       await this.sitToStandService.setup();
-      this.sit2StandScene.playMusic(this.genre, 'backtrack');
+      this.sit2StandScene.playBacktrack(this.genre);
     } else if (nextGame === 'beat_boxer') {
       this.elements.score.state = {
         data: {
