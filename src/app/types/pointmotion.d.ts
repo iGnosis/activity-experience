@@ -51,6 +51,14 @@ export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled'
 
 export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-hands' | undefined;
 
+export type OpenHandStatus =
+  | 'both-hands'
+  | 'left-hand'
+  | 'right-hand'
+  | 'none'
+  | 'unknown'
+  | undefined;
+
 /**
  * We support two modes: 'full' | 'fast'.
  * 'full' mode is enabled by default.

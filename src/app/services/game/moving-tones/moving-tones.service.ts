@@ -22,7 +22,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { PoseService } from '../../pose/pose.service';
 
 @Injectable({
@@ -210,7 +210,11 @@ export class MovingTonesService implements ActivityBase {
       blueSubscription = this.movingTonesScene.blueHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < left.length; i++) {
-            await this.elements.sleep(sleepTime);
+            await this.elements.sleep(sleepTime - 100);
+
+            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+            if (!['left-hand', 'both-hands'].includes(handStatus || '')) break;
+
             if (i === left.length - 1) {
               this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
             } else {
@@ -226,7 +230,11 @@ export class MovingTonesService implements ActivityBase {
       redSubscription = this.movingTonesScene.redHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < right.length; i++) {
-            await this.elements.sleep(sleepTime);
+            await this.elements.sleep(sleepTime - 100);
+
+            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+            if (!['right-hand', 'both-hands'].includes(handStatus || '')) break;
+
             if (i === right.length - 1) {
               this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
             } else {
