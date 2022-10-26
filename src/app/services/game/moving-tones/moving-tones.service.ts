@@ -23,6 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { Subscription } from 'rxjs';
+import { PoseService } from '../../pose/pose.service';
 
 @Injectable({
   providedIn: 'root',
@@ -63,6 +64,7 @@ export class MovingTonesService implements ActivityBase {
     private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
     private googleAnalyticsService: GoogleAnalyticsService,
+    private poseService: PoseService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -113,8 +115,6 @@ export class MovingTonesService implements ActivityBase {
     } else if (curveType === 'semicircle') {
       const isPointOnLeft = start.x <= this.center.x && end.x <= this.center.x;
 
-      this.center.y = this.center.y - 100; // moving center of circle up a bit
-
       if (isPointOnLeft) {
         start.x = 2 * this.center.x - start.x;
         end.x = 2 * this.center.x - end.x;
@@ -136,8 +136,6 @@ export class MovingTonesService implements ActivityBase {
           y: this.center.y + radius * Math.sin((angle * i) / pointsInBetween - angleFromCenter),
         });
       }
-
-      this.center.y = this.center.y + 100; // moving center of circle back to original position
     } else if (curveType === 'zigzag') {
       coordinates.push(start);
 
@@ -172,6 +170,20 @@ export class MovingTonesService implements ActivityBase {
     return coordinates;
   }
 
+  private async getRelativeCoordinates(
+    start: Coordinate,
+    end: Coordinate,
+  ): Promise<[start: Coordinate, end: Coordinate]> {
+    const ratio = await this.poseService.getHeightRatio();
+
+    const newEnd: Coordinate = {
+      x: (1 - ratio) * start.x + ratio * end.x,
+      y: (1 - ratio) * start.y + ratio * end.y,
+    };
+
+    return [start, newEnd];
+  }
+
   private async showCircles({
     left,
     right,
@@ -193,29 +205,33 @@ export class MovingTonesService implements ActivityBase {
     let redSubscription: Subscription | undefined;
 
     if (left?.length) {
+      const sleepTime = 2500 / (left.length - 1);
+
       blueSubscription = this.movingTonesScene.blueHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < left.length; i++) {
+            await this.elements.sleep(sleepTime);
             if (i === left.length - 1) {
               this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
             } else {
               this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
             }
-            await this.elements.sleep(150);
           }
         }
       });
     }
     if (right?.length) {
+      const sleepTime = 2500 / (right.length - 1);
+
       redSubscription = this.movingTonesScene.redHoldState.subscribe(async (state) => {
         if (state) {
           for (let i = 1; i < right.length; i++) {
+            await this.elements.sleep(sleepTime);
             if (i === right.length - 1) {
               this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
             } else {
               this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
             }
-            await this.elements.sleep(150);
           }
         }
       });
@@ -224,24 +240,26 @@ export class MovingTonesService implements ActivityBase {
     return { blueSubscription, redSubscription };
   }
 
-  private getRandomConfiguration(): MovingTonesConfiguration {
+  private async getRandomConfiguration(): Promise<MovingTonesConfiguration> {
+    this.center = await this.movingTonesScene.getCenterFromPose();
+    console.log('center: ', this.center);
     const configurations: MovingTonesConfiguration[] = [
       {
         startLeft: {
-          x: this.center.x - 100,
-          y: this.center.y - 270,
+          x: this.center.x - 50,
+          y: this.center.y - 130,
         },
         endLeft: {
           x: 50,
-          y: this.center.y + 100,
+          y: this.center.y + 200,
         },
         startRight: {
-          x: this.center.x + 100,
-          y: this.center.y - 270,
+          x: this.center.x + 50,
+          y: this.center.y - 130,
         },
         endRight: {
           x: 2 * this.center.x - 50,
-          y: this.center.y + 100,
+          y: this.center.y + 200,
         },
         curveType: 'semicircle',
         pointsInBetween: 2,
@@ -249,7 +267,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y + 120,
+          y: this.center.y + 220,
         },
         endLeft: {
           x: 50,
@@ -257,7 +275,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y + 120,
+          y: this.center.y + 220,
         },
         endRight: {
           x: 2 * this.center.x - 50,
@@ -269,7 +287,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y + 120,
+          y: this.center.y + 170,
         },
         endLeft: {
           x: this.center.x - 300,
@@ -277,7 +295,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y - 250,
+          y: this.center.y - 170,
         },
         endRight: {
           x: this.center.x + 300,
@@ -289,7 +307,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y - 250,
+          y: this.center.y - 170,
         },
         endLeft: {
           x: this.center.x - 300,
@@ -297,7 +315,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y + 120,
+          y: this.center.y + 170,
         },
         endRight: {
           x: this.center.x + 300,
@@ -309,58 +327,58 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y - 270,
+          y: this.center.y - 150,
         },
         endLeft: {
-          x: this.center.x - 100,
-          y: this.center.y + 150,
+          x: this.center.x - 50,
+          y: this.center.y + 200,
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y - 270,
+          y: this.center.y - 150,
         },
         endRight: {
-          x: this.center.x + 100,
-          y: this.center.y + 150,
+          x: this.center.x + 50,
+          y: this.center.y + 200,
         },
         curveType: 'semicircle',
         pointsInBetween: 2,
       }, // semicircles - top to bottom
       {
         startLeft: {
-          x: this.center.x / 2,
-          y: this.center.y - 100,
+          x: this.center.x / 2 + 50,
+          y: this.center.y,
         },
         endLeft: {
           x: this.center.x / 2 + 100,
-          y: this.center.y - 250,
+          y: this.center.y - 150,
         },
         startRight: {
-          x: this.center.x + this.center.x / 2,
-          y: this.center.y - 100,
+          x: this.center.x + this.center.x / 2 - 50,
+          y: this.center.y,
         },
         endRight: {
           x: this.center.x + this.center.x / 2 - 100,
-          y: this.center.y - 250,
+          y: this.center.y - 150,
         },
         curveType: 'triangle',
         pointsInBetween: 1,
       }, // triangles - top
       {
         startLeft: {
-          x: this.center.x / 2 - 50,
+          x: this.center.x / 2 + 50,
           y: this.center.y,
         },
         endLeft: {
-          x: this.center.x / 2 + 50,
+          x: this.center.x / 2 + 100,
           y: this.center.y + 150,
         },
         startRight: {
-          x: this.center.x + this.center.x / 2 + 50,
+          x: this.center.x + this.center.x / 2 - 50,
           y: this.center.y,
         },
         endRight: {
-          x: this.center.x + this.center.x / 2 - 50,
+          x: this.center.x + this.center.x / 2 - 100,
           y: this.center.y + 150,
         },
         curveType: 'triangle',
@@ -369,23 +387,23 @@ export class MovingTonesService implements ActivityBase {
       {
         startRight: {
           x: this.center.x,
-          y: this.center.y - 250,
+          y: this.center.y - 100,
         },
         endRight: {
-          x: this.center.x + 200,
-          y: this.center.y + 100,
+          x: this.center.x + 150,
+          y: this.center.y + 150,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
       }, // zigzag - middle to right
       {
         startRight: {
-          x: this.center.x + 200,
-          y: this.center.y - 250,
+          x: this.center.x + 150,
+          y: this.center.y - 100,
         },
         endRight: {
           x: this.center.x,
-          y: this.center.y + 100,
+          y: this.center.y + 150,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
@@ -393,23 +411,23 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x,
-          y: this.center.y - 250,
+          y: this.center.y - 100,
         },
         endLeft: {
-          x: this.center.x - 200,
-          y: this.center.y + 100,
+          x: this.center.x - 150,
+          y: this.center.y + 150,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
       }, // middle to left
       {
         startLeft: {
-          x: this.center.x - 200,
-          y: this.center.y - 250,
+          x: this.center.x - 150,
+          y: this.center.y - 100,
         },
         endLeft: {
           x: this.center.x,
-          y: this.center.y + 100,
+          y: this.center.y + 150,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
@@ -417,19 +435,19 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 100,
-          y: this.center.y - 250,
+          y: this.center.y - 100,
         },
         endLeft: {
           x: this.center.x - 100,
-          y: this.center.y + 170,
+          y: this.center.y + 350,
         },
         startRight: {
           x: this.center.x + 100,
-          y: this.center.y - 250,
+          y: this.center.y - 100,
         },
         endRight: {
           x: this.center.x + 100,
-          y: this.center.y + 170,
+          y: this.center.y + 350,
         },
         curveType: 'line',
         pointsInBetween: 2,
@@ -448,16 +466,18 @@ export class MovingTonesService implements ActivityBase {
       }
 
       const { startLeft, endLeft, startRight, endRight, curveType, pointsInBetween } =
-        this.getRandomConfiguration();
+        await this.getRandomConfiguration();
 
       let leftCoordinates: Coordinate[] = [];
       let rightCoordinates: Coordinate[] = [];
 
       if (startLeft && endLeft) {
-        leftCoordinates = this.getCoordinates(startLeft, endLeft, curveType, pointsInBetween);
+        const relativeCoordinates = await this.getRelativeCoordinates(startLeft, endLeft);
+        leftCoordinates = this.getCoordinates(...relativeCoordinates, curveType, pointsInBetween);
       }
       if (startRight && endRight) {
-        rightCoordinates = this.getCoordinates(startRight, endRight, curveType, pointsInBetween);
+        const relativeCoordinates = await this.getRelativeCoordinates(startRight, endRight);
+        rightCoordinates = this.getCoordinates(...relativeCoordinates, curveType, pointsInBetween);
       }
 
       const isSemicircle =
@@ -473,7 +493,7 @@ export class MovingTonesService implements ActivityBase {
 
       const shouldReverse = Math.random() > 0.5;
 
-      if (shouldReverse) {
+      if (shouldReverse && curveType !== 'zigzag') {
         leftCoordinates.reverse();
         rightCoordinates.reverse();
       }

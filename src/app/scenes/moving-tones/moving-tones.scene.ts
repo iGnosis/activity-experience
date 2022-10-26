@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription, take } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
+import { Coordinate } from 'src/app/types/pointmotion';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -985,5 +986,30 @@ export class MovingTonesScene extends Phaser.Scene {
   center() {
     const { width, height } = this.game.canvas;
     return { x: width / 2, y: height / 2 };
+  }
+
+  getCenterFromPose(): Promise<Coordinate> {
+    return new Promise((resolve) => {
+      this.poseService
+        .getPose()
+        .pipe(take(1))
+        .subscribe((results) => {
+          const left = {
+            x: this.game.canvas.width * results.poseLandmarks[11].x,
+            y: this.game.canvas.height * results.poseLandmarks[11].y,
+          };
+          const right = {
+            x: this.game.canvas.width * results.poseLandmarks[12].x,
+            y: this.game.canvas.height * results.poseLandmarks[12].y,
+          };
+
+          const midPoint = {
+            x: (left.x + right.x) / 2,
+            y: (left.y + right.y) / 2,
+          };
+
+          resolve(midPoint);
+        });
+    });
   }
 }
