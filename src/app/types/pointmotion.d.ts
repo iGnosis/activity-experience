@@ -1309,3 +1309,10 @@ export type GameStatus = {
   breakpoint: number;
   game: Activities;
 };
+
+export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
+  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
+  texture?: {
+    key: string;
+  };
+};

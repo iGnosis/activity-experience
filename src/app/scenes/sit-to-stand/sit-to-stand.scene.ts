@@ -70,6 +70,7 @@ export class SitToStandScene extends Phaser.Scene {
         this.surprise = new Howl({
           src,
           sprite: audioSprites.ambientSprite[randomSet],
+          html5: true,
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -78,6 +79,7 @@ export class SitToStandScene extends Phaser.Scene {
         this.dance = new Howl({
           src,
           sprite: audioSprites.danceSprite[randomSet],
+          html5: true,
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -86,6 +88,7 @@ export class SitToStandScene extends Phaser.Scene {
         this.rock = new Howl({
           src,
           sprite: audioSprites.rockSprite[randomSet],
+          html5: true,
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -94,6 +97,7 @@ export class SitToStandScene extends Phaser.Scene {
         this.classical = new Howl({
           src,
           sprite: audioSprites.classicalSprite[randomSet],
+          html5: true,
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -102,6 +106,7 @@ export class SitToStandScene extends Phaser.Scene {
         this.jazz = new Howl({
           src,
           sprite: audioSprites.jazzSprite[randomSet],
+          html5: true,
           onload: this.onLoadCallback,
           onloaderror: this.onLoadErrorCallback,
         });
@@ -121,7 +126,7 @@ export class SitToStandScene extends Phaser.Scene {
     return this.musicFilesLoaded === 1;
   }
 
-  async waitForAssetsToLoad(genre: Genre) {
+  async loadAssets(genre: Genre) {
     await this.ttsService.preLoadTts('sit_stand_achieve');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();

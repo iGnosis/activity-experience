@@ -6,7 +6,7 @@ import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/ha
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
-import { Coordinate } from 'src/app/types/pointmotion';
+import { Coordinate, GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -35,13 +35,6 @@ interface TweenData {
   totalTimeElapsed: number;
   tween?: Phaser.Tweens.Tween;
 }
-
-type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
-  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
-  texture?: {
-    key: string;
-  };
-};
 
 @Injectable({
   providedIn: 'root',
@@ -150,7 +143,6 @@ export class MovingTonesScene extends Phaser.Scene {
                     remainingDuration: tween.duration - tween.elapsed,
                     totalTimeElapsed: this.redTween.totalTimeElapsed + tween.elapsed,
                   };
-                  console.log(this.redTween.totalTimeElapsed);
                   graphics.destroy(true);
                   tween.remove();
                 }
@@ -261,7 +253,7 @@ export class MovingTonesScene extends Phaser.Scene {
             const { tween: blueTween, graphics } =
               this.blueTween.remainingDuration === undefined ||
               this.blueTween.stoppedAt === undefined
-                ? this.animateHeld(x, y, circleRadius, color, this.holdDuration)
+                ? this.animateHeld(x, y, circleRadius, color, 0, this.holdDuration)
                 : this.animateHeld(
                     x,
                     y,
@@ -798,7 +790,7 @@ export class MovingTonesScene extends Phaser.Scene {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
-  async waitForAssetsToLoad() {
+  async loadAssets() {
     // TODO: Preload TTS for movingTones
     // await this.ttsService.preLoadTts('movingTones');
     return new Promise<void>((resolve, reject) => {
@@ -873,9 +865,6 @@ export class MovingTonesScene extends Phaser.Scene {
    * @param results Pose Results
    */
   private drawHands(results: Results): void {
-    const handObjectRadius = 20;
-    const handObjectColor = 0xffffff;
-    const handObjectOpacity = 0.5;
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;

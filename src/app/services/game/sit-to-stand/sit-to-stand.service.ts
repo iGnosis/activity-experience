@@ -114,7 +114,7 @@ export class SitToStandService implements ActivityBase {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.sit2StandScene.waitForAssetsToLoad(this.genre);
+        await this.sit2StandScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
