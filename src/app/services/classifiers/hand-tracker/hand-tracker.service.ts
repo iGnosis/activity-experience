@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
 import { debounceTime, Subject, Subscription } from 'rxjs';
-import { HandTrackerStatus } from 'src/app/types/pointmotion';
+import { Coordinate, HandTrackerStatus } from 'src/app/types/pointmotion';
 import { PoseService } from '../../pose/pose.service';
+import { Results as HandResults } from '@mediapipe/hands';
+import { HandsService } from '../../hands/hands.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,12 +13,13 @@ export class HandTrackerService {
   isEnabled = false;
   visibilityThreshold = 0.7;
   distanceThreshold = 0.2;
-  subscription: Subscription;
+  poseSubscription: Subscription;
+  handSubscription: Subscription;
   result = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
   debouncedStatus: HandTrackerStatus = undefined;
 
-  constructor(private poseService: PoseService) {
+  constructor(private poseService: PoseService, private handsService: HandsService) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
       this.debouncedStatus = status;
       console.log('HandTrackerService:debouncedStatus:', this.status);
@@ -25,7 +28,7 @@ export class HandTrackerService {
 
   enable() {
     this.isEnabled = true;
-    this.subscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
       const newStatus = this.classify(results);
       if (!newStatus) return;
       if (newStatus.status != this.status) {
@@ -33,13 +36,19 @@ export class HandTrackerService {
       }
       this.status = newStatus.status;
     });
+
+    this.handSubscription = this.handsService.getHands().subscribe((results) => {
+      const newStatus = this.checkIfHandsAreOpen(results);
+      console.log('Check If Hands Are Open::', newStatus);
+    });
   }
 
   disable() {
     this.isEnabled = false;
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
     }
+    this.handSubscription && this.handSubscription.unsubscribe();
   }
 
   calcDist(x1: number, y1: number, x2: number, y2: number): any {
@@ -160,5 +169,112 @@ export class HandTrackerService {
       return 'right-hand';
     }
     return undefined;
+  }
+
+  private getAngle(a: Coordinate, b: Coordinate, c: Coordinate) {
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    const angle = (radians * 180) / Math.PI;
+    if (angle > 180) {
+      return 360 - angle;
+    }
+    return Math.abs(angle);
+  }
+
+  private midPoint(x1: number, y1: number, x2: number, y2: number): Coordinate {
+    return {
+      x: (x1 + x2) / 2,
+      y: (y1 + y2) / 2,
+    };
+  }
+
+  // the values 160 and 30 have to be finetuned by trail/error.
+  private checkIfFingerIsOpen(a: Coordinate, b: Coordinate, c: Coordinate) {
+    return this.getAngle(a, b, c) > 160;
+  }
+
+  private checkIfFingersAreWide(a: Coordinate, b: Coordinate, c: Coordinate) {
+    return this.getAngle(a, b, c) > 30;
+  }
+
+  private checkIfHandsAreOpen(
+    results: HandResults,
+  ): 'both-hands' | 'left-hand' | 'right-hand' | 'none' | 'unknown' | undefined {
+    const status: { [key: string]: boolean } = {};
+
+    if (results.multiHandLandmarks) {
+      const fingers: { [key: string]: [number, number, number] } = {
+        thumb: [2, 3, 4],
+        index: [5, 6, 7],
+        middle: [9, 10, 11],
+        ring: [13, 14, 15],
+        pinky: [17, 18, 19],
+      };
+
+      for (const [idx, landmarks] of results.multiHandLandmarks.entries()) {
+        const hand = results.multiHandedness[idx].label.toLowerCase();
+        console.log('hand::', hand);
+
+        let isHandOpen = true;
+
+        for (const finger in fingers) {
+          const [a, b, c] = fingers[finger];
+          const isFingerOpen = this.checkIfFingerIsOpen(landmarks[a], landmarks[b], landmarks[c]);
+          console.log(`${finger} finger`, isFingerOpen);
+          if (isFingerOpen === false) {
+            isHandOpen = false;
+            break;
+          }
+        }
+
+        // if hand is not open.. there's no need to check if hand is widely open.
+        if (!isHandOpen) continue;
+
+        const fingerWebs: { [key: string]: number[] } = {
+          indexMiddle: [5, 9, 6, 10],
+          middleRing: [9, 13, 10, 14],
+          ringLittle: [13, 17, 14, 18],
+        };
+
+        let isHandStretched = true;
+
+        for (const finger in fingerWebs) {
+          const [a, b, c, d] = fingerWebs[finger];
+
+          const midPoint = this.midPoint(
+            landmarks[a].x,
+            landmarks[a].y,
+            landmarks[b].x,
+            landmarks[b].y,
+          );
+          const isFingerWide = this.checkIfFingersAreWide(landmarks[c], midPoint, landmarks[d]);
+          console.log(`${finger} angle::`, this.getAngle(landmarks[c], midPoint, landmarks[d]));
+          if (isFingerWide === false) {
+            isHandStretched = false;
+            break;
+          }
+        }
+
+        const isFingerWide = this.checkIfFingersAreWide(landmarks[3], landmarks[2], landmarks[5]);
+        if (isFingerWide === false) {
+          isHandStretched = false;
+        }
+
+        if (isHandOpen && isHandStretched) {
+          status[hand] = true;
+        }
+      }
+
+      if (status['left'] && status['right']) {
+        return 'both-hands';
+      } else if (status['left'] && !status['right']) {
+        return 'left-hand';
+      } else if (!status['left'] && status['right']) {
+        return 'right-hand';
+      } else {
+        return 'none';
+      }
+    }
+
+    return 'unknown';
   }
 }

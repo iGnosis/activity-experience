@@ -35,7 +35,6 @@ import { MovingTonesService } from './moving-tones/moving-tones.service';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { BenchmarkService } from '../benchmark/benchmark.service';
 import { HandsService } from '../hands/hands.service';
-import { HandClassifierService } from '../classifiers/hand-classifier/hand-classifier.service';
 
 @Injectable({
   providedIn: 'root',
