@@ -15,7 +15,8 @@ enum TextureKeys {
   MUSIC_CIRCLE = 'music_circle',
   BLUE_DONE = 'blue_done',
   RED_DONE = 'red_done',
-  RED_BLUE_RIPPLE = 'red_blue_ripple',
+  RED_RIPPLE = 'red_ripple',
+  BLUE_RIPPLE = 'blue_ripple',
   GREEN_BUBBLES = 'green_bubbles',
   GREEN_RIPPLE = 'green_ripple',
   GREEN_BLAST = 'green_blast',
@@ -24,7 +25,8 @@ enum TextureKeys {
 }
 
 enum AnimationKeys {
-  RED_BLUE_RIPPLE_ANIM = 'red_blue_ripple_anim',
+  RED_RIPPLE_ANIM = 'red_ripple_anim',
+  BLUE_RIPPLE_ANIM = 'blue_ripple_anim',
   GREEN_BUBBLES_ANIM = 'green_bubbles_anim',
   GREEN_RIPPLE_ANIM = 'green_ripple_anim',
   GREEN_BLAST_ANIM = 'green_blast_anim',
@@ -177,9 +179,9 @@ export class MovingTonesScene extends Phaser.Scene {
                 });
               } else {
                 this.add
-                  .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+                  .sprite(x, y, TextureKeys.RED_RIPPLE)
                   .setScale(this.circleScale)
-                  .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+                  .play(AnimationKeys.RED_RIPPLE_ANIM);
               }
             });
           }
@@ -316,9 +318,9 @@ export class MovingTonesScene extends Phaser.Scene {
                 });
               } else {
                 this.add
-                  .sprite(x, y, TextureKeys.RED_BLUE_RIPPLE)
+                  .sprite(x, y, TextureKeys.BLUE_RIPPLE)
                   .setScale(this.circleScale)
-                  .play(AnimationKeys.RED_BLUE_RIPPLE_ANIM);
+                  .play(AnimationKeys.BLUE_RIPPLE_ANIM);
               }
             });
           }
@@ -418,9 +420,15 @@ export class MovingTonesScene extends Phaser.Scene {
     });
 
     this.load.atlas(
-      TextureKeys.RED_BLUE_RIPPLE,
-      'assets/images/moving-tones/spritesheets/blue-red-ripple.png',
-      'assets/images/moving-tones/spritesheets/blue-red-ripple.json',
+      TextureKeys.BLUE_RIPPLE,
+      'assets/images/moving-tones/spritesheets/blue-ripple.png',
+      'assets/images/moving-tones/spritesheets/blue-ripple.json',
+    );
+
+    this.load.atlas(
+      TextureKeys.RED_RIPPLE,
+      'assets/images/moving-tones/spritesheets/red-ripple.png',
+      'assets/images/moving-tones/spritesheets/red-ripple.json',
     );
     this.load.atlas(
       TextureKeys.GREEN_RIPPLE,
@@ -514,8 +522,21 @@ export class MovingTonesScene extends Phaser.Scene {
     this.group = this.physics.add.staticGroup({});
 
     this.anims.create({
-      key: AnimationKeys.RED_BLUE_RIPPLE_ANIM,
-      frames: this.anims.generateFrameNames(TextureKeys.RED_BLUE_RIPPLE, {
+      key: AnimationKeys.RED_RIPPLE_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.RED_RIPPLE, {
+        start: 5,
+        end: 35,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.BLUE_RIPPLE_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.BLUE_RIPPLE, {
         start: 5,
         end: 35,
         prefix: 'tile0',
