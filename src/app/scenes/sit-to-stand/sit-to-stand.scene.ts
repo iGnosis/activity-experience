@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Genre } from 'src/app/types/pointmotion';
 import { Howl } from 'howler';
-import { AudioSprite, audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { AudioSprite } from 'src/app/types/pointmotion';
 import { TtsService } from 'src/app/services/tts/tts.service';
 
 @Injectable({

@@ -148,7 +148,7 @@ export class SoundExplorerService {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.soundExplorerScene.loadAssets();
+        await this.soundExplorerScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -645,6 +645,8 @@ export class SoundExplorerService {
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
+        this.soundExplorerScene.playBacktrack();
+        this.soundExplorerScene.enableMusic();
         this.ttsService.tts('Next activity. Sound Explorer.');
         this.elements.banner.state = {
           attributes: {
@@ -654,13 +656,13 @@ export class SoundExplorerService {
           data: {
             type: 'intro',
             htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Next Activity</h2>
-              <h1 class="pt-6 display-4">Sound Explorer</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Range of Motion and Balance</h2>
-            </div>
-            `,
+              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+                <h1 class="pt-2">Next Activity</h2>
+                <h1 class="pt-6 display-4">Sound Explorer</h1>
+                <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+                <h1 class="py-2">Range of Motion and Balance</h2>
+              </div>
+              `,
             buttons: [
               {
                 title: 'Starting Sound Explorer',
@@ -896,6 +898,7 @@ export class SoundExplorerService {
     return [
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.enableMusic(false);
+        this.soundExplorerScene.stopBacktrack();
         this.soundExplorerScene.disable();
         this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;

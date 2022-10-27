@@ -1316,3 +1316,7 @@ export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
     key: string;
   };
 };
+
+export interface AudioSprite {
+  [audio: string]: [number, number] | [number, number, boolean];
+}

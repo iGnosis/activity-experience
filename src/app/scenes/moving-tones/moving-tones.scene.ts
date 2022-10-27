@@ -5,8 +5,9 @@ import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } fr
 import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
-import { Coordinate, GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
+import { AudioSprite, Coordinate, GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -454,29 +455,29 @@ export class MovingTonesScene extends Phaser.Scene {
       onloaderror: this.onLoadErrorCallback,
     });
     this.alto = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Alto.mp3',
-      sprite: audioSprites.soundExplorer.alto,
+      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Alto.mp3',
+      sprite: soundExporerAudio.classical[1].alto as AudioSprite,
       html5: true,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
     this.bass = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Bass.mp3',
-      sprite: audioSprites.soundExplorer.bass,
+      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Bass.mp3',
+      sprite: soundExporerAudio.classical[1].bass as AudioSprite,
       html5: true,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
     this.soprano = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Soprano.mp3',
-      sprite: audioSprites.soundExplorer.soprano,
+      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Soprano.mp3',
+      sprite: soundExporerAudio.classical[1].soprano as AudioSprite,
       html5: true,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
     this.tenor = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/piano/Tenor.mp3',
-      sprite: audioSprites.soundExplorer.tenor,
+      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Tenor.mp3',
+      sprite: soundExporerAudio.classical[1].tenor as AudioSprite,
       html5: true,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,

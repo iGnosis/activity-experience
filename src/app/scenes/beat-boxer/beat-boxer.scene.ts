@@ -1,22 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { left } from '@popperjs/core';
 import { Howl } from 'howler';
-import { reject } from 'lodash';
-import { max, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
+import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 
-export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
-  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
-  texture?: {
-    key: string;
-  };
-};
 export type CenterOfMotion = 'left' | 'right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
-export enum TextureKeys {
+enum TextureKeys {
   HEAVY_BLUE = 'heavy-blue',
   SPEED_BLUE = 'speed-blue',
   HEAVY_RED = 'heavy-red',
