@@ -4,6 +4,7 @@ import { take } from 'rxjs';
 import {
   ActivityBase,
   AnalyticsDTO,
+  GameLevels,
   GameState,
   Genre,
   PreferenceState,
@@ -36,6 +37,9 @@ export class SitToStandService implements ActivityBase {
   private maxSpeed = 10000; /* assumption: 10seconds will be max timeout. */
   private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
+  private streak = 0;
+  private levelUpStreak = 10;
+  private shouldLevelUp = false;
   private config = {
     minCorrectReps: this.gameSettings.levels[this.currentLevel].configuration.minCorrectReps,
     speed: this.gameSettings.levels[this.currentLevel].configuration.speed,
@@ -97,6 +101,10 @@ export class SitToStandService implements ActivityBase {
     console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
   }
 
+  parseExpression(str: string): number {
+    return Function(`'use strict'; return (${str})`)();
+  }
+
   async setup() {
     // setup game config
     const settings = await this.apiService.getGameSettings('sit_stand_achieve');
@@ -107,6 +115,8 @@ export class SitToStandService implements ActivityBase {
         settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
       this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
+    } else {
+      await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
     }
 
     this.sit2StandService.enable();
@@ -266,23 +276,9 @@ export class SitToStandService implements ActivityBase {
     ];
   }
 
-  tutorial() {
-    console.log('running tutorial');
-    return [
+  onboardingByLevel: { [key in GameLevels]: ((reCalibrationCount: number) => Promise<void>)[] } = {
+    level1: [
       async (reCalibrationCount: number) => {
-        this.soundsService.playActivityInstructionSound(this.genre);
-        this.elements.guide.state = {
-          data: {
-            title: "Great, let's begin.",
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts("Great, let's begin.");
-        await this.elements.sleep(5000);
         this.elements.guide.state = {
           data: {
             title: 'This activity is a simple play on the sit to stand exercise.',
@@ -697,6 +693,217 @@ export class SitToStandService implements ActivityBase {
         };
         this.ttsService.tts('Guide completed');
         await this.elements.sleep(3400);
+      },
+    ],
+    level2: [
+      async (reCalibrationCount: number) => {
+        this.elements.guide.state = {
+          data: {
+            title: 'Welcome to Level 2 of Sit to Stand.',
+            titleDuration: 4000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Welcome to Level 2 of Sit to Stand');
+        await this.elements.sleep(4000);
+        this.elements.guide.state = {
+          data: {
+            title: "I'm going to give you a simple mathematical problem.",
+            titleDuration: 4000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("I'm going to give you a simple mathematical problem");
+        await this.elements.sleep(4000);
+        this.elements.guide.state = {
+          data: {
+            title: "In this level we'll be doing addition and subtraction.",
+            titleDuration: 5000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("In this level we'll be doing addition and subtraction");
+        await this.elements.sleep(5000);
+      },
+      async (reCalibrationCount: number) => {
+        this.elements.video.state = {
+          data: {
+            type: 'video',
+            title: 'Odd No. = Stand Up',
+            description: 'Stand up if the answer is an odd number.',
+            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        this.ttsService.tts('Stand up if the answer is an odd number.');
+
+        await this.elements.sleep(8000);
+
+        this.elements.video.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
+        await this.elements.sleep(3000);
+
+        this.elements.video.state = {
+          data: {
+            type: 'video',
+            title: 'Even No. = Sit Down',
+            description: 'Sit down if the answer is an even number.',
+            src: 'assets/videos/sit-to-stand/even_num.mp4',
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        this.ttsService.tts('Sit down if the answer is an even number.');
+        await this.elements.sleep(8000);
+
+        this.elements.video.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
+        await this.elements.sleep(3000);
+
+        this.elements.guide.state = {
+          data: {
+            title: 'Let’s try it out.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Let’s try it out.');
+        await this.elements.sleep(3000);
+      },
+      async (reCalibrationCount: number) => {
+        const promptExpressions = ['4+8', '9-6'];
+
+        for (let i = 0; i < promptExpressions.length; i++) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
+          this.elements.prompt.state = {
+            data: {
+              value: promptExpressions[i],
+              position: 'center',
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          const ttsExpression = promptExpressions[i].replace('-', ' minus ').replace('+', ' plus ');
+          this.ttsService.tts(ttsExpression);
+          this.elements.timeout.state = {
+            data: {
+              mode: 'start',
+              timeout: this.config.speed,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
+            this.parseExpression(promptExpressions[i]) % 2 === 0 ? 'sit' : 'stand',
+            this.config.speed,
+          );
+
+          this.elements.timeout.state = {
+            data: {
+              mode: 'stop',
+            },
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          this.elements.prompt.state = {
+            data: {
+              repStatus: res.result,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          if (res.result === 'failure') --i; //repeat current prompt if failure
+
+          await this.elements.sleep(1000);
+        }
+
+        this.elements.prompt.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+
+        this.elements.guide.state = {
+          data: {
+            title: 'Tutorial Completed.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts('Tutorial Completed.');
+        await this.elements.sleep(3000);
+      },
+    ],
+    level3: [],
+  };
+
+  tutorial() {
+    console.log('running tutorial');
+    return [
+      async (reCalibrationCount: number) => {
+        console.log('current level: ', this.currentLevel);
+        this.soundsService.playActivityInstructionSound(this.genre);
+        this.elements.guide.state = {
+          data: {
+            title: "Great, let's begin.",
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.ttsService.tts("Great, let's begin.");
+        await this.elements.sleep(5000);
+      },
+      ...this.onboardingByLevel[this.currentLevel],
+      async (reCalibrationCount: number) => {
         await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
@@ -714,12 +921,13 @@ export class SitToStandService implements ActivityBase {
     promptId: string,
     analytics: any[],
     reCalibrationCount?: number,
+    stringExpression?: string,
   ) {
     const promptClass = promptNum % 2 === 0 ? 'sit' : 'stand';
 
     this.elements.prompt.state = {
       data: {
-        value: promptNum,
+        value: stringExpression || promptNum,
       },
       attributes: {
         visibility: 'visible',
@@ -727,7 +935,9 @@ export class SitToStandService implements ActivityBase {
       },
     };
     const promptTimestamp = Date.now();
-    this.ttsService.tts(promptNum.toString());
+    const ttsExpression = stringExpression?.replace('-', ' minus ').replace('+', ' plus ');
+
+    this.ttsService.tts(ttsExpression || promptNum.toString());
     this.elements.timeout.state = {
       data: {
         mode: 'start',
@@ -764,6 +974,7 @@ export class SitToStandService implements ActivityBase {
         timestamp: promptTimestamp,
         data: {
           number: promptNum,
+          ...(stringExpression ? { stringExpression } : {}),
         },
       },
       reaction: {
@@ -871,7 +1082,20 @@ export class SitToStandService implements ActivityBase {
             throw new Error('reCalibrationCount changed');
           }
           // generating a prompt number
-          let promptNum = Math.floor(Math.random() * 100);
+          const isSumOperation = Math.random() > 0.5;
+
+          const num1 = Math.floor(Math.random() * 9);
+          const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
+
+          let stringExpression;
+
+          if (this.currentLevel === 'level2')
+            stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
+
+          let promptNum = stringExpression
+            ? this.parseExpression(stringExpression)
+            : Math.floor(Math.random() * 100);
+
           // checking if not more than two even or two odd in a row.
           if (this.analytics && this.analytics.length >= 2) {
             const prevReps = this.analytics.slice(-2);
@@ -888,6 +1112,7 @@ export class SitToStandService implements ActivityBase {
             promptId,
             this.analytics,
             reCalibrationCount,
+            stringExpression,
           );
           this.analytics.push(analyticsObj);
 
@@ -924,6 +1149,8 @@ export class SitToStandService implements ActivityBase {
                 reCalibrationCount,
               },
             };
+
+            if (++this.streak === this.levelUpStreak) this.shouldLevelUp = true;
           } else {
             this.soundsService.playCalibrationSound('error');
             this.elements.prompt.state = {
@@ -936,6 +1163,7 @@ export class SitToStandService implements ActivityBase {
               },
             };
             this.failedReps += 1;
+            this.streak = 0;
             if (this.failedReps >= 3) {
               // for better user experience - increase timeout duration by 2 second.
               this.config.speed += 2000;
@@ -1057,10 +1285,44 @@ export class SitToStandService implements ActivityBase {
         // this.soundsService.stopGenreSound();
         this.sit2StandScene.stopBacktrack(this.genre);
         const achievementRatio = this.successfulReps / this.totalReps;
-        if (achievementRatio < 0.6) {
+        if (achievementRatio < 0.6 || this.shouldLevelUp) {
           await this.apiService.updateOnboardingStatus({
             sit_stand_achieve: false,
           });
+        }
+
+        if (this.shouldLevelUp) {
+          const nextLevel = Number(this.currentLevel.charAt(this.currentLevel.length - 1)) + 1;
+          if (nextLevel <= 3) {
+            this.currentLevel = ('level' + nextLevel) as GameLevels;
+            this.gameSettings.currentLevel = this.currentLevel;
+
+            this.elements.guide.state = {
+              data: {
+                title: "Congratulations, you've progressed to the next level.",
+                titleDuration: 5000,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            this.ttsService.tts("Congratulations, you've progressed to the next level.");
+            await this.elements.sleep(5000);
+
+            this.elements.guide.state = {
+              data: {
+                title: "Hope you're ready for a new challenge tomorrow.",
+                titleDuration: 3000,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            this.ttsService.tts("Hope you're ready for a new challenge tomorrow.");
+            await this.elements.sleep(3000);
+          }
         }
 
         // update game config.
