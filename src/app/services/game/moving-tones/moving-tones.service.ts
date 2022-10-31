@@ -1037,6 +1037,13 @@ export class MovingTonesService implements ActivityBase {
         await this.game(reCalibrationCount);
       },
       async (reCalibrationCount: number) => {
+        const highScore = await this.apiService.getHighScore('moving_tones');
+
+        const shouldAllowReplay =
+          Math.abs(this.coinsCollected - highScore) <= 5 || Math.random() < 0.5;
+
+        if (!shouldAllowReplay) return;
+
         this.ttsService.tts(
           'Raise both your hands if you want to add 30 more seconds to this activity.',
         );
@@ -1104,6 +1111,8 @@ export class MovingTonesService implements ActivityBase {
 
           await this.game(reCalibrationCount);
         }
+      },
+      async (reCalibrationCount: number) => {
         this.elements.timer.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1149,7 +1158,7 @@ export class MovingTonesService implements ActivityBase {
         const highScore = await this.apiService.getHighScore('moving_tones');
 
         this.ttsService.tts(
-          `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} minutes.`,
+          `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} seconds.`,
         );
         this.elements.banner.state = {
           attributes: {

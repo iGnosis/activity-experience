@@ -54,9 +54,25 @@ export class BeatBoxerService {
       environment.settings['beat_boxer'].levels[this.currentLevel].configuration.gameDuration,
     speed: environment.settings['beat_boxer'].levels[this.currentLevel].configuration.speed,
   };
+
+  private gameDuration = this.config.gameDuration || 0;
+  private totalDuration = this.config.gameDuration || 0;
+
   private successfulReps = 0;
   private failedReps = 0;
   private totalReps = 0;
+
+  private updateElapsedTime = (elapsedTime: number) => {
+    if (elapsedTime >= this.gameDuration!) this.isGameComplete = true;
+    this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+  };
+
+  private replayOrTimeout(timeout = 10000) {
+    return new Promise(async (resolve, reject) => {
+      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
+      setTimeout(() => resolve(false), timeout);
+    });
+  }
 
   constructor(
     private store: Store<{
@@ -871,6 +887,7 @@ export class BeatBoxerService {
       clearTimeout(this.rightBagTimeout);
       this.successfulReps++;
       this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
+      this.store.dispatch(game.setScore({ score: this.successfulReps }));
       this.elements.score.state = {
         data: {
           label: 'Punches',
@@ -989,17 +1006,13 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        const updateElapsedTime = (elapsedTime: number) => {
-          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-        };
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
-            duration: this.config.gameDuration! * 1000,
-            onPause: updateElapsedTime,
-            onComplete: updateElapsedTime,
+            duration: this.gameDuration! * 1000,
+            onPause: this.updateElapsedTime,
+            onComplete: this.updateElapsedTime,
           },
           attributes: {
             visibility: 'visible',
@@ -1077,6 +1090,113 @@ export class BeatBoxerService {
           },
         };
       },
+      async (reCalibrationCount: number) => {
+        const highScoreResp = await this.apiService.getHighScore('beat_boxer');
+        const highScore = highScoreResp?.length ? highScoreResp[0].repsCompleted : 0;
+
+        const shouldAllowReplay =
+          Math.abs(this.successfulReps - highScore) <= 5 || Math.random() < 0.5;
+
+        if (!shouldAllowReplay) return;
+
+        this.ttsService.tts(
+          'Raise both your hands if you want to add 30 more seconds to this activity.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'Raise both your hands to add 30 seconds.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'action',
+            htmlStr: `
+              <div class="text-center row">
+                <h1 class="pt-4 display-3">Times Up!</h1>
+                <h2 class="pb-8 display-6">Want to improve your score?</h2>
+                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
+              <div>
+            `,
+            buttons: [
+              {
+                title: 'Continue',
+                progressDurationMs: 9000,
+              },
+            ],
+          },
+        };
+        const shouldReplay = await this.replayOrTimeout(10000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        if (shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+
+          this.isGameComplete = false;
+
+          this.elements.timer.state = {
+            data: {
+              mode: 'start',
+              isCountdown: true,
+              duration: 30_000,
+              onPause: this.updateElapsedTime,
+              onComplete: this.updateElapsedTime,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.gameDuration = 30;
+          this.totalDuration += 30;
+
+          while (!this.isGameComplete) {
+            if (reCalibrationCount !== this.globalReCalibrationCount) {
+              throw new Error('reCalibrationCount changed');
+            }
+
+            const shouldShowObstacle = Math.random() > 0.5;
+            const leftBagType = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.right || ''),
+            );
+            const rightBagType = this.getRandomItemFromArray(
+              this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
+            );
+            const leftBagPosition = this.getRandomItemFromArray(this.negativeLevel);
+            const rightBagPosition = this.getRandomItemFromArray(this.positiveLevel);
+
+            const promptId = uuidv4();
+            const { analyticsObj } = await this.showPrompt(
+              {
+                shouldShowObstacle,
+                leftBagType,
+                rightBagType,
+                leftBagPosition,
+                rightBagPosition,
+              },
+              promptId,
+              reCalibrationCount,
+            );
+            this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+
+            await this.elements.sleep(this.config.speed);
+          }
+        }
+      },
     ];
   }
 
@@ -1109,7 +1229,7 @@ export class BeatBoxerService {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.apiService.getDurationForTimer(this.config.gameDuration!);
+        } = this.apiService.getDurationForTimer(this.totalDuration);
         const highScore = await this.apiService.getHighScore('beat_boxer');
 
         this.elements.banner.state = {

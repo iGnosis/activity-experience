@@ -46,6 +46,9 @@ export class SoundExplorerService {
 
   private isGameComplete = false;
 
+  private gameDuration = this.config.gameDuration || 0;
+  private totalDuration = this.config.gameDuration || 0;
+
   private difficulty = 1;
   private streak = 0;
 
@@ -109,6 +112,18 @@ export class SoundExplorerService {
     this.soundExplorerScene.showShapes(['wrong'], randomPosition, randomAngle, this.config.speed);
     return { obstacleAngle: randomAngle, obstaclePosition: randomPosition };
   };
+
+  private updateElapsedTime = (elapsedTime: number) => {
+    if (elapsedTime >= this.gameDuration!) this.isGameComplete = true;
+    this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+  };
+
+  private replayOrTimeout(timeout = 10000) {
+    return new Promise(async (resolve, reject) => {
+      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
+      setTimeout(() => resolve(false), timeout);
+    });
+  }
 
   constructor(
     private store: Store<{
@@ -785,17 +800,13 @@ export class SoundExplorerService {
       // Initializes score & timer.
       // When the timer runs out, loop() is ended.
       async (reCalibrationCount: number) => {
-        const updateElapsedTime = (elapsedTime: number) => {
-          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-        };
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
-            duration: this.config.gameDuration! * 1000,
-            onPause: updateElapsedTime,
-            onComplete: updateElapsedTime,
+            duration: this.gameDuration * 1000,
+            onPause: this.updateElapsedTime,
+            onComplete: this.updateElapsedTime,
           },
           attributes: {
             visibility: 'visible',
@@ -861,6 +872,94 @@ export class SoundExplorerService {
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
         }
       },
+      async (reCalibrationCount: number) => {
+        const highScoreResp = await this.apiService.getHighScore('sound_explorer');
+        const highScore =
+          highScoreResp && highScoreResp.length ? highScoreResp[0].repsCompleted : 0;
+
+        const shouldAllowReplay =
+          Math.abs(this.pointsGained - highScore) <= 5 || Math.random() < 0.5;
+
+        if (!shouldAllowReplay) return;
+
+        this.ttsService.tts(
+          'Raise both your hands if you want to add 30 more seconds to this activity.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'Raise both your hands to add 30 seconds.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'action',
+            htmlStr: `
+              <div class="text-center row">
+                <h1 class="pt-4 display-3">Times Up!</h1>
+                <h2 class="pb-8 display-6">Want to improve your score?</h2>
+                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
+              <div>
+            `,
+            buttons: [
+              {
+                title: 'Continue',
+                progressDurationMs: 9000,
+              },
+            ],
+          },
+        };
+        const shouldReplay = await this.replayOrTimeout(10000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        if (shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+
+          this.isGameComplete = false;
+
+          this.elements.timer.state = {
+            data: {
+              mode: 'start',
+              isCountdown: true,
+              duration: 30_000,
+              onPause: this.updateElapsedTime,
+              onComplete: this.updateElapsedTime,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.gameDuration = 30;
+          this.totalDuration += 30;
+
+          while (!this.isGameComplete) {
+            if (reCalibrationCount !== this.globalReCalibrationCount) {
+              throw new Error('reCalibrationCount changed');
+            }
+
+            const showObstacle = Math.random() > 0.5;
+            const promptId = uuidv4();
+            const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
+            await this.elements.sleep(100);
+            this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+          }
+        }
+      },
 
       // this probably should be in postLoop() ?
       async (reCalibrationCount: number) => {
@@ -908,8 +1007,7 @@ export class SoundExplorerService {
           });
         }
         this.ttsService.tts(
-          `Your score is ${this.currentScore}, time completed ${this.config
-            .gameDuration!} seconds.`,
+          `Your score is ${this.pointsGained}, time completed ${this.totalDuration} seconds.`,
         );
         const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
@@ -917,7 +1015,7 @@ export class SoundExplorerService {
           seconds: string;
         };
         // eslint-disable-next-line prefer-const
-        totalDuration = this.apiService.getDurationForTimer(this.config.gameDuration!);
+        totalDuration = this.apiService.getDurationForTimer(this.totalDuration);
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -931,7 +1029,7 @@ export class SoundExplorerService {
             <h2 class="pt-7">Score: ${this.currentScore}</h2>
             <h2 class="pt-5">High Score: ${Math.max(
               highScore && highScore.length ? highScore[0].repsCompleted : 0,
-              this.currentScore,
+              this.pointsGained,
             )}</h2>
             <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
               totalDuration.seconds
