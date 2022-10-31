@@ -23,6 +23,18 @@ export const environment: Environment = {
             speed: 5000,
           },
         },
+        level2: {
+          configuration: {
+            minCorrectReps: 17,
+            speed: 6500,
+          },
+        },
+        level3: {
+          configuration: {
+            minCorrectReps: 20,
+            speed: 6500,
+          },
+        },
       },
     },
     beat_boxer: {

@@ -291,6 +291,26 @@ export class ApiService {
       console.log(err);
     }
   }
+  async insertGameSettings(gameName: Activities, settings: ActivityConfiguration) {
+    try {
+      const insertSettingsResp = await this.client.req(
+        gql`
+          mutation InsertGameSettings(
+            $gameName: game_name_enum = beat_boxer
+            $configuration: jsonb = ""
+          ) {
+            insert_game_settings(objects: { gameName: $gameName, configuration: $configuration }) {
+              affected_rows
+            }
+          }
+        `,
+        { gameName, configuration: settings },
+      );
+      return insertSettingsResp;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   async getLastGame() {
     const today = new Date();
