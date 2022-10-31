@@ -354,19 +354,19 @@ export class MovingTonesService implements ActivityBase {
       }, // semicircles - top to bottom
       {
         startLeft: {
-          x: this.center.x / 2 + 50,
+          x: this.center.x / 2 - 50,
           y: this.center.y,
         },
         endLeft: {
-          x: this.center.x / 2 + 100,
+          x: this.center.x / 2,
           y: this.center.y - 150,
         },
         startRight: {
-          x: this.center.x + this.center.x / 2 - 50,
+          x: this.center.x + this.center.x / 2 + 50,
           y: this.center.y,
         },
         endRight: {
-          x: this.center.x + this.center.x / 2 - 100,
+          x: this.center.x + this.center.x / 2,
           y: this.center.y - 150,
         },
         curveType: 'triangle',
@@ -374,19 +374,19 @@ export class MovingTonesService implements ActivityBase {
       }, // triangles - top
       {
         startLeft: {
-          x: this.center.x / 2 + 50,
+          x: this.center.x / 2 - 50,
           y: this.center.y,
         },
         endLeft: {
-          x: this.center.x / 2 + 100,
+          x: this.center.x / 2,
           y: this.center.y + 150,
         },
         startRight: {
-          x: this.center.x + this.center.x / 2 - 50,
+          x: this.center.x + this.center.x / 2 + 50,
           y: this.center.y,
         },
         endRight: {
-          x: this.center.x + this.center.x / 2 - 100,
+          x: this.center.x + this.center.x / 2,
           y: this.center.y + 150,
         },
         curveType: 'triangle',
@@ -398,20 +398,20 @@ export class MovingTonesService implements ActivityBase {
           y: this.center.y - 100,
         },
         endRight: {
-          x: this.center.x + 150,
-          y: this.center.y + 150,
+          x: this.center.x + 250,
+          y: this.center.y + 250,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
       }, // zigzag - middle to right
       {
         startRight: {
-          x: this.center.x + 150,
+          x: this.center.x + 250,
           y: this.center.y - 100,
         },
         endRight: {
           x: this.center.x,
-          y: this.center.y + 150,
+          y: this.center.y + 250,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
@@ -422,20 +422,20 @@ export class MovingTonesService implements ActivityBase {
           y: this.center.y - 100,
         },
         endLeft: {
-          x: this.center.x - 150,
-          y: this.center.y + 150,
+          x: this.center.x - 250,
+          y: this.center.y + 250,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
       }, // middle to left
       {
         startLeft: {
-          x: this.center.x - 150,
+          x: this.center.x - 250,
           y: this.center.y - 100,
         },
         endLeft: {
           x: this.center.x,
-          y: this.center.y + 150,
+          y: this.center.y + 250,
         },
         curveType: 'zigzag',
         pointsInBetween: 3,
@@ -443,19 +443,19 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 100,
-          y: this.center.y - 100,
+          y: this.center.y - 180,
         },
         endLeft: {
           x: this.center.x - 100,
-          y: this.center.y + 350,
+          y: this.center.y + 420,
         },
         startRight: {
           x: this.center.x + 100,
-          y: this.center.y - 100,
+          y: this.center.y - 180,
         },
         endRight: {
           x: this.center.x + 100,
-          y: this.center.y + 350,
+          y: this.center.y + 420,
         },
         curveType: 'line',
         pointsInBetween: 2,
