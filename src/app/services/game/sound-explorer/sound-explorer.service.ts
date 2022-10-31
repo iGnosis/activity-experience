@@ -204,15 +204,14 @@ export class SoundExplorerService {
             },
           };
           await this.setup();
-
-          this.elements.banner.state = {
-            data: {},
-            attributes: {
-              reCalibrationCount,
-              visibility: 'hidden',
-            },
-          };
         }
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            reCalibrationCount,
+            visibility: 'hidden',
+          },
+        };
       },
 
       async (reCalibrationCount: number) => {

@@ -150,15 +150,14 @@ export class BeatBoxerService {
             },
           };
           await this.setup();
-
-          this.elements.banner.state = {
-            data: {},
-            attributes: {
-              reCalibrationCount,
-              visibility: 'hidden',
-            },
-          };
         }
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            reCalibrationCount,
+            visibility: 'hidden',
+          },
+        };
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts("Raise one of your hands when you're ready to begin.");

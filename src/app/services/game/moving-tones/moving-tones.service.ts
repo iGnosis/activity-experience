@@ -634,15 +634,14 @@ export class MovingTonesService implements ActivityBase {
             },
           };
           await this.setup();
-
-          this.elements.banner.state = {
-            data: {},
-            attributes: {
-              reCalibrationCount,
-              visibility: 'hidden',
-            },
-          };
         }
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            reCalibrationCount,
+            visibility: 'hidden',
+          },
+        };
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts('Last activity. Moving Tones.');
