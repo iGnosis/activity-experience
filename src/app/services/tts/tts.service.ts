@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Howl } from 'howler';
+import { Activities } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { TtsPreloader } from './tts.preloader';
 
@@ -87,7 +88,7 @@ export class TtsService {
     });
   }
 
-  async preLoadTts(activity: 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer') {
+  async preLoadTts(activity: Activities) {
     this.resetCache();
     return new Promise<void>((resolve, reject) => {
       const ttsTexts = this.ttsPreloaderService.getTtsToCache();

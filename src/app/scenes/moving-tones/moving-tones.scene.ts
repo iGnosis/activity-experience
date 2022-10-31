@@ -813,8 +813,7 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   async loadAssets() {
-    // TODO: Preload TTS for movingTones
-    // await this.ttsService.preLoadTts('movingTones');
+    await this.ttsService.preLoadTts('moving_tones');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
       const intervalId = setInterval(() => {

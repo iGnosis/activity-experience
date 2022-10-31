@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
+import { Activities } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TtsPreloader {
   getTtsToCache(): {
-    [key: string]: string[];
+    [key in Activities]: string[];
   } {
     return {
       sit_stand_achieve: [
@@ -80,6 +81,33 @@ export class TtsPreloader {
         'The guide is complete.',
         'Last activity. Sound Explorer.',
         'Please raise one of your hands to close the game.',
+      ],
+
+      moving_tones: [
+        'Fingers stretched wide',
+        'Posture upright and big',
+        'Move feet to reach objects',
+        'Last activity. Moving Tones.',
+        'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
+        'Raise one of your hands to start the tutorial.',
+        "Raise one of your hands when you're ready to start.",
+        'The objective of this game is to collect as many green coins as you can.',
+        'Hold the right hand over the red circle when it first appears, to load the music coins.',
+        "Now let's try the other hand.",
+        'Hold the left hand over the blue circle when it first appears, to load the music coins.',
+        "Let's try with both hands now.",
+        'Follow your hand over the music coins to collect them and finish on the same colour on which you started.',
+        'Well done!',
+        "You're ready to start collecting some music coins.",
+        'Tutorial Completed.',
+        "Let's begin.",
+        '3', // ribbon element
+        '2',
+        '1',
+        "Let's Go!",
+        'Raise both your hands if you want to add 30 more seconds to this activity.',
+        'Activity completed.',
+        'Well done. See you soon!',
       ],
     };
   }
