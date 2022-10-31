@@ -8,7 +8,7 @@ import { Coordinate, IsMediaPipeReady } from 'src/app/types/pointmotion';
 })
 export class PoseService {
   options: Options = {
-    modelComplexity: 1,
+    modelComplexity: 2,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5,
   };
