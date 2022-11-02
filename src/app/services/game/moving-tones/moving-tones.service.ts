@@ -98,7 +98,7 @@ export class MovingTonesService implements ActivityBase {
     pointsInBetween: number,
   ): Coordinate[] {
     const coordinates: Coordinate[] = [];
-    pointsInBetween = pointsInBetween + 1;
+    const pointsIncludingLast = pointsInBetween + 1;
 
     const xDiff = end.x - start.x;
     const yDiff = end.y - start.y;
@@ -106,10 +106,10 @@ export class MovingTonesService implements ActivityBase {
     if (curveType === 'line') {
       coordinates.push(start);
 
-      for (let i = 1; i <= pointsInBetween; i++) {
+      for (let i = 1; i <= pointsIncludingLast; i++) {
         coordinates.push({
-          x: start.x + (xDiff * i) / pointsInBetween,
-          y: start.y + (yDiff * i) / pointsInBetween,
+          x: start.x + (xDiff * i) / pointsIncludingLast,
+          y: start.y + (yDiff * i) / pointsIncludingLast,
         });
       }
     } else if (curveType === 'semicircle') {
@@ -130,10 +130,10 @@ export class MovingTonesService implements ActivityBase {
         this.getAngleBetweenPoints(start.x, start.y, this.center.x, 0) * (isPointOnLeft ? 1 : -1) +
         (90 * Math.PI) / 180;
 
-      for (let i = 0; i <= pointsInBetween; i++) {
+      for (let i = 0; i <= pointsIncludingLast; i++) {
         coordinates.push({
-          x: this.center.x + radius * Math.cos((angle * i) / pointsInBetween - angleFromCenter),
-          y: this.center.y + radius * Math.sin((angle * i) / pointsInBetween - angleFromCenter),
+          x: this.center.x + radius * Math.cos((angle * i) / pointsIncludingLast - angleFromCenter),
+          y: this.center.y + radius * Math.sin((angle * i) / pointsIncludingLast - angleFromCenter),
         });
       }
     } else if (curveType === 'zigzag') {
@@ -577,18 +577,14 @@ export class MovingTonesService implements ActivityBase {
     };
   }
 
-  private replayOrTimeout(timeout = 10000) {
-    return new Promise(async (resolve, reject) => {
-      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
-      setTimeout(() => resolve(false), timeout);
-    });
-  }
-
   async setup() {
     this.movingTonesScene.enable();
+
     const heightRatio = await this.poseService.getHeightRatio();
     this.movingTonesScene.circleScale *= heightRatio;
+
     this.center = this.movingTonesScene.center();
+
     return new Promise<void>(async (resolve, reject) => {
       this.movingTonesScene.scene.start('movingTones');
 
@@ -599,7 +595,6 @@ export class MovingTonesService implements ActivityBase {
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
-        // this.soundExplorerScene.scene.restart();
         reject();
       }
       console.timeEnd('Waiting for assets to Load');
@@ -1078,7 +1073,7 @@ export class MovingTonesService implements ActivityBase {
             ],
           },
         };
-        const shouldReplay = await this.replayOrTimeout(10000);
+        const shouldReplay = await this.apiService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,

@@ -13,6 +13,7 @@ import {
 } from 'src/app/types/pointmotion';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
+import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,7 @@ export class ApiService {
       preference: PreferenceState;
     }>,
     private client: GqlClientService,
+    private handTrackerService: HandTrackerService,
   ) {}
 
   async newGame(game: string) {
@@ -426,6 +428,7 @@ export class ApiService {
     }
   }
 
+  // helper methods
   getDurationForTimer(totalSeconds: number): {
     minutes: string;
     seconds: string;
@@ -447,5 +450,12 @@ export class ApiService {
           : (time.seconds = totalSeconds.toString()),
     };
     return time;
+  }
+
+  replayOrTimeout(timeout = 10000) {
+    return new Promise(async (resolve, reject) => {
+      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
+      setTimeout(() => resolve(false), timeout);
+    });
   }
 }

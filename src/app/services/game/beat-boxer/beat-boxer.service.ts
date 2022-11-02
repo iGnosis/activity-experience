@@ -67,13 +67,6 @@ export class BeatBoxerService {
     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
-  private replayOrTimeout(timeout = 10000) {
-    return new Promise(async (resolve, reject) => {
-      this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
-      setTimeout(() => resolve(false), timeout);
-    });
-  }
-
   constructor(
     private store: Store<{
       game: GameState;
@@ -1133,7 +1126,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        const shouldReplay = await this.replayOrTimeout(10000);
+        const shouldReplay = await this.apiService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
