@@ -250,9 +250,9 @@ export class MovingTonesService implements ActivityBase {
             this.elements.timeout.state = {
               data: {
                 bars: [
-                  ...(this.elements.timeout.state.data.bars?.filter(
+                  ...((this.elements.timeout.state.data.bars?.filter(
                     (color) => color !== 'blue',
-                  ) as [TimeoutColor?]),
+                  ) as [TimeoutColor?]) || []),
                 ],
               },
               attributes: {
@@ -306,9 +306,9 @@ export class MovingTonesService implements ActivityBase {
             this.elements.timeout.state = {
               data: {
                 bars: [
-                  ...(this.elements.timeout.state.data.bars?.filter((color) => color !== 'red') as [
-                    TimeoutColor?,
-                  ]),
+                  ...((this.elements.timeout.state.data.bars?.filter(
+                    (color) => color !== 'red',
+                  ) as [TimeoutColor?]) || []),
                 ],
               },
               attributes: {
