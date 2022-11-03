@@ -103,7 +103,7 @@ export class PoseService {
             status: 'error',
           });
           this.isReady.error({
-            status: 'Failed to download mediapipe.',
+            status: 'Something went wrong.',
           });
         } else {
           this.start(this.videoElm as HTMLVideoElement, 25, 'cdn');

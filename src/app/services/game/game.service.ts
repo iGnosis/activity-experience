@@ -216,7 +216,7 @@ export class GameService {
                 htmlStr: `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
-                  <h3 class="pt-8 pb-4">Setting up the best experience for you. Take a deep breath and we'll be ready to begin.</h3>
+                  <h3 class="pt-8 pb-4">Downloading files for a smooth experience.<br>Take a few deep breaths and we should be ready.</h3>
                 </div>
                 `,
                 buttons: [
@@ -231,28 +231,36 @@ export class GameService {
               this.elements.banner.data.htmlStr = `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
-                  <h3 class="pt-8 pb-4">It's taking longer that usual. Please stick around.</h3>
+                  <h3 class="pt-6 pb-4">It's taking longer that usual.<br>Please make sure you have a stable internet connection for the best experience.</h3>
                 </div>
               `;
             }
           }
         },
-        error: (err) => {
+        error: async (err) => {
           this.elements.banner.state = {
             attributes: {
               visibility: 'visible',
+              reCalibrationCount: this.reCalibrationCount,
             },
             data: {
               type: 'status',
-              htmlStr: `
+              htmlStr: ``,
+            },
+          };
+          for (let i = 5; i >= 0; i--) {
+            this.elements.banner.state.data.htmlStr = `
               <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18">
                 <img src="assets/images/error.png" class="p-2 h-32 w-32" alt="error" />
                 <h1 class="pt-4 display-5 text-nowrap">${err.status}</h1>
-                <h3 class="pt-8 pb-4">Please try again by refreshing the page.</h3>
+                <h3 class="pt-8 pb-8">We ran into an unexpected issue while downloading the files. Please refresh the page to solve this issue</h3>
+                <button class="btn btn-primary d-flex justify-content-center align-items-center progress mx-16 text-center"><span>Trying again in... ${i}</span></button>
               </div>
-              `,
-            },
-          };
+              `;
+            await this.elements.sleep(1000);
+          }
+          this.elements.banner.state.attributes.visibility = 'hidden';
+          window.location.reload();
         },
       });
 
