@@ -9,6 +9,7 @@ import {
   PreferenceState,
   MovingTonesCurve,
   MovingTonesConfiguration,
+  TimeoutColor,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
@@ -22,7 +23,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { distinctUntilChanged, firstValueFrom, Subscription } from 'rxjs';
 import { PoseService } from '../../pose/pose.service';
 
 @Injectable({
@@ -187,9 +188,11 @@ export class MovingTonesService implements ActivityBase {
   private async showCircles({
     left,
     right,
+    reCalibrationCount,
   }: {
     left?: Coordinate[];
     right?: Coordinate[];
+    reCalibrationCount?: number;
   }): Promise<{
     blueSubscription: Subscription | undefined;
     redSubscription: Subscription | undefined;
@@ -207,42 +210,114 @@ export class MovingTonesService implements ActivityBase {
     if (left?.length) {
       const sleepTime = 2500 / (left.length - 1);
 
-      blueSubscription = this.movingTonesScene.blueHoldState.subscribe(async (state) => {
-        if (state) {
-          for (let i = 1; i < left.length; i++) {
-            await this.elements.sleep(sleepTime - 100);
+      blueSubscription = this.movingTonesScene.blueHoldState
+        .pipe(distinctUntilChanged())
+        .subscribe(async (state) => {
+          if (state) {
+            const isRedProgressBarShown =
+              this.elements.timeout.state.data.bars &&
+              this.elements.timeout.state.data.bars.includes('red');
 
-            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-            if (!['left-hand', 'both-hands'].includes(handStatus || '')) break;
-
-            if (i === left.length - 1) {
-              this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
+            if (isRedProgressBarShown) {
+              this.elements.timeout.state.data.bars = ['blue', 'red'];
             } else {
-              this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
+              this.elements.timeout.state = {
+                data: {
+                  mode: 'start',
+                  timeout: 2500,
+                  bars: ['blue'],
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
             }
+            for (let i = 1; i < left.length; i++) {
+              await this.elements.sleep(sleepTime - 100);
+
+              const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+              if (!['left-hand', 'both-hands'].includes(handStatus || '')) break;
+
+              if (i === left.length - 1) {
+                this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
+              } else {
+                this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
+              }
+            }
+          } else {
+            // remove blue bar
+            this.elements.timeout.state = {
+              data: {
+                bars: [
+                  ...(this.elements.timeout.state.data.bars?.filter(
+                    (color) => color !== 'blue',
+                  ) as [TimeoutColor?]),
+                ],
+              },
+              attributes: {
+                visibility: this.elements.timeout.state.data.bars ? 'visible' : 'hidden',
+                reCalibrationCount,
+              },
+            };
           }
-        }
-      });
+        });
     }
     if (right?.length) {
       const sleepTime = 2500 / (right.length - 1);
 
-      redSubscription = this.movingTonesScene.redHoldState.subscribe(async (state) => {
-        if (state) {
-          for (let i = 1; i < right.length; i++) {
-            await this.elements.sleep(sleepTime - 100);
+      redSubscription = this.movingTonesScene.redHoldState
+        .pipe(distinctUntilChanged())
+        .subscribe(async (state) => {
+          if (state) {
+            const isBlueProgressBarShown =
+              this.elements.timeout.state.data.bars &&
+              this.elements.timeout.state.data.bars.includes('blue');
 
-            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-            if (!['right-hand', 'both-hands'].includes(handStatus || '')) break;
-
-            if (i === right.length - 1) {
-              this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
+            if (isBlueProgressBarShown) {
+              this.elements.timeout.state.data.bars = ['blue', 'red'];
             } else {
-              this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
+              this.elements.timeout.state = {
+                data: {
+                  mode: 'start',
+                  timeout: 2500,
+                  bars: ['red'],
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
             }
+            for (let i = 1; i < right.length; i++) {
+              await this.elements.sleep(sleepTime - 100);
+
+              const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+              if (!['right-hand', 'both-hands'].includes(handStatus || '')) break;
+
+              if (i === right.length - 1) {
+                this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
+              } else {
+                this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
+              }
+            }
+          } else {
+            // remove red progress bar
+            this.elements.timeout.state = {
+              data: {
+                bars: [
+                  ...(this.elements.timeout.state.data.bars?.filter((color) => color !== 'red') as [
+                    TimeoutColor?,
+                  ]),
+                ],
+              },
+              attributes: {
+                visibility: this.elements.timeout.state.data.bars ? 'visible' : 'hidden',
+                reCalibrationCount,
+              },
+            };
           }
-        }
-      });
+        });
     }
 
     return { blueSubscription, redSubscription };
@@ -509,6 +584,7 @@ export class MovingTonesService implements ActivityBase {
       const subscriptions = await this.showCircles({
         left: leftCoordinates,
         right: rightCoordinates,
+        reCalibrationCount,
       });
       const promptTimestamp = Date.now();
 

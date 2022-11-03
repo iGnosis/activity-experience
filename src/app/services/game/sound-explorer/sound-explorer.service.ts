@@ -43,6 +43,7 @@ export class SoundExplorerService {
   private loopStartTime: number | null;
 
   private isGameComplete = false;
+  private shouldReplay = false;
 
   private gameDuration = this.config.gameDuration || 0;
   private totalDuration = this.config.gameDuration || 0;
@@ -907,7 +908,7 @@ export class SoundExplorerService {
             ],
           },
         };
-        const shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -916,7 +917,7 @@ export class SoundExplorerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        if (shouldReplay) {
+        if (this.shouldReplay) {
           this.soundsService.playCalibrationSound('success');
 
           this.isGameComplete = false;
@@ -936,7 +937,10 @@ export class SoundExplorerService {
           };
           this.gameDuration = 30;
           this.totalDuration += 30;
-
+        }
+      },
+      async (reCalibrationCount: number) => {
+        if (this.shouldReplay) {
           while (!this.isGameComplete) {
             if (reCalibrationCount !== this.globalReCalibrationCount) {
               throw new Error('reCalibrationCount changed');
@@ -997,7 +1001,7 @@ export class SoundExplorerService {
           });
         }
         this.ttsService.tts(
-          `Your score is ${this.pointsGained}, time completed ${this.totalDuration} seconds.`,
+          `Your score is ${this.currentScore}, time completed ${this.totalDuration} seconds.`,
         );
         const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
@@ -1019,7 +1023,7 @@ export class SoundExplorerService {
             <h2 class="pt-7">Score: ${this.currentScore}</h2>
             <h2 class="pt-5">High Score: ${Math.max(
               highScore && highScore.length ? highScore[0].repsCompleted : 0,
-              this.pointsGained,
+              this.currentScore,
             )}</h2>
             <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
               totalDuration.seconds

@@ -2,7 +2,7 @@ import { animate, keyframes, style, transition, trigger } from '@angular/animati
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription, timer } from 'rxjs';
 import { TimeoutService } from 'src/app/services/elements/timeout/timeout.service';
-import { ElementAttributes, TimeoutElementState } from 'src/app/types/pointmotion';
+import { ElementAttributes, TimeoutColor, TimeoutElementState } from 'src/app/types/pointmotion';
 
 @Component({
   selector: 'element-timeout',
@@ -13,7 +13,7 @@ import { ElementAttributes, TimeoutElementState } from 'src/app/types/pointmotio
       transition(':enter', [
         animate(
           '{{duration}}ms linear',
-          keyframes([style({ width: '0vw' }), style({ width: '100vw' })]),
+          keyframes([style({ width: '0%' }), style({ width: '100%' })]),
         ),
       ]),
     ]),
@@ -26,6 +26,13 @@ export class TimeoutComponent implements OnInit, OnDestroy {
   source: Observable<number>;
   timer: Subscription;
   isTimeOutRunning = false;
+
+  colors: { [key in TimeoutColor]: string } = {
+    yellow: '#ffb000',
+    red: '#EB0000',
+    blue: '#2F51AE',
+  };
+
   constructor(private timeoutService: TimeoutService) {}
   ngOnDestroy(): void {
     this.subscription.unsubscribe();

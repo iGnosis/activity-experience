@@ -1180,14 +1180,20 @@ export type PromptElementState = {
 export type TimeoutElementState = {
   /**
    * Timeout can be controlled using the modes.
-   * * Note: During 'start' mode the 'duration' has to be specified.
+   * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
-  mode: 'start' | 'stop';
+  mode?: 'start' | 'stop';
   /**
    * Duration of the timeout in ms.
    */
   timeout?: number;
+  /**
+   * Determines the number of progress bars and the color of each bar (max 2)
+   */
+  bars?: [TimeoutColor?, TimeoutColor?];
 };
+
+export type TimeoutColor = 'red' | 'blue' | 'yellow';
 
 export type ElementAttributes = {
   visibility?: 'visible' | 'hidden';
