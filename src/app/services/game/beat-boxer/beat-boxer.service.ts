@@ -4,15 +4,18 @@ import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.
 import { TtsService } from '../../tts/tts.service';
 import { ApiService } from '../../checkin/api.service';
 import { Store } from '@ngrx/store';
-import { GameState, Genre, AnalyticsDTO, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  GameState,
+  Genre,
+  AnalyticsDTO,
+  PreferenceState,
+  CenterOfMotion,
+  BagType,
+} from 'src/app/types/pointmotion';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundsService } from '../../sounds/sounds.service';
 import { CalibrationService } from '../../calibration/calibration.service';
-import {
-  CenterOfMotion,
-  BagType,
-  BeatBoxerScene,
-} from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
 

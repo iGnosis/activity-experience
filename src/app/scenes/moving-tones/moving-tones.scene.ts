@@ -4,10 +4,14 @@ import { Howl } from 'howler';
 import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } from 'rxjs';
 import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
 import { PoseService } from 'src/app/services/pose/pose.service';
-import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
-import { AudioSprite, Coordinate, GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
+import {
+  AudioSprite,
+  Coordinate,
+  GameObjectWithBodyAndTexture,
+  TweenData,
+} from 'src/app/types/pointmotion';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -30,13 +34,6 @@ enum AnimationKeys {
   GREEN_BUBBLES_ANIM = 'green_bubbles_anim',
   GREEN_RIPPLE_ANIM = 'green_ripple_anim',
   GREEN_BLAST_ANIM = 'green_blast_anim',
-}
-
-interface TweenData {
-  stoppedAt?: number;
-  remainingDuration?: number;
-  totalTimeElapsed: number;
-  tween?: Phaser.Tweens.Tween;
 }
 
 @Injectable({
@@ -163,7 +160,9 @@ export class MovingTonesScene extends Phaser.Scene {
               gameObject.destroy(true);
 
               if (type === 'start') {
-                const sprite = this.add.sprite(x, y, TextureKeys.RED_DONE);
+                const sprite = this.add
+                  .sprite(x, y, TextureKeys.RED_DONE)
+                  .setScale(this.circleScale);
                 this.tweens.addCounter({
                   ease: 'Linear',
                   duration: 300,
@@ -178,10 +177,7 @@ export class MovingTonesScene extends Phaser.Scene {
                   },
                 });
               } else {
-                this.add
-                  .sprite(x, y, TextureKeys.RED_RIPPLE)
-                  .setScale(this.circleScale)
-                  .play(AnimationKeys.RED_RIPPLE_ANIM);
+                this.animate(x, y, 'red');
               }
             });
           }
@@ -208,14 +204,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
       this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
       gameObject.destroy(true);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BLAST)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BLAST_ANIM);
+      this.animate(x, y, 'green');
     }
   };
 
@@ -302,7 +291,9 @@ export class MovingTonesScene extends Phaser.Scene {
               gameObject.destroy(true);
 
               if (type === 'start') {
-                const sprite = this.add.sprite(x, y, TextureKeys.BLUE_DONE);
+                const sprite = this.add
+                  .sprite(x, y, TextureKeys.BLUE_DONE)
+                  .setScale(this.circleScale);
                 this.tweens.addCounter({
                   ease: 'Linear',
                   duration: 300,
@@ -317,10 +308,7 @@ export class MovingTonesScene extends Phaser.Scene {
                   },
                 });
               } else {
-                this.add
-                  .sprite(x, y, TextureKeys.BLUE_RIPPLE)
-                  .setScale(this.circleScale)
-                  .play(AnimationKeys.BLUE_RIPPLE_ANIM);
+                this.animate(x, y, 'blue');
               }
             });
           }
@@ -330,7 +318,6 @@ export class MovingTonesScene extends Phaser.Scene {
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
       const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE);
-      console.log('startCirclesExist::', startCirclesExist);
       if (startCirclesExist) return;
 
       const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
@@ -341,20 +328,12 @@ export class MovingTonesScene extends Phaser.Scene {
       }
 
       const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
-      rippleAnim.destroy(true);
+      rippleAnim && rippleAnim.destroy(true);
 
       const { x, y } = gameObject.body.center;
-
       this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
       gameObject.destroy(true);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
-      this.add
-        .sprite(x, y, TextureKeys.GREEN_BLAST)
-        .setScale(this.circleScale)
-        .play(AnimationKeys.GREEN_BLAST_ANIM);
+      this.animate(x, y, 'green');
     }
   };
 
@@ -806,6 +785,29 @@ export class MovingTonesScene extends Phaser.Scene {
       },
     });
     return { tween, graphics };
+  }
+
+  private animate(x: number, y: number, animationKey: 'red' | 'blue' | 'green') {
+    if (animationKey === 'red') {
+      this.add
+        .sprite(x, y, TextureKeys.RED_RIPPLE)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.RED_RIPPLE_ANIM);
+    } else if (animationKey === 'blue') {
+      this.add
+        .sprite(x, y, TextureKeys.BLUE_RIPPLE)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.BLUE_RIPPLE_ANIM);
+    } else {
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BUBBLES)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BUBBLES_ANIM);
+      this.add
+        .sprite(x, y, TextureKeys.GREEN_BLAST)
+        .setScale(this.circleScale)
+        .play(AnimationKeys.GREEN_BLAST_ANIM);
+    }
   }
 
   private checkIfAssetsAreLoaded() {

@@ -302,7 +302,6 @@ export class SitToStandScene extends Phaser.Scene {
           }
           return this.classicalTriggerId;
         }
-        break;
       case 'dance':
         this.danceTriggerId = this.dance.play(`dance${this.currentTrigger}`);
         this.currentTrigger += 1;

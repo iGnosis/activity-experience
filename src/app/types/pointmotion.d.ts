@@ -1,7 +1,6 @@
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Shape } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 
 declare global {
   interface Window {
@@ -1302,6 +1301,7 @@ export interface ActivityBase {
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export type CenterOfMotion = 'left' | 'right';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 
 export type GameStatus = {
@@ -1319,4 +1319,21 @@ export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
 
 export interface AudioSprite {
   [audio: string]: [number, number] | [number, number, boolean];
+}
+
+export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
+export type Origin =
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'left-center'
+  | 'right-center'
+  | 'top-left'
+  | 'top-right';
+
+interface TweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
 }

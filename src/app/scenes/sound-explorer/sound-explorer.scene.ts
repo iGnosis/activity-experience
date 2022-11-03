@@ -5,7 +5,7 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
-import { AudioSprite, Genre } from 'src/app/types/pointmotion';
+import { AudioSprite, Genre, Origin, Shape } from 'src/app/types/pointmotion';
 import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 
 enum TextureKeys {
@@ -18,20 +18,12 @@ enum TextureKeys {
   CONCENTRIC_CIRCLES = 'concentric_circles',
   BURST = 'burst',
 }
+
 enum AnimationKeys {
   CONFETTI_ANIM = 'confetti_anim',
   CIRCLES_ANIM = 'circles_anim',
   BURST_ANIM = 'burst_anim',
 }
-export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
-export type Origin =
-  | 'bottom-right'
-  | 'bottom-left'
-  | 'bottom-center'
-  | 'left-center'
-  | 'right-center'
-  | 'top-left'
-  | 'top-right';
 
 @Injectable({
   providedIn: 'root',
@@ -58,18 +50,31 @@ export class SoundExplorerScene extends Phaser.Scene {
   private currentSet!: number;
   private genre!: Genre;
   private track!: Howl;
+  private backtrackId!: number;
+  private currentTriggerId!: number;
+  private currentTrigger = 1;
+  private alto: Howl;
+  private soprano: Howl;
+  private bass: Howl;
+  private tenor: Howl;
+  private failureMusic: Howl;
+  private altoId: number;
+  private sopranoId: number;
+  private bassId: number;
+  private tenorId: number;
+  private failureMusicId: number;
 
   private collisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    _shape: GameObjectWithBodyAndTexture,
+    shape: GameObjectWithBodyAndTexture,
   ) => {
-    if (!_shape.texture) return;
+    if (!shape.texture) return;
 
     // coordinates to play the success and failure animations
-    const [x, y] = this.getCenter(_shape);
+    const [x, y] = this.getCenter(shape);
 
     // updating the score, if the shape is not X shape.
-    if (!(_shape.texture.key === TextureKeys.WRONG)) {
+    if (!(shape.texture.key === TextureKeys.WRONG)) {
       this.currentScore += 1;
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
@@ -79,16 +84,16 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
 
       // to play success music based on the shape
-      console.log('play successMusic', _shape.texture.key);
+      console.log('play successMusic', shape.texture.key);
 
-      this.music && this.playSuccessMusic(_shape.texture.key, this.genre, this.currentSet);
+      this.music && this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
     } else {
       // play failure animation
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
       this.music && this.playFailureMusic();
     }
     // destroying the shape
-    _shape.destroy(true);
+    shape.destroy(true);
   };
 
   constructor(private poseService: PoseService, private ttsService: TtsService) {
@@ -153,15 +158,15 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
-  onLoadCallback = () => {
+  private onLoadCallback = () => {
     this.musicFilesLoaded += 1;
   };
 
-  onLoadErrorCallback = () => {
+  private onLoadErrorCallback = () => {
     this.loadError = true;
   };
 
-  checkIfAssetsAreLoaded() {
+  private checkIfAssetsAreLoaded() {
     return (
       this.totalMusicFiles &&
       this.designAssetsLoaded &&
@@ -263,10 +268,8 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, width, height, true, true, true, true);
 
     // event listener for 'worldbounds', triggers when any gameObject with collideWorldBounds set to true is collided with world bounds.
-    this.physics.world.on('worldbounds', (_body: Phaser.Physics.Arcade.Body) => {
-      console.log(_body);
-      _body.gameObject.destroy(true);
-      console.log(this.group.getLength());
+    this.physics.world.on('worldbounds', (body: Phaser.Physics.Arcade.Body) => {
+      body.gameObject.destroy(true);
     });
   }
 
@@ -355,7 +358,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   /**
    * @param results Pose Results
    */
-  drawHands(results: Results): void {
+  private drawHands(results: Results): void {
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
@@ -384,11 +387,11 @@ export class SoundExplorerScene extends Phaser.Scene {
   /**
    * @returns midpoint of (x1, y1) and (x2, y2).
    */
-  midPoint(x1: number, y1: number, x2: number, y2: number) {
+  private midPoint(x1: number, y1: number, x2: number, y2: number) {
     return [(x1 + x2) / 2, (y1 + y2) / 2];
   }
 
-  getOrigin(type: Origin): [number, number] {
+  private getOrigin(type: Origin): [number, number] {
     const { width, height } = this.game.canvas;
     // adding some randomness so that the shapes won't overlap completely.
     switch (type) {
@@ -478,18 +481,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.currentNote = 1;
   }
 
-  alto: Howl;
-  soprano: Howl;
-  bass: Howl;
-  tenor: Howl;
-  failureMusic: Howl;
-  altoId: number;
-  sopranoId: number;
-  bassId: number;
-  tenorId: number;
-  failureMusicId: number;
-
-  src: { [key in Genre]: string[] } = {
+  private src: { [key in Genre]: string[] } = {
     classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/classical-set1.mp3'],
     'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/ambient-set1.mp3'],
     rock: ['assets/sounds/soundsprites/sound-explorer/rock/set1/rock-set1.mp3'],
@@ -497,7 +489,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/jazz-set1.mp3'],
   };
 
-  loadMusicFiles(genre: Genre) {
+  private loadMusicFiles(genre: Genre) {
     this.musicFilesLoaded = 0;
     const randomSet = genre === 'classical' ? Math.floor(Math.random() * 2) : 0;
     this.genre = genre;
@@ -596,8 +588,6 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  private backtrackId!: number;
-  private currentTriggerId!: number;
   playBacktrack() {
     if (!this.track.playing(this.backtrackId)) {
       this.backtrackId = this.track.play('backtrack');
@@ -618,7 +608,6 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  currentTrigger = 1;
   private playTrigger() {
     this.currentTriggerId = this.track.play('trigger' + this.currentTrigger);
     this.currentTrigger += 1;
