@@ -452,7 +452,7 @@ export class ApiService {
     return time;
   }
 
-  replayOrTimeout(timeout = 10000) {
+  replayOrTimeout(timeout = 10000): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       this.handTrackerService.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
       setTimeout(() => resolve(false), timeout);
