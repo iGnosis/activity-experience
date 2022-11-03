@@ -65,6 +65,8 @@ export class MovingTonesScene extends Phaser.Scene {
   blueHoldState = new Subject<boolean>();
   redHoldState = new Subject<boolean>();
   circleScale = 0.6;
+  allowClosedHandsWhileHoldingPose = false;
+  allowClosedHandsDuringCollision = false;
 
   private redTween: TweenData = {
     stoppedAt: undefined,
@@ -98,15 +100,21 @@ export class MovingTonesScene extends Phaser.Scene {
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
+          if (!status) return;
+
           const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
             'color',
             'startFromBeginning',
           ]);
-          if (this.isRedHeld && status && !['right-hand', 'both-hands'].includes(status)) {
+
+          if (this.isRedHeld && !['right-hand', 'both-hands'].includes(status)) {
             this.isRedHeld = false;
             if (type === 'start') this.redHoldState.next(false);
           }
-          if (this.isRedHeld === false && status && ['right-hand', 'both-hands'].includes(status)) {
+          if (
+            this.isRedHeld === false &&
+            (this.allowClosedHandsWhileHoldingPose || ['right-hand', 'both-hands'].includes(status))
+          ) {
             this.isRedHeld = true;
             if (type === 'start') this.redHoldState.next(true);
             const { x, y } = gameObject.body.center;
@@ -187,24 +195,34 @@ export class MovingTonesScene extends Phaser.Scene {
 
     if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
       const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.RED_CIRCLE);
-      console.log('startCirclesExist::', startCirclesExist);
       if (startCirclesExist) return;
 
-      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'blue') {
-        this.score.next(-1);
-      } else {
-        this.score.next(1);
-      }
+      const handSubscription = this.handTrackerService.openHandStatus
+        .pipe(distinctUntilChanged())
+        .subscribe((status) => {
+          if (!status) return;
+          if (
+            this.allowClosedHandsDuringCollision ||
+            ['right-hand', 'both-hands'].includes(status)
+          ) {
+            const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+            if (interactableWith === 'blue') {
+              this.score.next(-1);
+            } else {
+              this.score.next(1);
+            }
 
-      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
-      rippleAnim.destroy(true);
+            const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+            rippleAnim.destroy(true);
 
-      const { x, y } = gameObject.body.center;
+            const { x, y } = gameObject.body.center;
 
-      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
-      gameObject.destroy(true);
-      this.animate(x, y, 'green');
+            this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
+            gameObject.destroy(true);
+            this.animate(x, y, 'green');
+          }
+        });
+      handSubscription.unsubscribe();
     }
   };
 
@@ -224,18 +242,25 @@ export class MovingTonesScene extends Phaser.Scene {
         }
       }
 
-      const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
-        'color',
-        'startFromBeginning',
-      ]);
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
-          if (this.isBlueHeld && !['left-hand', 'both-hands'].includes(status || '')) {
+          if (!status) return;
+
+          const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
+            'color',
+            'startFromBeginning',
+          ]);
+
+          if (this.isBlueHeld && !['left-hand', 'both-hands'].includes(status)) {
             this.isBlueHeld = false;
             if (type === 'start') this.blueHoldState.next(false);
           }
-          if (this.isBlueHeld === false && ['left-hand', 'both-hands'].includes(status || '')) {
+
+          if (
+            this.isBlueHeld === false &&
+            (this.allowClosedHandsWhileHoldingPose || ['left-hand', 'both-hands'].includes(status))
+          ) {
             this.isBlueHeld = true;
             if (type === 'start') this.blueHoldState.next(true);
 
@@ -256,7 +281,7 @@ export class MovingTonesScene extends Phaser.Scene {
                   );
 
             blueTween.on('update', (tween: Phaser.Tweens.Tween) => {
-              if (!this.isBlueHeld || (status && !['left-hand', 'both-hands'].includes(status))) {
+              if (!this.isBlueHeld) {
                 if (startFromBeginning) {
                   graphics.destroy(true);
                   blueTween.remove();
@@ -320,20 +345,31 @@ export class MovingTonesScene extends Phaser.Scene {
       const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE);
       if (startCirclesExist) return;
 
-      const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-      if (interactableWith === 'red') {
-        this.score.next(-1);
-      } else {
-        this.score.next(1);
-      }
+      const handSubscription = this.handTrackerService.openHandStatus
+        .pipe(distinctUntilChanged())
+        .subscribe((status) => {
+          if (!status) return;
+          if (
+            this.allowClosedHandsDuringCollision ||
+            ['left-hand', 'both-hands'].includes(status)
+          ) {
+            const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+            if (interactableWith === 'red') {
+              this.score.next(-1);
+            } else {
+              this.score.next(1);
+            }
 
-      const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
-      rippleAnim && rippleAnim.destroy(true);
+            const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+            rippleAnim && rippleAnim.destroy(true);
 
-      const { x, y } = gameObject.body.center;
-      this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
-      gameObject.destroy(true);
-      this.animate(x, y, 'green');
+            const { x, y } = gameObject.body.center;
+            this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
+            gameObject.destroy(true);
+            this.animate(x, y, 'green');
+          }
+        });
+      handSubscription.unsubscribe();
     }
   };
 

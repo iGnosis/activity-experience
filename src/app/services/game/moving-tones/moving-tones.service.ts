@@ -579,6 +579,8 @@ export class MovingTonesService implements ActivityBase {
 
   async setup() {
     this.movingTonesScene.enable();
+    this.movingTonesScene.allowClosedHandsDuringCollision = true;
+    this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
 
     const heightRatio = await this.poseService.getHeightRatio();
     this.movingTonesScene.circleScale *= heightRatio;
