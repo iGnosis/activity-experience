@@ -35,7 +35,10 @@ export class MovingTonesService implements ActivityBase {
   private coinsCollected = 0;
   private failedReps = 0;
   private globalReCalibrationCount: number;
+
   private isGameComplete = false;
+  private shouldReplay: boolean;
+
   private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
     gameDuration:
@@ -1151,7 +1154,7 @@ export class MovingTonesService implements ActivityBase {
             ],
           },
         };
-        const shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1160,7 +1163,7 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        if (shouldReplay) {
+        if (this.shouldReplay) {
           this.soundsService.playCalibrationSound('success');
 
           this.isGameComplete = false;
@@ -1180,11 +1183,12 @@ export class MovingTonesService implements ActivityBase {
           };
           this.gameDuration = 30;
           this.totalDuration += 30;
-
-          await this.game(reCalibrationCount);
         }
       },
       async (reCalibrationCount: number) => {
+        if (this.shouldReplay) {
+          await this.game(reCalibrationCount);
+        }
         this.elements.timer.attributes = {
           visibility: 'hidden',
           reCalibrationCount,

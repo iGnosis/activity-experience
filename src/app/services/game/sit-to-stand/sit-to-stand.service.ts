@@ -27,9 +27,6 @@ import { v4 as uuidv4 } from 'uuid';
 export class SitToStandService implements ActivityBase {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
-  private successfulReps = 0;
-  private failedReps = 0;
-  private totalReps = 0;
   private globalReCalibrationCount: number;
 
   // init default config values.
@@ -44,6 +41,15 @@ export class SitToStandService implements ActivityBase {
     minCorrectReps: this.gameSettings.levels[this.currentLevel].configuration.minCorrectReps,
     speed: this.gameSettings.levels[this.currentLevel].configuration.speed,
   };
+
+  private successfulReps = 0;
+  private failedReps = 0;
+  private totalReps = 0;
+
+  private targetReps = this.config.minCorrectReps;
+  private totalDuration = 0;
+
+  private shouldReplay = false;
 
   private gameStartTime: number | null;
   private firstPromptTime: number | null;
@@ -1187,6 +1193,204 @@ export class SitToStandService implements ActivityBase {
     return { res, analyticsObj };
   }
 
+  private async game(reCalibrationCount?: number) {
+    while (this.successfulReps < this.targetReps!) {
+      if (reCalibrationCount !== this.globalReCalibrationCount) {
+        throw new Error('reCalibrationCount changed');
+      }
+      // generating a prompt number
+
+      let stringExpression;
+
+      if (this.currentLevel === 'level2') {
+        const isSumOperation = Math.random() > 0.5;
+
+        const num1 = Math.floor(Math.random() * 9);
+        const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
+
+        stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
+      } else if (this.currentLevel === 'level3') {
+        const isDivisionOperation = Math.random() > 0.5;
+
+        const num1 = Math.floor(Math.random() * 9);
+
+        const num1Factors = this.factors(num1);
+        const randomFactor =
+          num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
+
+        const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
+
+        stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
+      }
+
+      let promptNum = stringExpression
+        ? this.parseExpression(stringExpression)
+        : Math.floor(Math.random() * 100);
+
+      // checking if not more than two even or two odd in a row.
+      if (this.analytics && this.analytics.length >= 2) {
+        const prevReps = this.analytics.slice(-2);
+        if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
+          // if two even or two odd in a row, we generate the opposite class number.
+          prevReps[0].prompt.type === 'sit'
+            ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
+            : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+        }
+      }
+      const promptId = uuidv4();
+      const { res, analyticsObj } = await this.showPrompt(
+        promptNum,
+        promptId,
+        this.analytics,
+        reCalibrationCount,
+        stringExpression,
+      );
+      this.analytics.push(analyticsObj);
+
+      if (
+        this.analytics.length >= 2 &&
+        this.analytics.slice(this.analytics.length - 2)[0].prompt.type !=
+          this.analytics.slice(this.analytics.length - 2)[1].prompt.type
+      ) {
+        this.optimizeSpeed();
+      }
+
+      this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+      if (res.result === 'success') {
+        this.sit2StandScene.playTrigger(this.genre);
+        this.elements.prompt.state = {
+          data: {
+            repStatus: res.result,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.successfulReps += 1;
+        this.failedReps = 0;
+        this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
+        this.elements.score.state = {
+          data: {
+            label: 'Motion',
+            value: this.successfulReps.toString(),
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        if (++this.streak === this.levelUpStreak) this.shouldLevelUp = true;
+      } else {
+        this.soundsService.playCalibrationSound('error');
+        this.elements.prompt.state = {
+          data: {
+            repStatus: res.result,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.failedReps += 1;
+        this.streak = 0;
+        if (this.failedReps >= 3) {
+          // for better user experience - increase timeout duration by 2 second.
+          this.config.speed += 2000;
+          this.elements.timer.state = {
+            data: {
+              mode: 'pause',
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.prompt.attributes = {
+            visibility: 'hidden',
+            reCalibrationCount,
+          };
+          await this.elements.sleep(2000);
+          // walkthrough
+          this.elements.banner.state = {
+            data: {
+              htmlStr: `
+              <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                <div class='p-4 d-flex flex-row align-items-center'>
+                      <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                      <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
+                      <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
+                      <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
+                </div>
+                <div>
+                  <hr style="border: 2px solid #A0AEC0;">
+                  <p class=" display-5 text-white">Odd Number - Stand Up</p>
+                </div>
+              </div>
+          `,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(5000);
+          this.elements.banner.attributes = {
+            visibility: 'hidden',
+            reCalibrationCount,
+          };
+          await this.elements.sleep(2000);
+          this.elements.banner.state = {
+            data: {
+              htmlStr: `
+                  <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
+                    <div class='p-4 d-flex flex-row align-items-center'>
+                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
+                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
+                    </div>
+                    <div>
+                      <hr style="border: 2px solid #A0AEC0;">
+                      <p class=" display-5 text-white">Even Number - Sit Down</p>
+                    </div>
+                  </div>
+              `,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(5000);
+          this.elements.banner.attributes = {
+            visibility: 'hidden',
+            reCalibrationCount,
+          };
+          await this.elements.sleep(2000);
+          this.elements.timer.state = {
+            data: {
+              mode: 'resume',
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+        }
+      }
+      await this.elements.sleep(1000);
+      this.elements.prompt.state = {
+        data: {},
+        attributes: {
+          visibility: 'hidden',
+          reCalibrationCount,
+        },
+      };
+    }
+  }
+
   loop() {
     return [
       async (reCalibrationCount: number) => {
@@ -1226,7 +1430,8 @@ export class SitToStandService implements ActivityBase {
           },
         };
         const updateElapsedTime = (elapsedTime: number) => {
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
+          this.totalDuration += elapsedTime;
+          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
         };
         this.elements.timer.state = {
           data: {
@@ -1269,201 +1474,105 @@ export class SitToStandService implements ActivityBase {
         this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
       },
       async (reCalibrationCount: number) => {
-        while (this.successfulReps < this.config.minCorrectReps!) {
-          if (reCalibrationCount !== this.globalReCalibrationCount) {
-            throw new Error('reCalibrationCount changed');
-          }
-          // generating a prompt number
-
-          let stringExpression;
-
-          if (this.currentLevel === 'level2') {
-            const isSumOperation = Math.random() > 0.5;
-
-            const num1 = Math.floor(Math.random() * 9);
-            const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
-
-            stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
-          } else if (this.currentLevel === 'level3') {
-            const isDivisionOperation = Math.random() > 0.5;
-
-            const num1 = Math.floor(Math.random() * 9);
-
-            const num1Factors = this.factors(num1);
-            const randomFactor =
-              num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
-
-            const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
-
-            stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
-          }
-
-          let promptNum = stringExpression
-            ? this.parseExpression(stringExpression)
-            : Math.floor(Math.random() * 100);
-
-          // checking if not more than two even or two odd in a row.
-          if (this.analytics && this.analytics.length >= 2) {
-            const prevReps = this.analytics.slice(-2);
-            if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
-              // if two even or two odd in a row, we generate the opposite class number.
-              prevReps[0].prompt.type === 'sit'
-                ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
-                : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
-            }
-          }
-          const promptId = uuidv4();
-          const { res, analyticsObj } = await this.showPrompt(
-            promptNum,
-            promptId,
-            this.analytics,
+        await this.game(reCalibrationCount);
+        this.elements.timer.state = {
+          data: {
+            mode: 'stop',
+          },
+          attributes: {
+            visibility: 'hidden',
             reCalibrationCount,
-            stringExpression,
-          );
-          this.analytics.push(analyticsObj);
+          },
+        };
+        this.elements.score.state = {
+          data: {},
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+      },
+      async (reCalibrationCount: number) => {
+        let totalDuration: number | undefined;
+        this.store
+          .pipe(take(1))
+          .subscribe(async (state) => (totalDuration = state.game.totalDuration!));
+        const fastestTimeInSecs = await this.apiService.getFastestTime('sit_stand_achieve');
 
-          if (
-            this.analytics.length >= 2 &&
-            this.analytics.slice(this.analytics.length - 2)[0].prompt.type !=
-              this.analytics.slice(this.analytics.length - 2)[1].prompt.type
-          ) {
-            this.optimizeSpeed();
-          }
+        const shouldAllowReplay =
+          Math.abs(fastestTimeInSecs - (totalDuration || 0)) <= 5 || Math.random() < 0.5;
 
-          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
-          if (res.result === 'success') {
-            this.sit2StandScene.playTrigger(this.genre);
-            this.elements.prompt.state = {
-              data: {
-                repStatus: res.result,
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-            this.successfulReps += 1;
-            this.failedReps = 0;
-            this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
-            this.elements.score.state = {
-              data: {
-                label: 'Motion',
-                value: this.successfulReps.toString(),
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
+        if (!shouldAllowReplay) return;
 
-            if (++this.streak === this.levelUpStreak) this.shouldLevelUp = true;
-          } else {
-            this.soundsService.playCalibrationSound('error');
-            this.elements.prompt.state = {
-              data: {
-                repStatus: res.result,
+        this.ttsService.tts(
+          'Raise both your hands if you want to add 10 more reps to this activity.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'Raise both your hands to add 10 reps.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'action',
+            htmlStr: `
+              <div class="text-center row">
+                <h1 class="pt-4 display-3">Times Up!</h1>
+                <h2 class="pb-8 display-6">Want to improve your score?</h2>
+                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 10 more reps</span></button>
+              <div>
+            `,
+            buttons: [
+              {
+                title: 'Continue',
+                progressDurationMs: 9000,
               },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-            this.failedReps += 1;
-            this.streak = 0;
-            if (this.failedReps >= 3) {
-              // for better user experience - increase timeout duration by 2 second.
-              this.config.speed += 2000;
-              this.elements.timer.state = {
-                data: {
-                  mode: 'pause',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              this.elements.prompt.attributes = {
-                visibility: 'hidden',
-                reCalibrationCount,
-              };
-              await this.elements.sleep(2000);
-              // walkthrough
-              this.elements.banner.state = {
-                data: {
-                  htmlStr: `
-                  <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
-                    <div class='p-4 d-flex flex-row align-items-center'>
-                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
-                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
-                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
-                          <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
-                    </div>
-                    <div>
-                      <hr style="border: 2px solid #A0AEC0;">
-                      <p class=" display-5 text-white">Odd Number - Stand Up</p>
-                    </div>
-                  </div>
-              `,
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              await this.elements.sleep(5000);
-              this.elements.banner.attributes = {
-                visibility: 'hidden',
-                reCalibrationCount,
-              };
-              await this.elements.sleep(2000);
-              this.elements.banner.state = {
-                data: {
-                  htmlStr: `
-                      <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
-                        <div class='p-4 d-flex flex-row align-items-center'>
-                              <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
-                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
-                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
-                              <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
-                        </div>
-                        <div>
-                          <hr style="border: 2px solid #A0AEC0;">
-                          <p class=" display-5 text-white">Even Number - Sit Down</p>
-                        </div>
-                      </div>
-                  `,
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-              await this.elements.sleep(5000);
-              this.elements.banner.attributes = {
-                visibility: 'hidden',
-                reCalibrationCount,
-              };
-              await this.elements.sleep(2000);
-              this.elements.timer.state = {
-                data: {
-                  mode: 'resume',
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-            }
-          }
-          await this.elements.sleep(1000);
-          this.elements.prompt.state = {
-            data: {},
+            ],
+          },
+        };
+        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        if (this.shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+
+          this.targetReps! += 10;
+
+          const updateElapsedTime = (elapsedTime: number) => {
+            this.totalDuration += elapsedTime;
+            this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
+          };
+          this.elements.timer.state = {
+            data: {
+              mode: 'start',
+              duration: 60 * 60 * 1000,
+              onPause: updateElapsedTime,
+              onComplete: updateElapsedTime,
+            },
             attributes: {
-              visibility: 'hidden',
+              visibility: 'visible',
               reCalibrationCount,
             },
           };
         }
+      },
+      async (reCalibrationCount: number) => {
+        await this.game(reCalibrationCount);
         this.elements.timer.state = {
           data: {
             mode: 'stop',
