@@ -43,6 +43,8 @@ export class BeatBoxerService {
   private obstacleTimeout: any;
 
   private isGameComplete = false;
+  private shouldReplay: boolean;
+
   private getRandomItemFromArray = <T>(array: T[]): T => {
     return array[Math.floor(Math.random() * array.length)];
   };
@@ -1129,7 +1131,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        const shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1138,7 +1140,7 @@ export class BeatBoxerService {
           visibility: 'hidden',
           reCalibrationCount,
         };
-        if (shouldReplay) {
+        if (this.shouldReplay) {
           this.soundsService.playCalibrationSound('success');
 
           this.isGameComplete = false;
@@ -1158,7 +1160,10 @@ export class BeatBoxerService {
           };
           this.gameDuration = 30;
           this.totalDuration += 30;
-
+        }
+      },
+      async (reCalibrationCount: number) => {
+        if (this.shouldReplay) {
           while (!this.isGameComplete) {
             if (reCalibrationCount !== this.globalReCalibrationCount) {
               throw new Error('reCalibrationCount changed');
