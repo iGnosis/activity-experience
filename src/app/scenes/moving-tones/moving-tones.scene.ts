@@ -49,8 +49,8 @@ export class MovingTonesScene extends Phaser.Scene {
   private poseSubscription: Subscription;
   private music = false;
   private group: Phaser.Physics.Arcade.StaticGroup;
-  private holdDuration = 2500;
   private currentNote = 1;
+  holdDuration = 2500;
 
   score = new BehaviorSubject<number>(0);
 

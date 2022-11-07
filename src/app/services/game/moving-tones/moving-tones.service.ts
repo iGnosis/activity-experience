@@ -211,12 +211,22 @@ export class MovingTonesService implements ActivityBase {
     let redSubscription: Subscription | undefined;
 
     if (left?.length) {
-      const sleepTime = 2500 / (left.length - 1);
+      const sleepTime = this.movingTonesScene.holdDuration / (left.length - 1);
 
       blueSubscription = this.movingTonesScene.blueHoldState
         .pipe(distinctUntilChanged())
         .subscribe(async (state) => {
           if (state) {
+            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+
+            if (
+              !(
+                this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
+                ['left-hand', 'both-hands'].includes(handStatus || '')
+              )
+            )
+              return;
+
             const isRedProgressBarShown =
               this.elements.timeout.state.data.bars &&
               this.elements.timeout.state.data.bars.includes('red');
@@ -227,7 +237,7 @@ export class MovingTonesService implements ActivityBase {
               this.elements.timeout.state = {
                 data: {
                   mode: 'start',
-                  timeout: 2500,
+                  timeout: this.movingTonesScene.holdDuration,
                   bars: ['blue'],
                 },
                 attributes: {
@@ -239,8 +249,13 @@ export class MovingTonesService implements ActivityBase {
             for (let i = 1; i < left.length; i++) {
               await this.elements.sleep(sleepTime - 100);
 
-              const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-              if (!['left-hand', 'both-hands'].includes(handStatus || '')) break;
+              if (
+                !(
+                  this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
+                  ['left-hand', 'both-hands'].includes(handStatus || '')
+                )
+              )
+                break;
 
               if (i === left.length - 1) {
                 this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
@@ -267,12 +282,22 @@ export class MovingTonesService implements ActivityBase {
         });
     }
     if (right?.length) {
-      const sleepTime = 2500 / (right.length - 1);
+      const sleepTime = this.movingTonesScene.holdDuration / (right.length - 1);
 
       redSubscription = this.movingTonesScene.redHoldState
         .pipe(distinctUntilChanged())
         .subscribe(async (state) => {
           if (state) {
+            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
+
+            if (
+              !(
+                this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
+                ['right-hand', 'both-hands'].includes(handStatus || 'none')
+              )
+            )
+              return;
+
             const isBlueProgressBarShown =
               this.elements.timeout.state.data.bars &&
               this.elements.timeout.state.data.bars.includes('blue');
@@ -283,7 +308,7 @@ export class MovingTonesService implements ActivityBase {
               this.elements.timeout.state = {
                 data: {
                   mode: 'start',
-                  timeout: 2500,
+                  timeout: this.movingTonesScene.holdDuration,
                   bars: ['red'],
                 },
                 attributes: {
@@ -295,8 +320,13 @@ export class MovingTonesService implements ActivityBase {
             for (let i = 1; i < right.length; i++) {
               await this.elements.sleep(sleepTime - 100);
 
-              const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-              if (!['right-hand', 'both-hands'].includes(handStatus || '')) break;
+              if (
+                !(
+                  this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
+                  ['right-hand', 'both-hands'].includes(handStatus || 'none')
+                )
+              )
+                break;
 
               if (i === right.length - 1) {
                 this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
