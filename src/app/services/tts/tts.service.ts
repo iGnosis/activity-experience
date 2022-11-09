@@ -26,7 +26,9 @@ export class TtsService {
     this.isTtsPlaying = false;
   }
 
-  async tts(text: string | undefined, speaker = 'mila') {
+  async tts(text: string | undefined, backtrack?: Howl) {
+    backtrack && backtrack.volume(0.7);
+
     if (!text || environment.speedUpSession) return;
 
     console.log('adding to queue ', text, this.queue);
@@ -34,6 +36,8 @@ export class TtsService {
 
     if (this.isTtsPlaying) {
       console.log("Couldn't play tts (because another tts is playing: ) ", text);
+
+      backtrack && backtrack.volume(1);
       return;
     }
     this.isTtsPlaying = true;
@@ -52,6 +56,7 @@ export class TtsService {
       sound.play();
 
       // If TTS is in cache store, the execution will be ended here.
+      backtrack && backtrack.volume(1);
       return;
     }
 
@@ -72,6 +77,7 @@ export class TtsService {
         onplayerror: () => {
           console.log('Cannot play', text);
           this.isTtsPlaying = false;
+          backtrack && backtrack.volume(1);
           reject();
         },
         onend: () => {
@@ -80,6 +86,7 @@ export class TtsService {
           if (this.queue.length > 0) {
             return this.tts(this.queue.shift());
           } else {
+            backtrack && backtrack.volume(1);
             return resolve({});
           }
         },
