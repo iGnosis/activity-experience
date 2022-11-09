@@ -1010,6 +1010,10 @@ export class SoundExplorerService {
         };
         // eslint-disable-next-line prefer-const
         totalDuration = this.apiService.getDurationForTimer(this.totalDuration);
+
+        const isLastActivity =
+          environment.stageName === 'stage' || environment.stageName === 'prod';
+
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -1032,7 +1036,7 @@ export class SoundExplorerService {
           `,
             buttons: [
               {
-                title: 'Next Activity',
+                title: isLastActivity ? 'Back to Homepage' : 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],
@@ -1040,7 +1044,36 @@ export class SoundExplorerService {
         };
 
         await this.elements.sleep(12000);
+
+        if (isLastActivity) {
+          this.ttsService.tts('Well done. See you soon!');
+          this.elements.guide.state = {
+            data: {
+              title: 'Well done. See you soon!',
+              titleDuration: 2500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(4000);
+        }
+
         this.store.dispatch(game.gameCompleted());
+        this.googleAnalyticsService.sendEvent('level_end', {
+          level_name: 'sound_explorer',
+        });
+        await this.gameStateService.postLoopHook();
+
+        if (isLastActivity) {
+          window.parent.postMessage(
+            {
+              type: 'end-game',
+            },
+            '*',
+          );
+        }
       },
     ];
   }
