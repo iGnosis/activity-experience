@@ -26,7 +26,7 @@ export class GqlClientService {
     });
   }
 
-  async req(request: string, variables?: any) {
+  async req(request: string, variables?: { [key: string]: any }): Promise<any> {
     return this.client.request(request, variables);
   }
 }
