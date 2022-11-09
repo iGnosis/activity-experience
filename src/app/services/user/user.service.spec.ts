@@ -69,6 +69,8 @@ describe('UserService', () => {
 
     expect(localStorage.getItem('token')).toEqual('');
     expect(result).toEqual(false);
+
+    localStorage.removeItem('token');
   });
 
   it('should set patient ID', () => {
