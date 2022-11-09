@@ -12,9 +12,6 @@ export class UserService {
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {}
 
-  debug() {
-    console.log('hello from user.service');
-  }
   /**
    * Setting the token in local storage.
    *
