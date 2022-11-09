@@ -25,11 +25,13 @@ export class GqlClientService {
    */
   refreshClient(jwt?: string) {
     const token = jwt || localStorage.getItem('token');
-    this.client = new GraphQLClient(environment.endpoint, {
-      headers: {
-        authorization: 'Bearer ' + token,
-      },
-    });
+    if (token) {
+      this.client = new GraphQLClient(environment.endpoint, {
+        headers: {
+          authorization: 'Bearer ' + token,
+        },
+      });
+    }
   }
 
   /**
