@@ -1140,7 +1140,11 @@ export class SitToStandService implements ActivityBase {
       .replace('/', ' divided by ')
       .replace('*', ' multiplied with ');
 
-    this.ttsService.tts(ttsExpression || promptNum.toString());
+    this.sit2StandScene.getBacktrack(this.genre).volume(0.5);
+    await this.ttsService.tts(ttsExpression || promptNum.toString());
+    setTimeout(() => {
+      this.sit2StandScene.getBacktrack(this.genre).volume(1);
+    }, 2000);
     this.elements.timeout.state = {
       data: {
         mode: 'start',

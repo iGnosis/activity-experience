@@ -181,6 +181,21 @@ export class SitToStandScene extends Phaser.Scene {
     }
   }
 
+  getBacktrack(genre: Genre): Howl {
+    switch (genre) {
+      case 'classical':
+        return this.classical;
+      case 'dance':
+        return this.dance;
+      case 'rock':
+        return this.rock;
+      case 'surprise me!':
+        return this.surprise;
+      case 'jazz':
+        return this.jazz;
+    }
+  }
+
   isBacktrackPlaying(genre: Genre) {
     switch (genre) {
       case 'classical':
@@ -245,7 +260,6 @@ export class SitToStandScene extends Phaser.Scene {
       case 'classical':
         // classical set 0 has weird music logic
         if (this.currentSet === 0) {
-          console.log(`playing set${this.currentClassicalSet}rep${this.currentClassicalRep}`);
           const soundTrackKey = `set${this.currentClassicalSet}classical${this.currentClassicalRep}`;
           if (this.classicalTriggerId && this.classical.playing(this.classicalTriggerId)) {
             this.classical.stop(this.classicalTriggerId);
@@ -263,7 +277,6 @@ export class SitToStandScene extends Phaser.Scene {
           }, 1500);
           this.currentClassicalRep += 1;
           if (this.currentClassicalSet === 1 && this.currentClassicalRep === 12) {
-            console.log('set 1 ended, starting set 2, resetting reps to 0');
             this.currentClassicalSet = 2;
             this.currentClassicalRep = 1;
             if (this.classical.playing(this.classicalBacktrackId)) {
@@ -273,7 +286,6 @@ export class SitToStandScene extends Phaser.Scene {
               `classicalBacktrack${this.currentClassicalSet}`,
             );
           } else if (this.currentClassicalSet === 2 && this.currentClassicalRep === 12) {
-            console.log('set 2 ended, starting set 3, resetting reps to 0');
             this.currentClassicalSet = 3;
             this.currentClassicalRep = 1;
             if (this.classical.playing(this.classicalBacktrackId)) {
@@ -283,7 +295,6 @@ export class SitToStandScene extends Phaser.Scene {
               `classicalBacktrack${this.currentClassicalSet}`,
             );
           } else if (this.currentClassicalSet === 3 && this.currentClassicalRep === 14) {
-            console.log('set 3 ended, starting set 1, resetting reps to 0');
             this.currentClassicalSet = 1;
             this.currentClassicalRep = 1;
             if (this.classical.playing(this.classicalBacktrackId)) {
