@@ -107,14 +107,19 @@ export class MovingTonesScene extends Phaser.Scene {
             'startFromBeginning',
           ]);
 
-          if (this.isRedHeld && !['right-hand', 'both-hands'].includes(status)) {
+          const isHandClosed = this.isRedHeld && !['right-hand', 'both-hands'].includes(status);
+
+          if (!this.allowClosedHandsWhileHoldingPose && isHandClosed) {
             this.isRedHeld = false;
             if (type === 'start') this.redHoldState.next(false);
           }
-          if (
+
+          const isHandHeld =
             this.isRedHeld === false &&
-            (this.allowClosedHandsWhileHoldingPose || ['right-hand', 'both-hands'].includes(status))
-          ) {
+            (this.allowClosedHandsWhileHoldingPose ||
+              ['right-hand', 'both-hands'].includes(status));
+
+          if (isHandHeld) {
             this.isRedHeld = true;
             if (type === 'start') this.redHoldState.next(true);
             const { x, y } = gameObject.body.center;
@@ -252,15 +257,18 @@ export class MovingTonesScene extends Phaser.Scene {
             'startFromBeginning',
           ]);
 
-          if (this.isBlueHeld && !['left-hand', 'both-hands'].includes(status)) {
+          const isHandClosed = this.isBlueHeld && !['left-hand', 'both-hands'].includes(status);
+
+          if (!this.allowClosedHandsWhileHoldingPose && isHandClosed) {
             this.isBlueHeld = false;
             if (type === 'start') this.blueHoldState.next(false);
           }
 
-          if (
+          const isHandHeld =
             this.isBlueHeld === false &&
-            (this.allowClosedHandsWhileHoldingPose || ['left-hand', 'both-hands'].includes(status))
-          ) {
+            (this.allowClosedHandsWhileHoldingPose || ['left-hand', 'both-hands'].includes(status));
+
+          if (isHandHeld) {
             this.isBlueHeld = true;
             if (type === 'start') this.blueHoldState.next(true);
 
