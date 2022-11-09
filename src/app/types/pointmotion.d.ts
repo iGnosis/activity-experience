@@ -1,3 +1,10 @@
+import {
+  SafeHtml,
+  SafeResourceUrl,
+  SafeScript,
+  SafeStyle,
+  SafeUrl,
+} from '@angular/platform-browser';
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -1337,9 +1344,12 @@ export type Origin =
   | 'top-left'
   | 'top-right';
 
-interface TweenData {
+export interface TweenData {
   stoppedAt?: number;
   remainingDuration?: number;
   totalTimeElapsed: number;
   tween?: Phaser.Tweens.Tween;
 }
+
+export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
+export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
