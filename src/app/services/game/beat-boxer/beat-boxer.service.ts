@@ -88,7 +88,7 @@ export class BeatBoxerService {
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
-        if (preference.genre && this.genre !== preference.genre) {
+        if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {

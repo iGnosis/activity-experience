@@ -149,7 +149,7 @@ export class GameService {
     this.store
       .select((state) => state.game)
       .subscribe((game) => {
-        if (game.id) {
+        if (game && game.id) {
           // use a specific query to update analytics -- since analytics are stored as JSONB array
           if (game.analytics) {
             // game.analytics[0] is an ugly-workaround - there will always an array of length 1
