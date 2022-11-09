@@ -20,6 +20,10 @@ describe('UserService', () => {
     localStorage.setItem('patient', '');
   });
 
+  afterEach(() => {
+    localStorage.removeItem('token');
+  });
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
@@ -69,8 +73,6 @@ describe('UserService', () => {
 
     expect(localStorage.getItem('token')).toEqual('');
     expect(result).toEqual(false);
-
-    localStorage.removeItem('token');
   });
 
   it('should set patient ID', () => {
