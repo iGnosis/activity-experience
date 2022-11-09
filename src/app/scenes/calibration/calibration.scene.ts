@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
 import { CalibrationStatusType } from 'src/app/types/pointmotion';
@@ -9,16 +8,10 @@ import { CalibrationStatusType } from 'src/app/types/pointmotion';
   providedIn: 'root',
 })
 export class CalibrationScene extends Scene {
-  invalid = false;
-  webcam: any;
-  frame$?: Observable<any>;
-  calibration$?: Observable<any>;
-  texture?: string;
   showCalibration = true;
   checkImage?: Phaser.GameObjects.Image;
   wrongImage?: Phaser.GameObjects.Image;
   graphics?: Phaser.GameObjects.Graphics = undefined;
-  calibrationStatus = 'success';
 
   //calibration box dimensions
   calibrationBox: {
