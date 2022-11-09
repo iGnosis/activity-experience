@@ -56,7 +56,7 @@ export class GoogleAnalyticsService {
       console.log(e);
     }
   }
-  sendEvent(name: string, params?: any) {
+  sendEvent(name: string, params?: { [key: string]: any }) {
     try {
       if (window.gtag) {
         if (params) window.gtag('event', name, { ...params });
