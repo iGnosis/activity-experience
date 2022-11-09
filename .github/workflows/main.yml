@@ -62,8 +62,8 @@ jobs:
           npm install -g @angular/cli
           npm run build -- -c "$ENVIRONMENT"
 
-      # - name: running unit tests
-      #   run: npm run test
+      - name: running unit tests
+        run: npm run test
 
       - uses: jakejarvis/s3-sync-action@v0.5.1
         with:
