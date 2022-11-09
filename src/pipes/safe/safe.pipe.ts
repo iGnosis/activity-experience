@@ -1,13 +1,7 @@
 // Angular
 import { Pipe, PipeTransform } from '@angular/core';
-import {
-  DomSanitizer,
-  SafeHtml,
-  SafeStyle,
-  SafeScript,
-  SafeUrl,
-  SafeResourceUrl,
-} from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
+import { SafePipeResult, SafePipeTransformType } from 'src/app/types/pointmotion';
 
 /**
  * Sanitize HTML
@@ -30,13 +24,8 @@ export class SafePipe implements PipeTransform {
    * @param value: string
    * @param type: string
    */
-  transform(
-    value: string,
-    type: string,
-  ): SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl {
+  transform(value: string, type: SafePipeTransformType): SafePipeResult {
     switch (type) {
-      case 'html':
-        return this._sanitizer.bypassSecurityTrustHtml(value);
       case 'style':
         return this._sanitizer.bypassSecurityTrustStyle(value);
       case 'script':
@@ -45,6 +34,7 @@ export class SafePipe implements PipeTransform {
         return this._sanitizer.bypassSecurityTrustUrl(value);
       case 'resourceUrl':
         return this._sanitizer.bypassSecurityTrustResourceUrl(value);
+      case 'html':
       default:
         return this._sanitizer.bypassSecurityTrustHtml(value);
     }
