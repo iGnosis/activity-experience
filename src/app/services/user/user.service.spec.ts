@@ -22,6 +22,7 @@ describe('UserService', () => {
 
   afterEach(() => {
     localStorage.removeItem('token');
+    localStorage.removeItem('patient');
   });
 
   it('should be created', () => {
