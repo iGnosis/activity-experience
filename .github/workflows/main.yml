@@ -63,7 +63,7 @@ jobs:
           npm run build -- -c "$ENVIRONMENT"
 
       - name: running unit tests
-        run: npm run test
+        run: npm run test:chromeheadless
 
       - uses: jakejarvis/s3-sync-action@v0.5.1
         with:
