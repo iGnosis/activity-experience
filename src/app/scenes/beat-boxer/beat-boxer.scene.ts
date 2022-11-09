@@ -337,6 +337,11 @@ export class BeatBoxerScene extends Phaser.Scene {
     return distance;
   }
 
+  /**
+   * @param results Pose results from @mediapipe/.
+   * @param position can be left or right (based on the side you want to place the bag).
+   * @returns an Object with shoulderX, wristX and maxReach of the user.
+   */
   private calculateReach(
     results: Results,
     position: CenterOfMotion,
