@@ -437,6 +437,7 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
+              bars: ['yellow'],
             },
             attributes: {
               visibility: 'visible',
@@ -528,6 +529,7 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
+              bars: ['yellow'],
             },
             attributes: {
               visibility: 'visible',
@@ -632,6 +634,7 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
+              bars: ['yellow'],
             },
             attributes: {
               visibility: 'visible',
@@ -832,6 +835,7 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
+              bars: ['yellow'],
             },
             attributes: {
               visibility: 'visible',
@@ -1019,6 +1023,7 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
+              bars: ['yellow'],
             },
             attributes: {
               visibility: 'visible',
@@ -1140,6 +1145,7 @@ export class SitToStandService implements ActivityBase {
       data: {
         mode: 'start',
         timeout: this.config.speed,
+        bars: ['yellow'],
       },
       attributes: {
         visibility: 'visible',

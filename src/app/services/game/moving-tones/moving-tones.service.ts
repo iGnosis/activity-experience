@@ -211,7 +211,8 @@ export class MovingTonesService implements ActivityBase {
     let redSubscription: Subscription | undefined;
 
     if (left?.length) {
-      const sleepTime = this.movingTonesScene.holdDuration / (left.length - 1);
+      // reduced sleep time to avoid loading glitches
+      const sleepTime = 200;
 
       blueSubscription = this.movingTonesScene.blueHoldState
         .pipe(distinctUntilChanged())
@@ -247,7 +248,7 @@ export class MovingTonesService implements ActivityBase {
               };
             }
             for (let i = 1; i < left.length; i++) {
-              await this.elements.sleep(sleepTime - 100);
+              await this.elements.sleep(sleepTime);
 
               if (
                 !(
@@ -282,7 +283,8 @@ export class MovingTonesService implements ActivityBase {
         });
     }
     if (right?.length) {
-      const sleepTime = this.movingTonesScene.holdDuration / (right.length - 1);
+      // reduced sleep time to avoid loading glitches
+      const sleepTime = 200;
 
       redSubscription = this.movingTonesScene.redHoldState
         .pipe(distinctUntilChanged())
@@ -318,7 +320,7 @@ export class MovingTonesService implements ActivityBase {
               };
             }
             for (let i = 1; i < right.length; i++) {
-              await this.elements.sleep(sleepTime - 100);
+              await this.elements.sleep(sleepTime);
 
               if (
                 !(
