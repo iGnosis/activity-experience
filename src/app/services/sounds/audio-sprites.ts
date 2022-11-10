@@ -1,7 +1,5 @@
 import { AudioSprite } from 'src/app/types/pointmotion';
 
-type Set = 'set1' | 'set2';
-
 export const audioSprites: {
   ambientSprite: AudioSprite[];
   danceSprite: AudioSprite[];
