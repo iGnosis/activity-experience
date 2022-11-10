@@ -392,6 +392,9 @@ export class CalibrationScene extends Scene {
           ],
           alpha: 0.9,
           duration: 1000,
+          onComplete: () => {
+            this.scene.start('sit2stand');
+          },
         });
       } else {
         this.tweens.getAllTweens().forEach((tween) => {
