@@ -73,6 +73,13 @@ export type OpenHandStatus =
  */
 export type CalibrationMode = 'full' | 'fast';
 
+export type CalibrationBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export declare enum CalibrationDetails {
   MULTIPLE_PEOPLE_DETECTED = '1',
   NO_PERSON_DETECTED = '2',
