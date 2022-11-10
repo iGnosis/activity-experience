@@ -26,11 +26,7 @@ export class CalibrationService {
     height: number;
   };
 
-  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {
-    this.result.pipe(debounceTime(2000)).subscribe((status) => {
-      // this.calculateCalibrationCount(status);
-    });
-  }
+  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
 
   enable(autoSwitchMode = true) {
     this.isEnabled = true;
@@ -64,14 +60,12 @@ export class CalibrationService {
 
       if (newStatus.status !== this.status) {
         this.calibrationScene.destroyGraphics();
-        // Update all the subscribers interested in calibration status
+
         this.result.next(newStatus.status);
 
-        // Draw the calibration box
         this.calibrationScene.drawCalibrationBox(newStatus.status);
 
         if (autoSwitchMode) {
-          // Move the calibration from full to fast mode.
           this.switchMode(newStatus.status);
         }
       }
@@ -162,9 +156,8 @@ export class CalibrationService {
       calibrationBox,
     );
 
-    // allow user to play the game.
-    if (bodyPoints.length === calibratedPoints.length) {
-      // console.log(`mode: ${mode} - calibration success`);
+    const shouldStartGame = bodyPoints.length === calibratedPoints.length;
+    if (shouldStartGame) {
       return { status: 'success' };
     }
 
