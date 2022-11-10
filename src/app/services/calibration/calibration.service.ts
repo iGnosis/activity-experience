@@ -8,18 +8,18 @@ import { PoseService } from '../pose/pose.service';
   providedIn: 'root',
 })
 export class CalibrationService {
-  status: CalibrationStatusType = 'error';
+  private status: CalibrationStatusType = 'error';
   isEnabled = false;
   result = new Subject<CalibrationStatusType>();
   subscription: Subscription;
   subscriptionReCalibration: Subscription;
   mode: CalibrationMode = 'full';
-  visibilityThreshold = 0.7;
-  _reCalibrationCount = 0;
+  private visibilityThreshold = 0.7;
+  private _reCalibrationCount = 0;
   reCalibrationCount = new Subject<number>();
-  canvasWidth: number;
-  canvasHeight: number;
-  calibrationBox: {
+  private canvasWidth: number;
+  private canvasHeight: number;
+  private calibrationBox: {
     x: number;
     y: number;
     width: number;
