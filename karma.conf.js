@@ -26,9 +26,14 @@ module.exports = function (config) {
     },
     coverageReporter: {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      dir: require('path').join(__dirname, './coverage/activities'),
+      dir: require('path').join(__dirname, './coverage'),
       subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcov' }],
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' },
+        { type: 'lcov' },
+        { type: 'json-summary' },
+      ],
     },
     reporters: ['progress', 'kjhtml'],
     port: 9876,
