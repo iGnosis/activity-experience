@@ -252,12 +252,20 @@ export class SitToStandScene extends Phaser.Scene {
   currentTrigger = 1;
   currentClassicalRep = 1;
   currentClassicalSet = 1;
-  classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
 
   playTrigger(genre: Genre) {
     switch (genre) {
       case 'classical':
-        // classical set 0 has weird music logic
+        // to fade we need to know duration to fade. All the triggers have the same duration.
+        const classicTriggerFadeoutDuration = 1519.183673469399;
+
+        /**
+         * Classical set0 is a bit different than the rest of the music sets in SSA.
+         * It has 3 sub-sets, each sub-set has 1 backtrack. sub-set 1 and 2 has 12 triggers, but sub-set 3 has 14 triggers.
+         * first, the sub-set 1 backtrack is played in the background.. for every right movement the user makes, a trigger will be played.
+         * when all the triggers from sub-set-1 are finished, then sub-set 1 backtrack will be replaced with sub-set 2 backtrack.
+         * from now, a trigger from sub-set 2 will be played for right movements.. similarly it moves to sub-set 3.
+         */
         if (this.currentSet === 0) {
           const soundTrackKey = `set${this.currentClassicalSet}classical${this.currentClassicalRep}`;
           if (this.classicalTriggerId && this.classical.playing(this.classicalTriggerId)) {
@@ -267,12 +275,7 @@ export class SitToStandScene extends Phaser.Scene {
           this.classicalTriggerId = this.classical.play(soundTrackKey);
           this.classical.fade(0, 0.7, 1500, this.classicalTriggerId);
           setTimeout(() => {
-            this.classical.fade(
-              0.7,
-              0,
-              this.classicTriggerFadeoutDuration,
-              this.classicalTriggerId,
-            );
+            this.classical.fade(0.7, 0, classicTriggerFadeoutDuration, this.classicalTriggerId);
           }, 1500);
           this.currentClassicalRep += 1;
           if (this.currentClassicalSet === 1 && this.currentClassicalRep === 12) {
