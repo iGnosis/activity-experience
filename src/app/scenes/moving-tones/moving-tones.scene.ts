@@ -680,7 +680,7 @@ export class MovingTonesScene extends Phaser.Scene {
     return gameObject;
   }
 
-  destroy(gameObject: any) {
+  destroy(gameObject: Phaser.GameObjects.GameObject) {
     if (gameObject && this.group) {
       this.group.remove(gameObject, true, true);
     }
@@ -698,24 +698,29 @@ export class MovingTonesScene extends Phaser.Scene {
   ) {
     console.log('Destroy Game Objects::', object || 'ALL');
     if (!object) {
+      // to clear the green circle animations
+      (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child) => {
+        if (child.texture && child.texture.key === TextureKeys.MUSIC_CIRCLE) {
+          const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          rippleAnim && rippleAnim.destroy(true);
+        }
+      });
+
+      // then remove all the remaining objects
       this.group.clear(true, true);
     } else {
       if (object === TextureKeys.MUSIC_CIRCLE) {
         const idxList: number[] = [];
         (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child, idx) => {
-          if (!child || !child.texture || !child.texture.key) {
-            idxList.push(idx);
-          } else if (child.texture.key === TextureKeys.MUSIC_CIRCLE) {
-            const rippleAnim = child.getData('rippleAnim');
-            rippleAnim && rippleAnim.destroy(true);
+          if (child.texture && child.texture.key === TextureKeys.MUSIC_CIRCLE) {
             idxList.push(idx);
           }
         });
-        idxList.sort(function (a, b) {
-          return b - a;
-        });
+        idxList.sort((a, b) => b - a);
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
+          const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
         });
       } else {
@@ -728,8 +733,6 @@ export class MovingTonesScene extends Phaser.Scene {
           } else if (child.texture.key === TextureKeys.MUSIC_CIRCLE) {
             const childInteractableWith: 'red' | 'blue' = child.getData('interactableWith');
             if (color === childInteractableWith) {
-              const rippleAnim = child.getData('rippleAnim');
-              rippleAnim && rippleAnim.destroy(true);
               idxList.push(idx);
             }
           } else if (child.texture.key === textureKey) {
@@ -739,11 +742,11 @@ export class MovingTonesScene extends Phaser.Scene {
             }
           }
         });
-        idxList.sort(function (a, b) {
-          return b - a;
-        });
+        idxList.sort((a, b) => b - a);
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
+          const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
         });
       }
