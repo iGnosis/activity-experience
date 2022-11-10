@@ -345,15 +345,14 @@ export class BeatBoxerScene extends Phaser.Scene {
   private calculateReach(
     results: Results,
     position: CenterOfMotion,
-  ): { shoulderX: number; wristX: number; maxReach: number } {
-    const { width, height } = this.game.canvas;
+  ): { shoulderX: number; wristX: number } {
+    const width = this.game.canvas.width;
 
     // if results or results.poseLandmarks are not present.. return default values.
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return {
         wristX: 250,
         shoulderX: width / 2,
-        maxReach: 200,
       };
     }
 
@@ -366,25 +365,10 @@ export class BeatBoxerScene extends Phaser.Scene {
       results.poseLandmarks[15]
     ) {
       const leftShoulder = results.poseLandmarks[11];
-      const leftElbow = results.poseLandmarks[13];
       const leftWrist = results.poseLandmarks[15];
-      const maxReach =
-        this.calcDist(
-          width - leftShoulder.x * width,
-          leftShoulder.y * height,
-          width - leftElbow.x * width,
-          leftElbow.y * height,
-        ) +
-        this.calcDist(
-          width - leftElbow.x * width,
-          leftElbow.y * height,
-          width - leftWrist.x * width,
-          leftWrist.y * height,
-        );
       return {
         shoulderX: width - leftShoulder.x * width,
         wristX: width - leftWrist.x * width,
-        maxReach,
       };
     } else if (
       position === 'right' &&
@@ -395,32 +379,15 @@ export class BeatBoxerScene extends Phaser.Scene {
       results.poseLandmarks[16]
     ) {
       const rightShoulder = results.poseLandmarks[12];
-      const rightElbow = results.poseLandmarks[14];
       const rightWrist = results.poseLandmarks[16];
-      const maxReach =
-        this.calcDist(
-          width - rightShoulder.x * width,
-          rightShoulder.y * height,
-          width - rightElbow.x * width,
-          rightElbow.y * height,
-        ) +
-        this.calcDist(
-          width - rightElbow.x * width,
-          rightElbow.y * height,
-          width - rightWrist.x * width,
-          rightWrist.y * height,
-        );
       return {
         shoulderX: width - rightShoulder.x * width,
         wristX: width - rightWrist.x * width,
-        maxReach,
       };
     }
-
     return {
       wristX: 250,
       shoulderX: width / 2,
-      maxReach: 200,
     };
   }
 
@@ -518,7 +485,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      const { shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
       let tmpX = 0;
       if (centerOfMotion === 'right') {
         // pick whichever is the maximum, to reduce the chances of collision.
@@ -571,7 +538,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      const { shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
 
       let tmpX = 0;
       if (centerOfMotion === 'right') {
