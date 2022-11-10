@@ -1,15 +1,10 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Results } from '@mediapipe/pose';
-import { Scene } from 'phaser';
 import { GameComponent } from 'src/app/pages/game/game.component';
-import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationService } from './calibration.service';
 
-fdescribe('CalibrationService', () => {
+describe('CalibrationService', () => {
   let service: CalibrationService;
-
-  let component: GameComponent;
-  let fixture: ComponentFixture<GameComponent>;
 
   // mock results and canvas details to test calibration
   const calibratedPoseResults: Pick<Results, 'poseLandmarks'> = {
