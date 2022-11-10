@@ -30,7 +30,7 @@ export class SitToStandService implements ActivityBase {
   private globalReCalibrationCount: number;
 
   // init default config values.
-  private minSpeed = 0;
+  private minSpeed = 600;
   private maxSpeed = 10000; /* assumption: 10seconds will be max timeout. */
   private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
@@ -105,10 +105,6 @@ export class SitToStandService implements ActivityBase {
     }
     this.config.speed = (this.minSpeed + this.maxSpeed) / 2;
     console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
-  }
-
-  parseExpression(str: string): number {
-    return Function(`'use strict'; return (${str})`)();
   }
 
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
@@ -843,7 +839,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
-            this.parseExpression(promptExpressions[i]) % 2 === 0 ? 'sit' : 'stand',
+            eval(promptExpressions[i]) % 2 === 0 ? 'sit' : 'stand',
             this.config.speed,
           );
 
@@ -1031,7 +1027,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
           const res = await this.sit2StandService.waitForClassChangeOrTimeOut(
-            this.parseExpression(promptExpressions[i]) % 2 === 0 ? 'sit' : 'stand',
+            eval(promptExpressions[i]) % 2 === 0 ? 'sit' : 'stand',
             this.config.speed,
           );
 
@@ -1231,9 +1227,7 @@ export class SitToStandService implements ActivityBase {
         stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
       }
 
-      let promptNum = stringExpression
-        ? this.parseExpression(stringExpression)
-        : Math.floor(Math.random() * 100);
+      let promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
 
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
