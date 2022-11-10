@@ -326,7 +326,8 @@ export class GameService {
         websocketEndpoint: environment.websocketEndpoint,
       });
 
-      const poseSubscription = this.poseService.results
+      const poseSubscription = this.poseService
+        .getPose()
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
           const { poseLandmarks } = poseResults;
