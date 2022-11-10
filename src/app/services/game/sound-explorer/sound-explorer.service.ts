@@ -1058,15 +1058,13 @@ export class SoundExplorerService {
             },
           };
           await this.elements.sleep(4000);
-        }
 
-        this.store.dispatch(game.gameCompleted());
-        this.googleAnalyticsService.sendEvent('level_end', {
-          level_name: 'sound_explorer',
-        });
-        await this.gameStateService.postLoopHook();
+          this.store.dispatch(game.gameCompleted());
+          this.googleAnalyticsService.sendEvent('level_end', {
+            level_name: 'sound_explorer',
+          });
+          await this.gameStateService.postLoopHook();
 
-        if (isLastActivity) {
           window.parent.postMessage(
             {
               type: 'end-game',
