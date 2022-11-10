@@ -1,23 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { Results } from '@mediapipe/pose';
-import { Store, StoreModule } from '@ngrx/store';
 import { GameComponent } from 'src/app/pages/game/game.component';
-import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { GameStateService } from '../game-state/game-state.service';
-import { GameService } from '../game/game.service';
-import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
-import { GqlClientService } from '../gql-client/gql-client.service';
-import { UserService } from '../user/user.service';
 import { CalibrationService } from './calibration.service';
-import * as Phaser from 'phaser';
 
 describe('CalibrationService', () => {
   let service: CalibrationService;
-
-  let component: GameComponent;
-  let fixture: ComponentFixture<GameComponent>;
 
   // mock results and canvas details to test calibration
   const calibratedPoseResults: Pick<Results, 'poseLandmarks'> = {
@@ -241,6 +228,7 @@ describe('CalibrationService', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(CalibrationService);
+    calibratedPoseResults.poseLandmarks[24].visibility = 0.9997970461845398;
   });
 
   it('should be created', () => {
@@ -261,6 +249,39 @@ describe('CalibrationService', () => {
 
     service.setMode('full');
     expect(service.mode).toEqual('full');
+  });
+
+  it('should enable calibration', () => {
+    expect(service.isEnabled).toBeFalse();
+    expect(service.subscription).not.toEqual(jasmine.anything());
+
+    service.enable();
+
+    expect(service.isEnabled).toBeTrue();
+    expect(service.subscription).toEqual(jasmine.anything());
+  });
+
+  it('should setup re-calibration subscription', () => {
+    expect(service.subscriptionReCalibration).not.toEqual(jasmine.anything());
+
+    service._setupReCalibrationSubscription();
+    expect(service.subscriptionReCalibration).toEqual(jasmine.anything());
+  });
+
+  it('should disable calibration', () => {
+    service.enable();
+    expect(service.isEnabled).toBeTrue();
+    expect(service.subscription).toEqual(jasmine.anything());
+
+    service.disable();
+    expect(service.isEnabled).toBeFalse();
+    expect(service.subscription).toEqual(jasmine.anything());
+  });
+
+  it('should start calibration scene', () => {
+    expect(function () {
+      service.startCalibrationScene(new Phaser.Game());
+    }).not.toThrow(new Error('Invalid game object'));
   });
 
   it('should be able to check if point is within calibration box', () => {
@@ -285,5 +306,85 @@ describe('CalibrationService', () => {
         calibrationBox,
       ).status,
     ).toEqual('success');
+  });
+
+  it('should not calibrate if not enabled', () => {
+    expect(
+      service._calibrateBody(
+        calibratedPoseResults as Results,
+        'full',
+        canvasWidth,
+        canvasHeight,
+        calibrationBox,
+      ).status,
+    ).toEqual('disabled');
+  });
+
+  it('should not calibrate if not landmarks not available', () => {
+    service.enable();
+    expect(
+      service._calibrateBody({} as Results, 'full', canvasWidth, canvasHeight, calibrationBox)
+        .status,
+    ).toEqual('error');
+  });
+
+  it('should not calibrate if some points are not visible', () => {
+    service.mode = 'fast';
+    service.enable();
+    calibratedPoseResults.poseLandmarks[24].visibility = 0;
+    expect(
+      service._calibrateBody(
+        calibratedPoseResults as Results,
+        'full',
+        canvasWidth,
+        canvasHeight,
+        calibrationBox,
+      ).status,
+    ).toEqual('error');
+  });
+
+  it('should give body points', () => {
+    service.mode = 'fast';
+    calibratedPoseResults.poseLandmarks[24].visibility = 0;
+
+    expect(service._getBodyPoints(calibratedPoseResults.poseLandmarks).bodyPoints.length).toEqual(
+      6,
+    );
+    expect(
+      service._getBodyPoints(calibratedPoseResults.poseLandmarks).invisiblePoints.length,
+    ).toEqual(1);
+  });
+
+  it('should get calibration points', () => {
+    service.enable();
+    const { bodyPoints } = service._getBodyPoints(calibratedPoseResults.poseLandmarks);
+
+    const { calibratedPoints, unCalibratedPoints } = service._getCalibrationPoints(
+      bodyPoints,
+      calibratedPoseResults.poseLandmarks,
+      canvasWidth,
+      canvasHeight,
+      'fast',
+      calibrationBox,
+    );
+    expect(calibratedPoints.length).toEqual(20);
+    expect(unCalibratedPoints.length).toEqual(0);
+  });
+
+  it('should get full calibration points', () => {
+    service.enable();
+    const { bodyPoints } = service._getBodyPoints(calibratedPoseResults.poseLandmarks);
+
+    const { calibratedPoints, unCalibratedPoints } = service._getCalibrationPoints(
+      bodyPoints,
+      calibratedPoseResults.poseLandmarks,
+      canvasWidth,
+      canvasHeight,
+      'full',
+      calibrationBox,
+    );
+
+    expect(calibratedPoints.length).toEqual(20);
+    expect(unCalibratedPoints.length).toEqual(0);
   });
 });

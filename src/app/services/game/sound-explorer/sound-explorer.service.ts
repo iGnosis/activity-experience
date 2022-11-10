@@ -5,10 +5,12 @@ import {
   AnalyticsResultDTO,
   GameState,
   Genre,
+  Origin,
   PreferenceState,
+  Shape,
 } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
-import { CheckinService } from '../../checkin/checkin.service';
+import { ApiService } from '../../checkin/api.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
@@ -16,10 +18,11 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
-import { Origin, Shape, SoundExplorerScene } from 'src/app/scenes/sound-explorer.scene';
+import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable({
   providedIn: 'root',
@@ -28,11 +31,26 @@ export class SoundExplorerService {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
+  private currentLevel = environment.settings['sound_explorer'].currentLevel;
   private config = {
-    gameDuration: environment.settings['sound_explorer'].configuration.gameDuration,
-    speed: environment.settings['sound_explorer'].configuration.speed,
+    gameDuration:
+      environment.settings['sound_explorer'].levels[this.currentLevel].configuration.gameDuration,
+    speed: environment.settings['sound_explorer'].levels[this.currentLevel].configuration.speed,
   };
+
+  private gameStartTime: number | null;
+  private firstPromptTime: number | null;
+  private loopStartTime: number | null;
+
   private isGameComplete = false;
+  private shouldReplay = false;
+
+  private gameDuration = this.config.gameDuration || 0;
+  private totalDuration = this.config.gameDuration || 0;
+
+  private difficulty = 1;
+  private streak = 0;
+
   private successfulReps = 0;
   private totalReps = 0;
   private currentScore = 0;
@@ -62,36 +80,41 @@ export class SoundExplorerService {
   private drawShapes = async (
     numberOfShapes: number,
     timeoutBetweenShapes = 200,
-  ): Promise<Shape[]> => {
+    promptDetails?: { angle: number; shapes: Shape[]; position: Origin },
+  ): Promise<{ angle: number; shapes: Shape[]; position: Origin }> => {
     this.soundExplorerScene.setNextNote();
 
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
-    const shapes: Shape[] = this.getMultipleRandomItems(this.shapes, numberOfShapes);
+    const randomPosition =
+      promptDetails?.position ||
+      this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+    const shapes: Shape[] =
+      promptDetails?.shapes || this.getMultipleRandomItems(this.shapes, numberOfShapes);
+    const randomAngle: number =
+      typeof promptDetails?.angle === 'number'
+        ? promptDetails?.angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
     for (let i = 0; i < numberOfShapes; i++) {
       const shape = shapes[i];
-      this.soundExplorerScene.showShapes(
-        [shape],
-        randomPosition,
-        this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-        this.config.speed,
-      );
+      this.soundExplorerScene.showShapes([shape], randomPosition, randomAngle, this.config.speed);
       await this.elements.sleep(timeoutBetweenShapes);
     }
-    return shapes;
+    return { angle: randomAngle, shapes, position: randomPosition };
   };
 
-  private drawObstacle = async () => {
-    const randomPosition = this.getRandomItemFromArray(
-      Object.keys(this.originsWithAngleRange) as Origin[],
-    );
-    this.soundExplorerScene.showShapes(
-      ['wrong'],
-      randomPosition,
-      this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]),
-      this.config.speed,
-    );
+  private drawObstacle = async (position?: Origin, angle?: number) => {
+    const randomPosition =
+      position || this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+    const randomAngle =
+      typeof angle === 'number'
+        ? angle
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+    this.soundExplorerScene.showShapes(['wrong'], randomPosition, randomAngle, this.config.speed);
+    return { obstacleAngle: randomAngle, obstaclePosition: randomPosition };
+  };
+
+  private updateElapsedTime = (elapsedTime: number) => {
+    if (elapsedTime >= this.gameDuration!) this.isGameComplete = true;
+    this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
   constructor(
@@ -102,7 +125,7 @@ export class SoundExplorerService {
     private elements: ElementsService,
     private gameStateService: GameStateService,
     private calibrationService: CalibrationService,
-    private checkinService: CheckinService,
+    private apiService: ApiService,
     private ttsService: TtsService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
@@ -112,7 +135,7 @@ export class SoundExplorerService {
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
-        if (preference.genre && this.genre !== preference.genre) {
+        if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
@@ -132,7 +155,7 @@ export class SoundExplorerService {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.soundExplorerScene.waitForAssetsToLoad();
+        await this.soundExplorerScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -148,6 +171,8 @@ export class SoundExplorerService {
   welcome() {
     return [
       async (reCalibrationCount: number) => {
+        // start recording
+        this.gameStartTime = Date.now();
         if (!this.isServiceSetup) {
           this.elements.banner.state = {
             attributes: {
@@ -171,15 +196,14 @@ export class SoundExplorerService {
             },
           };
           await this.setup();
-
-          this.elements.banner.state = {
-            data: {},
-            attributes: {
-              reCalibrationCount,
-              visibility: 'hidden',
-            },
-          };
         }
+        this.elements.banner.state = {
+          data: {},
+          attributes: {
+            reCalibrationCount,
+            visibility: 'hidden',
+          },
+        };
       },
 
       async (reCalibrationCount: number) => {
@@ -613,7 +637,7 @@ export class SoundExplorerService {
             titleDuration: 2000,
           },
         };
-        await this.checkinService.updateOnboardingStatus({
+        await this.apiService.updateOnboardingStatus({
           sound_explorer: true,
         });
         await this.elements.sleep(3000);
@@ -627,7 +651,9 @@ export class SoundExplorerService {
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Last activity. Sound Explorer.');
+        this.soundExplorerScene.playBacktrack();
+        this.soundExplorerScene.enableMusic();
+        this.ttsService.tts('Next activity. Sound Explorer.');
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -636,13 +662,13 @@ export class SoundExplorerService {
           data: {
             type: 'intro',
             htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Last Activity</h2>
-              <h1 class="pt-6 display-4">Sound Explorer</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Range of Motion and Balance</h2>
-            </div>
-            `,
+              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+                <h1 class="pt-2">Next Activity</h2>
+                <h1 class="pt-6 display-4">Sound Explorer</h1>
+                <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+                <h1 class="py-2">Range of Motion and Balance</h2>
+              </div>
+              `,
             buttons: [
               {
                 title: 'Starting Sound Explorer',
@@ -652,6 +678,7 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(7000);
+        this.loopStartTime = Date.now();
         this.ttsService.tts("Raise one of your hands when you're ready to start.");
         this.elements.guide.state = {
           data: {
@@ -664,6 +691,7 @@ export class SoundExplorerService {
           },
         };
         await this.handTrackerService.waitUntilHandRaised('any-hand');
+        this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.attributes = {
           visibility: 'hidden',
@@ -671,6 +699,71 @@ export class SoundExplorerService {
         };
       },
     ];
+  }
+
+  async showPrompt(promptDetails: any, promptId: string) {
+    const isPromptFromBenchmark: boolean = Object.keys(promptDetails).length > 1;
+    const currentPromptDetails = await this.drawShapes(
+      this.difficulty,
+      isPromptFromBenchmark ? 0 : 200,
+      promptDetails,
+    );
+
+    const promptTimestamp = Date.now();
+
+    let obstaclePromptDetails;
+    if (promptDetails.showObstacle)
+      obstaclePromptDetails = await this.drawObstacle(
+        promptDetails.obstaclePosition,
+        promptDetails.obstacleAngle,
+      );
+
+    await this.soundExplorerScene.waitForCollisionOrTimeout();
+    const resultTimestamp = Date.now();
+    this.totalReps++;
+
+    // if low points, reset difficulty
+    if (this.pointsGained < this.difficulty / 2) {
+      this.difficulty = 1;
+      this.streak = 0;
+    } else {
+      this.streak++;
+      this.successfulReps++;
+    }
+    // if continously high points, increase difficulty
+    if (this.streak !== 0 && this.streak % 3 === 0 && this.difficulty <= 4) {
+      this.difficulty++;
+    }
+
+    // Todo: replace placeholder analytics values.
+    const analyticsObj = {
+      prompt: {
+        id: promptId,
+        type: this.difficulty === 1 ? 'single' : this.difficulty === 2 ? 'harmony' : 'chord',
+        timestamp: promptTimestamp,
+        data: {
+          ...promptDetails,
+          ...currentPromptDetails,
+          ...obstaclePromptDetails,
+        },
+      },
+      reaction: {
+        type: 'slice',
+        timestamp: Date.now(),
+        startTime: Date.now(),
+        completionTimeInMs:
+          this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) : null, // seconds between reaction and result if user interacted with the shapes
+      },
+      result: {
+        type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
+        timestamp: resultTimestamp,
+        score: this.pointsGained,
+      },
+    };
+
+    this.pointsGained = 0;
+
+    return { analyticsObj };
   }
 
   loop() {
@@ -698,17 +791,13 @@ export class SoundExplorerService {
       // Initializes score & timer.
       // When the timer runs out, loop() is ended.
       async (reCalibrationCount: number) => {
-        const updateElapsedTime = (elapsedTime: number) => {
-          if (elapsedTime >= this.config.gameDuration!) this.isGameComplete = true;
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-        };
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
-            duration: this.config.gameDuration! * 1000,
-            onPause: updateElapsedTime,
-            onComplete: updateElapsedTime,
+            duration: this.gameDuration * 1000,
+            onPause: this.updateElapsedTime,
+            onComplete: this.updateElapsedTime,
           },
           attributes: {
             visibility: 'visible',
@@ -719,7 +808,6 @@ export class SoundExplorerService {
 
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
-        let difficulty = 1;
         this.soundExplorerScene.score.next(this.currentScore);
         this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
           this.elements.score.state = {
@@ -732,64 +820,137 @@ export class SoundExplorerService {
               value: score,
             },
           };
-          this.pointsGained = score - this.currentScore; // points obtained in current rep
+          this.pointsGained += score - this.currentScore; // points obtained in current rep
           this.currentScore = score;
           this.store.dispatch(game.setScore({ score }));
         });
-        let streak = 0;
+
+        const startResult: 'success' | 'failure' = 'success';
+        const startPrompt = {
+          prompt: {
+            id: uuidv4(),
+            type: 'start',
+            timestamp: Date.now(),
+            data: {
+              gameStartTime: this.gameStartTime,
+              loopStartTime: this.loopStartTime,
+              firstPromptTime: this.firstPromptTime,
+            },
+          },
+          reaction: {
+            type: 'start',
+            timestamp: Date.now(),
+            startTime: Date.now(),
+            completionTimeInMs: 0,
+          },
+          result: {
+            type: startResult,
+            timestamp: Date.now(),
+            score: 0,
+          },
+        };
+        this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
+
         while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          const shapes = await this.drawShapes(difficulty);
-          const promptTimestamp = Date.now();
 
           const showObstacle = Math.random() > 0.5;
-          if (showObstacle) this.drawObstacle();
-
-          await this.soundExplorerScene.waitForCollisionOrTimeout();
-          const resultTimestamp = Date.now();
+          const promptId = uuidv4();
+          const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
           await this.elements.sleep(100);
-          this.totalReps++;
+          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+        }
+      },
+      async (reCalibrationCount: number) => {
+        const highScoreResp = await this.apiService.getHighScore('sound_explorer');
+        const highScore =
+          highScoreResp && highScoreResp.length ? highScoreResp[0].repsCompleted : 0;
 
-          // if low points, reset difficulty
-          if (this.pointsGained < difficulty / 2) {
-            difficulty = 1;
-            streak = 0;
-          } else {
-            streak++;
-            this.successfulReps++;
-          }
-          // if continously high points, increase difficulty
-          if (streak !== 0 && streak % 3 === 0 && difficulty < 4) {
-            difficulty++;
-          }
+        const shouldAllowReplay =
+          Math.abs(this.pointsGained - highScore) <= 5 || Math.random() < 0.5;
 
-          // Todo: replace placeholder analytics values.
-          const analyticsObj = {
-            prompt: {
-              type: difficulty === 1 ? 'single' : difficulty === 2 ? 'harmony' : 'chord',
-              timestamp: promptTimestamp,
-              data: {
-                shapes,
+        if (!shouldAllowReplay) return;
+
+        this.ttsService.tts(
+          'Raise both your hands if you want to add 30 more seconds to this activity.',
+        );
+        this.elements.guide.state = {
+          data: {
+            title: 'Raise both your hands to add 30 seconds.',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.banner.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            type: 'action',
+            htmlStr: `
+              <div class="text-center row">
+                <h1 class="pt-4 display-3">Times Up!</h1>
+                <h2 class="pb-8 display-6">Want to improve your score?</h2>
+                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
+              <div>
+            `,
+            buttons: [
+              {
+                title: 'Continue',
+                progressDurationMs: 9000,
               },
+            ],
+          },
+        };
+        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.elements.banner.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        this.elements.guide.attributes = {
+          visibility: 'hidden',
+          reCalibrationCount,
+        };
+        if (this.shouldReplay) {
+          this.soundsService.playCalibrationSound('success');
+
+          this.isGameComplete = false;
+
+          this.elements.timer.state = {
+            data: {
+              mode: 'start',
+              isCountdown: true,
+              duration: 30_000,
+              onPause: this.updateElapsedTime,
+              onComplete: this.updateElapsedTime,
             },
-            reaction: {
-              type: 'slice',
-              timestamp: Date.now(),
-              startTime: Date.now(),
-              completionTime:
-                this.pointsGained > 0 ? Math.abs(resultTimestamp - promptTimestamp) / 1000 : null, // seconds between reaction and result if user interacted with the shapes
-            },
-            result: {
-              type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
-              timestamp: resultTimestamp,
-              score: this.pointsGained,
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
             },
           };
-          this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
-          if (this.pointsGained === 0) {
-            console.log('%c Not changed! ', 'background: #222; color: red');
+          this.gameDuration = 30;
+          this.totalDuration += 30;
+        }
+      },
+      async (reCalibrationCount: number) => {
+        if (this.shouldReplay) {
+          while (!this.isGameComplete) {
+            if (reCalibrationCount !== this.globalReCalibrationCount) {
+              throw new Error('reCalibrationCount changed');
+            }
+
+            const showObstacle = Math.random() > 0.5;
+            const promptId = uuidv4();
+            const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
+            await this.elements.sleep(100);
+            this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
           }
         }
       },
@@ -830,25 +991,29 @@ export class SoundExplorerService {
     return [
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.enableMusic(false);
+        this.soundExplorerScene.stopBacktrack();
         this.soundExplorerScene.disable();
         this.soundExplorerScene.scene.stop('soundExplorer');
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
-          await this.checkinService.updateOnboardingStatus({
+          await this.apiService.updateOnboardingStatus({
             sound_explorer: false,
           });
         }
         this.ttsService.tts(
-          `Your score is ${this.currentScore}, time completed ${this.config
-            .gameDuration!} seconds.`,
+          `Your score is ${this.currentScore}, time completed ${this.totalDuration} seconds.`,
         );
-        const highScore = await this.checkinService.getHighScore('sound_explorer');
+        const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
           minutes: string;
           seconds: string;
         };
         // eslint-disable-next-line prefer-const
-        totalDuration = this.checkinService.getDurationForTimer(this.config.gameDuration!);
+        totalDuration = this.apiService.getDurationForTimer(this.totalDuration);
+
+        const isLastActivity =
+          environment.stageName === 'stage' || environment.stageName === 'prod';
+
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -871,7 +1036,7 @@ export class SoundExplorerService {
           `,
             buttons: [
               {
-                title: 'Back to Homepage',
+                title: isLastActivity ? 'Back to Homepage' : 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],
@@ -879,37 +1044,34 @@ export class SoundExplorerService {
         };
 
         await this.elements.sleep(12000);
-      },
-      async (reCalibrationCount: number) => {
-        this.store.dispatch(game.gameCompleted());
-        this.ttsService.tts('Please raise one of your hands to close the game.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Please raise one of your hands to close the game.',
-            showIndefinitely: true,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
-        this.googleAnalyticsService.sendEvent('level_end', {
-          level_name: 'sound_explorer',
-        });
-        this.gameStateService.postLoopHook();
-        window.parent.postMessage(
-          {
-            type: 'end-game',
-          },
-          '*',
-        );
+
+        if (isLastActivity) {
+          this.ttsService.tts('Well done. See you soon!');
+          this.elements.guide.state = {
+            data: {
+              title: 'Well done. See you soon!',
+              titleDuration: 2500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(4000);
+
+          this.store.dispatch(game.gameCompleted());
+          this.googleAnalyticsService.sendEvent('level_end', {
+            level_name: 'sound_explorer',
+          });
+          await this.gameStateService.postLoopHook();
+
+          window.parent.postMessage(
+            {
+              type: 'end-game',
+            },
+            '*',
+          );
+        }
       },
     ];
   }

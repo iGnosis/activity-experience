@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
 import { CalibrationStatusType } from 'src/app/types/pointmotion';
@@ -9,16 +8,10 @@ import { CalibrationStatusType } from 'src/app/types/pointmotion';
   providedIn: 'root',
 })
 export class CalibrationScene extends Scene {
-  invalid = false;
-  webcam: any;
-  frame$?: Observable<any>;
-  calibration$?: Observable<any>;
-  texture?: string;
   showCalibration = true;
   checkImage?: Phaser.GameObjects.Image;
   wrongImage?: Phaser.GameObjects.Image;
   graphics?: Phaser.GameObjects.Graphics = undefined;
-  calibrationStatus = 'success';
 
   //calibration box dimensions
   calibrationBox: {
@@ -349,8 +342,20 @@ export class CalibrationScene extends Scene {
     );
   }
 
+  private getFillColor(colorType: Exclude<CalibrationStatusType, 'disabled'>): number {
+    if (colorType === 'error') {
+      return 0x000066;
+    } else if (colorType === 'warning') {
+      return 0xffff00;
+    } else {
+      return 0x00bd3e;
+    }
+  }
+
   drawCalibrationBox(type: CalibrationStatusType) {
     if (!this.game || !this.showCalibration) return;
+    // no need to draw calibration box if calibrationservice is disabled.
+    if (type === 'disabled') return;
 
     const { width, height } = this.sys.game.canvas;
 
@@ -361,18 +366,7 @@ export class CalibrationScene extends Scene {
     this.add.existing(this.calibrationRectangle.center as Phaser.GameObjects.Rectangle);
 
     console.log(`drawCalibrationBox: ${width} X ${height}`);
-    let fillColor = 0x000066;
-
-    switch (type) {
-      case 'error':
-        fillColor = 0x000066;
-        break;
-      case 'warning':
-        fillColor = 0xffff00;
-        break;
-      case 'success':
-        fillColor = 0x00bd3e;
-    }
+    const fillColor = this.getFillColor(type);
 
     ['top', 'right', 'bottom', 'left'].forEach((rect) => {
       this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setAlpha(1);
@@ -398,11 +392,6 @@ export class CalibrationScene extends Scene {
           ],
           alpha: 0.9,
           duration: 1000,
-          onComplete: () => {
-            // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
-            // Move to whatever activity was going on...
-            this.scene.start('sit2stand');
-          },
         });
       } else {
         this.tweens.getAllTweens().forEach((tween) => {

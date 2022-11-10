@@ -17,16 +17,31 @@ export class GqlClientService {
     });
   }
 
+  /**
+   * Recreate the client with the new jwt token
+   *
+   * @param {string} jwt?
+   * @returns {void}
+   */
   refreshClient(jwt?: string) {
     const token = jwt || localStorage.getItem('token');
-    this.client = new GraphQLClient(environment.endpoint, {
-      headers: {
-        authorization: 'Bearer ' + token,
-      },
-    });
+    if (token) {
+      this.client = new GraphQLClient(environment.endpoint, {
+        headers: {
+          authorization: 'Bearer ' + token,
+        },
+      });
+    }
   }
 
-  async req(request: string, variables?: any) {
+  /**
+   * Used to make a query to the graphql server
+   *
+   * @param {string} request
+   * @param {{ [key: string]: any } | undefined} variables?
+   * @returns {Promise<any>}
+   */
+  async req(request: string, variables?: { [key: string]: any }): Promise<any> {
     return this.client.request(request, variables);
   }
 }

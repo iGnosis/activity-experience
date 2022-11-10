@@ -1,0 +1,230 @@
+{
+  "frames": {
+    "tile005.png": {
+      "frame": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile006.png": {
+      "frame": { "x": 500, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile007.png": {
+      "frame": { "x": 1000, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile008.png": {
+      "frame": { "x": 1500, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile009.png": {
+      "frame": { "x": 2000, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile010.png": {
+      "frame": { "x": 2500, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile011.png": {
+      "frame": { "x": 3000, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile012.png": {
+      "frame": { "x": 3500, "y": 0, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile013.png": {
+      "frame": { "x": 0, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile014.png": {
+      "frame": { "x": 500, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile015.png": {
+      "frame": { "x": 1000, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile016.png": {
+      "frame": { "x": 1500, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile017.png": {
+      "frame": { "x": 2000, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile018.png": {
+      "frame": { "x": 2500, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile019.png": {
+      "frame": { "x": 3000, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile020.png": {
+      "frame": { "x": 3500, "y": 500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile021.png": {
+      "frame": { "x": 0, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile022.png": {
+      "frame": { "x": 500, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile023.png": {
+      "frame": { "x": 1000, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile024.png": {
+      "frame": { "x": 1500, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile025.png": {
+      "frame": { "x": 2000, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile026.png": {
+      "frame": { "x": 2500, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile027.png": {
+      "frame": { "x": 3000, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile028.png": {
+      "frame": { "x": 3500, "y": 1000, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile029.png": {
+      "frame": { "x": 0, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile030.png": {
+      "frame": { "x": 500, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile031.png": {
+      "frame": { "x": 1000, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile032.png": {
+      "frame": { "x": 1500, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile033.png": {
+      "frame": { "x": 2000, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile034.png": {
+      "frame": { "x": 2500, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    },
+    "tile035.png": {
+      "frame": { "x": 3000, "y": 1500, "w": 500, "h": 500 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 500, "h": 500 },
+      "sourceSize": { "w": 500, "h": 500 }
+    }
+  },
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "blue-red-ripple.png",
+    "format": "RGBA8888",
+    "size": { "w": 4000, "h": 2000 },
+    "scale": "1",
+    "smartupdate": "$TexturePacker:SmartUpdate:39e90c3673aa7a57231993c1d6001da6:1e537f94787218af7bafb9e23117a786:2625f9b5bb370cb0b89ff691e8e123b8$"
+  }
+}

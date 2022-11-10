@@ -1,7 +1,13 @@
+import {
+  SafeHtml,
+  SafeResourceUrl,
+  SafeScript,
+  SafeStyle,
+  SafeUrl,
+} from '@angular/platform-browser';
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import { Observable, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Shape } from '../scenes/sound-explorer.scene';
 
 declare global {
   interface Window {
@@ -51,6 +57,14 @@ export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled'
 
 export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-hands' | undefined;
 
+export type OpenHandStatus =
+  | 'both-hands'
+  | 'left-hand'
+  | 'right-hand'
+  | 'none'
+  | 'unknown'
+  | undefined;
+
 /**
  * We support two modes: 'full' | 'fast'.
  * 'full' mode is enabled by default.
@@ -58,6 +72,13 @@ export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-
  * * When 'fast' mode is active, all the key body points must be visible.
  */
 export type CalibrationMode = 'full' | 'fast';
+
+export type CalibrationBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export declare enum CalibrationDetails {
   MULTIPLE_PEOPLE_DETECTED = '1',
@@ -610,6 +631,11 @@ export interface IsMediaPipeReady {
   downloadSource: 'local' | 'cdn';
 }
 
+export interface IsHandsModelReady {
+  isHandsModelReady: boolean;
+  downloadSource: 'local' | 'cdn';
+}
+
 export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
 export type AnalyticsEventType =
   | 'sessionStarted'
@@ -743,23 +769,32 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
-export interface ActivityConfiguration {
-  configuration: {
-    /**
-     * Number of correct reps required for an activity to end.
-     */
-    minCorrectReps?: number;
-    /**
-     * Duration for which the game should run.
-     */
-    gameDuration?: number;
-    /**
-     * Defines speed in milliseconds at which the activity should be run.
-     */
-    speed: number;
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
+
+export type GameLevels = 'level1' | 'level2' | 'level3';
+
+export type ActivityLevel = {
+  [level: string]: {
+    configuration: {
+      /**
+       * Number of correct reps required for an activity to end.
+       */
+      minCorrectReps?: number;
+      /**
+       * Duration for which the game should run.
+       */
+      gameDuration?: number;
+      /**
+       * Defines speed in milliseconds at which the activity should be run.
+       */
+      speed: number;
+    };
   };
-  handler?: any;
+};
+
+export interface ActivityConfiguration {
+  currentLevel: GameLevels;
+  levels: ActivityLevel;
 }
 
 export interface Environment {
@@ -873,16 +908,22 @@ export type AnalyticsDTO = {
 };
 
 export type AnalyticsPromptDTO = {
+  id: string;
   type: string;
   timestamp: number;
-  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;
+  data:
+    | Sit2StandAnalyticsDTO
+    | BeatboxerAnalyticsDTO
+    | SoundExplorerAnalyticsDTO
+    | MovingTonesAnalyticsDTO
+    | GameStartAnalyticsDTO;
 };
 
 export type AnalyticsReactionDTO = {
   type: string;
   timestamp: number; // placeholder value.
   startTime: number; // placeholder value.
-  completionTime: number | null; // completion time in seconds.
+  completionTimeInMs: number | null;
 };
 
 export type AnalyticsResultDTO = {
@@ -903,6 +944,33 @@ export type BeatboxerAnalyticsDTO = {
 
 export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
+};
+
+export type MovingTonesAnalyticsDTO = {
+  leftCoordinates: Coordinate[];
+  rightCoordinates: Coordinate[];
+};
+
+export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
+
+export type Coordinate = {
+  x: number;
+  y: number;
+};
+
+export type MovingTonesConfiguration = {
+  startLeft?: Coordinate;
+  endLeft?: Coordinate;
+  startRight?: Coordinate;
+  endRight?: Coordinate;
+  curveType: MovingTonesCurve;
+  pointsInBetween: number;
+};
+
+export type GameStartAnalyticsDTO = {
+  gameStartTime: number | null;
+  loopStartTime: number | null;
+  firstPromptTime: number | null;
 };
 
 export type PreferenceState = {
@@ -964,6 +1032,10 @@ export type ScoreElementState = {
    * Inputs a string that appears as label for the score element
    */
   label?: string;
+  /**
+   * Inputs the file path for an icon to be displayed in the score element
+   */
+  icon?: string;
   /**
    * Inputs a number or string as the current score
    */
@@ -1056,7 +1128,7 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
 };
 
 export type GuideElementState = {
@@ -1122,14 +1194,20 @@ export type PromptElementState = {
 export type TimeoutElementState = {
   /**
    * Timeout can be controlled using the modes.
-   * * Note: During 'start' mode the 'duration' has to be specified.
+   * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
-  mode: 'start' | 'stop';
+  mode?: 'start' | 'stop';
   /**
    * Duration of the timeout in ms.
    */
   timeout?: number;
+  /**
+   * Determines the number of progress bars and the color of each bar (max 2)
+   */
+  bars?: [TimeoutColor?, TimeoutColor?];
 };
+
+export type TimeoutColor = 'red' | 'blue' | 'yellow';
 
 export type ElementAttributes = {
   visibility?: 'visible' | 'hidden';
@@ -1243,6 +1321,7 @@ export interface ActivityBase {
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export type CenterOfMotion = 'left' | 'right';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 
 export type GameStatus = {
@@ -1250,3 +1329,42 @@ export type GameStatus = {
   breakpoint: number;
   game: Activities;
 };
+
+export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
+  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
+  texture?: {
+    key: string;
+  };
+};
+
+export interface AudioSprite {
+  [audio: string]: [number, number] | [number, number, boolean];
+}
+
+export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
+export type Origin =
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'left-center'
+  | 'right-center'
+  | 'top-left'
+  | 'top-right';
+
+export interface TweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
+export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
+
+export enum GenreEnum {
+  CLASSICAL = 'classical',
+  JAZZ = 'jazz',
+  ROCK = 'rock',
+  DANCE = 'dance',
+  SURPRISE = 'surprise me!',
+}

@@ -1,21 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { left } from '@popperjs/core';
 import { Howl } from 'howler';
-import { reject } from 'lodash';
-import { max, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { TtsService } from 'src/app/services/tts/tts.service';
+import { BagType, CenterOfMotion, GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 
-export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
-  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
-  texture?: {
-    key: string;
-  };
-};
-export type CenterOfMotion = 'left' | 'right';
-export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
-export enum TextureKeys {
+enum TextureKeys {
   HEAVY_BLUE = 'heavy-blue',
   SPEED_BLUE = 'speed-blue',
   HEAVY_RED = 'heavy-red',
@@ -23,27 +15,49 @@ export enum TextureKeys {
   OBSTACLE = 'obstacle',
   LEFT_HAND = 'left-hand',
   RIGHT_HAND = 'right-hand',
+  WRONG_SIGN = 'wrong_sign',
+  CONFETTI = 'confetti',
+  MUSIC = 'music',
+}
+
+enum AnimationKeys {
+  CONFETTI_ANIM = 'confetti_anim',
+  MUSIC_ANIM = 'music_anim',
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class BeatBoxerScene extends Phaser.Scene {
-  enabled = false;
-  collisions = false;
-  collisionDetected?: {
+  private enabled = false;
+
+  private collisions = false;
+  private enableLeft = false;
+  private enableRight = false;
+  private collisionDetected?: {
     bagType: string;
     gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
-  poseSubscription: Subscription;
+  private poseSubscription: Subscription;
+  private results?: Results;
 
-  music = false;
-  enableLeft = false;
-  enableRight = false;
-  results?: Results;
+  private music = false;
+  private failureMusic: Howl;
+  private successMusic: Howl;
+  private failureMusicId: number;
 
-  blueGloveCollisionCallback = async (
+  private blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private group: Phaser.Physics.Arcade.StaticGroup;
+
+  private designAssetsLoaded = false;
+  private musicFilesLoaded = 0;
+  private totalMusicFiles = 2;
+  private loadError = false;
+
+  private blueGloveCollisionCallback = async (
     _blueGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _gameObject: GameObjectWithBodyAndTexture,
   ) => {
@@ -55,6 +69,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     const exitAnimComplete = await this.animateExit(
       _gameObject as Phaser.Types.Physics.Arcade.ImageWithStaticBody,
     );
+    // play confetti/wrong animation and music only after the animation is complete
     if (exitAnimComplete) {
       if (textureKey === TextureKeys.HEAVY_BLUE || textureKey === TextureKeys.SPEED_BLUE) {
         console.log(`collision::blueGlove::${textureKey}`);
@@ -77,7 +92,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   };
 
-  redGloveCollisionCallback = async (
+  private redGloveCollisionCallback = async (
     _redGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _gameObject: GameObjectWithBodyAndTexture,
   ) => {
@@ -112,42 +127,20 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   };
 
-  blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-
-  wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  confettiAnim?: Phaser.GameObjects.Sprite;
-  musicAnim?: Phaser.GameObjects.Sprite;
-
-  designAssetsLoaded = false;
-  musicFilesLoaded = 0;
-  totalMusicFiles = 2;
-  loadError = false;
-
-  constructor(private poseService: PoseService) {
+  constructor(private poseService: PoseService, private ttsService: TtsService) {
     super({ key: 'beatBoxer' });
   }
 
   preload() {
     this.designAssetsLoaded = false;
-    // default scale of desing assets
+    // default scale of desing assets (fine-tuned based on sujit's feedback)
     const heavyBagScale = 1;
     const speedBagScale = 0.8;
     const handOverlayScale = 0.6;
     const obstacleScale = 1.1;
 
-    // const { width, height } = this.game.canvas;
-
-    // if (width < 1200) {
-    //   // scale if canvas width less than 1200
-    //   heavyBagScale = 0.7;
-    //   speedBagScale = 0.4;
-    //   handOverlayScale = 0.3;
-    //   obstacleScale = 0.7;
-    // }
-
     this.load.atlas(
-      'confetti',
+      TextureKeys.CONFETTI,
       'assets/images/beat-boxer/confetti.png',
       'assets/images/beat-boxer/confetti.json',
     );
@@ -206,7 +199,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       },
     });
     this.load.svg({
-      key: 'wrong_sign',
+      key: TextureKeys.WRONG_SIGN,
       url: 'assets/images/beat-boxer/WRONG_HIT.svg',
       svgConfig: {
         scale: obstacleScale,
@@ -232,7 +225,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       onloaderror: this.onLoadErrorCallback,
     });
 
-    this.load.once('complete', (_id: any, _completed: number, failed: number) => {
+    this.load.once('complete', (_id: number, _completed: number, failed: number) => {
       if (failed === 0) {
         this.designAssetsLoaded = true;
       } else {
@@ -242,19 +235,20 @@ export class BeatBoxerScene extends Phaser.Scene {
     });
   }
 
-  onLoadCallback = () => {
+  private onLoadCallback = () => {
     this.musicFilesLoaded += 1;
   };
 
-  onLoadErrorCallback = () => {
+  private onLoadErrorCallback = () => {
     this.loadError = true;
   };
 
-  checkIfAssetsAreLoaded() {
+  private checkIfAssetsAreLoaded() {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
-  async waitForAssetsToLoad() {
+  async loadAssets() {
+    await this.ttsService.preLoadTts('beat_boxer');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
       const intervalId = setInterval(() => {
@@ -272,16 +266,13 @@ export class BeatBoxerScene extends Phaser.Scene {
     });
   }
 
-  private group: Phaser.Physics.Arcade.StaticGroup;
-
   create() {
     // creating confetti and music anims from the sprite sheet texture/atlas.
-
     this.group = this.physics.add.staticGroup({});
 
     this.anims.create({
-      key: 'confetti_anim',
-      frames: this.anims.generateFrameNames('confetti', {
+      key: AnimationKeys.CONFETTI_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.CONFETTI, {
         start: 1,
         end: 42,
         prefix: 'tile0',
@@ -291,9 +282,10 @@ export class BeatBoxerScene extends Phaser.Scene {
       duration: 1000,
       hideOnComplete: true,
     });
+
     this.anims.create({
-      key: 'music_anim',
-      frames: this.anims.generateFrameNames('music', {
+      key: AnimationKeys.MUSIC_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.MUSIC, {
         start: 68,
         end: 121,
         prefix: 'tile0',
@@ -306,7 +298,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   enable(): void {
-    // alert('beat boxer scene enabled');
     this.enabled = true;
     this.enableLeftHand();
     this.enableRightHand();
@@ -318,7 +309,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     });
   }
 
-  destroyGloves() {
+  private destroyGloves() {
     if (this.blueGlove) {
       this.blueGlove.destroy(true);
     }
@@ -340,13 +331,18 @@ export class BeatBoxerScene extends Phaser.Scene {
   /**
    * Function to calculate distance between two coordinates.
    */
-  calcDist(x1: number, y1: number, x2: number, y2: number): number {
+  private calcDist(x1: number, y1: number, x2: number, y2: number): number {
     // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
     const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     return distance;
   }
 
-  calculateReach(
+  /**
+   * @param results Pose results from @mediapipe/.
+   * @param position can be left or right (based on the side you want to place the bag).
+   * @returns an Object with shoulderX, wristX and maxReach of the user.
+   */
+  private calculateReach(
     results: Results,
     position: CenterOfMotion,
   ): { shoulderX: number; wristX: number; maxReach: number } {
@@ -449,14 +445,15 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  midPoint(x1: number, y1: number, x2: number, y2: number) {
+  private midPoint(x1: number, y1: number, x2: number, y2: number) {
     return [(x1 + x2) / 2, (y1 + y2) / 2];
   }
+
   /**
    * Function to draw hand overlays.
    * @param results pose results
    */
-  drawGloves(results: Results) {
+  private drawGloves(results: Results) {
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
@@ -486,25 +483,11 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   /**
-   * @param gameObjectWithBody the gameObject to calculate width
-   * @returns width of the gameObject
-   */
-  getWidth(
-    gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
-  ): number | undefined {
-    if (gameObjectWithBody && gameObjectWithBody.body) {
-      const { right, left } = gameObjectWithBody.body;
-      if (right && left) return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
-    }
-    return undefined;
-  }
-
-  /**
    * @param point the x coordination of the bag position
    * @param level level of the bag
    * @returns it will return `newX` if it is out of bounds.
    */
-  isInBounds(point: number, level: number) {
+  private isInBounds(point: number, level: number) {
     const { width } = this.game.canvas;
     const bagWidth = 160;
 
@@ -565,14 +548,14 @@ export class BeatBoxerScene extends Phaser.Scene {
         gameObject = this.physics.add.staticSprite(isBagInBounds.newX, y, type).setOrigin(0.5, 0.1);
       }
     }
-    this.group && this.group.add(gameObject);
     if (gameObject) {
+      this.group && this.group.add(gameObject);
       this.animateEntry(gameObject);
       gameObject.refreshBody();
     }
   }
 
-  getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
+  private getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
     return [
       (gameObject.body.right + gameObject.body.left) / 2,
       (gameObject.body.top + gameObject.body.bottom) / 2,
@@ -622,8 +605,8 @@ export class BeatBoxerScene extends Phaser.Scene {
           .setOrigin(0.5, 0.1);
       }
     }
-    this.group && this.group.add(gameObject);
     if (gameObject) {
+      this.group && this.group.add(gameObject);
       this.animateEntry(gameObject);
       gameObject.refreshBody();
     }
@@ -640,16 +623,16 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  playConfettiAnim(x: number, y: number) {
-    this.add.sprite(x, y, 'confetti').play('confetti_anim');
-    this.add.sprite(x, y, 'music').play('music_anim');
+  private playConfettiAnim(x: number, y: number) {
+    this.add.sprite(x, y, TextureKeys.CONFETTI).play(AnimationKeys.CONFETTI_ANIM);
+    this.add.sprite(x, y, TextureKeys.MUSIC).play(AnimationKeys.MUSIC_ANIM);
   }
 
-  showWrongSign(x: number, y: number) {
+  private showWrongSign(x: number, y: number) {
     if (this.wrongSign) {
       this.wrongSign.destroy(true);
     }
-    this.wrongSign = this.physics.add.staticImage(x, y, 'wrong_sign');
+    this.wrongSign = this.physics.add.staticImage(x, y, TextureKeys.WRONG_SIGN);
     setTimeout(() => {
       this.wrongSign && this.wrongSign.destroy(true);
     }, 1000);
@@ -658,7 +641,8 @@ export class BeatBoxerScene extends Phaser.Scene {
   /**
    * @param bag bag object to tween.
    */
-  animateEntry(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+  private animateEntry(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+    // chaining tweens
     this.tweens.addCounter({
       from: -120,
       to: 20,
@@ -711,7 +695,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   /**
    * @param bag bag object to tween.
    */
-  async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+  private async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
     return new Promise<boolean>((resolve) => {
       let bagHeight = 700;
       if (bag.body) {
@@ -795,16 +779,12 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.collisions = value;
   }
 
-  failureMusic: Howl;
-  successMusic: Howl;
-  failureMusicId: number;
-
-  getDurationOfNote(note: number) {
+  private getDurationOfNote(note: number) {
     return audioSprites['beatBoxer'][`note_${note}`][1];
   }
 
   nextPianoNote = 1;
-  playSuccessMusic() {
+  private playSuccessMusic() {
     const fadeOutDuration = 750;
     const noteDuration = this.getDurationOfNote(this.nextPianoNote);
     const durationBeforeFadeOut = noteDuration - fadeOutDuration;
@@ -818,7 +798,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.nextPianoNote += 1;
   }
 
-  playFailureMusic() {
+  private playFailureMusic() {
     if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
       this.failureMusic.stop();
     }
