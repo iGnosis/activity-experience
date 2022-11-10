@@ -1360,3 +1360,11 @@ export interface TweenData {
 
 export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
 export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
+
+export enum GenreEnum {
+  CLASSICAL = 'classical',
+  JAZZ = 'jazz',
+  ROCK = 'rock',
+  DANCE = 'dance',
+  SURPRISE = 'surprise me!',
+}

@@ -85,7 +85,6 @@ export class GameService {
     this._calibrationStatus = status;
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
-      this.soundsService.stopAllAudio();
     } else if (status === 'success') {
       if (this.gameStatus.stage === 'loop') {
         this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
