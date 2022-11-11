@@ -40,7 +40,6 @@ export type CalibrationBox = {
   width: number;
   height: number;
 };
-
 /**
  * Source: https://github.com/google/mediapipe/issues/1408#issuecomment-810652766
  * @fileoverview Declarations for the Holistic API.
