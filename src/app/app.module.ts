@@ -18,7 +18,6 @@ import { TimeoutComponent } from './widgets/elements/timeout/timeout.component';
 import { RibbonComponent } from './widgets/elements/ribbon/ribbon.component';
 import { OverlayComponent } from './widgets/elements/overlay/overlay.component';
 import { BannerComponent } from './widgets/elements/banner/banner.component';
-import { SafeHtmlPipe } from './pipes/safe-html.pipe';
 import { VideoElementComponent } from './widgets/elements/video/video.component';
 import { SafePipe } from 'src/pipes/safe/safe.pipe';
 import { preferenceReducer } from './store/reducers/preference.reducer';
@@ -44,7 +43,6 @@ export let AppInjector: Injector;
     RibbonComponent,
     OverlayComponent,
     BannerComponent,
-    SafeHtmlPipe,
     SafePipe,
   ],
   imports: [
