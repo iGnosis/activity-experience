@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { gql } from 'graphql-request';
 import { preference } from 'src/app/store/actions/preference.actions';
 import {
   Activities,
   ActivityConfiguration,
-  ActivityLevel,
   AnalyticsDTO,
   GameState,
   Genre,
@@ -14,6 +12,7 @@ import {
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
+import { GqlConstants } from '../gql-constants';
 
 @Injectable({
   providedIn: 'root',
@@ -28,94 +27,38 @@ export class ApiService {
   ) {}
 
   async newGame(game: string) {
-    return this.client.req(
-      gql`
-        mutation newGame($game: game_name_enum = sit_stand_achieve) {
-          insert_game_one(object: { game: $game }) {
-            id
-          }
-        }
-      `,
-      {
-        game,
-      },
-    );
+    return this.client.req(GqlConstants.NEW_GAME, {
+      game,
+    });
   }
 
   async updateGame(id: string, game: GameState) {
-    return this.client.req(
-      gql`
-        mutation UpdateGame($id: uuid!, $game: game_set_input = {}) {
-          update_game_by_pk(pk_columns: { id: $id }, _set: $game) {
-            id
-          }
-        }
-      `,
-      {
-        id,
-        game,
-      },
-    );
+    return this.client.req(GqlConstants.UPDATE_GAME, {
+      id,
+      game,
+    });
   }
 
   async updateAnalytics(gameId: string, analytics: AnalyticsDTO) {
-    return this.client.req(
-      gql`
-        mutation UpdateAnalytics($analytics: jsonb!, $gameId: uuid!) {
-          update_game_by_pk(pk_columns: { id: $gameId }, _append: { analytics: $analytics }) {
-            id
-          }
-        }
-      `,
-      {
-        gameId,
-        analytics,
-      },
-    );
+    return this.client.req(GqlConstants.UPDATE_ANALYTICS, {
+      gameId,
+      analytics,
+    });
   }
 
   // called after completion of a game.
   async updateRewards(startDate: Date, endDate: Date, userTimezone: string) {
     // unlocks rewards based on recent user activity.
-    this.client.req(
-      gql`
-        mutation UpdateRewards($startDate: String!, $endDate: String!, $userTimezone: String!) {
-          updateRewards(startDate: $startDate, endDate: $endDate, userTimezone: $userTimezone) {
-            status
-          }
-        }
-      `,
-      { startDate, endDate, userTimezone },
-    );
+    this.client.req(GqlConstants.UPDATE_REWARDS, { startDate, endDate, userTimezone });
   }
 
   async gameCompleted(startDate: Date, endDate: Date, currentDate: Date, userTimezone: string) {
-    this.client.req(
-      `mutation GameCompleted($startDate: String!, $endDate: String!, $currentDate: String!, $userTimezone: String!) {
-      gameCompleted(startDate: $startDate, endDate: $endDate, currentDate: $currentDate, userTimezone: $userTimezone) {
-        status
-      }
-    }`,
-      { startDate, endDate, currentDate, userTimezone },
-    );
+    this.client.req(GqlConstants.GAME_COMPLETED, { startDate, endDate, currentDate, userTimezone });
   }
 
   async getUserGenre(): Promise<Genre | void> {
     try {
-      const userGenre = await this.client.req(
-        gql`
-          query GetCheckinData {
-            genre: checkin(
-              limit: 1
-              order_by: { createdAt: desc }
-              where: { type: { _eq: genre } }
-            ) {
-              type
-              value
-            }
-          }
-        `,
-      );
+      const userGenre = await this.client.req(GqlConstants.GET_CHECKIN_DATA);
 
       const genre: Genre = userGenre.genre[0].value;
       this.store.dispatch(
@@ -131,15 +74,7 @@ export class ApiService {
 
   async getOnboardingStatus() {
     try {
-      const onboardingStatus = await this.client.req(
-        gql`
-          query GetOnboardingStatus {
-            patient {
-              onboardingStatus
-            }
-          }
-        `,
-      );
+      const onboardingStatus = await this.client.req(GqlConstants.GET_ONBOARDING_STATUS);
 
       return onboardingStatus.patient;
     } catch (err) {
@@ -151,24 +86,10 @@ export class ApiService {
     try {
       const id = localStorage.getItem('patient');
 
-      const onboardingStatus = await this.client.req(
-        gql`
-          mutation updateOnboardingStatus($onboardingStatus: jsonb!, $id: uuid!) {
-            update_patient(
-              where: { id: { _eq: $id } }
-              _append: { onboardingStatus: $onboardingStatus }
-            ) {
-              returning {
-                onboardingStatus
-              }
-            }
-          }
-        `,
-        {
-          onboardingStatus: status,
-          id,
-        },
-      );
+      const onboardingStatus = await this.client.req(GqlConstants.UPDATE_ONBOARDING_STATUS, {
+        onboardingStatus: status,
+        id,
+      });
 
       return onboardingStatus.data.update_patient.returning[0].onboardingStatus;
     } catch (err) {
@@ -178,19 +99,9 @@ export class ApiService {
 
   async getBenchmarkConfig(id: string): Promise<any> {
     try {
-      const result = await this.client.req(
-        gql`
-          query GetBenchmarkConfig($id: uuid = "") {
-            game_benchmark_config_by_pk(id: $id) {
-              originalGameId
-              rawVideoUrl
-            }
-          }
-        `,
-        {
-          id,
-        },
-      );
+      const result = await this.client.req(GqlConstants.GET_BENCHMARK_CONFIG, {
+        id,
+      });
 
       return result.game_benchmark_config_by_pk;
     } catch (err) {
@@ -205,28 +116,12 @@ export class ApiService {
     systemSpec?: any,
   ) {
     try {
-      const result = await this.client.req(
-        gql`
-          mutation SaveAutoBenchmark(
-            $analytics: jsonb!
-            $gameId: uuid!
-            $systemSpec: jsonb = {}
-            $originalGameId: uuid = ""
-          ) {
-            insert_game_benchmarks_one(
-              object: {
-                analytics: $analytics
-                gameId: $gameId
-                systemSpec: $systemSpec
-                originalGameId: $originalGameId
-              }
-            ) {
-              id
-            }
-          }
-        `,
-        { gameId, analytics, systemSpec, originalGameId },
-      );
+      const result = await this.client.req(GqlConstants.SAVE_AUTO_BENCHMARK, {
+        gameId,
+        analytics,
+        systemSpec,
+        originalGameId,
+      });
 
       return result.insert_game_benchmarks_one;
     } catch (err) {
@@ -254,19 +149,7 @@ export class ApiService {
 
   async getGameSettings(gameName: Activities) {
     try {
-      const gameSettings = await this.client.req(
-        gql`
-          query GetGameSettings($gameName: game_name_enum!) {
-            game_settings(where: { gameName: { _eq: $gameName } }) {
-              gameName
-              createdAt
-              updatedAt
-              settings: configuration
-            }
-          }
-        `,
-        { gameName },
-      );
+      const gameSettings = await this.client.req(GqlConstants.GET_GAME_SETTINGS, { gameName });
       return gameSettings.game_settings[0];
     } catch (err) {
       console.log(err);
@@ -275,19 +158,10 @@ export class ApiService {
 
   async updateGameSettings(gameName: Activities, settings: ActivityConfiguration) {
     try {
-      const updateSettingsResp = await this.client.req(
-        gql`
-          mutation UpdateGameSettings($gameName: game_name_enum!, $configuration: jsonb!) {
-            update_game_settings(
-              where: { gameName: { _eq: $gameName } }
-              _set: { configuration: $configuration }
-            ) {
-              affected_rows
-            }
-          }
-        `,
-        { gameName, configuration: settings },
-      );
+      const updateSettingsResp = await this.client.req(GqlConstants.UPDATE_GAME_SETTINGS, {
+        gameName,
+        configuration: settings,
+      });
       return updateSettingsResp;
     } catch (err) {
       console.log(err);
@@ -295,19 +169,10 @@ export class ApiService {
   }
   async insertGameSettings(gameName: Activities, settings: ActivityConfiguration) {
     try {
-      const insertSettingsResp = await this.client.req(
-        gql`
-          mutation InsertGameSettings(
-            $gameName: game_name_enum = beat_boxer
-            $configuration: jsonb = ""
-          ) {
-            insert_game_settings(objects: { gameName: $gameName, configuration: $configuration }) {
-              affected_rows
-            }
-          }
-        `,
-        { gameName, configuration: settings },
-      );
+      const insertSettingsResp = await this.client.req(GqlConstants.INSERT_GAME_SETTINGS, {
+        gameName,
+        configuration: settings,
+      });
       return insertSettingsResp;
     } catch (err) {
       console.log(err);
@@ -318,17 +183,7 @@ export class ApiService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     try {
-      const lastGame = await this.client.req(
-        gql`
-          query GetLastGame($today: timestamptz = "") {
-            game(limit: 1, order_by: { endedAt: desc }, where: { endedAt: { _gte: $today } }) {
-              id
-              game
-            }
-          }
-        `,
-        { today },
-      );
+      const lastGame = await this.client.req(GqlConstants.GET_LAST_GAME, { today });
 
       return lastGame.game;
     } catch (err) {
@@ -340,18 +195,7 @@ export class ApiService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     try {
-      const lastGame = await this.client.req(
-        gql`
-          query GetLastGame($today: timestamptz = "") {
-            game(limit: 1, order_by: { createdAt: desc }, where: { createdAt: { _gte: $today } }) {
-              id
-              game
-              endedAt
-            }
-          }
-        `,
-        { today },
-      );
+      const lastGame = await this.client.req(GqlConstants.GET_LAST_PLAYED_GAME, { today });
 
       return lastGame.game;
     } catch (err) {
@@ -361,18 +205,7 @@ export class ApiService {
 
   async getBenchmarkGame(id: string) {
     try {
-      const nextGame = await this.client.req(
-        gql`
-          query GetBenchmarkGame($id: uuid = "") {
-            game_by_pk(id: $id) {
-              analytics
-              game
-              id
-            }
-          }
-        `,
-        { id },
-      );
+      const nextGame = await this.client.req(GqlConstants.GET_BENCHMARK_GAME, { id });
 
       return nextGame.game_by_pk;
     } catch (err) {
@@ -382,21 +215,7 @@ export class ApiService {
 
   async getFastestTime(game: string) {
     try {
-      const fastestTime = await this.client.req(
-        gql`
-          query GetFastestTime($game: game_name_enum = sit_stand_achieve) {
-            game(
-              limit: 1
-              order_by: { totalDuration: asc_nulls_last }
-              where: { endedAt: { _is_null: false }, _and: { game: { _eq: $game } } }
-            ) {
-              id
-              totalDuration
-            }
-          }
-        `,
-        { game },
-      );
+      const fastestTime = await this.client.req(GqlConstants.GET_FASTEST_TIME, { game });
 
       return fastestTime.game[0].totalDuration;
     } catch (err) {
@@ -406,21 +225,7 @@ export class ApiService {
 
   async getHighScore(game: string) {
     try {
-      const highScore = await this.client.req(
-        gql`
-          query GetHighScore($game: game_name_enum = beat_boxer) {
-            game(
-              limit: 1
-              order_by: { repsCompleted: desc_nulls_last }
-              where: { endedAt: { _is_null: false }, _and: { game: { _eq: $game } } }
-            ) {
-              id
-              repsCompleted
-            }
-          }
-        `,
-        { game },
-      );
+      const highScore = await this.client.req(GqlConstants.GET_HIGHSCORE, { game });
 
       return highScore.game;
     } catch (err) {
