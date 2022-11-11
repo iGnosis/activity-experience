@@ -1541,7 +1541,7 @@ export class SitToStandService implements ActivityBase {
             ],
           },
         };
-        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,

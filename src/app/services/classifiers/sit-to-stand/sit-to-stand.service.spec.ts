@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { Results } from '@mediapipe/pose';
+import { provideMockStore } from '@ngrx/store/testing';
 
 import { SitToStandService } from './sit-to-stand.service';
 
@@ -413,7 +415,10 @@ describe('SitToStandService', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule],
+      providers: [provideMockStore({})],
+    });
     service = TestBed.inject(SitToStandService);
   });
 

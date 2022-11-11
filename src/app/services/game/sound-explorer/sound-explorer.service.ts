@@ -23,6 +23,7 @@ import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { v4 as uuidv4 } from 'uuid';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -130,7 +131,7 @@ export class SoundExplorerService {
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
     private soundExplorerScene: SoundExplorerScene,
-    private googleAnalyticsService: GoogleAnalyticsService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -908,7 +909,7 @@ export class SoundExplorerService {
             ],
           },
         };
-        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1009,7 +1010,7 @@ export class SoundExplorerService {
           seconds: string;
         };
         // eslint-disable-next-line prefer-const
-        totalDuration = this.apiService.getDurationForTimer(this.totalDuration);
+        totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
 
         const isLastActivity =
           environment.stageName === 'stage' || environment.stageName === 'prod';
@@ -1046,31 +1047,7 @@ export class SoundExplorerService {
         await this.elements.sleep(12000);
 
         if (isLastActivity) {
-          this.ttsService.tts('Well done. See you soon!');
-          this.elements.guide.state = {
-            data: {
-              title: 'Well done. See you soon!',
-              titleDuration: 2500,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          await this.elements.sleep(4000);
-
-          this.store.dispatch(game.gameCompleted());
-          this.googleAnalyticsService.sendEvent('level_end', {
-            level_name: 'sound_explorer',
-          });
-          await this.gameStateService.postLoopHook();
-
-          window.parent.postMessage(
-            {
-              type: 'end-game',
-            },
-            '*',
-          );
+          await this.activityHelperService.exitGame('sound_explorer');
         }
       },
     ];

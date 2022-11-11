@@ -53,12 +53,6 @@ export class HandTrackerService {
     this.handSubscription && this.handSubscription.unsubscribe();
   }
 
-  calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
-  }
-
   async waitUntilHandRaised(hand: HandTrackerStatus) {
     return new Promise((resolve, _) => {
       const interval = setInterval(() => {
@@ -73,6 +67,13 @@ export class HandTrackerService {
           resolve({});
         }
       }, 300);
+    });
+  }
+
+  replayOrTimeout(timeout = 10000): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      this.waitUntilHandRaised('both-hands').then(() => resolve(true), reject);
+      setTimeout(() => resolve(false), timeout);
     });
   }
 

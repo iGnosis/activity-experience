@@ -329,15 +329,6 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   /**
-   * Function to calculate distance between two coordinates.
-   */
-  private calcDist(x1: number, y1: number, x2: number, y2: number): number {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
-  }
-
-  /**
    * @param results Pose results from @mediapipe/.
    * @param position can be left or right (based on the side you want to place the bag).
    * @returns an Object with shoulderX, wristX and maxReach of the user.

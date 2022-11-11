@@ -18,6 +18,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -84,6 +85,7 @@ export class BeatBoxerService {
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -1131,7 +1133,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1229,7 +1231,7 @@ export class BeatBoxerService {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.apiService.getDurationForTimer(this.totalDuration);
+        } = this.activityHelperService.getDurationForTimer(this.totalDuration);
         const highScore = await this.apiService.getHighScore('beat_boxer');
 
         this.elements.banner.state = {
