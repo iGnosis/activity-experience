@@ -1264,7 +1264,8 @@ export class MovingTonesService implements ActivityBase {
           minutes: string;
           seconds: string;
         } = this.activityHelperService.getDurationForTimer(this.totalDuration);
-        const highScore = await this.apiService.getHighScore('moving_tones');
+        const highScoreResp = await this.apiService.getHighScore('moving_tones');
+        const highScore = highScoreResp?.length ? highScoreResp[0].repsCompleted : 0;
 
         this.ttsService.tts(
           `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} seconds.`,

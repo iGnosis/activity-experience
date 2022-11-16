@@ -144,7 +144,6 @@ export class CalibrationService {
     const { bodyPoints, invisiblePoints } = this._getBodyPoints(poseLandmarkArray);
 
     if (invisiblePoints.length > 0) {
-      console.log('invisible points in calibration', invisiblePoints);
       return { status: 'error' };
     }
 
