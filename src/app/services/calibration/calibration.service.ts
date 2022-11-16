@@ -144,6 +144,7 @@ export class CalibrationService {
     const { bodyPoints, invisiblePoints } = this._getBodyPoints(poseLandmarkArray);
 
     if (invisiblePoints.length > 0) {
+      console.log('invisible points in calibration', invisiblePoints);
       return { status: 'error' };
     }
 
@@ -197,7 +198,16 @@ export class CalibrationService {
 
     const keyBodyPoints = bodyPoints.map((point) => poseLandmarkArray[point]);
     const invisiblePoints = keyBodyPoints.filter((point) => {
-      if (!point || !point.visibility || point.visibility < this.visibilityThreshold) {
+      if (
+        !point ||
+        !point.visibility ||
+        (point.visibility < this.visibilityThreshold &&
+          !this._isPointWithinCalibrationBox(
+            point.x * this.canvasWidth,
+            point.y * this.canvasHeight,
+            this.calibrationBox,
+          ))
+      ) {
         return true;
       }
       return false;
