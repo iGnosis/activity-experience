@@ -68,6 +68,7 @@ export class GameService {
   _calibrationStatus: CalibrationStatusType;
   calibrationStartTime: Date;
   isNewGame = false;
+  currentGame?: Activities;
   private gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
@@ -162,6 +163,16 @@ export class GameService {
           }
         }
       });
+  }
+
+  setGame(name: Activities) {
+    this.isNewGame = false;
+    this.gameStatus = {
+      stage: 'welcome',
+      breakpoint: 0,
+      game: name,
+    };
+    this.currentGame = name;
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
@@ -465,6 +476,16 @@ export class GameService {
     // will be called in two cases...
     // once one game is finished
     // second when the user is calibrated (again)
+    if (this.currentGame) {
+      // for testing
+      const game = this.currentGame || 'sit_stand_achieve';
+      const settings = await this.apiService.getGameSettings(game);
+      this.currentGame = undefined;
+      return {
+        name: game,
+        settings: settings ? settings.settings : environment.settings[game],
+      };
+    }
     const lastGame = await this.apiService.getLastGame();
 
     if (!lastGame || !lastGame.length) {
