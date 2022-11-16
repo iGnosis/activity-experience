@@ -589,21 +589,21 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   playBacktrack() {
-    if (!this.track.playing(this.backtrackId)) {
+    if (this.track && !this.track.playing(this.backtrackId)) {
       this.backtrackId = this.track.play('backtrack');
     }
     return this.backtrackId;
   }
 
   pauseBacktrack() {
-    if (this.backtrackId && this.track.playing(this.backtrackId)) {
+    if (this.track && this.backtrackId && this.track.playing(this.backtrackId)) {
       this.track.pause(this.backtrackId);
     }
   }
 
   stopBacktrack() {
     const endFadeoutDuration = 5000;
-    if (this.backtrackId && this.track.playing(this.backtrackId)) {
+    if (this.track && this.backtrackId && this.track.playing(this.backtrackId)) {
       this.track.fade(100, 0, endFadeoutDuration, this.backtrackId);
     }
   }
