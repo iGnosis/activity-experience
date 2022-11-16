@@ -232,7 +232,7 @@ export class SoundExplorerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic();
+        // this.soundExplorerScene.enableMusic();
         this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts('Use your hands to interact with the shapes you see on the screen.');
         this.elements.guide.state = {
@@ -643,7 +643,7 @@ export class SoundExplorerService {
         });
         await this.elements.sleep(3000);
         this.soundsService.pauseActivityInstructionSound(this.genre);
-        this.soundExplorerScene.enableMusic(false);
+        // this.soundExplorerScene.enableMusic(false);
         this.soundExplorerScene.resetNotes();
       },
     ];
@@ -771,7 +771,7 @@ export class SoundExplorerService {
     return [
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic();
+        // this.soundExplorerScene.enableMusic();
         this.ttsService.tts('Ready?');
         await this.elements.sleep(1500);
 

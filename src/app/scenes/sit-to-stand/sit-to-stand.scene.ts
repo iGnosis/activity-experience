@@ -15,11 +15,12 @@ export class SitToStandScene extends Phaser.Scene {
     super({ key: 'sit2stand' });
   }
 
-  surprise: Howl;
-  dance: Howl;
-  rock: Howl;
-  jazz: Howl;
-  classical: Howl;
+  private surprise: Howl;
+  private dance: Howl;
+  private rock: Howl;
+  private jazz: Howl;
+  private classical: Howl;
+  private music = false;
   classicalBacktrackId!: number;
   danceBacktrackId!: number;
   rockBacktrackId!: number;
@@ -32,6 +33,9 @@ export class SitToStandScene extends Phaser.Scene {
   jazzTriggerId!: number;
 
   currentSet!: number;
+  currentTrigger = 1;
+  currentClassicalRep = 1;
+  currentClassicalSet = 1;
 
   preload() {}
 
@@ -173,6 +177,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         break;
       case 'jazz':
+      default:
         if (this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
           this.jazz.pause(this.jazzBacktrackId);
         }
@@ -206,6 +211,7 @@ export class SitToStandScene extends Phaser.Scene {
       case 'surprise me!':
         return this.surprise.playing(this.surpriseBacktrackId);
       case 'jazz':
+      default:
         return this.jazz.playing(this.jazzBacktrackId);
     }
   }
@@ -242,16 +248,13 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.surpriseBacktrackId;
       case 'jazz':
+      default:
         if (!this.jazz.playing(this.jazzBacktrackId)) {
           this.jazzBacktrackId = this.jazz.play('jazzBacktrack');
         }
         return this.jazzBacktrackId;
     }
   }
-
-  currentTrigger = 1;
-  currentClassicalRep = 1;
-  currentClassicalSet = 1;
 
   playTrigger(genre: Genre) {
     switch (genre) {
@@ -337,6 +340,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.surpriseTriggerId;
       case 'jazz':
+      default:
         this.jazzTriggerId = this.jazz.play(`jazz${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -362,7 +366,22 @@ export class SitToStandScene extends Phaser.Scene {
         this.surprise && this.surprise.fade(100, 0, endFadeoutDuration);
         return;
       case 'jazz':
+      default:
         this.jazz && this.jazz.fade(100, 0, endFadeoutDuration);
+        return;
+    }
+  }
+
+  enableMusic(value = true) {
+    this.music = value;
+
+    // if disabled... unload music files
+    if (!value) {
+      this.surprise && this.surprise.unload();
+      this.classical && this.classical.unload();
+      this.dance && this.dance.unload();
+      this.rock && this.rock.unload();
+      this.jazz && this.jazz.unload();
     }
   }
 }

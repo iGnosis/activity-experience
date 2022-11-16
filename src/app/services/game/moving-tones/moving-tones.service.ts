@@ -1082,6 +1082,7 @@ export class MovingTonesService implements ActivityBase {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.movingTonesScene.enableMusic();
         this.ttsService.tts("Let's begin.");
         this.elements.guide.state = {
           data: {
@@ -1237,6 +1238,9 @@ export class MovingTonesService implements ActivityBase {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        this.movingTonesScene.disable();
+        this.movingTonesScene.enableMusic(false);
+        this.movingTonesScene.scene.stop('movingTones');
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {
           data: {

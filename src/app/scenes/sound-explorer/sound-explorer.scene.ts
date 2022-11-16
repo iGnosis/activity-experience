@@ -4,6 +4,7 @@ import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import { AudioSprite, Genre, Origin, Shape } from 'src/app/types/pointmotion';
 import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
@@ -74,7 +75,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     const [x, y] = this.getCenter(shape);
 
     // updating the score, if the shape is not X shape.
-    if (!(shape.texture.key === TextureKeys.WRONG)) {
+    if (shape.texture.key !== TextureKeys.WRONG) {
       this.currentScore += 1;
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
@@ -86,17 +87,29 @@ export class SoundExplorerScene extends Phaser.Scene {
       // to play success music based on the shape
       console.log('play successMusic', shape.texture.key);
 
-      this.music && this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
+      if (this.music) {
+        this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
+      } else {
+        this.soundsService.playCalibrationSound('success');
+      }
     } else {
       // play failure animation
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
-      this.music && this.playFailureMusic();
+      if (this.music) {
+        this.playFailureMusic();
+      } else {
+        this.soundsService.playCalibrationSound('error');
+      }
     }
     // destroying the shape
     shape.destroy(true);
   };
 
-  constructor(private poseService: PoseService, private ttsService: TtsService) {
+  constructor(
+    private poseService: PoseService,
+    private ttsService: TtsService,
+    private soundsService: SoundsService,
+  ) {
     super({ key: 'soundExplorer' });
     this.score.subscribe((score) => (this.currentScore = score));
   }
@@ -685,5 +698,15 @@ export class SoundExplorerScene extends Phaser.Scene {
    */
   enableMusic(value = true) {
     this.music = value;
+
+    // unload all music, when music is disabled. This is to prevent the audiopool from being exhausted.
+    if (!value) {
+      this.soprano && this.soprano.unload();
+      this.tenor && this.tenor.unload();
+      this.alto && this.alto.unload();
+      this.bass && this.bass.unload();
+      this.failureMusic && this.failureMusic.unload();
+      this.track && this.track.unload();
+    }
   }
 }

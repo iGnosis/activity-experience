@@ -1198,6 +1198,7 @@ export class SitToStandService implements ActivityBase {
   }
 
   private async game(reCalibrationCount?: number) {
+    this.sit2StandScene.enableMusic();
     while (this.successfulReps < this.targetReps!) {
       if (reCalibrationCount !== this.globalReCalibrationCount) {
         throw new Error('reCalibrationCount changed');
@@ -1601,6 +1602,8 @@ export class SitToStandService implements ActivityBase {
       async (reCalibrationCount: number) => {
         // this.soundsService.stopGenreSound();
         this.sit2StandScene.stopBacktrack(this.genre);
+
+        this.sit2StandScene.enableMusic(false);
         const achievementRatio = this.successfulReps / this.totalReps;
         const nextLevel = Number(this.currentLevel.charAt(this.currentLevel.length - 1)) + 1;
         if (achievementRatio < 0.6 || (this.shouldLevelUp && nextLevel <= 3)) {
