@@ -43,6 +43,11 @@ export class GameComponent implements OnInit {
     window.addEventListener(
       'message',
       async (data) => {
+        if (data?.data?.type === 'set-game') {
+          // for testing
+          this.gameService.setGame(data.data.game);
+          return;
+        }
         const tokenHandled = this.userService.handleToken(data);
         if (tokenHandled) {
           this.cameraStatus = await this.gameService.bootstrap(

@@ -1,8 +1,20 @@
+:root {
+  --primary: #000066;
+  --success: #39b54a;
+  --warning: #ffb000;
+  --info: #2f51ae;
+  --danger: #eb0000;
+  --secondary: #f5f9fc;
+  --border-light: #cbd5e0;
+  --font-family: Inter, 'Times New Roman', Times, serif;
+}
 
-$primary: #000066;
-$success: #39B54A;
-$warning: #FFB000;
-$info: #2F51AE;
-$danger: #EB0000;
-$secondary: #f5f9fc;
+$primary_color: var(--primary);
+$success_color: var(--success);
+$warning_color: var(--warning);
+$info_color: var(--info);
+$danger_color: var(--danger);
+$secondary_color: var(--secondary);
 
+$border-light_color: var(--border-light);
+$font-family: var(--font-family);

@@ -86,12 +86,14 @@ export class HandTrackerService {
     const nose = poseLandmarkArray[0];
     const rightWrist = poseLandmarkArray[16];
     const rightElbow = poseLandmarkArray[14];
+    const rightShoulder = poseLandmarkArray[12];
     const leftWrist = poseLandmarkArray[15];
     const leftElbow = poseLandmarkArray[13];
+    const leftShoulder = poseLandmarkArray[11];
 
     // First, considers nose - elbow. As, the elbow is more likely to be always visible.
     if (this._isElbowsVisible(poseLandmarkArray)) {
-      const status = this._noseElbowYDist(nose, leftElbow, rightElbow);
+      const status = this._shoulderElbowYDist(leftShoulder, rightShoulder, leftElbow, rightElbow);
       if (status) {
         return { status };
       }
@@ -99,7 +101,7 @@ export class HandTrackerService {
 
     // We then consider nose - wrist.
     if (this._isWristsVisible(poseLandmarkArray)) {
-      const status = this._noseWristYDist(nose, leftWrist, rightWrist);
+      const status = this._shoulderWristYDist(leftShoulder, rightShoulder, leftWrist, rightWrist);
       if (status) {
         return { status };
       }
@@ -136,39 +138,41 @@ export class HandTrackerService {
     return true;
   }
 
-  _noseElbowYDist(
-    nose: NormalizedLandmark,
+  _shoulderElbowYDist(
+    leftShoulder: NormalizedLandmark,
+    rightShoulder: NormalizedLandmark,
     leftElbow: NormalizedLandmark,
     rightElbow: NormalizedLandmark,
   ): HandTrackerStatus {
-    const yNoseLeftElbowDiff = parseFloat((nose.y - leftElbow.y).toFixed(1));
-    const yNoseRightElbowDiff = parseFloat((nose.y - rightElbow.y).toFixed(1));
-    if (yNoseLeftElbowDiff >= 0 && yNoseRightElbowDiff >= 0) {
+    const yShoulderLeftElbowDiff = parseFloat((leftShoulder.y - leftElbow.y).toFixed(1));
+    const yShoulderRightElbowDiff = parseFloat((rightShoulder.y - rightElbow.y).toFixed(1));
+    if (yShoulderLeftElbowDiff >= 0 && yShoulderRightElbowDiff >= 0) {
       return 'both-hands';
     }
-    if (yNoseLeftElbowDiff >= 0) {
+    if (yShoulderLeftElbowDiff >= 0) {
       return 'left-hand';
     }
-    if (yNoseRightElbowDiff >= 0) {
+    if (yShoulderRightElbowDiff >= 0) {
       return 'right-hand';
     }
     return undefined;
   }
 
-  _noseWristYDist(
-    nose: NormalizedLandmark,
-    leftWrist: NormalizedLandmark,
-    rightWrist: NormalizedLandmark,
+  _shoulderWristYDist(
+    leftShoulder: NormalizedLandmark,
+    rightShoulder: NormalizedLandmark,
+    leftElbow: NormalizedLandmark,
+    rightElbow: NormalizedLandmark,
   ): HandTrackerStatus {
-    const yNoseLeftWristDiff = parseFloat((nose.y - leftWrist.y).toFixed(1));
-    const yNoseRightWristDiff = parseFloat((nose.y - rightWrist.y).toFixed(1));
-    if (yNoseLeftWristDiff >= 0 && yNoseRightWristDiff >= 0) {
+    const yShoulderLeftElbowDiff = parseFloat((leftShoulder.y - leftElbow.y).toFixed(1));
+    const yShoulderRightElbowDiff = parseFloat((rightShoulder.y - rightElbow.y).toFixed(1));
+    if (yShoulderLeftElbowDiff >= 0 && yShoulderRightElbowDiff >= 0) {
       return 'both-hands';
     }
-    if (yNoseLeftWristDiff >= 0) {
+    if (yShoulderLeftElbowDiff >= 0) {
       return 'left-hand';
     }
-    if (yNoseRightWristDiff >= 0) {
+    if (yShoulderRightElbowDiff >= 0) {
       return 'right-hand';
     }
     return undefined;
