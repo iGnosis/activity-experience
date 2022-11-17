@@ -12,7 +12,7 @@ import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 enum TextureKeys {
   CIRCLE = 'circle_shape',
   TRIANGLE = 'triangle_shape',
-  RECTANGLE = 'rectangle_shape',
+  SQUARE = 'square_shape',
   WRONG = 'wrong_shape',
   HEXAGON = 'hexagon_shape',
   CONFETTI = 'confetti',
@@ -49,8 +49,9 @@ export class SoundExplorerScene extends Phaser.Scene {
   private totalMusicFiles!: number;
   private loadError = false;
   private currentSet!: number;
-  private genre!: Genre;
-  private track!: Howl;
+  private genre: Genre;
+  private backtrack: Howl;
+  private trigger: Howl;
   private backtrackId!: number;
   private currentTriggerId!: number;
   private currentTrigger = 1;
@@ -124,7 +125,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
 
     this.load.image({
-      key: TextureKeys.RECTANGLE,
+      key: TextureKeys.SQUARE,
       url: 'assets/images/sound-slicer/Rectangle shape.png',
     });
 
@@ -309,7 +310,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       case 'circle':
         return TextureKeys.CIRCLE;
       case 'rectangle':
-        return TextureKeys.RECTANGLE;
+        return TextureKeys.SQUARE;
       case 'triangle':
         return TextureKeys.TRIANGLE;
       case 'wrong':
@@ -508,6 +509,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.genre = genre;
     this.currentSet = randomSet;
 
+    // common for all genres
     this.failureMusic = new Howl({
       src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
       html5: true,
@@ -515,7 +517,13 @@ export class SoundExplorerScene extends Phaser.Scene {
       onloaderror: this.onLoadErrorCallback,
     });
 
-    // classical set1 has different music logic compared to other music sets
+    /**
+     * classical set1 is different form rest of the sound-explorer music sets.
+     * classical set1 has 4 subsets.. Bass, Tenor, Soprano, Alto. Each subset has 17 notes.
+     * Each shape is mapped with each subset.
+     * Circle --> Bass, Triangle --> Tenor,  Square/Rect --> Soprano, Hexagon --> Alto.
+     * whenever a shape is hit a note from it's corresponding subset will be played.
+     */
     if (genre === 'classical' && randomSet === 1) {
       this.totalMusicFiles = 5;
 
@@ -550,11 +558,18 @@ export class SoundExplorerScene extends Phaser.Scene {
       return;
     }
 
-    this.totalMusicFiles = 2;
+    this.totalMusicFiles = 3;
     const src = this.src[genre][randomSet];
     switch (genre) {
       case 'surprise me!':
-        this.track = new Howl({
+        this.backtrack = new Howl({
+          src,
+          sprite: soundExporerAudio['surprise me!'][randomSet],
+          html5: true,
+          onload: this.onLoadCallback,
+          onloaderror: this.onLoadErrorCallback,
+        });
+        this.trigger = new Howl({
           src,
           sprite: soundExporerAudio['surprise me!'][randomSet],
           html5: true,
@@ -563,7 +578,14 @@ export class SoundExplorerScene extends Phaser.Scene {
         });
         break;
       case 'dance':
-        this.track = new Howl({
+        this.backtrack = new Howl({
+          src,
+          sprite: soundExporerAudio.dance[randomSet],
+          html5: true,
+          onload: this.onLoadCallback,
+          onloaderror: this.onLoadErrorCallback,
+        });
+        this.trigger = new Howl({
           src,
           sprite: soundExporerAudio.dance[randomSet],
           html5: true,
@@ -572,7 +594,14 @@ export class SoundExplorerScene extends Phaser.Scene {
         });
         break;
       case 'rock':
-        this.track = new Howl({
+        this.backtrack = new Howl({
+          src,
+          sprite: soundExporerAudio.rock[randomSet],
+          html5: true,
+          onload: this.onLoadCallback,
+          onloaderror: this.onLoadErrorCallback,
+        });
+        this.trigger = new Howl({
           src,
           sprite: soundExporerAudio.rock[randomSet],
           html5: true,
@@ -581,7 +610,14 @@ export class SoundExplorerScene extends Phaser.Scene {
         });
         break;
       case 'classical':
-        this.track = new Howl({
+        this.backtrack = new Howl({
+          src,
+          sprite: soundExporerAudio.classical[randomSet] as AudioSprite,
+          html5: true,
+          onload: this.onLoadCallback,
+          onloaderror: this.onLoadErrorCallback,
+        });
+        this.trigger = new Howl({
           src,
           sprite: soundExporerAudio.classical[randomSet] as AudioSprite,
           html5: true,
@@ -590,7 +626,14 @@ export class SoundExplorerScene extends Phaser.Scene {
         });
         break;
       case 'jazz':
-        this.track = new Howl({
+        this.backtrack = new Howl({
+          src,
+          sprite: soundExporerAudio.jazz[randomSet],
+          html5: true,
+          onload: this.onLoadCallback,
+          onloaderror: this.onLoadErrorCallback,
+        });
+        this.trigger = new Howl({
           src,
           sprite: soundExporerAudio.jazz[randomSet],
           html5: true,
@@ -602,27 +645,23 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   playBacktrack() {
-    if (this.track && !this.track.playing(this.backtrackId)) {
-      this.backtrackId = this.track.play('backtrack');
+    if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
+      this.backtrackId = this.backtrack.play('backtrack');
     }
     return this.backtrackId;
   }
 
-  pauseBacktrack() {
-    if (this.track && this.backtrackId && this.track.playing(this.backtrackId)) {
-      this.track.pause(this.backtrackId);
-    }
-  }
-
   stopBacktrack() {
     const endFadeoutDuration = 5000;
-    if (this.track && this.backtrackId && this.track.playing(this.backtrackId)) {
-      this.track.fade(100, 0, endFadeoutDuration, this.backtrackId);
+    if (this.backtrack && this.backtrackId && this.backtrack.playing(this.backtrackId)) {
+      this.backtrack.fade(100, 0, endFadeoutDuration, this.backtrackId).on('fade', (id) => {
+        this.backtrack.stop(id);
+      });
     }
   }
 
   private playTrigger() {
-    this.currentTriggerId = this.track.play('trigger' + this.currentTrigger);
+    this.currentTriggerId = this.trigger.play('trigger' + this.currentTrigger);
     this.currentTrigger += 1;
     if (this.currentTrigger === 65) {
       this.currentTrigger = 1;
@@ -637,7 +676,7 @@ export class SoundExplorerScene extends Phaser.Scene {
         this.playClassicalChord('bass');
       } else if (textureKey === TextureKeys.TRIANGLE) {
         this.playClassicalChord('tenor');
-      } else if (textureKey === TextureKeys.RECTANGLE) {
+      } else if (textureKey === TextureKeys.SQUARE) {
         this.playClassicalChord('alto');
       } else if (textureKey === TextureKeys.HEXAGON) {
         this.playClassicalChord('soprano');
@@ -684,13 +723,11 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  private playFailureMusic(): void {
-    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusic.stop();
+  private playFailureMusic() {
+    if (!this.failureMusic) {
+      return;
     }
-    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusicId = this.failureMusic.play();
-    }
+    return this.failureMusic.play();
   }
 
   /**
@@ -706,7 +743,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.alto && this.alto.unload();
       this.bass && this.bass.unload();
       this.failureMusic && this.failureMusic.unload();
-      this.track && this.track.unload();
+      this.backtrack && this.backtrack.unload();
     }
   }
 }
