@@ -642,7 +642,7 @@ export class SoundExplorerService {
           sound_explorer: true,
         });
         await this.elements.sleep(3000);
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
         // this.soundExplorerScene.enableMusic(false);
         this.soundExplorerScene.resetNotes();
       },

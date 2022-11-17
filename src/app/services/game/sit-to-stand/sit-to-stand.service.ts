@@ -1102,7 +1102,7 @@ export class SitToStandService implements ActivityBase {
         await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
   }

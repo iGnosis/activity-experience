@@ -126,7 +126,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('classical');
-    service.pauseActivityInstructionSound('classical');
+    service.stopActivityInstructionSound('classical');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('jazz');
-    service.pauseActivityInstructionSound('jazz');
+    service.stopActivityInstructionSound('jazz');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('rock');
-    service.pauseActivityInstructionSound('rock');
+    service.stopActivityInstructionSound('rock');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).toHaveBeenCalled();
@@ -159,7 +159,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('dance');
-    service.pauseActivityInstructionSound('dance');
+    service.stopActivityInstructionSound('dance');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).toHaveBeenCalled();
@@ -170,7 +170,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('surprise me!');
-    service.pauseActivityInstructionSound('surprise me!');
+    service.stopActivityInstructionSound('surprise me!');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).toHaveBeenCalled();
@@ -181,7 +181,7 @@ describe('SoundsService', () => {
     spyOn(Howl.prototype, 'pause');
 
     service.loadMusicFiles('classical');
-    service.pauseActivityInstructionSound('classical');
+    service.stopActivityInstructionSound('classical');
 
     expect(Howl.prototype.playing).toHaveBeenCalled();
     expect(Howl.prototype.pause).not.toHaveBeenCalled();

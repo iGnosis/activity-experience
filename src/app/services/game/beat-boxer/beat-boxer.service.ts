@@ -722,7 +722,7 @@ export class BeatBoxerService {
         await this.apiService.updateOnboardingStatus({
           beat_boxer: true,
         });
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
   }

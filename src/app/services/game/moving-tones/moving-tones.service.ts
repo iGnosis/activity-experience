@@ -1070,7 +1070,7 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(3000);
 
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
   }
