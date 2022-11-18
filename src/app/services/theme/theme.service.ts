@@ -6,51 +6,26 @@ import { Injectable } from '@angular/core';
 export class ThemeService {
   constructor() {}
 
-  async getOrganizationTheme(organization = 'pointmotion'): Promise<any> {
-    return new Promise((resolve) => {
-      // dummy api
-      resolve(
-        {
-          arboracres: {
-            theme: {
-              primary: '#39B54A',
-              success: '#000066',
-              warning: '#FFB000',
-              info: '#2F51AE',
-              danger: '#CBD5E0',
-              secondary: '#f5f9fc',
-              'border-light': '#EB0000',
-            },
-            font: {
-              // family: 'Rubik Bubbles',
-              // url: 'https://fonts.googleapis.com/css?family=Rubik+Bubbles&display=swap',
-            },
-          },
-          pointmotion: {
-            theme: {
-              primary: '#000066',
-              success: '#39B54A',
-              warning: '#FFB000',
-              info: '#2F51AE',
-              danger: '#EB0000',
-              secondary: '#f5f9fc',
-              'border-light': '#CBD5E0',
-            },
-            font: {},
-          },
-        }[organization],
-      );
+  /**
+   * Setting the colors of the entire application.
+   *
+   * @param {{ [key: string]: any }} colors
+   * @returns {void}
+   */
+  setColors(colors: { [key: string]: any }) {
+    if (!colors) return;
+
+    Object.keys(colors).forEach((color) => {
+      document.documentElement.style.setProperty(`--${color}`, colors[color]);
     });
   }
 
-  setTheme(theme: any) {
-    if (!theme) return;
-
-    Object.keys(theme).forEach((key) => {
-      document.documentElement.style.setProperty(`--${key}`, theme[key]);
-    });
-  }
-
+  /**
+   * Setting the typography of the entire application.
+   *
+   * @param {{ family: string url: string }} font
+   * @returns {void}
+   */
   loadFont(font: { family: string; url: string }) {
     if (!font) return;
 

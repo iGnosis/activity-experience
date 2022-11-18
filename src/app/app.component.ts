@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { GoogleAnalyticsService } from './services/google-analytics/google-analytics.service';
+import { environment } from 'src/environments/environment';
+import { ApiService } from './services/checkin/api.service';
 import { ThemeService } from './services/theme/theme.service';
 
 @Component({
@@ -9,10 +10,10 @@ import { ThemeService } from './services/theme/theme.service';
 })
 export class AppComponent {
   title = 'activities';
-  constructor(private themeService: ThemeService) {
-    this.themeService.getOrganizationTheme().then(({ theme, font }) => {
-      this.themeService.setTheme(theme);
-      this.themeService.loadFont(font);
+  constructor(private apiService: ApiService, private themeService: ThemeService) {
+    this.apiService.getOrganizationConfig(environment.organizationName).then((theme) => {
+      this.themeService.setColors(theme.colors);
+      this.themeService.loadFont(theme.font);
     });
   }
 }

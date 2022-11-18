@@ -171,5 +171,12 @@ export const GqlConstants = {
         repsCompleted
       }
     }
-  `,
+`,
+  GET_ORGANIZATION_CONFIG: `
+  query OrganizationConfig($name: String = "") {
+    organization(where: {name: {_eq: $name}}) {
+      configuration
+    }
+  }
+`,
 };
