@@ -495,6 +495,7 @@ export interface ActivityConfiguration {
 }
 
 export interface Environment {
+  organizationName: string;
   stageName: string;
   production: boolean;
   speedUpSession?: boolean;

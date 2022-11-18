@@ -20,8 +20,7 @@ jobs:
           echo "Current path: $(pwd)"
           ls -la
           npm ci --ignore-scripts
-          # TODO: Change this to use org's config
-          npm run build -- -c "production"
+          npm run build -- -c "${GITHUB_REF#*/*/}"
 
       - name: running unit tests
         run: npm run test:chromeheadless
