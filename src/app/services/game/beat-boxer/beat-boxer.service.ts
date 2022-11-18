@@ -110,7 +110,7 @@ export class BeatBoxerService {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.beatBoxerScene.loadAssets();
+        await this.beatBoxerScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -995,6 +995,7 @@ export class BeatBoxerService {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.playBacktrack();
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -1206,6 +1207,7 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.stopBacktrack();
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
         this.beatBoxerScene.scene.stop('beatBoxer');

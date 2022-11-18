@@ -1,0 +1,6 @@
+{
+  "src": ["jazzError.mp3"],
+  "sprite": {
+    "error1": [0, 2560]
+  }
+}

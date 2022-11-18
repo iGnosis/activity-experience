@@ -1,4 +1,4 @@
-import { AudioSprite, Genre } from 'src/app/types/pointmotion';
+import { AudioSprite } from 'src/app/types/pointmotion';
 
 type ChordType = 'alto' | 'bass' | 'tenor' | 'soprano';
 
