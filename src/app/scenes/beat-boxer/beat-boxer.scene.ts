@@ -49,6 +49,16 @@ export class BeatBoxerScene extends Phaser.Scene {
   private results?: Results;
 
   private music = false;
+  private currentFailureTriggerId!: number;
+  private currentSuccessTriggerId!: number;
+  private genre!: Genre;
+  private currentSet!: number;
+  private backtrack!: Howl;
+  private successTrack!: Howl;
+  private failureTrack!: Howl;
+  private backtrackId: number;
+  private currentSuccessTrigger = 1;
+  private currentFailureTrigger = 1;
 
   private blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   private redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
@@ -738,14 +748,6 @@ export class BeatBoxerScene extends Phaser.Scene {
     jazz: 'assets/sounds/soundsprites/beat-boxer/jazz/',
   };
 
-  genre!: Genre;
-  currentSet!: number;
-  backtrack!: Howl;
-  successTrack!: Howl;
-  failureTrack!: Howl;
-  backtrackId: number;
-  private currentSuccessTrigger = 1;
-  private currentFailureTrigger = 1;
   private loadMusicFiles(genre: Genre) {
     this.musicFilesLoaded = 0;
 
@@ -824,7 +826,6 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  currentSuccessTriggerId!: number;
   private playSuccessMusic() {
     if (this.genre === 'classical' && this.currentSet === 1) {
       const fadeOutDuration = 750;
@@ -857,7 +858,6 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   }
 
-  currentFailureTriggerId!: number;
   private playFailureMusic() {
     if (this.genre === 'classical' && this.currentSet === 1) {
       return this.failureTrack.play();
