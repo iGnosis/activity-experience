@@ -496,12 +496,16 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   private src: { [key in Genre]: string[] } = {
-    classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/classical-set1.mp3'],
-    'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/ambient-set1.mp3'],
-    rock: ['assets/sounds/soundsprites/sound-explorer/rock/set1/rock-set1.mp3'],
-    dance: ['assets/sounds/soundsprites/sound-explorer/dance/set1/dance-set1.mp3'],
-    jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/jazz-set1.mp3'],
+    classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/'],
+    'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/'],
+    rock: ['assets/sounds/soundsprites/sound-explorer/rock/set1/'],
+    dance: ['assets/sounds/soundsprites/sound-explorer/dance/set1/'],
+    jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/'],
   };
+
+  triggerOnEndCallback(id: number) {
+    this.trigger && this.trigger.stop(id);
+  }
 
   private loadMusicFiles(genre: Genre) {
     this.musicFilesLoaded = 0;
@@ -560,93 +564,29 @@ export class SoundExplorerScene extends Phaser.Scene {
 
     this.totalMusicFiles = 3;
     const src = this.src[genre][randomSet];
-    switch (genre) {
-      case 'surprise me!':
-        this.backtrack = new Howl({
-          src,
-          sprite: soundExporerAudio['surprise me!'][randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        this.trigger = new Howl({
-          src,
-          sprite: soundExporerAudio['surprise me!'][randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'dance':
-        this.backtrack = new Howl({
-          src,
-          sprite: soundExporerAudio.dance[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        this.trigger = new Howl({
-          src,
-          sprite: soundExporerAudio.dance[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'rock':
-        this.backtrack = new Howl({
-          src,
-          sprite: soundExporerAudio.rock[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        this.trigger = new Howl({
-          src,
-          sprite: soundExporerAudio.rock[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'classical':
-        this.backtrack = new Howl({
-          src,
-          sprite: soundExporerAudio.classical[randomSet] as AudioSprite,
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        this.trigger = new Howl({
-          src,
-          sprite: soundExporerAudio.classical[randomSet] as AudioSprite,
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'jazz':
-        this.backtrack = new Howl({
-          src,
-          sprite: soundExporerAudio.jazz[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        this.trigger = new Howl({
-          src,
-          sprite: soundExporerAudio.jazz[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-    }
+    // surprise me! music files are being called as ambient music, so we need to change the name.
+    const srcGenre = this.genre === 'surprise me!' ? 'ambient' : this.genre;
+
+    this.backtrack = new Howl({
+      src: src + 'backtrack.mp3',
+      loop: true,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.trigger = new Howl({
+      src: src + srcGenre + '-set' + (randomSet + 1) + '.mp3',
+      sprite: soundExporerAudio[genre][randomSet] as AudioSprite,
+      onend: this.triggerOnEndCallback,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
   }
 
   playBacktrack() {
     if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
-      this.backtrackId = this.backtrack.play('backtrack');
+      this.backtrackId = this.backtrack.play();
     }
     return this.backtrackId;
   }
@@ -744,6 +684,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.bass && this.bass.unload();
       this.failureMusic && this.failureMusic.unload();
       this.backtrack && this.backtrack.unload();
+      this.trigger && this.trigger.unload();
     }
   }
 }
