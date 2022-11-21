@@ -30,8 +30,6 @@ export class SitToStandService implements ActivityBase {
   private globalReCalibrationCount: number;
 
   // init default config values.
-  private minSpeed = 600;
-  private maxSpeed = 10000; /* assumption: 10seconds will be max timeout. */
   private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
   private streak = 0;
@@ -84,6 +82,10 @@ export class SitToStandService implements ActivityBase {
     });
   }
 
+  getPercentageChange(percentage: number, value: number) {
+    return (percentage * Math.abs(value)) / 100 + value;
+  }
+
   optimizeSpeed(pastNPromptsToConsider = 1) {
     const pastNPrompts = this.analytics.slice(this.analytics.length - pastNPromptsToConsider);
 
@@ -96,14 +98,13 @@ export class SitToStandService implements ActivityBase {
     ).length;
     const avgSuccess = numOfSuccessPrompts / pastNPrompts.length;
 
-    // ...so that it's harder to play
     if (avgSuccess > 0.5) {
-      this.maxSpeed = this.config.speed;
+      // decrease timeout by 10%
+      this.config.speed = this.getPercentageChange(-10, this.config.speed);
     } else {
-      // ...so that it's easier to play
-      this.minSpeed = this.config.speed + 250;
+      // increase timeout by 10%
+      this.config.speed = this.getPercentageChange(10, this.config.speed);
     }
-    this.config.speed = (this.minSpeed + this.maxSpeed) / 2;
     console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
   }
 
@@ -1612,6 +1613,10 @@ export class SitToStandService implements ActivityBase {
           });
         }
 
+        console.log('updating game settings:', this.gameSettings);
+        this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
+
         if (this.shouldLevelUp && nextLevel <= 3) {
           this.currentLevel = ('level' + nextLevel) as GameLevels;
           this.gameSettings.currentLevel = this.currentLevel;
@@ -1642,10 +1647,6 @@ export class SitToStandService implements ActivityBase {
           this.ttsService.tts("Hope you're ready for a new challenge tomorrow.");
           await this.elements.sleep(3000);
         }
-
-        // update game config.
-        this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
-        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         let totalDuration: {
           minutes: string;
