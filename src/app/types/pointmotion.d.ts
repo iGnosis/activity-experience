@@ -989,3 +989,13 @@ export enum GenreEnum {
   DANCE = 'dance',
   SURPRISE = 'surprise me!',
 }
+
+export interface Theme {
+  colors: {
+    [key: string]: any;
+  };
+  font: {
+    family: string;
+    url: string;
+  };
+}
