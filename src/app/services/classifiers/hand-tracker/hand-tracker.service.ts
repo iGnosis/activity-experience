@@ -41,7 +41,7 @@ export class HandTrackerService {
     this.handSubscription = this.handsService.getHands().subscribe((results) => {
       const newStatus = this.checkIfHandsAreOpen(results);
       this.openHandStatus.next(newStatus);
-      console.log('Check If Hands Are Open::', newStatus);
+      // console.log('Check If Hands Are Open::', newStatus);
     });
   }
 
@@ -217,14 +217,14 @@ export class HandTrackerService {
 
       for (const [idx, landmarks] of results.multiHandLandmarks.entries()) {
         const hand = results.multiHandedness[idx].label.toLowerCase();
-        console.log('hand::', hand);
+        // console.log('hand::', hand);
 
         let isHandOpen = true;
 
         for (const finger in fingers) {
           const [a, b, c] = fingers[finger];
           const isFingerOpen = this.checkIfFingerIsOpen(landmarks[a], landmarks[b], landmarks[c]);
-          console.log(`${finger} finger`, isFingerOpen);
+          // console.log(`${finger} finger`, isFingerOpen);
           if (isFingerOpen === false) {
             isHandOpen = false;
             break;
@@ -252,7 +252,7 @@ export class HandTrackerService {
             landmarks[b].y,
           );
           const isFingerWide = this.checkIfFingersAreWide(landmarks[c], midPoint, landmarks[d]);
-          console.log(`${finger} angle::`, this.getAngle(landmarks[c], midPoint, landmarks[d]));
+          // console.log(`${finger} angle::`, this.getAngle(landmarks[c], midPoint, landmarks[d]));
           if (isFingerWide === false) {
             isHandStretched = false;
             break;

@@ -236,7 +236,6 @@ export class ApiService {
   async getOrganizationConfig(name: string) {
     try {
       const response = await this.client.req(GqlConstants.GET_ORGANIZATION_CONFIG, { name });
-
       return response.organization && response.organization[0];
     } catch (err) {
       console.log(err);
