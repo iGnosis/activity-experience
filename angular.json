@@ -125,7 +125,7 @@
                 }
               ]
             },
-            "org/pmc": {
+            "org/pointmotion": {
               "budgets": [
                 {
                   "type": "initial",
