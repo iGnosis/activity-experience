@@ -176,6 +176,7 @@ export const GqlConstants = {
   query OrganizationConfig($name: String = "") {
     organization(where: {name: {_eq: $name}}) {
       configuration
+      logoUrl
     }
   }
 `,

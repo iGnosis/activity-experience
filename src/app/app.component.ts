@@ -11,16 +11,7 @@ import { Theme } from './types/pointmotion';
 })
 export class AppComponent {
   title = 'activities';
-  constructor(private apiService: ApiService, private themeService: ThemeService) {
-    this.apiService.getOrganizationConfig(environment.organizationName).then((theme: Theme) => {
-      if (theme) {
-        if (theme.colors) {
-          this.themeService.setColors(theme.colors);
-        }
-        if (theme.font) {
-          this.themeService.loadFont(theme.font);
-        }
-      }
-    });
+  constructor(private themeService: ThemeService) {
+    this.themeService.setTheme();
   }
 }

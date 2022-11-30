@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { environment } from 'src/environments/environment';
+import { ApiService } from '../checkin/api.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ThemeService {
-  constructor() {}
+  logoSubject = new BehaviorSubject<string>('');
+
+  constructor(private apiService: ApiService) {}
 
   /**
    * Setting the colors of the entire application.
@@ -38,5 +43,29 @@ export class ThemeService {
       `--font-family`,
       `'${font.family}', Inter, 'Times New Roman', Times, serif`,
     );
+  }
+
+  private setLogoUrl(url: string) {
+    this.logoSubject.next(url);
+  }
+
+  /**
+   * Setting the theme of the application.
+   *
+   * @returns {Promise<void>}
+   */
+  async setTheme(): Promise<void> {
+    const theme = await this.apiService.getOrganizationConfig(environment.organizationName);
+    if (theme) {
+      if (theme.colors) {
+        this.setColors(theme.colors);
+      }
+      if (theme.font) {
+        this.loadFont(theme.font);
+      }
+      if (theme.logoUrl) {
+        this.setLogoUrl(theme.logoUrl);
+      }
+    }
   }
 }
