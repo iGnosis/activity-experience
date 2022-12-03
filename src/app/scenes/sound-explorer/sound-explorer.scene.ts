@@ -51,7 +51,6 @@ export class SoundExplorerScene extends Phaser.Scene {
   private currentSet!: number;
   private genre: Genre;
   private backtrack: Howl;
-  private trigger: Howl;
   private backtrackId!: number;
   private currentTriggerId!: number;
   private currentTrigger = 1;
@@ -483,18 +482,6 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
-  setNextNote() {
-    if (this.currentNote === 16) {
-      this.currentNote = 1;
-    } else {
-      this.currentNote += 1;
-    }
-  }
-
-  resetNotes() {
-    this.currentNote = 1;
-  }
-
   private src: { [key in Genre]: string[] } = {
     classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/'],
     'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/'],
@@ -502,10 +489,6 @@ export class SoundExplorerScene extends Phaser.Scene {
     dance: ['assets/sounds/soundsprites/sound-explorer/dance/set1/'],
     jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/'],
   };
-
-  triggerOnEndCallback(id: number) {
-    this.trigger && this.trigger.stop(id);
-  }
 
   private loadMusicFiles(genre: Genre) {
     this.musicFilesLoaded = 0;
@@ -537,6 +520,9 @@ export class SoundExplorerScene extends Phaser.Scene {
         html5: true,
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.alto.stop(id);
+        },
       });
       this.bass = new Howl({
         src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Bass.mp3',
@@ -544,6 +530,9 @@ export class SoundExplorerScene extends Phaser.Scene {
         html5: true,
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.bass.stop(id);
+        },
       });
       this.soprano = new Howl({
         src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Soprano.mp3',
@@ -551,6 +540,9 @@ export class SoundExplorerScene extends Phaser.Scene {
         html5: true,
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.soprano.stop(id);
+        },
       });
       this.tenor = new Howl({
         src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Tenor.mp3',
@@ -558,14 +550,15 @@ export class SoundExplorerScene extends Phaser.Scene {
         html5: true,
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.tenor.stop(id);
+        },
       });
       return;
     }
 
-    this.totalMusicFiles = 3;
+    this.totalMusicFiles = 6;
     const src = this.src[genre][randomSet];
-    // surprise me! music files are being called as ambient music, so we need to change the name.
-    const srcGenre = this.genre === 'surprise me!' ? 'ambient' : this.genre;
 
     this.backtrack = new Howl({
       src: src + 'backtrack.mp3',
@@ -574,13 +567,46 @@ export class SoundExplorerScene extends Phaser.Scene {
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
-    this.trigger = new Howl({
-      src: src + srcGenre + '-set' + (randomSet + 1) + '.mp3',
-      sprite: soundExporerAudio[genre][randomSet] as AudioSprite,
-      onend: this.triggerOnEndCallback,
+
+    this.alto = new Howl({
+      src: src + 'Alto.mp3',
+      sprite: soundExporerAudio[genre][randomSet].alto,
       html5: true,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.alto.stop(id);
+      },
+    });
+    this.bass = new Howl({
+      src: src + 'Bass.mp3',
+      sprite: soundExporerAudio[genre][randomSet].bass,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.bass.stop(id);
+      },
+    });
+    this.soprano = new Howl({
+      src: src + 'Soprano.mp3',
+      sprite: soundExporerAudio[genre][randomSet].soprano,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.soprano.stop(id);
+      },
+    });
+    this.tenor = new Howl({
+      src: src + 'Tenor.mp3',
+      sprite: soundExporerAudio[genre][randomSet].tenor,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.tenor.stop(id);
+      },
     });
   }
 
@@ -600,33 +626,34 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  private playTrigger() {
-    this.currentTriggerId = this.trigger.play('trigger' + this.currentTrigger);
-    this.currentTrigger += 1;
-    if (this.currentTrigger === 65) {
-      this.currentTrigger = 1;
+  setNextNote() {
+    const totalNotesAvailable = Object.entries(
+      soundExporerAudio[this.genre][this.currentSet].bass,
+    ).length;
+    if (this.currentNote === totalNotesAvailable + 1) {
+      this.currentNote = 1;
+    } else {
+      this.currentNote += 1;
     }
-    return this.currentTriggerId;
+  }
+
+  resetNotes() {
+    this.currentNote = 1;
   }
 
   private playSuccessMusic(textureKey: string, genre: Genre, set: number) {
-    // classical set1 has different music logic compared to other music sets
-    if (genre === 'classical' && set === 1) {
-      if (textureKey === TextureKeys.CIRCLE) {
-        this.playClassicalChord('bass');
-      } else if (textureKey === TextureKeys.TRIANGLE) {
-        this.playClassicalChord('tenor');
-      } else if (textureKey === TextureKeys.SQUARE) {
-        this.playClassicalChord('alto');
-      } else if (textureKey === TextureKeys.HEXAGON) {
-        this.playClassicalChord('soprano');
-      }
-    } else {
-      this.playTrigger();
+    if (textureKey === TextureKeys.CIRCLE) {
+      this.playChord('bass');
+    } else if (textureKey === TextureKeys.TRIANGLE) {
+      this.playChord('tenor');
+    } else if (textureKey === TextureKeys.SQUARE) {
+      this.playChord('alto');
+    } else if (textureKey === TextureKeys.HEXAGON) {
+      this.playChord('soprano');
     }
   }
 
-  private playClassicalChord(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
+  private playChord(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
     switch (type) {
       case 'alto':
         if (this.alto && this.alto.playing(this.altoId)) {
@@ -684,7 +711,6 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.bass && this.bass.unload();
       this.failureMusic && this.failureMusic.unload();
       this.backtrack && this.backtrack.unload();
-      this.trigger && this.trigger.unload();
     }
   }
 }
