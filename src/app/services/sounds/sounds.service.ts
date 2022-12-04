@@ -109,32 +109,24 @@ export class SoundsService {
     }
   }
 
-  pauseActivityInstructionSound(genre: Genre) {
+  stopActivityInstructionSound(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (this.classicalInstructionsSound.playing()) {
-          this.classicalInstructionsSound.pause();
-        }
+        this.classicalInstructionsSound && this.classicalInstructionsSound.stop();
         break;
       case 'jazz':
-        if (this.jazzInstructionsSound.playing()) {
-          this.jazzInstructionsSound.pause();
-        }
+        this.jazzInstructionsSound && this.jazzInstructionsSound.stop();
+
         break;
       case 'rock':
-        if (this.rockInstructionsSound.playing()) {
-          this.rockInstructionsSound.pause();
-        }
+        this.rockInstructionsSound && this.rockInstructionsSound.stop();
         break;
       case 'dance':
-        if (this.danceInstructionsSound.playing()) {
-          this.danceInstructionsSound.pause();
-        }
+        this.danceInstructionsSound && this.danceInstructionsSound.stop();
+
         break;
       case 'surprise me!':
-        if (this.surpriseInstructionsSound.playing()) {
-          this.surpriseInstructionsSound.pause();
-        }
+        this.surpriseInstructionsSound && this.surpriseInstructionsSound.stop();
         break;
     }
   }

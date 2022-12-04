@@ -48,6 +48,20 @@ export class MovingTonesScene extends Phaser.Scene {
   private enabled = false;
   private poseSubscription: Subscription;
   private music = false;
+  private alto: Howl;
+  private soprano: Howl;
+  private bass: Howl;
+  private tenor: Howl;
+  private failureMusic: Howl;
+  private holdSuccessMusic: Howl;
+  private holdEntrySound: Howl;
+  private greenEntrySound: Howl;
+  private holdSound: Howl;
+  private altoId: number;
+  private sopranoId: number;
+  private bassId: number;
+  private tenorId: number;
+  private failureMusicId: number;
   private group: Phaser.Physics.Arcade.StaticGroup;
   private currentNote = 1;
   holdDuration = 2500;
@@ -983,21 +997,6 @@ export class MovingTonesScene extends Phaser.Scene {
     this.currentNote = 1;
   }
 
-  private alto: Howl;
-  private soprano: Howl;
-  private bass: Howl;
-  private tenor: Howl;
-  private failureMusic: Howl;
-  private holdSuccessMusic: Howl;
-  private holdEntrySound: Howl;
-  private greenEntrySound: Howl;
-  private holdSound: Howl;
-  private altoId: number;
-  private sopranoId: number;
-  private bassId: number;
-  private tenorId: number;
-  private failureMusicId: number;
-
   private playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
     switch (type) {
       case 'alto':
@@ -1061,6 +1060,19 @@ export class MovingTonesScene extends Phaser.Scene {
    */
   enableMusic(value = true) {
     this.music = value;
+
+    // unload music on disable.
+    if (!value) {
+      this.alto && this.alto.unload();
+      this.bass && this.bass.unload();
+      this.soprano && this.soprano.unload();
+      this.tenor && this.tenor.unload();
+      this.failureMusic && this.failureMusic.unload();
+      this.holdSuccessMusic && this.holdSuccessMusic.unload();
+      this.holdEntrySound && this.holdEntrySound.unload();
+      this.greenEntrySound && this.greenEntrySound.unload();
+      this.holdSound && this.holdSound.unload();
+    }
   }
 
   center() {

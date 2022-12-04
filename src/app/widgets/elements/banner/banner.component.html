@@ -1,6 +1,6 @@
 <div [@animate-banner]="{value: bannerAnimationState}" *ngIf="attributes && attributes.visibility === 'visible'"
   class="banner" [class.loader]="state.type === 'loader'" [class.status]="state.type === 'status'" [class.action]="state.type === 'action'">
-  <div class="pt-4" [innerHTML]="state.htmlStr | safeHtml"></div>
+  <div class="pt-4" [innerHTML]="state.htmlStr || '' | safe: 'html'"></div>
   <div class="row pt-6">
     <div class="col-12 pt-2" *ngFor="let button of state.buttons">
       <div class="progress">

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Subscription } from 'rxjs';
+import { ActivityHelperService } from '../../game/activity-helper/activity-helper.service';
 import { PoseService } from '../../pose/pose.service';
 @Injectable({
   providedIn: 'root',
@@ -11,13 +12,10 @@ export class SitToStandService {
   distanceThreshold: any;
   subscription: Subscription;
 
-  public static calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
-  }
-
-  constructor(private poseService: PoseService) {}
+  constructor(
+    private poseService: PoseService,
+    private activityHelperService: ActivityHelperService,
+  ) {}
 
   enable() {
     this.enabled = true;
@@ -53,25 +51,25 @@ export class SitToStandService {
         };
       }
 
-      const distanceBetweenLeftShoulderAndHip = SitToStandService.calcDist(
+      const distanceBetweenLeftShoulderAndHip = this.activityHelperService.calcDist(
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
         leftHip.y,
       );
-      const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
+      const distanceBetweenRightShoulderAndHip = this.activityHelperService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
         rightHip.y,
       );
-      const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
+      const distanceBetweenLeftHipAndKnee = this.activityHelperService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
         leftKnee.y,
       );
-      const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
+      const distanceBetweenRightHipAndKnee = this.activityHelperService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,

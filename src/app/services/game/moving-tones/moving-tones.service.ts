@@ -25,6 +25,7 @@ import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { distinctUntilChanged, firstValueFrom, Subscription } from 'rxjs';
 import { PoseService } from '../../pose/pose.service';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -67,8 +68,8 @@ export class MovingTonesService implements ActivityBase {
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
-    private googleAnalyticsService: GoogleAnalyticsService,
     private poseService: PoseService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -1069,7 +1070,7 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(3000);
 
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
   }
@@ -1081,6 +1082,7 @@ export class MovingTonesService implements ActivityBase {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.movingTonesScene.enableMusic();
         this.ttsService.tts("Let's begin.");
         this.elements.guide.state = {
           data: {
@@ -1186,7 +1188,7 @@ export class MovingTonesService implements ActivityBase {
             ],
           },
         };
-        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1236,6 +1238,9 @@ export class MovingTonesService implements ActivityBase {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        this.movingTonesScene.disable();
+        this.movingTonesScene.enableMusic(false);
+        this.movingTonesScene.scene.stop('movingTones');
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {
           data: {
@@ -1262,8 +1267,9 @@ export class MovingTonesService implements ActivityBase {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.apiService.getDurationForTimer(this.totalDuration);
-        const highScore = await this.apiService.getHighScore('moving_tones');
+        } = this.activityHelperService.getDurationForTimer(this.totalDuration);
+        const highScoreResp = await this.apiService.getHighScore('moving_tones');
+        const highScore = highScoreResp?.length ? highScoreResp[0].repsCompleted : 0;
 
         this.ttsService.tts(
           `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} seconds.`,
@@ -1298,31 +1304,7 @@ export class MovingTonesService implements ActivityBase {
           reCalibrationCount,
         };
 
-        this.ttsService.tts('Well done. See you soon!');
-        this.elements.guide.state = {
-          data: {
-            title: 'Well done. See you soon!',
-            titleDuration: 2500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(4000);
-
-        this.store.dispatch(game.gameCompleted());
-        this.googleAnalyticsService.sendEvent('level_end', {
-          level_name: 'moving_tones',
-        });
-        await this.gameStateService.postLoopHook();
-
-        window.parent.postMessage(
-          {
-            type: 'end-game',
-          },
-          '*',
-        );
+        await this.activityHelperService.exitGame('moving_tones');
       },
     ];
   }

@@ -15,11 +15,12 @@ export class SitToStandScene extends Phaser.Scene {
     super({ key: 'sit2stand' });
   }
 
-  surprise: Howl;
-  dance: Howl;
-  rock: Howl;
-  jazz: Howl;
-  classical: Howl;
+  private surprise: Howl;
+  private dance: Howl;
+  private rock: Howl;
+  private jazz: Howl;
+  private classical: Howl;
+  private music = false;
   classicalBacktrackId!: number;
   danceBacktrackId!: number;
   rockBacktrackId!: number;
@@ -32,6 +33,9 @@ export class SitToStandScene extends Phaser.Scene {
   jazzTriggerId!: number;
 
   currentSet!: number;
+  currentTrigger = 1;
+  currentClassicalRep = 1;
+  currentClassicalSet = 1;
 
   preload() {}
 
@@ -173,6 +177,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         break;
       case 'jazz':
+      default:
         if (this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
           this.jazz.pause(this.jazzBacktrackId);
         }
@@ -206,6 +211,7 @@ export class SitToStandScene extends Phaser.Scene {
       case 'surprise me!':
         return this.surprise.playing(this.surpriseBacktrackId);
       case 'jazz':
+      default:
         return this.jazz.playing(this.jazzBacktrackId);
     }
   }
@@ -242,6 +248,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.surpriseBacktrackId;
       case 'jazz':
+      default:
         if (!this.jazz.playing(this.jazzBacktrackId)) {
           this.jazzBacktrackId = this.jazz.play('jazzBacktrack');
         }
@@ -249,15 +256,19 @@ export class SitToStandScene extends Phaser.Scene {
     }
   }
 
-  currentTrigger = 1;
-  currentClassicalRep = 1;
-  currentClassicalSet = 1;
-  classicTriggerFadeoutDuration = 4519.183673469399 - 3000;
-
   playTrigger(genre: Genre) {
     switch (genre) {
       case 'classical':
-        // classical set 0 has weird music logic
+        // to fade we need to know duration to fade. All the triggers have the same duration.
+        const classicTriggerFadeoutDuration = 1519.183673469399;
+
+        /**
+         * Classical set0 is a bit different than the rest of the music sets in SSA.
+         * It has 3 sub-sets, each sub-set has 1 backtrack. sub-set 1 and 2 has 12 triggers, but sub-set 3 has 14 triggers.
+         * first, the sub-set 1 backtrack is played in the background.. for every right movement the user makes, a trigger will be played.
+         * when all the triggers from sub-set-1 are finished, then sub-set 1 backtrack will be replaced with sub-set 2 backtrack.
+         * from now, a trigger from sub-set 2 will be played for right movements.. similarly it moves to sub-set 3.
+         */
         if (this.currentSet === 0) {
           const soundTrackKey = `set${this.currentClassicalSet}classical${this.currentClassicalRep}`;
           if (this.classicalTriggerId && this.classical.playing(this.classicalTriggerId)) {
@@ -267,12 +278,7 @@ export class SitToStandScene extends Phaser.Scene {
           this.classicalTriggerId = this.classical.play(soundTrackKey);
           this.classical.fade(0, 0.7, 1500, this.classicalTriggerId);
           setTimeout(() => {
-            this.classical.fade(
-              0.7,
-              0,
-              this.classicTriggerFadeoutDuration,
-              this.classicalTriggerId,
-            );
+            this.classical.fade(0.7, 0, classicTriggerFadeoutDuration, this.classicalTriggerId);
           }, 1500);
           this.currentClassicalRep += 1;
           if (this.currentClassicalSet === 1 && this.currentClassicalRep === 12) {
@@ -334,6 +340,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.surpriseTriggerId;
       case 'jazz':
+      default:
         this.jazzTriggerId = this.jazz.play(`jazz${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -347,19 +354,49 @@ export class SitToStandScene extends Phaser.Scene {
     const endFadeoutDuration = 5000;
     switch (genre) {
       case 'classical':
-        this.classical && this.classical.fade(100, 0, endFadeoutDuration);
+        this.classical &&
+          this.classical.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+            this.classical.stop(id);
+          });
         break;
       case 'dance':
-        this.dance && this.dance.fade(100, 0, endFadeoutDuration);
+        this.dance &&
+          this.dance.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+            this.dance.stop(id);
+          });
         break;
       case 'rock':
-        this.rock && this.rock.fade(100, 0, endFadeoutDuration);
+        this.rock &&
+          this.rock.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+            this.rock.stop(id);
+          });
         break;
       case 'surprise me!':
-        this.surprise && this.surprise.fade(100, 0, endFadeoutDuration);
+        this.surprise &&
+          this.surprise.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+            this.surprise.stop(id);
+          });
         return;
       case 'jazz':
-        this.jazz && this.jazz.fade(100, 0, endFadeoutDuration);
+      default:
+        this.jazz &&
+          this.jazz.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+            this.jazz.stop(id);
+          });
+        return;
+    }
+  }
+
+  enableMusic(value = true) {
+    this.music = value;
+
+    // if disabled... unload music files
+    if (!value) {
+      this.surprise && this.surprise.unload();
+      this.classical && this.classical.unload();
+      this.dance && this.dance.unload();
+      this.rock && this.rock.unload();
+      this.jazz && this.jazz.unload();
     }
   }
 }

@@ -18,6 +18,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -84,6 +85,7 @@ export class BeatBoxerService {
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -108,7 +110,7 @@ export class BeatBoxerService {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.beatBoxerScene.loadAssets();
+        await this.beatBoxerScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -720,7 +722,7 @@ export class BeatBoxerService {
         await this.apiService.updateOnboardingStatus({
           beat_boxer: true,
         });
-        this.soundsService.pauseActivityInstructionSound(this.genre);
+        this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
   }
@@ -993,6 +995,7 @@ export class BeatBoxerService {
   loop() {
     return [
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.playBacktrack();
         this.elements.score.state = {
           data: {
             label: 'Punches',
@@ -1131,7 +1134,7 @@ export class BeatBoxerService {
             ],
           },
         };
-        this.shouldReplay = await this.apiService.replayOrTimeout(10000);
+        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1204,6 +1207,7 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
+        this.beatBoxerScene.stopBacktrack();
         this.beatBoxerScene.enableMusic(false);
         this.beatBoxerScene.disable();
         this.beatBoxerScene.scene.stop('beatBoxer');
@@ -1229,7 +1233,7 @@ export class BeatBoxerService {
         const totalDuration: {
           minutes: string;
           seconds: string;
-        } = this.apiService.getDurationForTimer(this.totalDuration);
+        } = this.activityHelperService.getDurationForTimer(this.totalDuration);
         const highScore = await this.apiService.getHighScore('beat_boxer');
 
         this.elements.banner.state = {

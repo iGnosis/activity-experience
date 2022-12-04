@@ -4,6 +4,7 @@ import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseService } from 'src/app/services/pose/pose.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import { AudioSprite, Genre, Origin, Shape } from 'src/app/types/pointmotion';
 import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
@@ -11,7 +12,7 @@ import { GameObjectWithBodyAndTexture } from 'src/app/types/pointmotion';
 enum TextureKeys {
   CIRCLE = 'circle_shape',
   TRIANGLE = 'triangle_shape',
-  RECTANGLE = 'rectangle_shape',
+  SQUARE = 'square_shape',
   WRONG = 'wrong_shape',
   HEXAGON = 'hexagon_shape',
   CONFETTI = 'confetti',
@@ -48,8 +49,8 @@ export class SoundExplorerScene extends Phaser.Scene {
   private totalMusicFiles!: number;
   private loadError = false;
   private currentSet!: number;
-  private genre!: Genre;
-  private track!: Howl;
+  private genre: Genre;
+  private backtrack: Howl;
   private backtrackId!: number;
   private currentTriggerId!: number;
   private currentTrigger = 1;
@@ -74,7 +75,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     const [x, y] = this.getCenter(shape);
 
     // updating the score, if the shape is not X shape.
-    if (!(shape.texture.key === TextureKeys.WRONG)) {
+    if (shape.texture.key !== TextureKeys.WRONG) {
       this.currentScore += 1;
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
@@ -86,17 +87,29 @@ export class SoundExplorerScene extends Phaser.Scene {
       // to play success music based on the shape
       console.log('play successMusic', shape.texture.key);
 
-      this.music && this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
+      if (this.music) {
+        this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
+      } else {
+        this.soundsService.playCalibrationSound('success');
+      }
     } else {
       // play failure animation
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
-      this.music && this.playFailureMusic();
+      if (this.music) {
+        this.playFailureMusic();
+      } else {
+        this.soundsService.playCalibrationSound('error');
+      }
     }
     // destroying the shape
     shape.destroy(true);
   };
 
-  constructor(private poseService: PoseService, private ttsService: TtsService) {
+  constructor(
+    private poseService: PoseService,
+    private ttsService: TtsService,
+    private soundsService: SoundsService,
+  ) {
     super({ key: 'soundExplorer' });
     this.score.subscribe((score) => (this.currentScore = score));
   }
@@ -111,7 +124,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
 
     this.load.image({
-      key: TextureKeys.RECTANGLE,
+      key: TextureKeys.SQUARE,
       url: 'assets/images/sound-slicer/Rectangle shape.png',
     });
 
@@ -296,7 +309,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       case 'circle':
         return TextureKeys.CIRCLE;
       case 'rectangle':
-        return TextureKeys.RECTANGLE;
+        return TextureKeys.SQUARE;
       case 'triangle':
         return TextureKeys.TRIANGLE;
       case 'wrong':
@@ -469,8 +482,155 @@ export class SoundExplorerScene extends Phaser.Scene {
     });
   }
 
+  private src: { [key in Genre]: string[] } = {
+    classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/'],
+    'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/'],
+    rock: ['assets/sounds/soundsprites/sound-explorer/rock/set1/'],
+    dance: ['assets/sounds/soundsprites/sound-explorer/dance/set1/'],
+    jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/'],
+  };
+
+  private loadMusicFiles(genre: Genre) {
+    this.musicFilesLoaded = 0;
+    const randomSet = genre === 'classical' ? Math.floor(Math.random() * 2) : 0;
+    this.genre = genre;
+    this.currentSet = randomSet;
+
+    // common for all genres
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    /**
+     * classical set1 is different form rest of the sound-explorer music sets.
+     * classical set1 has 4 subsets.. Bass, Tenor, Soprano, Alto. Each subset has 17 notes.
+     * Each shape is mapped with each subset.
+     * Circle --> Bass, Triangle --> Tenor,  Square/Rect --> Soprano, Hexagon --> Alto.
+     * whenever a shape is hit a note from it's corresponding subset will be played.
+     */
+    if (genre === 'classical' && randomSet === 1) {
+      this.totalMusicFiles = 5;
+
+      this.alto = new Howl({
+        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Alto.mp3',
+        sprite: soundExporerAudio.classical[1].alto as AudioSprite,
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.alto.stop(id);
+        },
+      });
+      this.bass = new Howl({
+        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Bass.mp3',
+        sprite: soundExporerAudio.classical[1].bass as AudioSprite,
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.bass.stop(id);
+        },
+      });
+      this.soprano = new Howl({
+        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Soprano.mp3',
+        sprite: soundExporerAudio.classical[1].soprano as AudioSprite,
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.soprano.stop(id);
+        },
+      });
+      this.tenor = new Howl({
+        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Tenor.mp3',
+        sprite: soundExporerAudio.classical[1].tenor as AudioSprite,
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+        onend: (id) => {
+          this.tenor.stop(id);
+        },
+      });
+      return;
+    }
+
+    this.totalMusicFiles = 6;
+    const src = this.src[genre][randomSet];
+
+    this.backtrack = new Howl({
+      src: src + 'backtrack.mp3',
+      loop: true,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    this.alto = new Howl({
+      src: src + 'Alto.mp3',
+      sprite: soundExporerAudio[genre][randomSet].alto,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.alto.stop(id);
+      },
+    });
+    this.bass = new Howl({
+      src: src + 'Bass.mp3',
+      sprite: soundExporerAudio[genre][randomSet].bass,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.bass.stop(id);
+      },
+    });
+    this.soprano = new Howl({
+      src: src + 'Soprano.mp3',
+      sprite: soundExporerAudio[genre][randomSet].soprano,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.soprano.stop(id);
+      },
+    });
+    this.tenor = new Howl({
+      src: src + 'Tenor.mp3',
+      sprite: soundExporerAudio[genre][randomSet].tenor,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+      onend: (id) => {
+        this.tenor.stop(id);
+      },
+    });
+  }
+
+  playBacktrack() {
+    if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
+      this.backtrackId = this.backtrack.play();
+    }
+    return this.backtrackId;
+  }
+
+  stopBacktrack() {
+    const endFadeoutDuration = 5000;
+    if (this.backtrack && this.backtrackId && this.backtrack.playing(this.backtrackId)) {
+      this.backtrack.fade(100, 0, endFadeoutDuration, this.backtrackId).on('fade', (id) => {
+        this.backtrack.stop(id);
+      });
+    }
+  }
+
   setNextNote() {
-    if (this.currentNote === 16) {
+    const totalNotesAvailable = Object.entries(
+      soundExporerAudio[this.genre][this.currentSet].bass,
+    ).length;
+    if (this.currentNote === totalNotesAvailable + 1) {
       this.currentNote = 1;
     } else {
       this.currentNote += 1;
@@ -481,160 +641,19 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.currentNote = 1;
   }
 
-  private src: { [key in Genre]: string[] } = {
-    classical: ['assets/sounds/soundsprites/sound-explorer/classical/set1/classical-set1.mp3'],
-    'surprise me!': ['assets/sounds/soundsprites/sound-explorer/ambient/set1/ambient-set1.mp3'],
-    rock: ['assets/sounds/soundsprites/sound-explorer/rock/set1/rock-set1.mp3'],
-    dance: ['assets/sounds/soundsprites/sound-explorer/dance/set1/dance-set1.mp3'],
-    jazz: ['assets/sounds/soundsprites/sound-explorer/jazz/set1/jazz-set1.mp3'],
-  };
-
-  private loadMusicFiles(genre: Genre) {
-    this.musicFilesLoaded = 0;
-    const randomSet = genre === 'classical' ? Math.floor(Math.random() * 2) : 0;
-    this.genre = genre;
-    this.currentSet = randomSet;
-
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-
-    // classical set1 has different music logic compared to other music sets
-    if (genre === 'classical' && randomSet === 1) {
-      this.totalMusicFiles = 5;
-
-      this.alto = new Howl({
-        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Alto.mp3',
-        sprite: soundExporerAudio.classical[1].alto as AudioSprite,
-        html5: true,
-        onload: this.onLoadCallback,
-        onloaderror: this.onLoadErrorCallback,
-      });
-      this.bass = new Howl({
-        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Bass.mp3',
-        sprite: soundExporerAudio.classical[1].bass as AudioSprite,
-        html5: true,
-        onload: this.onLoadCallback,
-        onloaderror: this.onLoadErrorCallback,
-      });
-      this.soprano = new Howl({
-        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Soprano.mp3',
-        sprite: soundExporerAudio.classical[1].soprano as AudioSprite,
-        html5: true,
-        onload: this.onLoadCallback,
-        onloaderror: this.onLoadErrorCallback,
-      });
-      this.tenor = new Howl({
-        src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Tenor.mp3',
-        sprite: soundExporerAudio.classical[1].tenor as AudioSprite,
-        html5: true,
-        onload: this.onLoadCallback,
-        onloaderror: this.onLoadErrorCallback,
-      });
-      return;
-    }
-
-    this.totalMusicFiles = 2;
-    const src = this.src[genre][randomSet];
-    switch (genre) {
-      case 'surprise me!':
-        this.track = new Howl({
-          src,
-          sprite: soundExporerAudio['surprise me!'][randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'dance':
-        this.track = new Howl({
-          src,
-          sprite: soundExporerAudio.dance[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'rock':
-        this.track = new Howl({
-          src,
-          sprite: soundExporerAudio.rock[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'classical':
-        this.track = new Howl({
-          src,
-          sprite: soundExporerAudio.classical[randomSet] as AudioSprite,
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-      case 'jazz':
-        this.track = new Howl({
-          src,
-          sprite: soundExporerAudio.jazz[randomSet],
-          html5: true,
-          onload: this.onLoadCallback,
-          onloaderror: this.onLoadErrorCallback,
-        });
-        break;
-    }
-  }
-
-  playBacktrack() {
-    if (!this.track.playing(this.backtrackId)) {
-      this.backtrackId = this.track.play('backtrack');
-    }
-    return this.backtrackId;
-  }
-
-  pauseBacktrack() {
-    if (this.backtrackId && this.track.playing(this.backtrackId)) {
-      this.track.pause(this.backtrackId);
-    }
-  }
-
-  stopBacktrack() {
-    const endFadeoutDuration = 5000;
-    if (this.backtrackId && this.track.playing(this.backtrackId)) {
-      this.track.fade(100, 0, endFadeoutDuration, this.backtrackId);
-    }
-  }
-
-  private playTrigger() {
-    this.currentTriggerId = this.track.play('trigger' + this.currentTrigger);
-    this.currentTrigger += 1;
-    if (this.currentTrigger === 65) {
-      this.currentTrigger = 1;
-    }
-    return this.currentTriggerId;
-  }
-
   private playSuccessMusic(textureKey: string, genre: Genre, set: number) {
-    // classical set1 has different music logic compared to other music sets
-    if (genre === 'classical' && set === 1) {
-      if (textureKey === TextureKeys.CIRCLE) {
-        this.playClassicalChord('bass');
-      } else if (textureKey === TextureKeys.TRIANGLE) {
-        this.playClassicalChord('tenor');
-      } else if (textureKey === TextureKeys.RECTANGLE) {
-        this.playClassicalChord('alto');
-      } else if (textureKey === TextureKeys.HEXAGON) {
-        this.playClassicalChord('soprano');
-      }
-    } else {
-      this.playTrigger();
+    if (textureKey === TextureKeys.CIRCLE) {
+      this.playChord('bass');
+    } else if (textureKey === TextureKeys.TRIANGLE) {
+      this.playChord('tenor');
+    } else if (textureKey === TextureKeys.SQUARE) {
+      this.playChord('alto');
+    } else if (textureKey === TextureKeys.HEXAGON) {
+      this.playChord('soprano');
     }
   }
 
-  private playClassicalChord(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
+  private playChord(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
     switch (type) {
       case 'alto':
         if (this.alto && this.alto.playing(this.altoId)) {
@@ -671,13 +690,11 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
   }
 
-  private playFailureMusic(): void {
-    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusic.stop();
+  private playFailureMusic() {
+    if (!this.failureMusic) {
+      return;
     }
-    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusicId = this.failureMusic.play();
-    }
+    return this.failureMusic.play();
   }
 
   /**
@@ -685,5 +702,15 @@ export class SoundExplorerScene extends Phaser.Scene {
    */
   enableMusic(value = true) {
     this.music = value;
+
+    // unload all music, when music is disabled. This is to prevent the audiopool from being exhausted.
+    if (!value) {
+      this.soprano && this.soprano.unload();
+      this.tenor && this.tenor.unload();
+      this.alto && this.alto.unload();
+      this.bass && this.bass.unload();
+      this.failureMusic && this.failureMusic.unload();
+      this.backtrack && this.backtrack.unload();
+    }
   }
 }

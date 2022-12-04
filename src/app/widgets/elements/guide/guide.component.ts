@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { GuideService } from 'src/app/services/elements/guide/guide.service';
+import { ThemeService } from 'src/app/services/theme/theme.service';
 import { ElementAttributes, GuideElementState } from 'src/app/types/pointmotion';
 
 @Component({
@@ -11,8 +12,14 @@ import { ElementAttributes, GuideElementState } from 'src/app/types/pointmotion'
 export class GuideComponent implements OnInit, OnDestroy {
   state: { data: GuideElementState; attributes: object & ElementAttributes };
   subscription: Subscription;
+  logoUrl = '/assets/images/sound_health_logo.jpg';
 
-  constructor(private guideService: GuideService) {}
+  constructor(private guideService: GuideService, private themeService: ThemeService) {
+    const logoSubscription = this.themeService.logoSubject.subscribe((url) => {
+      this.logoUrl = url;
+      if (url) logoSubscription.unsubscribe();
+    });
+  }
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

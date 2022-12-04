@@ -5,6 +5,7 @@
 import { Environment } from 'src/app/types/pointmotion';
 
 export const environment: Environment = {
+  organizationName: 'pointmotion',
   stageName: 'default',
   production: false,
   speedUpSession: false,
