@@ -47,7 +47,7 @@ export class SitToStandService {
         (rightKnee.visibility && rightKnee.visibility < 0.6)
       ) {
         return {
-          result: 'unknown',
+          result: this.currentClass,
         };
       }
 
