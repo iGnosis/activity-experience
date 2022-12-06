@@ -627,13 +627,10 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   setNextNote() {
-    const totalNotesAvailable = Object.entries(
-      soundExporerAudio[this.genre][this.currentSet].bass,
-    ).length;
-    if (this.currentNote === totalNotesAvailable + 1) {
-      this.currentNote = 1;
-    } else {
-      this.currentNote += 1;
+    this.currentNote += 1;
+    // the chords only have 16 notes.. so resetting it to 1 when the value moves past 16.
+    if (this.currentNote === 17) {
+      this.resetNotes();
     }
   }
 
