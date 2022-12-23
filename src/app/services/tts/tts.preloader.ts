@@ -21,7 +21,7 @@ export class TtsPreloader {
         'Please sit on the chair to continue.',
         'Great, lets begin.',
         'This activity is a simple play on the sit to stand exercise',
-        'Please raise one of your hands to move further',
+        'Please raise one of your hands to continue',
         'Please raise one of your hands to get started.',
         "Great job, looks like you're getting the hang of it",
         'Guide completed',

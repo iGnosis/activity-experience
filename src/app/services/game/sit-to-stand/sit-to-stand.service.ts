@@ -318,7 +318,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise one of your hands to move further',
+            title: 'Please raise one of your hands to continue',
             showIndefinitely: true,
           },
           attributes: {
@@ -327,7 +327,7 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        this.ttsService.tts('Please raise one of your hands to move further');
+        this.ttsService.tts('Please raise one of your hands to continue');
 
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
@@ -371,7 +371,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise one of your hands to move further',
+            title: 'Please raise one of your hands to continue',
             showIndefinitely: true,
           },
           attributes: {
@@ -379,7 +379,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Please raise one of your hands to move further');
+        this.ttsService.tts('Please raise one of your hands to continue');
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
@@ -1402,14 +1402,14 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             showIndefinitely: true,
-            title: 'Raise one of your hands to move further.',
+            title: 'Raise one of your hands to continue.',
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Raise one of your hands to move further');
+        this.ttsService.tts('Raise one of your hands to continue');
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
