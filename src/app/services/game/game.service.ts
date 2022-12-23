@@ -533,7 +533,7 @@ export class GameService {
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
     let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.apiService.getOnboardingStatus();
-    if (onboardingStatus[0]?.onboardingStatus[nextGame]) {
+    if (onboardingStatus && onboardingStatus[0]?.onboardingStatus[nextGame]) {
       allStages = allStages.filter((stage) => stage !== 'tutorial');
     }
     return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
