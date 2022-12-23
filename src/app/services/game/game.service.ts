@@ -260,7 +260,7 @@ export class GameService {
           };
           for (let i = 5; i >= 0; i--) {
             this.elements.banner.state.data.htmlStr = `
-              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18">
+            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18 position-absolute translate-middle-y top-1/2">
                 <img src="assets/images/error.png" class="p-2 h-32 w-32" alt="error" />
                 <h1 class="pt-4 display-5 text-nowrap">${err.status}</h1>
                 <h3 class="pt-8 pb-8">We ran into an unexpected issue while downloading the files. Please refresh the page to solve this issue</h3>
