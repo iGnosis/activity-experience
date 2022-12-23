@@ -59,10 +59,12 @@ export class ActivityHelperService {
    * @returns {Promise<void>}
    */
   async exitGame(activityName: Activities, reCalibrationCount?: number): Promise<void> {
-    this.ttsService.tts('Well done. See you soon!');
+    this.ttsService.tts(
+      "Great job on the progress you've made today. I hope to see you back very soon.",
+    );
     this.elements.guide.state = {
       data: {
-        title: 'Well done. See you soon!',
+        title: "Great job on the progress you've made today. I hope to see you back very soon.",
         titleDuration: 2500,
       },
       attributes: {
