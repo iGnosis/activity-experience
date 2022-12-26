@@ -47,7 +47,7 @@ describe('TtsService', () => {
     expect(service['isFilesLoadedCountZero']).toEqual(0);
 
     service.preLoadTts('sit_stand_achieve');
-    expect(service['isFilesLoadedCountZero']).toEqual(15);
+    expect(service['isFilesLoadedCountZero']).toEqual(16);
   });
 
   it('should cache tts', () => {
