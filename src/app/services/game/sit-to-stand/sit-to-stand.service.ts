@@ -481,8 +481,8 @@ export class SitToStandService implements ActivityBase {
         this.elements.video.state = {
           data: {
             type: 'video',
-            title: 'When consecutive even or odd numbers appear.',
-            description: 'Continue sitting or standing until the timer below runs out.',
+            title: 'If you see two even or odd numbers appear one after the other,',
+            description: 'hold the pose until the timer runs out.',
             src: 'assets/videos/sit-to-stand/consecutive_case.mp4',
           },
           attributes: {
@@ -492,7 +492,7 @@ export class SitToStandService implements ActivityBase {
         };
 
         this.ttsService.tts(
-          'When consecutive even or odd numbers appear Continue sitting or standing until the timer below runs out',
+          'If you see two even or odd numbers appear one after the other, hold the pose until the timer runs out.',
         );
         await this.elements.sleep(10000);
         this.elements.video.state = {
