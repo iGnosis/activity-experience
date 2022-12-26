@@ -35,7 +35,7 @@ export class HandsService {
       this.config = config;
       this.videoElm = videoElm;
 
-      let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/';
+      let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.3/';
       if (config === 'local') {
         baseUrl = '/assets/@mediapipe/hands/';
       }
