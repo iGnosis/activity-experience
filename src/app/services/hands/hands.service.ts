@@ -35,23 +35,39 @@ export class HandsService {
       this.config = config;
       this.videoElm = videoElm;
 
-      let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.3/';
+      let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/';
       if (config === 'local') {
         baseUrl = '/assets/@mediapipe/hands/';
       }
+      try {
+        this.hands = new Hands({
+          locateFile: (file) => {
+            console.log('loading hands file:', file);
+            return baseUrl + file;
+          },
+        });
+        this.hands.setOptions(this.options);
+        this.hands.onResults((results) => {
+          this.handleResults(results);
+        });
+        await this.hands.send({ image: videoElm });
+      } catch (error) {
+        console.log('Failed to load locally', error);
+        console.log('Trying to load from CDN');
+        baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/';
 
-      this.hands = new Hands({
-        locateFile: (file) => {
-          console.log('loading hands file:', file);
-          return baseUrl + file;
-        },
-      });
-
-      this.hands.setOptions(this.options);
-      this.hands.onResults((results) => {
-        this.handleResults(results);
-      });
-      await this.hands.send({ image: videoElm });
+        this.hands = new Hands({
+          locateFile: (file) => {
+            console.log('loading hands file:', file);
+            return baseUrl + file;
+          },
+        });
+        this.hands.setOptions(this.options);
+        this.hands.onResults((results) => {
+          this.handleResults(results);
+        });
+        await this.hands.send({ image: videoElm });
+      }
 
       console.log('HandModel files must be loaded by now!');
 
