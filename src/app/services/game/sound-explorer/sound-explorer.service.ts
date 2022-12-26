@@ -61,8 +61,8 @@ export class SoundExplorerService {
     'bottom-right': [-110, -115],
     'bottom-left': [-70, -75],
     'bottom-center': [-120, -70],
-    'left-center': [-70, -65],
-    'right-center': [-120, -110],
+    'left-center': [-65, -60],
+    'right-center': [-110, -105],
     'top-left': [40, 50],
     'top-right': [150, 160],
   };
