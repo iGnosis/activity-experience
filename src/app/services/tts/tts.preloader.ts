@@ -27,10 +27,10 @@ export class TtsPreloader {
         'Guide completed',
 
         // Remind user when they make a lot of mistakes.
-        'An Odd number is any number ending with 1 3 5 7 9. Stand up when you see an Odd Number.',
-        'An Even number is any number ending with 0 2 4 6 8. Sit down when you see an Even Number.',
         'When consecutive even or odd numbers appear Continue sitting or standing until the timer below runs out',
         'If you see two even or odd numbers appear one after the other, hold the pose until the timer runs out.',
+        'When you see an odd number on your screen. You stand up from your seat.',
+        'When you see an even number on your screen. You sit down on your seat.',
       ],
 
       beat_boxer: [

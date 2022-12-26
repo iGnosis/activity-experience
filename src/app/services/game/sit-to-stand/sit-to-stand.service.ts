@@ -364,7 +364,7 @@ export class SitToStandService implements ActivityBase {
         };
 
         this.ttsService.tts(
-          'An Even number is any number ending with 0 2 4 6 8. Sit down when you see an Even Number.',
+          'When you see an even number on your screen. You sit down on your seat.',
         );
 
         await this.elements.sleep(8000);
