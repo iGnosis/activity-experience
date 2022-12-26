@@ -40,33 +40,41 @@ export class HandsService {
         baseUrl = '/assets/@mediapipe/hands/';
       }
       try {
-        this.hands = new Hands({
-          locateFile: (file) => {
-            console.log('loading hands file:', file);
-            return baseUrl + file;
-          },
-        });
-        this.hands.setOptions(this.options);
-        this.hands.onResults((results) => {
-          this.handleResults(results);
-        });
-        await this.hands.send({ image: videoElm });
-      } catch (error) {
-        console.log('Failed to load locally', error);
-        console.log('Trying to load from CDN');
-        baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/';
+        try {
+          this.hands = new Hands({
+            locateFile: (file) => {
+              console.log('loading hands file:', file);
+              return baseUrl + file;
+            },
+          });
+          this.hands.setOptions(this.options);
+          this.hands.onResults((results) => {
+            this.handleResults(results);
+          });
+          await this.hands.send({ image: videoElm });
+        } catch (error) {
+          console.log('Failed to load locally', error);
+          console.log('Trying to load from CDN');
+          baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/';
 
-        this.hands = new Hands({
-          locateFile: (file) => {
-            console.log('loading hands file:', file);
-            return baseUrl + file;
-          },
+          this.hands = new Hands({
+            locateFile: (file) => {
+              console.log('loading hands file:', file);
+              return baseUrl + file;
+            },
+          });
+          this.hands.setOptions(this.options);
+          this.hands.onResults((results) => {
+            this.handleResults(results);
+          });
+          await this.hands.send({ image: videoElm });
+        }
+      } catch (error) {
+        console.log('Failed to load from CDN', error);
+        this.isReady.error({
+          status: 'Something went wrong.',
         });
-        this.hands.setOptions(this.options);
-        this.hands.onResults((results) => {
-          this.handleResults(results);
-        });
-        await this.hands.send({ image: videoElm });
+        return;
       }
 
       console.log('HandModel files must be loaded by now!');

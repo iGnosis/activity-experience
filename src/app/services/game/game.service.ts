@@ -27,7 +27,7 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
+import { combineLatest, combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
@@ -208,10 +208,13 @@ export class GameService {
         });
       }
 
-      this.poseService.getMediapipeStatus().subscribe({
+      combineLatest([
+        this.poseService.getMediapipeStatus(),
+        this.handsService.getMediapipeStatus(),
+      ]).subscribe({
         next: async (res) => {
           console.log('this.poseService.getMediapipeStatus:res', res);
-          if (res.isMediaPipeReady) {
+          if (res[0].isMediaPipeReady && res[1].isHandsModelReady) {
             await this.setPhaserDimensions(canvas);
             this.startCalibration();
             this.elements.banner.state.attributes.visibility = 'hidden';
@@ -237,7 +240,7 @@ export class GameService {
               },
             };
 
-            if (res.downloadSource == 'cdn') {
+            if (res[0].downloadSource == 'cdn' || res[1].downloadSource == 'cdn') {
               this.elements.banner.data.htmlStr = `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
