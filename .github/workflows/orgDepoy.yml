@@ -19,7 +19,7 @@ jobs:
           echo "Org: ${GITHUB_REF##*/}"
           echo "Current path: $(pwd)"
           ls -la
-          npm ci --ignore-scripts
+          npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "${GITHUB_REF#*/*/}"
 
       - name: running unit tests
