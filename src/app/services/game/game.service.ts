@@ -76,8 +76,6 @@ export class GameService {
   };
   private poseTrackerWorker: Worker;
 
-  private executingBatch = false;
-
   get calibrationStatus() {
     return this._calibrationStatus;
   }
@@ -611,15 +609,13 @@ export class GameService {
             game: nextGame.name,
           };
         }
-        if (!this.executingBatch) {
-          await this.executeBatch(
-            reCalibrationCount,
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            activity[remainingStages[i]](reCalibrationCount),
-          );
-          this.executingBatch = false;
-        }
+
+        await this.executeBatch(
+          reCalibrationCount,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          activity[remainingStages[i]](reCalibrationCount),
+        );
       }
       // await this.executeBatch(reCalibrationCount, activity['welcome']());
       // // TODO, check if the tutorial needs to run
@@ -688,7 +684,6 @@ export class GameService {
     reCalibrationCount: number,
     batch: Array<(reCalibrationCount: number) => Promise<any>>,
   ) {
-    this.executingBatch = true;
     return new Promise(async (resolve, reject) => {
       try {
         console.log('breakpoint', this.gameStatus);
@@ -698,7 +693,7 @@ export class GameService {
             if (this.calibrationStartTime) this.updateCalibrationDuration();
 
             reject('Recalibration count changed');
-            this.executingBatch = false;
+            // return;
             throw new Error('Recalibration count changed');
             // TODO save the index of the current item in the batch.
           }
@@ -710,23 +705,12 @@ export class GameService {
             this.gameStatus.breakpoint,
           );
 
-          await this.waitForBatchOrRecalibration(() => batch[i](this.reCalibrationCount));
+          await batch[i](this.reCalibrationCount);
         }
-        this.executingBatch = false;
         resolve({});
       } catch (err) {
-        this.executingBatch = false;
         reject(err);
       }
-    });
-  }
-
-  async waitForBatchOrRecalibration(batch: any): Promise<boolean> {
-    return new Promise(async (resolve, reject) => {
-      batch().then(() => resolve(true), reject);
-      setInterval(() => {
-        if (this.calibrationStatus !== 'success') resolve(false);
-      }, 50);
     });
   }
 
