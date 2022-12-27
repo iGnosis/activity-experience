@@ -76,6 +76,8 @@ export class GameService {
   };
   private poseTrackerWorker: Worker;
 
+  private executingBatch = false;
+
   get calibrationStatus() {
     return this._calibrationStatus;
   }
@@ -388,9 +390,11 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
+    let previousCalibrationState: CalibrationStatusType = 'disabled';
     this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
+        if (previousCalibrationState === 'success') return;
         if (this.gameStatus.stage === 'loop') {
           this.ttsService.tts('Now I can see you again.');
           await this.elements.sleep(3000);
@@ -446,6 +450,7 @@ export class GameService {
           },
         };
       }
+      previousCalibrationState = this.calibrationStatus;
     });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
@@ -565,10 +570,6 @@ export class GameService {
       }
 
       for (let i = 0; i < remainingStages.length; i++) {
-        if (reCalibrationCount !== this.reCalibrationCount) {
-          return;
-          // throw new Error('Re-calibration occurred');
-        }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
           const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
@@ -610,13 +611,15 @@ export class GameService {
             game: nextGame.name,
           };
         }
-
-        await this.executeBatch(
-          reCalibrationCount,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          activity[remainingStages[i]](reCalibrationCount),
-        );
+        if (!this.executingBatch) {
+          await this.executeBatch(
+            reCalibrationCount,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            activity[remainingStages[i]](reCalibrationCount),
+          );
+          this.executingBatch = false;
+        }
       }
       // await this.executeBatch(reCalibrationCount, activity['welcome']());
       // // TODO, check if the tutorial needs to run
@@ -685,16 +688,17 @@ export class GameService {
     reCalibrationCount: number,
     batch: Array<(reCalibrationCount: number) => Promise<any>>,
   ) {
+    this.executingBatch = true;
     return new Promise(async (resolve, reject) => {
       try {
         console.log('breakpoint', this.gameStatus);
 
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
-          if (this.reCalibrationCount !== reCalibrationCount) {
+          if (this.calibrationStatus !== 'success') {
             if (this.calibrationStartTime) this.updateCalibrationDuration();
 
             reject('Recalibration count changed');
-            // return;
+            this.executingBatch = false;
             throw new Error('Recalibration count changed');
             // TODO save the index of the current item in the batch.
           }
@@ -706,12 +710,23 @@ export class GameService {
             this.gameStatus.breakpoint,
           );
 
-          await batch[i](this.reCalibrationCount);
+          await this.waitForBatchOrRecalibration(() => batch[i](this.reCalibrationCount));
         }
+        this.executingBatch = false;
         resolve({});
       } catch (err) {
+        this.executingBatch = false;
         reject(err);
       }
+    });
+  }
+
+  async waitForBatchOrRecalibration(batch: any): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      batch().then(() => resolve(true), reject);
+      setInterval(() => {
+        if (this.calibrationStatus !== 'success') resolve(false);
+      }, 50);
     });
   }
 
