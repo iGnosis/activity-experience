@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Options, Pose, Results } from '@mediapipe/pose';
-import { Observable, Subject, take } from 'rxjs';
-import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
-import { Coordinate, IsMediaPipeReady } from 'src/app/types/pointmotion';
+import { Pose, Results } from '@mediapipe/pose';
+import { Subject, take } from 'rxjs';
+import { IsMediaPipeReady, Options } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
@@ -11,6 +10,7 @@ export class PoseService {
     modelComplexity: 2,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5,
+    useCpuInference: false,
   };
   private interval: any;
   private videoElm?: HTMLVideoElement;

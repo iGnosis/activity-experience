@@ -367,6 +367,7 @@ export interface Options {
   refineFaceLandmarks?: boolean;
   minDetectionConfidence?: number;
   minTrackingConfidence?: number;
+  useCpuInference?: boolean;
 }
 
 /**
