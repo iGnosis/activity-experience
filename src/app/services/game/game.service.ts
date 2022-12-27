@@ -388,9 +388,11 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
+    let previousCalibrationState: CalibrationStatusType = 'disabled';
     this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;
       if (this.calibrationStatus === 'success') {
+        if (previousCalibrationState === 'success') return;
         if (this.gameStatus.stage === 'loop') {
           this.ttsService.tts('Now I can see you again.');
           await this.elements.sleep(3000);
@@ -446,6 +448,7 @@ export class GameService {
           },
         };
       }
+      previousCalibrationState = this.calibrationStatus;
     });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
@@ -565,10 +568,6 @@ export class GameService {
       }
 
       for (let i = 0; i < remainingStages.length; i++) {
-        if (reCalibrationCount !== this.reCalibrationCount) {
-          return;
-          // throw new Error('Re-calibration occurred');
-        }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
           const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
@@ -690,7 +689,7 @@ export class GameService {
         console.log('breakpoint', this.gameStatus);
 
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
-          if (this.reCalibrationCount !== reCalibrationCount) {
+          if (this.calibrationStatus !== 'success') {
             if (this.calibrationStartTime) this.updateCalibrationDuration();
 
             reject('Recalibration count changed');
