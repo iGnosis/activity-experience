@@ -1161,6 +1161,8 @@ export class SitToStandService implements ActivityBase {
       promptNum,
       'promptClass: ',
       promptClass,
+      'patientClass: ',
+      res.currentClass,
       'stringExpression: ',
       stringExpression,
       'res: ',
@@ -1176,10 +1178,8 @@ export class SitToStandService implements ActivityBase {
         ...(typeof reCalibrationCount === 'number' && { reCalibrationCount }),
       },
     };
-    const userState =
-      res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
     const hasUserStateChanged: boolean =
-      analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== userState : true;
+      analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== res.currentClass : true;
     const analyticsObj = {
       prompt: {
         id: promptId,
@@ -1191,7 +1191,7 @@ export class SitToStandService implements ActivityBase {
         },
       },
       reaction: {
-        type: userState,
+        type: res.currentClass,
         timestamp: Date.now(),
         startTime: Date.now(),
         completionTimeInMs: hasUserStateChanged
