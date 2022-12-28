@@ -1099,7 +1099,7 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(5000);
       },
       ...this.onboardingByLevel[this.currentLevel],
-      async (reCalibrationCount: number) => {
+      async () => {
         await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
@@ -1156,6 +1156,16 @@ export class SitToStandService implements ActivityBase {
       this.config.speed,
     );
     const resultTimestamp = Date.now();
+    console.log(
+      'promptNum: ',
+      promptNum,
+      'promptClass: ',
+      promptClass,
+      'stringExpression: ',
+      stringExpression,
+      'res: ',
+      res,
+    );
     this.totalReps += 1;
     this.elements.timeout.state = {
       data: {
@@ -1197,6 +1207,33 @@ export class SitToStandService implements ActivityBase {
 
     return { res, analyticsObj };
   }
+  private getRandomPromptExpression() {
+    let stringExpression;
+
+    if (this.currentLevel === 'level2') {
+      const isSumOperation = Math.random() > 0.5;
+
+      const num1 = Math.floor(Math.random() * 9);
+      const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
+
+      stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
+    } else if (this.currentLevel === 'level3') {
+      const isDivisionOperation = Math.random() > 0.5;
+
+      const num1 = Math.floor(Math.random() * 9);
+
+      const num1Factors = this.factors(num1);
+      const randomFactor =
+        num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
+
+      const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
+
+      stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
+    }
+    const promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
+
+    return { promptNum, stringExpression };
+  }
 
   private async game(reCalibrationCount?: number) {
     this.sit2StandScene.enableMusic();
@@ -1205,40 +1242,35 @@ export class SitToStandService implements ActivityBase {
         throw new Error('reCalibrationCount changed');
       }
       // generating a prompt number
-
-      let stringExpression;
-
-      if (this.currentLevel === 'level2') {
-        const isSumOperation = Math.random() > 0.5;
-
-        const num1 = Math.floor(Math.random() * 9);
-        const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
-
-        stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
-      } else if (this.currentLevel === 'level3') {
-        const isDivisionOperation = Math.random() > 0.5;
-
-        const num1 = Math.floor(Math.random() * 9);
-
-        const num1Factors = this.factors(num1);
-        const randomFactor =
-          num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
-
-        const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
-
-        stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
-      }
-
-      let promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
+      const result = this.getRandomPromptExpression();
+      let promptNum = result.promptNum;
+      let stringExpression = result.stringExpression;
 
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
         const prevReps = this.analytics.slice(-2);
         if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
           // if two even or two odd in a row, we generate the opposite class number.
-          prevReps[0].prompt.type === 'sit'
-            ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
-            : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+          if (this.currentLevel === 'level1') {
+            prevReps[0].prompt.type === 'sit'
+              ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
+              : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+          } else {
+            // for level 2 and 3
+            if (prevReps[0].prompt.type === 'sit') {
+              do {
+                const result = this.getRandomPromptExpression();
+                promptNum = result.promptNum;
+                stringExpression = result.stringExpression;
+              } while (promptNum % 2 === 0);
+            } else {
+              do {
+                const result = this.getRandomPromptExpression();
+                promptNum = result.promptNum;
+                stringExpression = result.stringExpression;
+              } while (promptNum % 2 !== 0);
+            }
+          }
         }
       }
       const promptId = uuidv4();
@@ -1322,7 +1354,7 @@ export class SitToStandService implements ActivityBase {
               htmlStr: `
               <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
                 <div class='p-4 d-flex flex-row align-items-center'>
-                      <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                      <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png' alt="standing man"/>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
@@ -1350,7 +1382,7 @@ export class SitToStandService implements ActivityBase {
               htmlStr: `
                   <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
                     <div class='p-4 d-flex flex-row align-items-center'>
-                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png' alt="sitting on chair"/>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
