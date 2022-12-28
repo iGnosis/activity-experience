@@ -743,7 +743,7 @@ export class BeatBoxerService {
               <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Beat Boxer</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Endurance and Coordination</h2>
+              <h1 class="pt-2">Endurance and Coordination</h2>
             </div>
             `,
             buttons: [
