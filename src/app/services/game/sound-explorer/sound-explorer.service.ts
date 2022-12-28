@@ -667,7 +667,7 @@ export class SoundExplorerService {
                 <h1 class="pt-2">Next Activity</h2>
                 <h1 class="pt-6 display-4">Sound Explorer</h1>
                 <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-                <h1 class="py-2">Range of Motion and Balance</h2>
+                <h1 class="pt-2">Range of Motion and Balance</h2>
               </div>
               `,
             buttons: [

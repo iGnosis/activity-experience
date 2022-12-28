@@ -218,7 +218,7 @@ export class SitToStandService implements ActivityBase {
               <h1 class="pt-2">First Activity</h2>
               <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Balance and Reaction Time</h2>
+              <h1 class="pt-2">Balance and Reaction Time</h2>
             </div>
             `,
             buttons: [

@@ -958,11 +958,9 @@ export class MovingTonesScene extends Phaser.Scene {
       const leftIndex = results.poseLandmarks[19];
       const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
 
-      this.leftHand = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
-        TextureKeys.LEFT_HAND,
-      );
+      this.leftHand = this.physics.add
+        .staticImage(width - x * width, y * height, TextureKeys.LEFT_HAND)
+        .setDepth(-2);
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
@@ -970,11 +968,9 @@ export class MovingTonesScene extends Phaser.Scene {
       const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
 
       // this.rightHand = this.add.arc(width - x * width, y * height, 25, 0, 360, false, 0xffffff, 0.5);
-      this.rightHand = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
-        TextureKeys.RIGHT_HAND,
-      );
+      this.rightHand = this.physics.add
+        .staticImage(width - x * width, y * height, TextureKeys.RIGHT_HAND)
+        .setDepth(-2);
     }
   }
 
