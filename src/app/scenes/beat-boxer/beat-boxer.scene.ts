@@ -24,11 +24,13 @@ enum TextureKeys {
   WRONG_SIGN = 'wrong_sign',
   CONFETTI = 'confetti',
   MUSIC = 'music',
+  WRONG_SIGN_ATLAS = 'wrog_sign_atlas',
 }
 
 enum AnimationKeys {
   CONFETTI_ANIM = 'confetti_anim',
   MUSIC_ANIM = 'music_anim',
+  WRONG_SIGN_ANIM = 'wrong_sign_anim',
 }
 
 @Injectable({
@@ -162,6 +164,13 @@ export class BeatBoxerScene extends Phaser.Scene {
       'assets/images/beat-boxer/music.png',
       'assets/images/beat-boxer/music.json',
     );
+
+    this.load.atlas(
+      TextureKeys.WRONG_SIGN_ATLAS,
+      'assets/images/beat-boxer/wrong_sign.png',
+      'assets/images/beat-boxer/wrong_sign.json',
+    );
+
     this.load.svg({
       key: TextureKeys.LEFT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
@@ -287,6 +296,19 @@ export class BeatBoxerScene extends Phaser.Scene {
       frames: this.anims.generateFrameNames(TextureKeys.MUSIC, {
         start: 68,
         end: 121,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.WRONG_SIGN_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.WRONG_SIGN_ATLAS, {
+        start: 1,
+        end: 3,
         prefix: 'tile0',
         zeroPad: 2,
         suffix: '.png',
@@ -586,13 +608,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   private showWrongSign(x: number, y: number) {
-    if (this.wrongSign) {
-      this.wrongSign.destroy(true);
-    }
-    this.wrongSign = this.physics.add.staticImage(x, y, TextureKeys.WRONG_SIGN);
-    setTimeout(() => {
-      this.wrongSign && this.wrongSign.destroy(true);
-    }, 1000);
+    this.add.sprite(x, y, TextureKeys.WRONG_SIGN_ATLAS).play(AnimationKeys.WRONG_SIGN_ANIM);
   }
 
   /**
@@ -860,9 +876,11 @@ export class BeatBoxerScene extends Phaser.Scene {
 
   private playFailureMusic() {
     if (this.genre === 'classical' && this.currentSet === 1) {
+      console.log('playFailureTrack:: classical');
       return this.failureTrack.play();
     } else {
-      this.currentFailureTriggerId = this.successTrack.play('error' + this.currentFailureTrigger);
+      console.log('playFailureTrack:: classical');
+      this.currentFailureTriggerId = this.failureTrack.play('error' + this.currentFailureTrigger);
       this.currentFailureTrigger += 1;
       const totalTriggers = Object.entries(
         beatBoxerAudio[this.genre][this.currentSet].errorTriggers,
