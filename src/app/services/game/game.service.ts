@@ -11,12 +11,12 @@ import {
   GameState,
   GameStatus,
   PreferenceState,
+  AvailableModelsEnum,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ElementsService } from '../elements/elements.service';
 import { GameStateService } from '../game-state/game-state.service';
-import { PoseService } from '../pose/pose.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
@@ -35,6 +35,7 @@ import { MovingTonesService } from './moving-tones/moving-tones.service';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { BenchmarkService } from '../benchmark/benchmark.service';
 import { HandsService } from '../hands/hands.service';
+import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -128,7 +129,7 @@ export class GameService {
     private beatBoxerService: BeatBoxerService,
     private soundExplorerService: SoundExplorerService,
     private movingTonesService: MovingTonesService,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private store: Store<{
       game: GameState;
       preference: PreferenceState;
@@ -145,7 +146,6 @@ export class GameService {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
       return false;
     };
-    this.handTrackerService.enable();
     this.store
       .select((state) => state.game)
       .subscribe((game) => {
@@ -176,6 +176,8 @@ export class GameService {
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+    this.poseModelAdapter.setModel('mediapipe');
+
     this.checkAuth();
     this.benchmarkId = benchmarkId;
     try {
@@ -208,13 +210,10 @@ export class GameService {
         });
       }
 
-      combineLatest([
-        this.poseService.getMediapipeStatus(),
-        this.handsService.getMediapipeStatus(),
-      ]).subscribe({
+      combineLatest([this.poseModelAdapter.getStatus(), this.handsService.getStatus()]).subscribe({
         next: async (res) => {
-          console.log('this.poseService.getMediapipeStatus:res', res);
-          if (res[0].isMediaPipeReady && res[1].isHandsModelReady) {
+          console.log('this.poseModelAdapter.getMediapipeStatus:res', res);
+          if (res[0].isModelReady && res[1].isHandsModelReady) {
             await this.setPhaserDimensions(canvas);
             this.startCalibration();
             this.elements.banner.state.attributes.visibility = 'hidden';
@@ -311,7 +310,7 @@ export class GameService {
   startPoseDetection(video: HTMLVideoElement) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.poseService.start(video);
+        this.poseModelAdapter.start(video);
         if (environment.stageName !== 'local') {
           this.startPoseTracker();
         }
@@ -339,7 +338,7 @@ export class GameService {
         websocketEndpoint: environment.websocketEndpoint,
       });
 
-      const poseSubscription = this.poseService
+      const poseSubscription = this.poseModelAdapter
         .getPose()
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
@@ -388,6 +387,7 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
+    this.handTrackerService.enable();
     let previousCalibrationState: CalibrationStatusType = 'disabled';
     this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
       this.calibrationStatus = status;

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
 import { CalibrationStatusType } from 'src/app/types/pointmotion';
 

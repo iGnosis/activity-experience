@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { Subscription } from 'rxjs';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -142,7 +142,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   };
 
-  constructor(private poseService: PoseService, private ttsService: TtsService) {
+  constructor(private poseModelAdapter: PoseModelAdapter, private ttsService: TtsService) {
     super({ key: 'beatBoxer' });
   }
 
@@ -323,7 +323,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.enableLeftHand();
     this.enableRightHand();
     this.enableCollisionDetection();
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       this.results = results;
       this.destroyGloves();
       this.drawGloves(results);

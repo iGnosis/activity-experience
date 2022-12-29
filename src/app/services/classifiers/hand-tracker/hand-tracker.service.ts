@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
 import { BehaviorSubject, debounceTime, Subject, Subscription } from 'rxjs';
 import { Coordinate, HandTrackerStatus, OpenHandStatus } from 'src/app/types/pointmotion';
-import { PoseService } from '../../pose/pose.service';
 import { Results as HandResults } from '@mediapipe/hands';
 import { HandsService } from '../../hands/hands.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +20,7 @@ export class HandTrackerService {
   debouncedStatus: HandTrackerStatus = undefined;
   openHandStatus = new BehaviorSubject<OpenHandStatus>(undefined);
 
-  constructor(private poseService: PoseService, private handsService: HandsService) {
+  constructor(private handsService: HandsService, private poseModelAdapter: PoseModelAdapter) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
       this.debouncedStatus = status;
       console.log('HandTrackerService:debouncedStatus:', this.status);
@@ -29,19 +29,18 @@ export class HandTrackerService {
 
   enable() {
     this.isEnabled = true;
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.handSubscription = this.handsService.getHands().subscribe((results) => {
+      const newStatus = this.checkIfHandsAreOpen(results);
+      this.openHandStatus.next(newStatus);
+      // console.log('Check If Hands Are Open::', newStatus);
+    });
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       const newStatus = this.classify(results);
       if (!newStatus) return;
       if (newStatus.status != this.status) {
         this.result.next(newStatus.status);
       }
       this.status = newStatus.status;
-    });
-
-    this.handSubscription = this.handsService.getHands().subscribe((results) => {
-      const newStatus = this.checkIfHandsAreOpen(results);
-      this.openHandStatus.next(newStatus);
-      // console.log('Check If Hands Are Open::', newStatus);
     });
   }
 

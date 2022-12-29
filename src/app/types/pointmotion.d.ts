@@ -443,8 +443,8 @@ export declare class Holistic implements HolisticInterface {
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
 export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
-export interface IsMediaPipeReady {
-  isMediaPipeReady: boolean;
+export interface IsModelReady {
+  isModelReady: boolean;
   downloadSource: 'local' | 'cdn';
 }
 
@@ -999,4 +999,9 @@ export interface Theme {
     family: string;
     url: string;
   };
+}
+
+export enum AvailableModelsEnum {
+  MEDIAPIPE = 'mediapipe',
+  POSENET = 'posenet',
 }

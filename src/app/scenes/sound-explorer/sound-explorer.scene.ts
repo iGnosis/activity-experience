@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -106,7 +106,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   };
 
   constructor(
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private ttsService: TtsService,
     private soundsService: SoundsService,
   ) {
@@ -214,7 +214,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.enableLeftHand();
     this.enableRightHand();
 
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       // this.results = results;
       if (this.leftHand) {
         this.leftHand.destroy(true);
