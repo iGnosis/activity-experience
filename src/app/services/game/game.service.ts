@@ -184,9 +184,11 @@ export class GameService {
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile) {
+    if (
+      navigator.userAgent.match(/Mac/) &&
+      navigator.maxTouchPoints &&
+      navigator.maxTouchPoints > 2
+    ) {
       this.setPoseModel('posenet');
     } else {
       this.setPoseModel('mediapipe');
