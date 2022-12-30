@@ -175,8 +175,12 @@ export class GameService {
     this.currentGame = name;
   }
 
-  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+  setPoseModel(model: 'posenet' | 'mediapipe') {
     this.poseModelAdapter.setModel('mediapipe');
+  }
+
+  async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+    this.setPoseModel('mediapipe');
 
     this.checkAuth();
     this.benchmarkId = benchmarkId;
