@@ -22,7 +22,7 @@ export class PosenetService {
    * This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam),
    * and you want the poses to be returned in the proper orientation.
    */
-  private flipHorizontal = true;
+  private flipHorizontal = false;
 
   /**
    * Internally, this parameter affects the height and width of the layers in the neural network.
@@ -30,7 +30,7 @@ export class PosenetService {
    * The lower the value of the output stride the higher the accuracy but slower the speed,
    * the higher the value the faster the speed but lower the accuracy.
    */
-  private outputStride = 16;
+  private outputStride: posenet.PoseNetOutputStride = 16;
 
   private numOfResults = 0;
   private isReady = new Subject<IsModelReady>();
@@ -76,7 +76,7 @@ export class PosenetService {
   constructor() {}
 
   // converts Posenet output to mediapipe output.
-  transformPosenetResults(pose: posenet.Pose): Results {
+  private transformPosenetResults(pose: posenet.Pose, video: HTMLVideoElement): Results {
     const transformedRes: NormalizedLandmarkList = [];
 
     for (let i = 0; i < Object.keys(this.mediapipeBodyPoints).length; i++) {
@@ -86,8 +86,8 @@ export class PosenetService {
       if (posenetPoint) {
         transformedRes.push({
           visibility: posenetPoint.score,
-          x: posenetPoint.position.x / screen.width,
-          y: posenetPoint.position.y / screen.height,
+          x: posenetPoint.position.x / video.width,
+          y: posenetPoint.position.y / video.height,
           z: 0,
         });
       } else {
@@ -108,20 +108,33 @@ export class PosenetService {
   }
 
   async start(videoElm: HTMLVideoElement) {
-    const net = await posenet.load();
+    this.videoElm = videoElm;
+
+    // emit an event when posenet is ready.
+    this.isReady.next({
+      isModelReady: false,
+      downloadSource: 'local',
+    });
+    const net = await posenet.load({
+      inputResolution: {
+        height: this.videoElm.height,
+        width: this.videoElm.width,
+      },
+      architecture: 'MobileNetV1',
+      outputStride: this.outputStride,
+    });
     // emit an event when posenet is ready.
     this.isReady.next({
       isModelReady: true,
-      downloadSource: 'cdn',
+      downloadSource: 'local',
     });
 
-    this.videoElm = videoElm;
     this.interval = setInterval(async () => {
       if (this.videoElm) {
-        const pose = await net.estimateSinglePose(videoElm, {
+        const pose = await net.estimateSinglePose(this.videoElm, {
           flipHorizontal: this.flipHorizontal,
         });
-        const transformedRes = this.transformPosenetResults(pose);
+        const transformedRes = this.transformPosenetResults(pose, this.videoElm);
         this.handleResults(transformedRes);
         // console.log('transformedRes::', transformedRes);
       }

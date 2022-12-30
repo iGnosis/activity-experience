@@ -176,11 +176,11 @@ export class GameService {
   }
 
   setPoseModel(model: 'posenet' | 'mediapipe') {
-    this.poseModelAdapter.setModel('mediapipe');
+    this.poseModelAdapter.setModel(model);
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
-    this.setPoseModel('mediapipe');
+    this.setPoseModel('posenet');
 
     this.checkAuth();
     this.benchmarkId = benchmarkId;

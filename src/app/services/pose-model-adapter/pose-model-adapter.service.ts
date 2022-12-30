@@ -16,7 +16,6 @@ export class PoseModelAdapter {
    *  will start poseModel that takes in the video feed from a video element and provides pose esults.
    * @param videoElm Video element to take image from
    * @param fps framerate of the device/ framerate at which the game is running.
-   * @param model choose which model to run.
    * @param config `local` | `cdn`  mediapipe/pose source
    */
   async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'local') {
@@ -34,6 +33,15 @@ export class PoseModelAdapter {
     } else if (model === 'posenet') {
       this.isPosenetActivated = true;
     }
+  }
+
+  getModel(): 'mediapipe' | 'posenet' | undefined {
+    if (this.isMediapipeActivated) {
+      return 'mediapipe';
+    } else if (this.isPosenetActivated) {
+      return 'posenet';
+    }
+    return;
   }
 
   isAnyModelEnabled() {

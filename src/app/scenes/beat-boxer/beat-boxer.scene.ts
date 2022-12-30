@@ -439,23 +439,17 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
     if (results.poseLandmarks[15] && results.poseLandmarks[19] && this.enableLeft) {
       const leftWrist = results.poseLandmarks[15];
-      const leftIndex = results.poseLandmarks[19];
-      const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
-
       this.blueGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
+        width - leftWrist.x * width,
+        leftWrist.y * height,
         TextureKeys.LEFT_HAND,
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
-      const rightIndex = results.poseLandmarks[20];
-      const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
-
       this.redGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
+        width - rightWrist.x * width,
+        rightWrist.y * height,
         TextureKeys.RIGHT_HAND,
       );
     }

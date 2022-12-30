@@ -8,13 +8,14 @@ import { GameStateService } from 'src/app/services/game-state/game-state.service
 import { GameService } from 'src/app/services/game/game.service';
 import { GoogleAnalyticsService } from 'src/app/services/google-analytics/google-analytics.service';
 import { GqlClientService } from 'src/app/services/gql-client/gql-client.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { UserService } from 'src/app/services/user/user.service';
-
 import { CalibrationScene } from './calibration.scene';
 
 describe('CalibrationScene', () => {
   let service: CalibrationScene;
   let game: Phaser.Game;
+  let poseModelAdapter: PoseModelAdapter;
   const canvasWidth = 1792;
   const canvasHeight = 1007;
 
@@ -237,8 +238,9 @@ describe('CalibrationScene', () => {
         { provide: GameService, useValue: {} },
       ],
     }).compileComponents();
+    poseModelAdapter = TestBed.inject(PoseModelAdapter);
     service = TestBed.inject(CalibrationScene);
-    service = new CalibrationScene();
+    service = new CalibrationScene(poseModelAdapter);
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.HEADLESS,
