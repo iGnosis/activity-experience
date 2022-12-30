@@ -30,6 +30,10 @@ export class PoseService {
    */
   async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'local') {
     try {
+      this.isReady.next({
+        isModelReady: false,
+        downloadSource: config,
+      });
       this.config = config;
       let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/';
       if (config === 'local') {
