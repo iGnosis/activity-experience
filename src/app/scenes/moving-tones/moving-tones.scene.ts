@@ -3,7 +3,7 @@ import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } from 'rxjs';
 import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import {
@@ -405,7 +405,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   constructor(
     private ttsService: TtsService,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private handTrackerService: HandTrackerService,
   ) {
     super({ key: 'movingTones' });
@@ -903,7 +903,7 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   private subscribe() {
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       if (this.leftHand) {
         this.leftHand.destroy(true);
       }
@@ -1078,7 +1078,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   getCenterFromPose(): Promise<Coordinate> {
     return new Promise((resolve) => {
-      this.poseService
+      this.poseModelAdapter
         .getPose()
         .pipe(take(1))
         .subscribe((results) => {

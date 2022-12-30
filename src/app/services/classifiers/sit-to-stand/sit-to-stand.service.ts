@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Subscription } from 'rxjs';
 import { ActivityHelperService } from '../../game/activity-helper/activity-helper.service';
-import { PoseService } from '../../pose/pose.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,13 +14,13 @@ export class SitToStandService {
   subscription: Subscription;
 
   constructor(
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private activityHelperService: ActivityHelperService,
   ) {}
 
   enable() {
     this.enabled = true;
-    this.subscription = this.poseService.getPose().subscribe((results) => {
+    this.subscription = this.poseModelAdapter.getPose().subscribe((results) => {
       this.currentClass = this.classify(results).result;
     });
   }

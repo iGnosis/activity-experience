@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   ActivityBase,
-  AnalyticsDTO,
   GameState,
   Genre,
   Coordinate,
@@ -22,10 +21,10 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
-import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { distinctUntilChanged, firstValueFrom, Subscription } from 'rxjs';
 import { PoseService } from '../../pose/pose.service';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -61,14 +60,13 @@ export class MovingTonesService implements ActivityBase {
       preference: PreferenceState;
     }>,
     private elements: ElementsService,
-    private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private activityHelperService: ActivityHelperService,
   ) {
     this.store
@@ -179,7 +177,7 @@ export class MovingTonesService implements ActivityBase {
     start: Coordinate,
     end: Coordinate,
   ): Promise<[start: Coordinate, end: Coordinate]> {
-    const ratio = await this.poseService.getHeightRatio();
+    const ratio = await this.poseModelAdapter.getHeightRatio();
 
     const newEnd: Coordinate = {
       x: (1 - ratio) * start.x + ratio * end.x,
@@ -694,7 +692,7 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
 
-    const heightRatio = await this.poseService.getHeightRatio();
+    const heightRatio = await this.poseModelAdapter.getHeightRatio();
     this.movingTonesScene.circleScale *= heightRatio;
 
     this.center = this.movingTonesScene.center();
