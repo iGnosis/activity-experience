@@ -227,6 +227,7 @@ export class MovingTonesScene extends Phaser.Scene {
             const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
             if (interactableWith === 'blue') {
               this.score.next(-1);
+              return;
             } else {
               this.score.next(1);
             }
@@ -378,6 +379,7 @@ export class MovingTonesScene extends Phaser.Scene {
             const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
             if (interactableWith === 'red') {
               this.score.next(-1);
+              return;
             } else {
               this.score.next(1);
             }
