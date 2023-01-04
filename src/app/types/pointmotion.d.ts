@@ -1032,6 +1032,7 @@ export type MovingTonesCircleSettings = {
 };
 
 export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  circle: MovingTonesCircle;
   end?: MovingTonesCircle;
   path?: MovingTonesCircle[];
 }

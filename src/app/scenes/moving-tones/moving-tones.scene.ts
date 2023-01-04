@@ -149,11 +149,13 @@ export class MovingTonesScene extends Phaser.Scene {
 
           if (isHandHeld) {
             this.setHeldState(handTexture, true);
-            let data: MovingTonesCircleData = {};
+
+            const data: MovingTonesCircleData = gameObject.getData('data');
             if (type === 'start') {
               this.getHoldStateSubscription(handTexture).next(true);
-              data = gameObject.getData('data');
             }
+
+            this.circleEvents.next({ name: 'collisionStarted', circle: data.circle });
 
             let holdDuration = 2500;
             if (data.collisionDebounce) {
@@ -171,6 +173,11 @@ export class MovingTonesScene extends Phaser.Scene {
 
             tween.on('update', (tween: Phaser.Tweens.Tween) => {
               if (!this.getHeldState(handTexture)) {
+                this.circleEvents.next({
+                  name: 'collisionEnded',
+                  circle: data.circle,
+                });
+
                 if (startFromBeginning) {
                   graphics.destroy(true);
                   tween.remove();
@@ -210,9 +217,13 @@ export class MovingTonesScene extends Phaser.Scene {
             });
 
             tween.once('complete', () => {
+              this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
               if (type === 'start') {
                 if (data.end) {
-                  this.showCirlce(data.end, 'end', { collisionDebounce: holdDuration });
+                  this.showCirlce(data.end, 'end', {
+                    collisionDebounce: holdDuration,
+                    circle: data.end,
+                  });
                 }
               }
               this.setTweenData(handTexture, {
@@ -263,6 +274,9 @@ export class MovingTonesScene extends Phaser.Scene {
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
+          const { circle }: MovingTonesCircleData = gameObject.getData('data');
+          this.circleEvents.next({ name: 'collisionStarted', circle });
+
           if (!status) return;
           if (
             this.allowClosedHandsDuringCollision ||
@@ -272,18 +286,19 @@ export class MovingTonesScene extends Phaser.Scene {
             const color = handTexture === TextureKeys.RIGHT_HAND ? 'red' : 'blue';
             if (interactableWith !== color) {
               this.score.next(-1);
+              this.circleEvents.next({ name: 'invalidCollision', circle });
               return;
             } else {
               this.score.next(1);
             }
-
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
             rippleAnim.destroy(true);
 
             const { x, y } = gameObject.body.center;
-
             this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
             gameObject.destroy(true);
+
+            this.circleEvents.next({ name: 'collisionCompleted', circle });
             this.animate(x, y, 'green');
           }
         });
@@ -588,6 +603,7 @@ export class MovingTonesScene extends Phaser.Scene {
     const { collisionDebounce } = settings;
 
     this.showCirlce(start, 'start', {
+      circle: start,
       collisionDebounce,
       end,
       path,
@@ -636,6 +652,7 @@ export class MovingTonesScene extends Phaser.Scene {
     gameObject.setData(gameObjectData);
 
     gameObject && gameObject.refreshBody();
+    this.circleEvents.next({ name: 'visible', circle });
     this.group.add(gameObject);
     return gameObject;
   }
@@ -696,6 +713,7 @@ export class MovingTonesScene extends Phaser.Scene {
     });
 
     gameObject.refreshBody();
+    this.circleEvents.next({ name: 'visible', circle });
     this.group.add(gameObject);
     return gameObject;
   }
@@ -745,6 +763,8 @@ export class MovingTonesScene extends Phaser.Scene {
       (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child) => {
         if (child.texture && child.texture.key === TextureKeys.MUSIC_CIRCLE) {
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
+          this.circleEvents.next({ name: 'hidden', circle });
           rippleAnim && rippleAnim.destroy(true);
         }
       });
@@ -763,8 +783,10 @@ export class MovingTonesScene extends Phaser.Scene {
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
           rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
+          this.circleEvents.next({ name: 'hidden', circle });
         });
       } else {
         if (!textureKey) return;
@@ -789,8 +811,10 @@ export class MovingTonesScene extends Phaser.Scene {
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
           rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
+          this.circleEvents.next({ name: 'hidden', circle });
         });
       }
     }
