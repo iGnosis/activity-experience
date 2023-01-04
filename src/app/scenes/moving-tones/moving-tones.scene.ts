@@ -274,7 +274,7 @@ export class MovingTonesScene extends Phaser.Scene {
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
-          const { circle }: MovingTonesCircleData = gameObject.getData('data');
+          const circle: Circle = gameObject.getData('circle');
           this.circleEvents.next({ name: 'collisionStarted', circle });
 
           if (!status) return;
