@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
-  AnalyticsDTO,
   AnalyticsResultDTO,
   GameState,
   Genre,
@@ -19,9 +18,7 @@ import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
-import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
-import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
@@ -724,8 +721,8 @@ export class SoundExplorerService {
     this.totalReps++;
 
     // if low points, reset difficulty
-    if (this.pointsGained < this.difficulty / 2) {
-      this.difficulty = 1;
+    if (this.pointsGained < this.difficulty / 2 && this.difficulty > 1) {
+      this.difficulty--;
       this.streak = 0;
     } else {
       this.streak++;
