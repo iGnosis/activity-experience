@@ -973,13 +973,6 @@ export type Origin =
   | 'top-left'
   | 'top-right';
 
-export interface TweenData {
-  stoppedAt?: number;
-  remainingDuration?: number;
-  totalTimeElapsed: number;
-  tween?: Phaser.Tweens.Tween;
-}
-
 export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
 export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
 
@@ -1004,4 +997,41 @@ export interface Theme {
 export enum AvailableModelsEnum {
   MEDIAPIPE = 'mediapipe',
   POSENET = 'posenet',
+}
+
+export interface MovingTonesTweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type MovingTonesCircle = {
+  id: string;
+  x: number;
+  y: number;
+  type: 'start' | 'end' | 'coin';
+  hand: 'left' | 'right';
+};
+
+export type MovingTonesCircleEventName =
+  | 'hidden'
+  | 'visible'
+  | 'collisionStarted'
+  | 'collisionEnded'
+  | 'collisionCompleted'
+  | 'invalidCollision';
+
+export type MovingTonesCircleEvent = {
+  name: MovingTonesCircleEventName;
+  circle: MovingTonesCircle;
+};
+
+export type MovingTonesCircleSettings = {
+  collisionDebounce?: number;
+};
+
+export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  end?: MovingTonesCircle;
+  path?: MovingTonesCircle[];
 }

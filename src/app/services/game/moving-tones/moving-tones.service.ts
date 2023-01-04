@@ -47,6 +47,7 @@ export class MovingTonesService implements ActivityBase {
   };
   private gameDuration = this.config.gameDuration || 0;
   private totalDuration = this.config.gameDuration || 0;
+  private holdDuration = 2500;
 
   private center: Coordinate;
   private updateElapsedTime = (elapsedTime: number) => {
@@ -237,7 +238,7 @@ export class MovingTonesService implements ActivityBase {
               this.elements.timeout.state = {
                 data: {
                   mode: 'start',
-                  timeout: this.movingTonesScene.holdDuration,
+                  timeout: this.holdDuration,
                   bars: ['blue'],
                 },
                 attributes: {
@@ -309,7 +310,7 @@ export class MovingTonesService implements ActivityBase {
               this.elements.timeout.state = {
                 data: {
                   mode: 'start',
-                  timeout: this.movingTonesScene.holdDuration,
+                  timeout: this.holdDuration,
                   bars: ['red'],
                 },
                 attributes: {
