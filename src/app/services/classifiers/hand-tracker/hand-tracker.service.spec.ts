@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { LandmarkList, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-
+import { Results } from '@mediapipe/pose';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { HandTrackerService } from './hand-tracker.service';
 
 describe('HandRaisedService', () => {
   let service: HandTrackerService;
+  let poseModelAdapter: PoseModelAdapter;
 
   // mock results from mediapipe pose to test the service.
   const noHandsRaised: Pick<Results, 'poseLandmarks'> = {
@@ -820,6 +821,8 @@ describe('HandRaisedService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(HandTrackerService);
+    poseModelAdapter = TestBed.inject(PoseModelAdapter);
+    poseModelAdapter.setModel('mediapipe');
   });
 
   it('should be created', () => {

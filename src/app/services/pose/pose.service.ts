@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Pose, Results } from '@mediapipe/pose';
 import { Subject, take } from 'rxjs';
-import { IsMediaPipeReady, Options } from 'src/app/types/pointmotion';
+import { IsModelReady, Options } from 'src/app/types/pointmotion';
 @Injectable({
   providedIn: 'root',
 })
@@ -18,7 +18,7 @@ export class PoseService {
   private pose: Pose;
   private config: 'cdn' | 'local';
   private results = new Subject<Results>();
-  private isReady = new Subject<IsMediaPipeReady>();
+  private isReady = new Subject<IsModelReady>();
 
   constructor() {}
 
@@ -30,12 +30,10 @@ export class PoseService {
    */
   async start(videoElm: HTMLVideoElement, fps = 35, config: 'cdn' | 'local' = 'local') {
     try {
-      // mediapipe isn't ready yet.
       this.isReady.next({
-        isMediaPipeReady: false,
+        isModelReady: false,
         downloadSource: config,
       });
-
       this.config = config;
       let baseUrl = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/';
       if (config === 'local') {
@@ -65,7 +63,7 @@ export class PoseService {
 
       // emit an event when mediapipe is ready.
       this.isReady.next({
-        isMediaPipeReady: true,
+        isModelReady: true,
         downloadSource: config,
       });
 
@@ -85,7 +83,7 @@ export class PoseService {
     clearInterval(this.interval);
   }
 
-  getMediapipeStatus() {
+  getStatus() {
     return this.isReady;
   }
 

@@ -7,9 +7,8 @@ import { ActivityStage } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ApiService } from '../checkin/api.service';
-import { ElementsService } from '../elements/elements.service';
 import { HandsService } from '../hands/hands.service';
-import { PoseService } from '../pose/pose.service';
+import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
 import { TtsService } from '../tts/tts.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { GameService } from './game.service';
@@ -82,13 +81,13 @@ describe('GameService', () => {
   }));
 
   it('should start pose detection', fakeAsync(() => {
-    spyOn(PoseService.prototype, 'start');
+    spyOn(PoseModelAdapter.prototype, 'start');
     const video = document.createElement('video');
-
+    service.setPoseModel('mediapipe');
     service.startPoseDetection(video);
     tick(1000);
 
-    expect(PoseService.prototype.start).toHaveBeenCalledWith(video);
+    expect(PoseModelAdapter.prototype.start).toHaveBeenCalledWith(video);
     flush();
   }));
 

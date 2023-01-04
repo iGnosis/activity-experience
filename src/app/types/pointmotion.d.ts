@@ -443,8 +443,8 @@ export declare class Holistic implements HolisticInterface {
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
 export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
-export interface IsMediaPipeReady {
-  isMediaPipeReady: boolean;
+export interface IsModelReady {
+  isModelReady: boolean;
   downloadSource: 'local' | 'cdn';
 }
 
@@ -973,13 +973,6 @@ export type Origin =
   | 'top-left'
   | 'top-right';
 
-export interface TweenData {
-  stoppedAt?: number;
-  remainingDuration?: number;
-  totalTimeElapsed: number;
-  tween?: Phaser.Tweens.Tween;
-}
-
 export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
 export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
 
@@ -999,4 +992,47 @@ export interface Theme {
     family: string;
     url: string;
   };
+}
+
+export enum AvailableModelsEnum {
+  MEDIAPIPE = 'mediapipe',
+  POSENET = 'posenet',
+}
+
+export interface MovingTonesTweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type MovingTonesCircle = {
+  id: string;
+  x: number;
+  y: number;
+  type: 'start' | 'end' | 'coin';
+  hand: 'left' | 'right';
+};
+
+export type MovingTonesCircleEventName =
+  | 'hidden'
+  | 'visible'
+  | 'collisionStarted'
+  | 'collisionEnded'
+  | 'collisionCompleted'
+  | 'invalidCollision';
+
+export type MovingTonesCircleEvent = {
+  name: MovingTonesCircleEventName;
+  circle: MovingTonesCircle;
+};
+
+export type MovingTonesCircleSettings = {
+  collisionDebounce?: number;
+};
+
+export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  circle: MovingTonesCircle;
+  end?: MovingTonesCircle;
+  path?: MovingTonesCircle[];
 }

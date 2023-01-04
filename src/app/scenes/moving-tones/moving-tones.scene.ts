@@ -3,14 +3,18 @@ import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } from 'rxjs';
 import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import {
   AudioSprite,
   Coordinate,
   GameObjectWithBodyAndTexture,
-  TweenData,
+  MovingTonesTweenData,
+  MovingTonesCircle as Circle,
+  MovingTonesCircleEvent as CircleEvent,
+  MovingTonesCircleSettings,
+  MovingTonesCircleData,
 } from 'src/app/types/pointmotion';
 
 enum TextureKeys {
@@ -64,7 +68,6 @@ export class MovingTonesScene extends Phaser.Scene {
   private failureMusicId: number;
   private group: Phaser.Physics.Arcade.StaticGroup;
   private currentNote = 1;
-  holdDuration = 2500;
 
   score = new BehaviorSubject<number>(0);
 
@@ -81,14 +84,15 @@ export class MovingTonesScene extends Phaser.Scene {
   circleScale = 0.6;
   allowClosedHandsWhileHoldingPose = false;
   allowClosedHandsDuringCollision = false;
+  circleEvents = new Subject<CircleEvent>();
 
-  private redTween: TweenData = {
+  private redTween: MovingTonesTweenData = {
     stoppedAt: undefined,
     remainingDuration: undefined,
     totalTimeElapsed: 0,
   };
 
-  private blueTween: TweenData = {
+  private blueTween: MovingTonesTweenData = {
     stoppedAt: undefined,
     remainingDuration: undefined,
     totalTimeElapsed: 0,
@@ -96,100 +100,148 @@ export class MovingTonesScene extends Phaser.Scene {
 
   private musicTypes = ['alto', 'soprano', 'tenor', 'bass'];
 
-  private rightCollisionCallback = (
-    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  private collisionCallback = (
+    hand: GameObjectWithBodyAndTexture,
     gameObject: GameObjectWithBodyAndTexture,
   ) => {
-    if (!gameObject.texture) return;
-    if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) return;
+    if (!gameObject.texture || !hand.texture) return;
+    let pathNumber = 0;
 
-    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) {
+    const gameObjectTexture = gameObject.texture.key;
+    const handTexture = hand.texture.key;
+
+    if (
+      (handTexture === TextureKeys.RIGHT_HAND && gameObjectTexture === TextureKeys.RED_CIRCLE) ||
+      (handTexture === TextureKeys.LEFT_HAND && gameObjectTexture === TextureKeys.BLUE_CIRCLE)
+    ) {
       const type: 'start' | 'end' | undefined = gameObject.getData('type');
-      if (type === 'end') {
-        if (this.checkIfStartCircleExists(this.group, TextureKeys.RED_CIRCLE)) {
-          return;
-        }
+      if (type === 'end' && this.checkIfStartCircleExists(this.group, gameObjectTexture)) {
+        return;
       }
+
+      const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
+        'color',
+        'startFromBeginning',
+      ]);
+
+      let handHeld = handTexture === TextureKeys.RIGHT_HAND ? this.isRedHeld : this.isBlueHeld;
 
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
           if (!status) return;
 
-          const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
-            'color',
-            'startFromBeginning',
-          ]);
-
-          const isHandClosed = this.isRedHeld && !['right-hand', 'both-hands'].includes(status);
-
+          const isHandClosed = handHeld && ![handTexture, 'both-hands'].includes(status);
           if (!this.allowClosedHandsWhileHoldingPose && isHandClosed) {
-            this.isRedHeld = false;
-            if (type === 'start') this.redHoldState.next(false);
+            handHeld = false;
+            if (handTexture === TextureKeys.RIGHT_HAND) {
+              this.isRedHeld = false;
+              if (type === 'start') this.redHoldState.next(false);
+            } else {
+              this.isBlueHeld = false;
+              if (type === 'start') this.blueHoldState.next(false);
+            }
           }
 
           const isHandHeld =
-            this.isRedHeld === false &&
-            (this.allowClosedHandsWhileHoldingPose ||
-              ['right-hand', 'both-hands'].includes(status));
+            handHeld === false &&
+            (this.allowClosedHandsWhileHoldingPose || [handTexture, 'both-hands'].includes(status));
 
           if (isHandHeld) {
-            this.isRedHeld = true;
-            if (type === 'start') this.redHoldState.next(true);
+            this.setHeldState(handTexture, true);
+
+            const data: MovingTonesCircleData = gameObject.getData('data');
+            if (type === 'start') {
+              this.getHoldStateSubscription(handTexture).next(true);
+            }
+
+            this.circleEvents.next({ name: 'collisionStarted', circle: data.circle });
+
+            let holdDuration = 2500;
+            if (data.collisionDebounce) {
+              holdDuration = data.collisionDebounce;
+            }
+
             const { x, y } = gameObject.body.center;
             const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
 
-            const { tween: redTween, graphics } =
-              this.redTween.remainingDuration === undefined || this.redTween.stoppedAt === undefined
-                ? this.animateHeld(x, y, circleRadius, color, 0, this.holdDuration)
-                : this.animateHeld(
-                    x,
-                    y,
-                    circleRadius,
-                    color,
-                    this.redTween.stoppedAt,
-                    this.redTween.remainingDuration,
-                  );
+            const { remainingDuration, stoppedAt } = this.getTween(handTexture);
+            const { tween, graphics } =
+              remainingDuration === undefined || stoppedAt === undefined
+                ? this.animateHeld(x, y, circleRadius, color, 0, holdDuration)
+                : this.animateHeld(x, y, circleRadius, color, stoppedAt, remainingDuration);
 
-            redTween.on('update', (tween: Phaser.Tweens.Tween) => {
-              if (!this.isRedHeld) {
+            tween.on('update', (tween: Phaser.Tweens.Tween) => {
+              if (!this.getHeldState(handTexture)) {
+                this.circleEvents.next({
+                  name: 'collisionEnded',
+                  circle: data.circle,
+                });
+
                 if (startFromBeginning) {
                   graphics.destroy(true);
-                  redTween.remove();
+                  tween.remove();
+                  // remove circles if interrupted when holding the start circles
                   if (type === 'start') {
-                    this.destroyGameObjects('allExceptStartCircle', TextureKeys.RED_CIRCLE);
+                    this.destroyGameObjects('allExceptStartCircle', gameObjectTexture);
                   }
-                  this.redTween = {
+                  this.setTweenData(handTexture, {
                     remainingDuration: undefined,
                     stoppedAt: undefined,
                     totalTimeElapsed: 0,
-                  };
+                  });
                 } else {
-                  this.redTween = {
+                  this.setTweenData(handTexture, {
                     stoppedAt: tween.getValue(),
                     remainingDuration: tween.duration - tween.elapsed,
-                    totalTimeElapsed: this.redTween.totalTimeElapsed + tween.elapsed,
-                  };
+                    totalTimeElapsed: this.getTween(handTexture).totalTimeElapsed + tween.elapsed,
+                  });
                   graphics.destroy(true);
                   tween.remove();
+                }
+              } else {
+                if (type === 'start') {
+                  if (!data.path) return;
+                  const { path } = data;
+                  const stepDuration = holdDuration / (path.length + 1);
+                  const alreadyShown: Circle[] = [];
+                  if (tween.elapsed >= stepDuration * (pathNumber + 1)) {
+                    if (path[pathNumber] && !alreadyShown.includes(path[pathNumber])) {
+                      alreadyShown.push(path[pathNumber]);
+                      this.showGreenCircle(path[pathNumber]);
+                      pathNumber += 1;
+                    }
+                  }
                 }
               }
             });
 
-            redTween.once('complete', () => {
-              this.redTween = {
+            tween.once('complete', () => {
+              this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
+              if (type === 'start') {
+                if (data.end) {
+                  this.showCirlce(data.end, 'end', {
+                    collisionDebounce: holdDuration,
+                    circle: data.end,
+                  });
+                }
+              }
+              this.setTweenData(handTexture, {
                 remainingDuration: undefined,
                 stoppedAt: undefined,
                 totalTimeElapsed: 0,
-              };
+              });
+
               graphics.destroy(true);
-              redTween.remove();
+              tween.remove();
               gameObject.destroy(true);
 
               if (type === 'start') {
-                const sprite = this.add
-                  .sprite(x, y, TextureKeys.RED_DONE)
-                  .setScale(this.circleScale);
+                const endTexture =
+                  handTexture === TextureKeys.RIGHT_HAND
+                    ? TextureKeys.RED_DONE
+                    : TextureKeys.BLUE_DONE;
+                const sprite = this.add.sprite(x, y, endTexture).setScale(this.circleScale);
                 this.tweens.addCounter({
                   ease: 'Linear',
                   duration: 300,
@@ -204,7 +256,8 @@ export class MovingTonesScene extends Phaser.Scene {
                   },
                 });
               } else {
-                this.animate(x, y, 'red');
+                const color = handTexture === TextureKeys.RIGHT_HAND ? 'red' : 'blue';
+                this.animate(x, y, color);
               }
             });
           }
@@ -212,32 +265,40 @@ export class MovingTonesScene extends Phaser.Scene {
       handSubscription.unsubscribe();
     }
 
-    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
-      const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.RED_CIRCLE);
+    if (gameObjectTexture === TextureKeys.MUSIC_CIRCLE) {
+      const interactableTexture =
+        handTexture === TextureKeys.RIGHT_HAND ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
+      const startCirclesExist = this.checkIfStartCircleExists(this.group, interactableTexture);
       if (startCirclesExist) return;
 
       const handSubscription = this.handTrackerService.openHandStatus
         .pipe(distinctUntilChanged())
         .subscribe((status) => {
+          const { circle }: MovingTonesCircleData = gameObject.getData('data');
+          this.circleEvents.next({ name: 'collisionStarted', circle });
+
           if (!status) return;
           if (
             this.allowClosedHandsDuringCollision ||
-            ['right-hand', 'both-hands'].includes(status)
+            [handTexture, 'both-hands'].includes(status)
           ) {
             const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-            if (interactableWith === 'blue') {
+            const color = handTexture === TextureKeys.RIGHT_HAND ? 'red' : 'blue';
+            if (interactableWith !== color) {
               this.score.next(-1);
+              this.circleEvents.next({ name: 'invalidCollision', circle });
+              return;
             } else {
               this.score.next(1);
             }
-
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
             rippleAnim.destroy(true);
 
             const { x, y } = gameObject.body.center;
-
             this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
             gameObject.destroy(true);
+
+            this.circleEvents.next({ name: 'collisionCompleted', circle });
             this.animate(x, y, 'green');
           }
         });
@@ -245,155 +306,48 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   };
 
-  private leftCollisionCallback = (
-    _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    gameObject: GameObjectWithBodyAndTexture,
-  ) => {
-    if (!gameObject.texture) return;
-
-    if (gameObject.texture.key === TextureKeys.RED_CIRCLE) return;
-
-    if (gameObject.texture.key === TextureKeys.BLUE_CIRCLE) {
-      const type: 'start' | 'end' | undefined = gameObject.getData('type');
-      if (type === 'end') {
-        if (this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE)) {
-          return;
-        }
-      }
-
-      const handSubscription = this.handTrackerService.openHandStatus
-        .pipe(distinctUntilChanged())
-        .subscribe((status) => {
-          if (!status) return;
-
-          const [color, startFromBeginning]: [number, boolean] = gameObject.getData([
-            'color',
-            'startFromBeginning',
-          ]);
-
-          const isHandClosed = this.isBlueHeld && !['left-hand', 'both-hands'].includes(status);
-
-          if (!this.allowClosedHandsWhileHoldingPose && isHandClosed) {
-            this.isBlueHeld = false;
-            if (type === 'start') this.blueHoldState.next(false);
-          }
-
-          const isHandHeld =
-            this.isBlueHeld === false &&
-            (this.allowClosedHandsWhileHoldingPose || ['left-hand', 'both-hands'].includes(status));
-
-          if (isHandHeld) {
-            this.isBlueHeld = true;
-            if (type === 'start') this.blueHoldState.next(true);
-
-            const { x, y } = gameObject.body.center;
-            const circleRadius = (gameObject.body.right - gameObject.body.left) / 2;
-
-            const { tween: blueTween, graphics } =
-              this.blueTween.remainingDuration === undefined ||
-              this.blueTween.stoppedAt === undefined
-                ? this.animateHeld(x, y, circleRadius, color, 0, this.holdDuration)
-                : this.animateHeld(
-                    x,
-                    y,
-                    circleRadius,
-                    color,
-                    this.blueTween.stoppedAt,
-                    this.blueTween.remainingDuration,
-                  );
-
-            blueTween.on('update', (tween: Phaser.Tweens.Tween) => {
-              if (!this.isBlueHeld) {
-                if (startFromBeginning) {
-                  graphics.destroy(true);
-                  blueTween.remove();
-                  if (type === 'start') {
-                    this.destroyGameObjects('allExceptStartCircle', TextureKeys.BLUE_CIRCLE);
-                  }
-                  this.blueTween = {
-                    remainingDuration: undefined,
-                    stoppedAt: undefined,
-                    totalTimeElapsed: 0,
-                  };
-                } else {
-                  this.blueTween = {
-                    stoppedAt: tween.getValue(),
-                    remainingDuration: tween.duration - tween.elapsed,
-                    totalTimeElapsed: this.blueTween.totalTimeElapsed + tween.elapsed,
-                  };
-                  graphics.destroy(true);
-                  tween.remove();
-                }
-              }
-            });
-
-            blueTween.once('complete', () => {
-              this.blueTween = {
-                remainingDuration: undefined,
-                stoppedAt: undefined,
-                totalTimeElapsed: 0,
-              };
-              graphics.destroy(true);
-              blueTween.remove();
-              gameObject.destroy(true);
-
-              if (type === 'start') {
-                const sprite = this.add
-                  .sprite(x, y, TextureKeys.BLUE_DONE)
-                  .setScale(this.circleScale);
-                this.tweens.addCounter({
-                  ease: 'Linear',
-                  duration: 300,
-                  from: 1,
-                  to: 1.1,
-                  onUpdate: (tween) => {
-                    sprite.setScale(tween.getValue());
-                  },
-                  onComplete: (tween) => {
-                    tween.remove();
-                    sprite.destroy(true);
-                  },
-                });
-              } else {
-                this.animate(x, y, 'blue');
-              }
-            });
-          }
-        });
-      handSubscription.unsubscribe();
+  getTween(texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND) {
+    if (texture === TextureKeys.RIGHT_HAND) {
+      return this.redTween;
+    } else {
+      return this.blueTween;
     }
+  }
 
-    if (gameObject.texture.key === TextureKeys.MUSIC_CIRCLE) {
-      const startCirclesExist = this.checkIfStartCircleExists(this.group, TextureKeys.BLUE_CIRCLE);
-      if (startCirclesExist) return;
-
-      const handSubscription = this.handTrackerService.openHandStatus
-        .pipe(distinctUntilChanged())
-        .subscribe((status) => {
-          if (!status) return;
-          if (
-            this.allowClosedHandsDuringCollision ||
-            ['left-hand', 'both-hands'].includes(status)
-          ) {
-            const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
-            if (interactableWith === 'red') {
-              this.score.next(-1);
-            } else {
-              this.score.next(1);
-            }
-
-            const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
-            rippleAnim && rippleAnim.destroy(true);
-
-            const { x, y } = gameObject.body.center;
-            this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
-            gameObject.destroy(true);
-            this.animate(x, y, 'green');
-          }
-        });
-      handSubscription.unsubscribe();
+  setTweenData(
+    texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND,
+    data: MovingTonesTweenData,
+  ) {
+    if (texture === TextureKeys.RIGHT_HAND) {
+      this.redTween = data;
+    } else {
+      this.blueTween = data;
     }
-  };
+  }
+
+  setHeldState(texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND, val: boolean) {
+    if (texture === TextureKeys.RIGHT_HAND) {
+      this.isRedHeld = val;
+    } else {
+      this.isBlueHeld = val;
+    }
+  }
+
+  getHeldState(texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND) {
+    if (texture === TextureKeys.RIGHT_HAND) {
+      return this.isRedHeld;
+    } else {
+      return this.isBlueHeld;
+    }
+  }
+
+  getHoldStateSubscription(texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND) {
+    if (TextureKeys.RIGHT_HAND) {
+      return this.redHoldState;
+    } else {
+      return this.blueHoldState;
+    }
+  }
 
   private onLoadCallback = () => {
     this.musicFilesLoaded += 1;
@@ -405,7 +359,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   constructor(
     private ttsService: TtsService,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private handTrackerService: HandTrackerService,
   ) {
     super({ key: 'movingTones' });
@@ -629,18 +583,78 @@ export class MovingTonesScene extends Phaser.Scene {
   override update(time: number, delta: number): void {
     if (this.collisions) {
       if (this.leftHand && this.group && this.group.getLength() >= 1) {
-        if (!this.physics.overlap(this.leftHand, this.group, this.leftCollisionCallback)) {
+        if (!this.physics.overlap(this.leftHand, this.group, this.collisionCallback)) {
           this.isBlueHeld = false;
           this.blueHoldState.next(false);
         }
       }
       if (this.rightHand && this.group && this.group.getLength() >= 1) {
-        if (!this.physics.overlap(this.rightHand, this.group, this.rightCollisionCallback)) {
+        if (!this.physics.overlap(this.rightHand, this.group, this.collisionCallback)) {
           this.isRedHeld = false;
           this.redHoldState.next(false);
         }
       }
     }
+  }
+
+  initPath(start: Circle, end: Circle, path: Circle[], settings: MovingTonesCircleSettings) {
+    // texture color depends on the hand
+    const textureColor = start.hand === 'right' ? 'red' : 'blue';
+    const { collisionDebounce } = settings;
+
+    this.showCirlce(start, 'start', {
+      circle: start,
+      collisionDebounce,
+      end,
+      path,
+    });
+  }
+
+  showCirlce(
+    circle: Circle,
+    type: 'start' | 'end',
+    data?: MovingTonesCircleData,
+    startFromBeginning = true,
+  ) {
+    const { x, y, hand } = circle;
+    const textureColor = hand === 'right' ? 'red' : 'blue';
+    const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
+    const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
+    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(this.circleScale);
+
+    if (!gameObject || !this.group) return;
+
+    // entry music for shapes
+    if (type === 'start') {
+      this.playHoldCircleMusic('entry');
+      this.setNextNote();
+    } else {
+      this.playMusicCirlceEntryMusic();
+    }
+
+    const gameObjectData: {
+      type: 'start' | 'end';
+      color: number;
+      startFromBeginning: boolean;
+      circle: Circle;
+      data?: { [key: string]: any };
+    } = {
+      type,
+      color,
+      startFromBeginning,
+      circle,
+    };
+
+    if (data) {
+      gameObjectData['data'] = data;
+    }
+
+    gameObject.setData(gameObjectData);
+
+    gameObject && gameObject.refreshBody();
+    this.circleEvents.next({ name: 'visible', circle });
+    this.group.add(gameObject);
+    return gameObject;
   }
 
   showHoldCircle(
@@ -667,6 +681,39 @@ export class MovingTonesScene extends Phaser.Scene {
       startFromBeginning,
     });
     gameObject && gameObject.refreshBody();
+    this.group.add(gameObject);
+    return gameObject;
+  }
+
+  showGreenCircle(circle: Circle) {
+    const { x, y, hand } = circle;
+    const interactableWith = hand === 'right' ? 'red' : 'blue';
+
+    this.circleEvents.next({ name: 'visible', circle });
+
+    const gameObject = this.physics.add
+      .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
+      .setScale(this.circleScale);
+
+    if (!gameObject || !this.group) return;
+
+    // entry music and anim
+    this.playMusicCirlceEntryMusic();
+    const anim = this.add
+      .sprite(x, y, TextureKeys.GREEN_RIPPLE)
+      .play(AnimationKeys.GREEN_RIPPLE_ANIM)
+      .setScale((0.4 * this.circleScale) / 0.6)
+      .setDepth(-1)
+      .setAlpha(0.5);
+
+    gameObject.setData({
+      rippleAnim: anim,
+      interactableWith,
+      circle,
+    });
+
+    gameObject.refreshBody();
+    this.circleEvents.next({ name: 'visible', circle });
     this.group.add(gameObject);
     return gameObject;
   }
@@ -716,6 +763,8 @@ export class MovingTonesScene extends Phaser.Scene {
       (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child) => {
         if (child.texture && child.texture.key === TextureKeys.MUSIC_CIRCLE) {
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
+          this.circleEvents.next({ name: 'hidden', circle });
           rippleAnim && rippleAnim.destroy(true);
         }
       });
@@ -734,8 +783,10 @@ export class MovingTonesScene extends Phaser.Scene {
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
           rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
+          this.circleEvents.next({ name: 'hidden', circle });
         });
       } else {
         if (!textureKey) return;
@@ -760,8 +811,10 @@ export class MovingTonesScene extends Phaser.Scene {
         idxList.forEach((idx) => {
           const child = this.group.getChildren()[idx] as GameObjectWithBodyAndTexture;
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
+          const circle: Circle = child.getData('circle');
           rippleAnim && rippleAnim.destroy(true);
           child && child.destroy(true);
+          this.circleEvents.next({ name: 'hidden', circle });
         });
       }
     }
@@ -903,7 +956,7 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   private subscribe() {
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       if (this.leftHand) {
         this.leftHand.destroy(true);
       }
@@ -1078,7 +1131,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   getCenterFromPose(): Promise<Coordinate> {
     return new Promise((resolve) => {
-      this.poseService
+      this.poseModelAdapter
         .getPose()
         .pipe(take(1))
         .subscribe((results) => {
