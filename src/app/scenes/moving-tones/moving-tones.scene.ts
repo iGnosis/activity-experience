@@ -598,8 +598,6 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   initPath(start: Circle, end: Circle, path: Circle[], settings: MovingTonesCircleSettings) {
-    // texture color depends on the hand
-    const textureColor = start.hand === 'right' ? 'red' : 'blue';
     const { collisionDebounce } = settings;
 
     this.showCircle(start, 'start', {
