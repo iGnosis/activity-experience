@@ -655,34 +655,6 @@ export class MovingTonesScene extends Phaser.Scene {
     return gameObject;
   }
 
-  showHoldCircle(
-    x: number,
-    y: number,
-    textureColor: 'red' | 'blue',
-    type: 'start' | 'end',
-    startFromBeginning = true,
-  ) {
-    const textureKey = textureColor === 'red' ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
-    const color = textureColor === 'red' ? 0xeb0000 : 0x2f51ae;
-    const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(this.circleScale);
-    if (!gameObject || !this.group) return;
-
-    if (type === 'start') {
-      this.playHoldCircleMusic('entry');
-      this.setNextNote();
-    } else {
-      this.playMusicCirlceEntryMusic();
-    }
-    gameObject.setData({
-      type,
-      color,
-      startFromBeginning,
-    });
-    gameObject && gameObject.refreshBody();
-    this.group.add(gameObject);
-    return gameObject;
-  }
-
   showGreenCircle(circle: Circle) {
     const { x, y, hand } = circle;
     const interactableWith = hand === 'right' ? 'red' : 'blue';
@@ -712,29 +684,6 @@ export class MovingTonesScene extends Phaser.Scene {
 
     gameObject.refreshBody();
     this.circleEvents.next({ name: 'visible', circle });
-    this.group.add(gameObject);
-    return gameObject;
-  }
-
-  showMusicCircle(x: number, y: number, interactableWith: 'red' | 'blue') {
-    const gameObject = this.physics.add
-      .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
-      .setScale(this.circleScale);
-
-    if (!gameObject || !this.group) return;
-
-    this.playMusicCirlceEntryMusic();
-    const anim = this.add
-      .sprite(x, y, TextureKeys.GREEN_RIPPLE)
-      .play(AnimationKeys.GREEN_RIPPLE_ANIM)
-      .setScale((0.4 * this.circleScale) / 0.6)
-      .setDepth(-1)
-      .setAlpha(0.5);
-    gameObject.setData({
-      rippleAnim: anim,
-      interactableWith,
-    });
-    gameObject.refreshBody();
     this.group.add(gameObject);
     return gameObject;
   }

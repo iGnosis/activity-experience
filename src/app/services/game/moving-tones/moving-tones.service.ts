@@ -832,7 +832,7 @@ export class MovingTonesService implements ActivityBase {
           hand: 'right',
           type: 'start',
         };
-        this.movingTonesScene.showCircle(rightCircle, 'start');
+        this.movingTonesScene.showCircle(rightCircle, 'start', { circle: rightCircle });
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
       },
@@ -881,7 +881,7 @@ export class MovingTonesService implements ActivityBase {
           hand: 'left',
           type: 'start',
         };
-        this.movingTonesScene.showCircle(leftCircle, 'start');
+        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
       },
@@ -913,8 +913,8 @@ export class MovingTonesService implements ActivityBase {
           hand: 'right',
           type: 'start',
         };
-        this.movingTonesScene.showCircle(rightCircle, 'start');
-        this.movingTonesScene.showCircle(leftCircle, 'start');
+        this.movingTonesScene.showCircle(rightCircle, 'start', { circle: rightCircle });
+        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
 
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
