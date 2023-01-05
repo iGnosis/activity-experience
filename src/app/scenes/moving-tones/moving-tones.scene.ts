@@ -220,7 +220,7 @@ export class MovingTonesScene extends Phaser.Scene {
               this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
               if (type === 'start') {
                 if (data.end) {
-                  this.showCirlce(data.end, 'end', {
+                  this.showCircle(data.end, 'end', {
                     collisionDebounce: holdDuration,
                     circle: data.end,
                   });
@@ -602,7 +602,7 @@ export class MovingTonesScene extends Phaser.Scene {
     const textureColor = start.hand === 'right' ? 'red' : 'blue';
     const { collisionDebounce } = settings;
 
-    this.showCirlce(start, 'start', {
+    this.showCircle(start, 'start', {
       circle: start,
       collisionDebounce,
       end,
@@ -610,7 +610,7 @@ export class MovingTonesScene extends Phaser.Scene {
     });
   }
 
-  showCirlce(
+  showCircle(
     circle: Circle,
     type: 'start' | 'end',
     data?: MovingTonesCircleData,

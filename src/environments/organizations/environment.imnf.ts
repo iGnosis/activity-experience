@@ -66,7 +66,7 @@ export const environment: Environment = {
         level1: {
           configuration: {
             gameDuration: 3 * 60,
-            speed: 400,
+            speed: 1500,
           },
         },
       },

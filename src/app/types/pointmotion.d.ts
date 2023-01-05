@@ -569,8 +569,8 @@ export type SoundExplorerAnalyticsDTO = {
 };
 
 export type MovingTonesAnalyticsDTO = {
-  leftCoordinates: Coordinate[];
-  rightCoordinates: Coordinate[];
+  leftPath: MovingTonesCircle[];
+  rightPath: MovingTonesCircle[];
 };
 
 export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
