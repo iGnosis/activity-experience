@@ -262,10 +262,10 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Did you hear that?',
             description: 'You just created music by interacting with the shape.',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -370,10 +370,10 @@ export class SoundExplorerService {
         this.ttsService.tts('When you play multiple notes at the same time you create a harmony.');
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'You created harmony!',
             description: 'When multiple notes are played together you create a harmony.',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/harmony.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -416,10 +416,10 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'You created a chord!',
             description: 'When 3 or more shapes are interacted with, you create a chord',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/chord.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -510,11 +510,11 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: "Avoid the 'X' shape.",
             description:
               "If you interact with an 'X' shape, you have to build up to playing the chords again.",
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/avoid-x-shape.mp4',
           },
           attributes: {
             visibility: 'visible',

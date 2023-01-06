@@ -306,7 +306,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up when you see an odd number on the screen.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -359,7 +359,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down when you see an even number on the screen.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -487,7 +487,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'If you see two even or odd numbers appear one after the other,',
             description: 'hold the pose until the timer runs out.',
-            src: 'assets/videos/sit-to-stand/consecutive_case.mp4',
+            src: 'assets/videos/sit-to-stand/consecutive.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -752,7 +752,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up if the answer is an odd number.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -779,7 +779,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down if the answer is an even number.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -938,7 +938,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up if the answer is an odd number.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -965,7 +965,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down if the answer is an even number.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',

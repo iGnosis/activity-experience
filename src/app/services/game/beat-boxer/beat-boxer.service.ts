@@ -274,10 +274,10 @@ export class BeatBoxerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Did you hear that?',
             description: 'You just created sound by punching the punching bag!',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/beat-boxer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -532,7 +532,7 @@ export class BeatBoxerService {
             type: 'video',
             title: 'Be the musician!',
             description: 'Try following a rhythm when you play the notes.',
-            src: 'assets/videos/beat-boxer/be-the-musician.mp4',
+            src: 'assets/videos/beat-boxer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -920,10 +920,10 @@ export class BeatBoxerService {
         await this.elements.sleep(2000);
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Right hand for red',
             description: 'Use your right hand to punch the red punching bags.',
-            src: 'assets/images/beat-boxer/red-bag.png',
+            src: 'assets/videos/beat-boxer/red-for-right.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -945,10 +945,10 @@ export class BeatBoxerService {
         await this.elements.sleep(3000);
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Left hand for blue',
             description: 'Use your left hand to punch the blue punching bags.',
-            src: 'assets/images/beat-boxer/blue-bag.png',
+            src: 'assets/videos/beat-boxer/blue-for-left.mp4',
           },
           attributes: {
             visibility: 'visible',
