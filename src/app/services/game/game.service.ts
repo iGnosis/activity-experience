@@ -584,6 +584,10 @@ export class GameService {
       }
 
       for (let i = 0; i < remainingStages.length; i++) {
+        if (this.calibrationStatus !== 'success') {
+          return;
+          // throw new Error('Re-calibration occurred');
+        }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
           const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
