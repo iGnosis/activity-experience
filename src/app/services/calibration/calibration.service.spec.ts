@@ -372,7 +372,7 @@ describe('CalibrationService', () => {
       'fast',
       calibrationBox,
     );
-    expect(calibratedPoints.length).toEqual(17);
+    expect(calibratedPoints.length).toEqual(20);
     expect(unCalibratedPoints.length).toEqual(0);
   });
 
@@ -389,7 +389,7 @@ describe('CalibrationService', () => {
       calibrationBox,
     );
 
-    expect(calibratedPoints.length).toEqual(17);
+    expect(calibratedPoints.length).toEqual(20);
     expect(unCalibratedPoints.length).toEqual(0);
   });
 });
