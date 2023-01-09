@@ -189,8 +189,13 @@ export class CalibrationService {
     let bodyPoints: number[] = [];
 
     if (this.mode === 'full') {
-      // consider all landmarks points that are compatible with Posenet.
-      bodyPoints = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+      if (this.poseModelAdapter.getModel() === 'mediapipe') {
+        // only consider point 9 to 28 (https://stackoverflow.com/a/28247338/1234007)
+        bodyPoints = Array.from({ length: 20 }, (v, k) => k + 9);
+      } else if (this.poseModelAdapter.getModel() === 'posenet') {
+        // consider all landmarks points that are compatible with Posenet.
+        bodyPoints = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+      }
     } else if (this.mode === 'fast') {
       // only the key body points must be visible.
       bodyPoints = [12, 11, 24, 23, 26, 25];
