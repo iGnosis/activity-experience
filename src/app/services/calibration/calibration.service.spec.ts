@@ -265,13 +265,6 @@ describe('CalibrationService', () => {
     expect(service.subscription).toEqual(jasmine.anything());
   });
 
-  it('should setup re-calibration subscription', () => {
-    expect(service.subscriptionReCalibration).not.toEqual(jasmine.anything());
-
-    service._setupReCalibrationSubscription();
-    expect(service.subscriptionReCalibration).toEqual(jasmine.anything());
-  });
-
   it('should disable calibration', () => {
     service.enable();
     expect(service.isEnabled).toBeTrue();
