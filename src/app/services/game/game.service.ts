@@ -88,6 +88,7 @@ export class GameService {
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
     } else if (status === 'success') {
+      // Refactor: move this to the method where mila asks to raise your hand ln:416
       if (this.gameStatus.stage === 'loop') {
         this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
           this.soundsService.playCalibrationSound('success');
@@ -165,6 +166,7 @@ export class GameService {
       });
   }
 
+  // Refactor: Remove this method if not needed?
   setGame(name: Activities) {
     this.isNewGame = false;
     this.gameStatus = {
@@ -226,6 +228,8 @@ export class GameService {
         });
       }
 
+      // Refactor: Break this down or make it more readable
+      // Refactor: Refresh the tab if files don't load within X seconds or if error happens
       combineLatest([this.poseModelAdapter.getStatus(), this.handsService.getStatus()]).subscribe({
         next: async (res) => {
           console.log('this.poseModelAdapter.getMediapipeStatus:res', res);
@@ -344,6 +348,7 @@ export class GameService {
     });
   }
 
+  // Refactor: Move this to a separate service for pose tracking?
   startPoseTracker() {
     if (typeof Worker !== 'undefined') {
       this.poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
@@ -404,6 +409,8 @@ export class GameService {
   setupSubscriptions() {
     this.calibrationService.enable();
     this.handTrackerService.enable();
+    // Refactor: Break this down into smaller methods
+    // Refactor: Make sure this debouncetime is affecting all the re-calibration
     this.calibrationService.result
       .pipe(debounceTime(2000))
       .subscribe(async (status: CalibrationStatusType) => {
@@ -442,10 +449,8 @@ export class GameService {
                 );
               });
             } else {
-              // if (!this.gameStarted) {
               console.log('starting game after calibration');
               this.startGame();
-              // }
             }
           }
         }
@@ -496,6 +501,8 @@ export class GameService {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
+  // Refactor: Rewrite this probably
+  // Create separate methods for these 2 cases to avoid complicated checks like in ln:599
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
     // will be called in two cases...
     // once one game is finished
@@ -591,6 +598,7 @@ export class GameService {
           // throw new Error('Re-calibration occurred');
         }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
+          // Refactor: handle pre game hook in a new method
           const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
           });
@@ -632,6 +640,7 @@ export class GameService {
           };
         }
 
+        // Refactor: Make sure only one instance is running at a given time.
         await this.executeBatch(
           reCalibrationCount,
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -647,6 +656,8 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+
+      // Refactor: Create to a separate method to handle the game end or just move this to postLoopHook()
       this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
       this.googleAnalyticsService.sendEvent('level_end', {
@@ -705,6 +716,7 @@ export class GameService {
     });
   }
 
+  //Refactor: Why do we need the recalibrationCount when calibrationStatus does the same job?
   async executeBatch(
     reCalibrationCount: number,
     batch: Array<(reCalibrationCount: number) => Promise<any>>,

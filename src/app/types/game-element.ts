@@ -38,6 +38,7 @@ export class GameElement<T, M> {
       return;
     }
     let recalibrationTimeout;
+    // Refactor: Avoid workaround to debounce recalibration
     if (this.reCalibrationCount !== this.attributes.reCalibrationCount) {
       recalibrationTimeout = setTimeout(() => {
         console.error('Global::reCalibrationCount', this.reCalibrationCount);
