@@ -404,68 +404,70 @@ export class GameService {
   setupSubscriptions() {
     this.calibrationService.enable();
     this.handTrackerService.enable();
-    let previousCalibrationState: CalibrationStatusType = 'disabled';
-    this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
-      this.calibrationStatus = status;
-      if (this.calibrationStatus === 'success') {
-        if (previousCalibrationState === 'success') return;
-        if (this.gameStatus.stage === 'loop') {
-          this.ttsService.tts('Now I can see you again.');
-          await this.elements.sleep(3000);
-          this.ttsService.tts('Please raise one of your hands to continue.');
+    this.calibrationService.result
+      .pipe(debounceTime(2000))
+      .subscribe(async (status: CalibrationStatusType) => {
+        this.calibrationStatus = status;
+        if (this.calibrationStatus === 'success') {
+          if (this.gameStatus.stage === 'loop') {
+            this.ttsService.tts('Now I can see you again.');
+            await this.elements.sleep(3000);
+            this.ttsService.tts('Please raise one of your hands to continue.');
+            this.elements.guide.state = {
+              data: {
+                title: 'Please raise one of your hands to continue.',
+                showIndefinitely: true,
+              },
+              attributes: {
+                visibility: 'visible',
+              },
+            };
+            await this.elements.sleep(3000);
+            this.elements.guide.attributes = {
+              visibility: 'hidden',
+            };
+            this.elements.guide.data = {
+              showIndefinitely: false,
+            };
+            this.calibrationStartTime = new Date();
+          } else {
+            if (this.benchmarkId) {
+              this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+                window.parent.postMessage(
+                  {
+                    type: 'end-game',
+                    ...result,
+                  },
+                  '*',
+                );
+              });
+            } else {
+              // if (!this.gameStarted) {
+              console.log('starting game after calibration');
+              this.startGame();
+              // }
+            }
+          }
+        }
+        if (this.calibrationStatus === 'error') {
+          if (this.calibrationStartTime) this.updateCalibrationDuration();
+          this.elements.timer.data = {
+            mode: 'pause',
+          };
+          this.ttsService.tts(
+            'To resume the game, please get your whole body, from head to toe, within the red box.',
+          );
           this.elements.guide.state = {
             data: {
-              title: 'Please raise one of your hands to continue.',
-              showIndefinitely: true,
+              title: 'Ensure your whole body is in the red box to continue.',
+              titleDuration: 3000,
             },
             attributes: {
               visibility: 'visible',
             },
           };
-          await this.elements.sleep(3000);
-          this.elements.guide.attributes = {
-            visibility: 'hidden',
-          };
-          this.elements.guide.data = {
-            showIndefinitely: false,
-          };
-          this.calibrationStartTime = new Date();
-        } else {
-          if (this.benchmarkId) {
-            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
-              window.parent.postMessage(
-                {
-                  type: 'end-game',
-                  ...result,
-                },
-                '*',
-              );
-            });
-          } else {
-            this.startGame();
-          }
         }
-      }
-      if (this.calibrationStatus === 'error') {
-        if (this.calibrationStartTime) this.updateCalibrationDuration();
-        this.elements.timer.data = {
-          mode: 'pause',
-        };
-        this.ttsService.tts(
-          'To resume the game, please get your whole body, from head to toe, within the red box.',
-        );
-        this.elements.guide.state = {
-          data: {
-            title: 'Ensure your whole body is in the red box to continue.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-          },
-        };
-      }
-      previousCalibrationState = this.calibrationStatus;
-    });
+      });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
     });
@@ -662,7 +664,10 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
-      if (!this.benchmarkId) this.startGame();
+      if (!this.benchmarkId) {
+        console.log('starting game inside startGame');
+        this.startGame();
+      }
     }
 
     // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.
