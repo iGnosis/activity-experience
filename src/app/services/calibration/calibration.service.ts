@@ -15,7 +15,7 @@ export class CalibrationService {
   subscriptionReCalibration: Subscription;
   mode: CalibrationMode = 'full';
   private visibilityThreshold = 0.7;
-  private _reCalibrationCount = 0;
+  _reCalibrationCount = 0;
   reCalibrationCount = new Subject<number>();
   private canvasWidth: number;
   private canvasHeight: number;
@@ -36,7 +36,6 @@ export class CalibrationService {
 
     this._setupCanvasDimensions();
     this._setupCalibrationSubscription(autoSwitchMode);
-    this._setupReCalibrationSubscription();
   }
 
   _setupCanvasDimensions() {
@@ -73,13 +72,6 @@ export class CalibrationService {
         }
       }
       this.status = newStatus.status;
-    });
-  }
-
-  _setupReCalibrationSubscription() {
-    this.subscriptionReCalibration = this.result.pipe(debounceTime(2000)).subscribe((status) => {
-      this._reCalibrationCount += 1;
-      this.reCalibrationCount.next(this._reCalibrationCount);
     });
   }
 

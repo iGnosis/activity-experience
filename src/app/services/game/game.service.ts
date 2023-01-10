@@ -27,7 +27,14 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { combineLatest, combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
+import {
+  combineLatest,
+  combineLatestWith,
+  debounceTime,
+  distinctUntilChanged,
+  take,
+  throttleTime,
+} from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
@@ -412,8 +419,9 @@ export class GameService {
     // Refactor: Break this down into smaller methods
     // Refactor: Make sure this debouncetime is affecting all the re-calibration
     this.calibrationService.result
-      .pipe(debounceTime(2000))
+      .pipe(debounceTime(2000), distinctUntilChanged())
       .subscribe(async (status: CalibrationStatusType) => {
+        this.updateRecalibrationCount();
         this.calibrationStatus = status;
         if (this.calibrationStatus === 'success') {
           if (this.gameStatus.stage === 'loop') {
@@ -476,6 +484,11 @@ export class GameService {
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
     });
+  }
+
+  updateRecalibrationCount() {
+    this.calibrationService._reCalibrationCount += 1;
+    this.calibrationService.reCalibrationCount.next(this.calibrationService._reCalibrationCount);
   }
 
   updateCalibrationDuration() {
