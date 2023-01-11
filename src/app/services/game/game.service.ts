@@ -606,7 +606,7 @@ export class GameService {
       }
 
       for (let i = 0; i < remainingStages.length; i++) {
-        if (this.calibrationStatus !== 'success') {
+        if (this.reCalibrationCount !== reCalibrationCount) {
           return;
           // throw new Error('Re-calibration occurred');
         }
@@ -739,7 +739,7 @@ export class GameService {
         console.log('breakpoint', this.gameStatus);
 
         for (let i = this.gameStatus.breakpoint; i < batch.length; i++) {
-          if (this.calibrationStatus !== 'success') {
+          if (this.reCalibrationCount !== reCalibrationCount) {
             if (this.calibrationStartTime) this.updateCalibrationDuration();
 
             reject('Recalibration count changed');
