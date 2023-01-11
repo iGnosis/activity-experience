@@ -128,6 +128,10 @@ export class SitToStandService implements ActivityBase {
       await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
     }
 
+    this.store.dispatch(
+      game.saveGameSettings({ settings: { ...this.config, level: this.currentLevel } }),
+    );
+
     this.sit2StandService.enable();
     return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');

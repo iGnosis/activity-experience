@@ -647,6 +647,11 @@ export type GameState = {
    * Indicates the amount of time for which the user was calibrated. (in seconds)
    */
   calibrationDuration?: number;
+
+  /**
+   * Stores game settings. such as timeout, and game current level.
+   */
+  settings?: any;
 };
 
 export type ScoreElementState = {
