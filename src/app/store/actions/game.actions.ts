@@ -10,4 +10,5 @@ export const game = {
   setCalibrationDuration: createAction('[Game] Set Calibration Duration', props<GameState>()),
   setTotalElapsedTime: createAction('[Game] Set Total Duration', props<GameState>()),
   gameCompleted: createAction('[Game] Game Completed'),
+  saveGameSettings: createAction('[Game] Pushes game settings to server', props<GameState>()),
 };
