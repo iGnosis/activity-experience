@@ -1040,4 +1040,5 @@ export interface MovingTonesCircleData extends MovingTonesCircleSettings {
   circle: MovingTonesCircle;
   end?: MovingTonesCircle;
   path?: MovingTonesCircle[];
+  variation?: string;
 }
