@@ -186,10 +186,6 @@ export class GameService {
 
   setPoseModel(model: 'posenet' | 'mediapipe') {
     this.poseModelAdapter.setModel(model);
-    if (environment.stageName === 'local' || environment.stageName === 'dev') {
-      const modelNameElem = document.getElementById('modelName') as HTMLElement;
-      modelNameElem.innerHTML = model;
-    }
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
