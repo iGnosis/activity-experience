@@ -101,6 +101,10 @@ export class SitToStandService implements ActivityBase {
     if (avgSuccess > 0.5) {
       // decrease timeout by 10%
       this.config.speed = this.getPercentageChange(-10, this.config.speed);
+      // minimum fixed speed... for better UX.
+      if (this.config.speed < 1500) {
+        this.config.speed = 1500;
+      }
     } else {
       // increase timeout by 10%
       this.config.speed = this.getPercentageChange(10, this.config.speed);
@@ -123,6 +127,10 @@ export class SitToStandService implements ActivityBase {
     } else {
       await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
     }
+
+    this.store.dispatch(
+      game.saveGameSettings({ settings: { ...this.config, level: this.currentLevel } }),
+    );
 
     this.sit2StandService.enable();
     return new Promise<void>(async (resolve, reject) => {
@@ -218,7 +226,7 @@ export class SitToStandService implements ActivityBase {
               <h1 class="pt-2">First Activity</h2>
               <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Balance and Reaction Time</h2>
+              <h1 class="pt-2">Balance and Reaction Time</h2>
             </div>
             `,
             buttons: [
@@ -302,7 +310,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up when you see an odd number on the screen.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -318,7 +326,7 @@ export class SitToStandService implements ActivityBase {
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise one of your hands to move further',
+            title: 'Please raise one of your hands to continue',
             showIndefinitely: true,
           },
           attributes: {
@@ -327,7 +335,7 @@ export class SitToStandService implements ActivityBase {
           },
         };
 
-        this.ttsService.tts('Please raise one of your hands to move further');
+        this.ttsService.tts('Please raise one of your hands to continue');
 
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
@@ -355,7 +363,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down when you see an even number on the screen.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -364,14 +372,14 @@ export class SitToStandService implements ActivityBase {
         };
 
         this.ttsService.tts(
-          'An Even number is any number ending with 0 2 4 6 8. Sit down when you see an Even Number.',
+          'When you see an even number on your screen. You sit down on your seat.',
         );
 
         await this.elements.sleep(8000);
 
         this.elements.guide.state = {
           data: {
-            title: 'Please raise one of your hands to move further',
+            title: 'Please raise one of your hands to continue',
             showIndefinitely: true,
           },
           attributes: {
@@ -379,7 +387,7 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Please raise one of your hands to move further');
+        this.ttsService.tts('Please raise one of your hands to continue');
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.soundsService.playCalibrationSound('success');
         this.elements.guide.state = {
@@ -481,9 +489,9 @@ export class SitToStandService implements ActivityBase {
         this.elements.video.state = {
           data: {
             type: 'video',
-            title: 'When consecutive even or odd numbers appear.',
-            description: 'Continue sitting or standing until the timer below runs out.',
-            src: 'assets/videos/sit-to-stand/consecutive_case.mp4',
+            title: 'If you see two even or odd numbers appear one after the other,',
+            description: 'hold the pose until the timer runs out.',
+            src: 'assets/videos/sit-to-stand/consecutive.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -492,7 +500,7 @@ export class SitToStandService implements ActivityBase {
         };
 
         this.ttsService.tts(
-          'When consecutive even or odd numbers appear Continue sitting or standing until the timer below runs out',
+          'If you see two even or odd numbers appear one after the other, hold the pose until the timer runs out.',
         );
         await this.elements.sleep(10000);
         this.elements.video.state = {
@@ -748,7 +756,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up if the answer is an odd number.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -775,7 +783,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down if the answer is an even number.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -934,7 +942,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Odd No. = Stand Up',
             description: 'Stand up if the answer is an odd number.',
-            src: 'assets/videos/sit-to-stand/odd_num.mp4',
+            src: 'assets/videos/sit-to-stand/odd.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -961,7 +969,7 @@ export class SitToStandService implements ActivityBase {
             type: 'video',
             title: 'Even No. = Sit Down',
             description: 'Sit down if the answer is an even number.',
-            src: 'assets/videos/sit-to-stand/even_num.mp4',
+            src: 'assets/videos/sit-to-stand/even.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -1099,7 +1107,7 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(5000);
       },
       ...this.onboardingByLevel[this.currentLevel],
-      async (reCalibrationCount: number) => {
+      async () => {
         await this.apiService.updateOnboardingStatus({
           sit_stand_achieve: true,
         });
@@ -1156,6 +1164,18 @@ export class SitToStandService implements ActivityBase {
       this.config.speed,
     );
     const resultTimestamp = Date.now();
+    console.log(
+      'promptNum: ',
+      promptNum,
+      'promptClass: ',
+      promptClass,
+      'patientClass: ',
+      res.currentClass,
+      'stringExpression: ',
+      stringExpression,
+      'res: ',
+      res,
+    );
     this.totalReps += 1;
     this.elements.timeout.state = {
       data: {
@@ -1166,10 +1186,8 @@ export class SitToStandService implements ActivityBase {
         ...(typeof reCalibrationCount === 'number' && { reCalibrationCount }),
       },
     };
-    const userState =
-      res.result === 'success' ? promptClass : promptClass === 'sit' ? 'stand' : 'sit';
     const hasUserStateChanged: boolean =
-      analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== userState : true;
+      analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== res.currentClass : true;
     const analyticsObj = {
       prompt: {
         id: promptId,
@@ -1181,7 +1199,7 @@ export class SitToStandService implements ActivityBase {
         },
       },
       reaction: {
-        type: userState,
+        type: res.currentClass,
         timestamp: Date.now(),
         startTime: Date.now(),
         completionTimeInMs: hasUserStateChanged
@@ -1197,6 +1215,33 @@ export class SitToStandService implements ActivityBase {
 
     return { res, analyticsObj };
   }
+  private getRandomPromptExpression() {
+    let stringExpression;
+
+    if (this.currentLevel === 'level2') {
+      const isSumOperation = Math.random() > 0.5;
+
+      const num1 = Math.floor(Math.random() * 9);
+      const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
+
+      stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
+    } else if (this.currentLevel === 'level3') {
+      const isDivisionOperation = Math.random() > 0.5;
+
+      const num1 = Math.floor(Math.random() * 9);
+
+      const num1Factors = this.factors(num1);
+      const randomFactor =
+        num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
+
+      const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
+
+      stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
+    }
+    const promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
+
+    return { promptNum, stringExpression };
+  }
 
   private async game(reCalibrationCount?: number) {
     this.sit2StandScene.enableMusic();
@@ -1205,40 +1250,35 @@ export class SitToStandService implements ActivityBase {
         throw new Error('reCalibrationCount changed');
       }
       // generating a prompt number
-
-      let stringExpression;
-
-      if (this.currentLevel === 'level2') {
-        const isSumOperation = Math.random() > 0.5;
-
-        const num1 = Math.floor(Math.random() * 9);
-        const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
-
-        stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
-      } else if (this.currentLevel === 'level3') {
-        const isDivisionOperation = Math.random() > 0.5;
-
-        const num1 = Math.floor(Math.random() * 9);
-
-        const num1Factors = this.factors(num1);
-        const randomFactor =
-          num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
-
-        const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
-
-        stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
-      }
-
-      let promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
+      const result = this.getRandomPromptExpression();
+      let promptNum = result.promptNum;
+      let stringExpression = result.stringExpression;
 
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
         const prevReps = this.analytics.slice(-2);
         if (prevReps[0].prompt.type === prevReps[1].prompt.type) {
           // if two even or two odd in a row, we generate the opposite class number.
-          prevReps[0].prompt.type === 'sit'
-            ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
-            : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+          if (this.currentLevel === 'level1') {
+            prevReps[0].prompt.type === 'sit'
+              ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
+              : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+          } else {
+            // for level 2 and 3
+            if (prevReps[0].prompt.type === 'sit') {
+              do {
+                const result = this.getRandomPromptExpression();
+                promptNum = result.promptNum;
+                stringExpression = result.stringExpression;
+              } while (promptNum % 2 === 0);
+            } else {
+              do {
+                const result = this.getRandomPromptExpression();
+                promptNum = result.promptNum;
+                stringExpression = result.stringExpression;
+              } while (promptNum % 2 !== 0);
+            }
+          }
         }
       }
       const promptId = uuidv4();
@@ -1322,7 +1362,7 @@ export class SitToStandService implements ActivityBase {
               htmlStr: `
               <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
                 <div class='p-4 d-flex flex-row align-items-center'>
-                      <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png'/>
+                      <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Standing Man.png' alt="standing man"/>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>1</div>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>17</div>
                       <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>23</div>
@@ -1350,7 +1390,7 @@ export class SitToStandService implements ActivityBase {
               htmlStr: `
                   <div class="w-full h-full position-absolute translate-middle top-1/2 start-1/2 rounded-4 d-flex align-items-center flex-column justify-content-center bg-info ">
                     <div class='p-4 d-flex flex-row align-items-center'>
-                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png'/>
+                          <img style='width:250px;height:250px;' src='assets/images/overlay_icons/Sitting on Chair.png' alt="sitting on chair"/>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>2</div>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>14</div>
                           <div class='bg-success p-6 display-4 text-white rounded-3 mx-4'>38</div>
@@ -1402,14 +1442,14 @@ export class SitToStandService implements ActivityBase {
         this.elements.guide.state = {
           data: {
             showIndefinitely: true,
-            title: 'Raise one of your hands to move further.',
+            title: 'Raise one of your hands to continue.',
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        this.ttsService.tts('Raise one of your hands to move further');
+        this.ttsService.tts('Raise one of your hands to continue');
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');

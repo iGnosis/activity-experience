@@ -367,6 +367,7 @@ export interface Options {
   refineFaceLandmarks?: boolean;
   minDetectionConfidence?: number;
   minTrackingConfidence?: number;
+  useCpuInference?: boolean;
 }
 
 /**
@@ -442,8 +443,8 @@ export declare class Holistic implements HolisticInterface {
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
 export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
-export interface IsMediaPipeReady {
-  isMediaPipeReady: boolean;
+export interface IsModelReady {
+  isModelReady: boolean;
   downloadSource: 'local' | 'cdn';
 }
 
@@ -568,8 +569,8 @@ export type SoundExplorerAnalyticsDTO = {
 };
 
 export type MovingTonesAnalyticsDTO = {
-  leftCoordinates: Coordinate[];
-  rightCoordinates: Coordinate[];
+  leftPath: MovingTonesCircle[];
+  rightPath: MovingTonesCircle[];
 };
 
 export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
@@ -646,6 +647,11 @@ export type GameState = {
    * Indicates the amount of time for which the user was calibrated. (in seconds)
    */
   calibrationDuration?: number;
+
+  /**
+   * Stores game settings. such as timeout, and game current level.
+   */
+  settings?: any;
 };
 
 export type ScoreElementState = {
@@ -972,13 +978,6 @@ export type Origin =
   | 'top-left'
   | 'top-right';
 
-export interface TweenData {
-  stoppedAt?: number;
-  remainingDuration?: number;
-  totalTimeElapsed: number;
-  tween?: Phaser.Tweens.Tween;
-}
-
 export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
 export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
 
@@ -998,4 +997,48 @@ export interface Theme {
     family: string;
     url: string;
   };
+}
+
+export enum AvailableModelsEnum {
+  MEDIAPIPE = 'mediapipe',
+  POSENET = 'posenet',
+}
+
+export interface MovingTonesTweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type MovingTonesCircle = {
+  id: string;
+  x: number;
+  y: number;
+  type: 'start' | 'end' | 'coin';
+  hand: 'left' | 'right';
+};
+
+export type MovingTonesCircleEventName =
+  | 'hidden'
+  | 'visible'
+  | 'collisionStarted'
+  | 'collisionEnded'
+  | 'collisionCompleted'
+  | 'invalidCollision';
+
+export type MovingTonesCircleEvent = {
+  name: MovingTonesCircleEventName;
+  circle: MovingTonesCircle;
+};
+
+export type MovingTonesCircleSettings = {
+  collisionDebounce?: number;
+};
+
+export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  circle: MovingTonesCircle;
+  end?: MovingTonesCircle;
+  path?: MovingTonesCircle[];
+  variation?: string;
 }

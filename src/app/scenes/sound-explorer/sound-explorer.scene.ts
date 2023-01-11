@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -106,7 +106,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   };
 
   constructor(
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private ttsService: TtsService,
     private soundsService: SoundsService,
   ) {
@@ -214,7 +214,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     this.enableLeftHand();
     this.enableRightHand();
 
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       // this.results = results;
       if (this.leftHand) {
         this.leftHand.destroy(true);
@@ -378,21 +378,14 @@ export class SoundExplorerScene extends Phaser.Scene {
     }
     if (results.poseLandmarks[15] && results.poseLandmarks[19] && this.enableLeft) {
       const leftWrist = results.poseLandmarks[15];
-      const leftIndex = results.poseLandmarks[19];
-      const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
-
       this.leftHand = this.physics.add.existing(
-        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+        this.add.circle(width - leftWrist.x * width, leftWrist.y * height, 25, 0xffffff, 0.5),
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
-      const rightIndex = results.poseLandmarks[20];
-      const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
-
-      // this.rightHand = this.add.arc(width - x * width, y * height, 25, 0, 360, false, 0xffffff, 0.5);
       this.rightHand = this.physics.add.existing(
-        this.add.circle(width - x * width, y * height, 25, 0xffffff, 0.5),
+        this.add.circle(width - rightWrist.x * width, rightWrist.y * height, 25, 0xffffff, 0.5),
       );
     }
   }
@@ -627,13 +620,10 @@ export class SoundExplorerScene extends Phaser.Scene {
   }
 
   setNextNote() {
-    const totalNotesAvailable = Object.entries(
-      soundExporerAudio[this.genre][this.currentSet].bass,
-    ).length;
-    if (this.currentNote === totalNotesAvailable + 1) {
-      this.currentNote = 1;
-    } else {
-      this.currentNote += 1;
+    this.currentNote += 1;
+    // the chords only have 16 notes.. so resetting it to 1 when the value moves past 16.
+    if (this.currentNote === 17) {
+      this.resetNotes();
     }
   }
 

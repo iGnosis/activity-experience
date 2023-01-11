@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
-  AnalyticsDTO,
   AnalyticsResultDTO,
   GameState,
   Genre,
@@ -19,9 +18,7 @@ import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
-import { sampleSize as _sampleSize } from 'lodash';
 import { Subscription } from 'rxjs';
-import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
@@ -61,8 +58,8 @@ export class SoundExplorerService {
     'bottom-right': [-110, -115],
     'bottom-left': [-70, -75],
     'bottom-center': [-120, -70],
-    'left-center': [-70, -65],
-    'right-center': [-120, -110],
+    'left-center': [-65, -60],
+    'right-center': [-110, -105],
     'top-left': [40, 50],
     'top-right': [150, 160],
   };
@@ -265,10 +262,10 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Did you hear that?',
             description: 'You just created music by interacting with the shape.',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -373,10 +370,10 @@ export class SoundExplorerService {
         this.ttsService.tts('When you play multiple notes at the same time you create a harmony.');
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'You created harmony!',
             description: 'When multiple notes are played together you create a harmony.',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/harmony.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -419,10 +416,10 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'You created a chord!',
             description: 'When 3 or more shapes are interacted with, you create a chord',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/chord.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -513,11 +510,11 @@ export class SoundExplorerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: "Avoid the 'X' shape.",
             description:
               "If you interact with an 'X' shape, you have to build up to playing the chords again.",
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/sound-explorer/avoid-x-shape.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -667,7 +664,7 @@ export class SoundExplorerService {
                 <h1 class="pt-2">Next Activity</h2>
                 <h1 class="pt-6 display-4">Sound Explorer</h1>
                 <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-                <h1 class="py-2">Range of Motion and Balance</h2>
+                <h1 class="pt-2">Range of Motion and Balance</h2>
               </div>
               `,
             buttons: [
@@ -724,8 +721,8 @@ export class SoundExplorerService {
     this.totalReps++;
 
     // if low points, reset difficulty
-    if (this.pointsGained < this.difficulty / 2) {
-      this.difficulty = 1;
+    if (this.pointsGained < this.difficulty / 2 && this.difficulty > 1) {
+      this.difficulty--;
       this.streak = 0;
     } else {
       this.streak++;

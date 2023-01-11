@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Results } from '@mediapipe/pose';
-import { GameComponent } from 'src/app/pages/game/game.component';
+import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
 import { CalibrationService } from './calibration.service';
 
 describe('CalibrationService', () => {
   let service: CalibrationService;
+  let poseModelAdapter: PoseModelAdapter;
 
   // mock results and canvas details to test calibration
   const calibratedPoseResults: Pick<Results, 'poseLandmarks'> = {
@@ -228,6 +229,9 @@ describe('CalibrationService', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(CalibrationService);
+    poseModelAdapter = TestBed.inject(PoseModelAdapter);
+    poseModelAdapter.setModel('mediapipe');
+
     calibratedPoseResults.poseLandmarks[24].visibility = 0.9997970461845398;
   });
 
@@ -259,13 +263,6 @@ describe('CalibrationService', () => {
 
     expect(service.isEnabled).toBeTrue();
     expect(service.subscription).toEqual(jasmine.anything());
-  });
-
-  it('should setup re-calibration subscription', () => {
-    expect(service.subscriptionReCalibration).not.toEqual(jasmine.anything());
-
-    service._setupReCalibrationSubscription();
-    expect(service.subscriptionReCalibration).toEqual(jasmine.anything());
   });
 
   it('should disable calibration', () => {
@@ -358,6 +355,7 @@ describe('CalibrationService', () => {
   it('should get calibration points', () => {
     service.enable();
     const { bodyPoints } = service._getBodyPoints(calibratedPoseResults.poseLandmarks);
+    console.log('bodyPoints:', bodyPoints);
 
     const { calibratedPoints, unCalibratedPoints } = service._getCalibrationPoints(
       bodyPoints,

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-import { debounceTime, iif, Observable, Subject, Subscription } from 'rxjs';
+import { debounceTime, Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationBox, CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
-import { PoseService } from '../pose/pose.service';
+import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -15,7 +15,7 @@ export class CalibrationService {
   subscriptionReCalibration: Subscription;
   mode: CalibrationMode = 'full';
   private visibilityThreshold = 0.7;
-  private _reCalibrationCount = 0;
+  _reCalibrationCount = 0;
   reCalibrationCount = new Subject<number>();
   private canvasWidth: number;
   private canvasHeight: number;
@@ -26,14 +26,16 @@ export class CalibrationService {
     height: number;
   };
 
-  constructor(private calibrationScene: CalibrationScene, private poseService: PoseService) {}
+  constructor(
+    private calibrationScene: CalibrationScene,
+    private poseModelAdapter: PoseModelAdapter,
+  ) {}
 
   enable(autoSwitchMode = true) {
     this.isEnabled = true;
 
     this._setupCanvasDimensions();
     this._setupCalibrationSubscription(autoSwitchMode);
-    this._setupReCalibrationSubscription();
   }
 
   _setupCanvasDimensions() {
@@ -47,7 +49,7 @@ export class CalibrationService {
   }
 
   _setupCalibrationSubscription(autoSwitchMode: boolean) {
-    this.subscription = this.poseService.getPose().subscribe((results) => {
+    this.subscription = this.poseModelAdapter.getPose().subscribe((results) => {
       const newStatus = this._calibrateBody(
         results,
         this.mode,
@@ -70,13 +72,6 @@ export class CalibrationService {
         }
       }
       this.status = newStatus.status;
-    });
-  }
-
-  _setupReCalibrationSubscription() {
-    this.subscriptionReCalibration = this.result.pipe(debounceTime(2000)).subscribe((status) => {
-      this._reCalibrationCount += 1;
-      this.reCalibrationCount.next(this._reCalibrationCount);
     });
   }
 
@@ -186,10 +181,13 @@ export class CalibrationService {
     let bodyPoints: number[] = [];
 
     if (this.mode === 'full') {
-      // 32 total body points -> 0, 1, 2, 3... 32.
-      // points = [...Array(33).keys()];
-      // only consider point 9 to 28 (https://stackoverflow.com/a/28247338/1234007)
-      bodyPoints = Array.from({ length: 20 }, (v, k) => k + 9);
+      if (this.poseModelAdapter.getModel() === 'mediapipe') {
+        // only consider point 9 to 28 (https://stackoverflow.com/a/28247338/1234007)
+        bodyPoints = Array.from({ length: 20 }, (v, k) => k + 9);
+      } else if (this.poseModelAdapter.getModel() === 'posenet') {
+        // consider all landmarks points that are compatible with Posenet.
+        bodyPoints = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+      }
     } else if (this.mode === 'fast') {
       // only the key body points must be visible.
       bodyPoints = [12, 11, 24, 23, 26, 25];

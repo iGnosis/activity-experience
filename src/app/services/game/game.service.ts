@@ -11,12 +11,12 @@ import {
   GameState,
   GameStatus,
   PreferenceState,
+  AvailableModelsEnum,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
 import { ElementsService } from '../elements/elements.service';
 import { GameStateService } from '../game-state/game-state.service';
-import { PoseService } from '../pose/pose.service';
 import { UiHelperService } from '../ui-helper/ui-helper.service';
 import { SitToStandService } from './sit-to-stand/sit-to-stand.service';
 import { game } from '../../store/actions/game.actions';
@@ -27,7 +27,14 @@ import { TtsService } from '../tts/tts.service';
 import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
-import { combineLatestWith, debounceTime, take, throttleTime } from 'rxjs';
+import {
+  combineLatest,
+  combineLatestWith,
+  debounceTime,
+  distinctUntilChanged,
+  take,
+  throttleTime,
+} from 'rxjs';
 import { SoundExplorerService } from './sound-explorer/sound-explorer.service';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
 import { GoogleAnalyticsService } from '../google-analytics/google-analytics.service';
@@ -35,6 +42,7 @@ import { MovingTonesService } from './moving-tones/moving-tones.service';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
 import { BenchmarkService } from '../benchmark/benchmark.service';
 import { HandsService } from '../hands/hands.service';
+import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -87,6 +95,7 @@ export class GameService {
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
     } else if (status === 'success') {
+      // Refactor: move this to the method where mila asks to raise your hand ln:416
       if (this.gameStatus.stage === 'loop') {
         this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
           this.soundsService.playCalibrationSound('success');
@@ -128,7 +137,7 @@ export class GameService {
     private beatBoxerService: BeatBoxerService,
     private soundExplorerService: SoundExplorerService,
     private movingTonesService: MovingTonesService,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private store: Store<{
       game: GameState;
       preference: PreferenceState;
@@ -145,7 +154,6 @@ export class GameService {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
       return false;
     };
-    this.handTrackerService.enable();
     this.store
       .select((state) => state.game)
       .subscribe((game) => {
@@ -165,6 +173,7 @@ export class GameService {
       });
   }
 
+  // Refactor: Remove this method if not needed?
   setGame(name: Activities) {
     this.isNewGame = false;
     this.gameStatus = {
@@ -175,7 +184,21 @@ export class GameService {
     this.currentGame = name;
   }
 
+  setPoseModel(model: 'posenet' | 'mediapipe') {
+    this.poseModelAdapter.setModel(model);
+  }
+
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+    if (
+      navigator.userAgent.match(/Mac/) &&
+      navigator.maxTouchPoints &&
+      navigator.maxTouchPoints > 2
+    ) {
+      this.setPoseModel('posenet');
+    } else {
+      this.setPoseModel('mediapipe');
+    }
+
     this.checkAuth();
     this.benchmarkId = benchmarkId;
     try {
@@ -208,10 +231,12 @@ export class GameService {
         });
       }
 
-      this.poseService.getMediapipeStatus().subscribe({
+      // Refactor: Break this down or make it more readable
+      // Refactor: Refresh the tab if files don't load within X seconds or if error happens
+      combineLatest([this.poseModelAdapter.getStatus(), this.handsService.getStatus()]).subscribe({
         next: async (res) => {
-          console.log('this.poseService.getMediapipeStatus:res', res);
-          if (res.isMediaPipeReady) {
+          console.log('this.poseModelAdapter.getMediapipeStatus:res', res);
+          if (res[0].isModelReady && res[1].isHandsModelReady) {
             await this.setPhaserDimensions(canvas);
             this.startCalibration();
             this.elements.banner.state.attributes.visibility = 'hidden';
@@ -237,7 +262,7 @@ export class GameService {
               },
             };
 
-            if (res.downloadSource == 'cdn') {
+            if (res[0].downloadSource == 'cdn' || res[1].downloadSource == 'cdn') {
               this.elements.banner.data.htmlStr = `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
@@ -260,7 +285,7 @@ export class GameService {
           };
           for (let i = 5; i >= 0; i--) {
             this.elements.banner.state.data.htmlStr = `
-              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18">
+            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-18 position-absolute translate-middle-y top-1/2">
                 <img src="assets/images/error.png" class="p-2 h-32 w-32" alt="error" />
                 <h1 class="pt-4 display-5 text-nowrap">${err.status}</h1>
                 <h3 class="pt-8 pb-8">We ran into an unexpected issue while downloading the files. Please refresh the page to solve this issue</h3>
@@ -308,7 +333,7 @@ export class GameService {
   startPoseDetection(video: HTMLVideoElement) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.poseService.start(video);
+        this.poseModelAdapter.start(video);
         if (environment.stageName !== 'local') {
           this.startPoseTracker();
         }
@@ -326,6 +351,7 @@ export class GameService {
     });
   }
 
+  // Refactor: Move this to a separate service for pose tracking?
   startPoseTracker() {
     if (typeof Worker !== 'undefined') {
       this.poseTrackerWorker = new Worker(new URL('../../pose-tracker.worker', import.meta.url), {
@@ -336,7 +362,7 @@ export class GameService {
         websocketEndpoint: environment.websocketEndpoint,
       });
 
-      const poseSubscription = this.poseService
+      const poseSubscription = this.poseModelAdapter
         .getPose()
         .pipe(combineLatestWith(this.calibrationService.result), throttleTime(100))
         .subscribe(([poseResults, calibrationStatus]) => {
@@ -385,68 +411,80 @@ export class GameService {
 
   setupSubscriptions() {
     this.calibrationService.enable();
-    this.calibrationService.result.pipe(debounceTime(2000)).subscribe(async (status: any) => {
-      this.calibrationStatus = status;
-      if (this.calibrationStatus === 'success') {
-        if (this.gameStatus.stage === 'loop') {
-          this.ttsService.tts('Now I can see you again.');
-          await this.elements.sleep(3000);
-          this.ttsService.tts('Please raise one of your hands to continue.');
+    this.handTrackerService.enable();
+    // Refactor: Break this down into smaller methods
+    // Refactor: Make sure this debouncetime is affecting all the re-calibration
+    this.calibrationService.result
+      .pipe(debounceTime(2000), distinctUntilChanged())
+      .subscribe(async (status: CalibrationStatusType) => {
+        this.updateRecalibrationCount();
+        this.calibrationStatus = status;
+        if (this.calibrationStatus === 'success') {
+          if (this.gameStatus.stage === 'loop') {
+            this.ttsService.tts('Now I can see you again.');
+            await this.elements.sleep(3000);
+            this.ttsService.tts('Please raise one of your hands to continue.');
+            this.elements.guide.state = {
+              data: {
+                title: 'Please raise one of your hands to continue.',
+                showIndefinitely: true,
+              },
+              attributes: {
+                visibility: 'visible',
+              },
+            };
+            await this.elements.sleep(3000);
+            this.elements.guide.attributes = {
+              visibility: 'hidden',
+            };
+            this.elements.guide.data = {
+              showIndefinitely: false,
+            };
+            this.calibrationStartTime = new Date();
+          } else {
+            if (this.benchmarkId) {
+              this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+                window.parent.postMessage(
+                  {
+                    type: 'end-game',
+                    ...result,
+                  },
+                  '*',
+                );
+              });
+            } else {
+              console.log('starting game after calibration');
+              this.startGame();
+            }
+          }
+        }
+        if (this.calibrationStatus === 'error') {
+          if (this.calibrationStartTime) this.updateCalibrationDuration();
+          this.elements.timer.data = {
+            mode: 'pause',
+          };
+          this.ttsService.tts(
+            'To resume the game, please get your whole body, from head to toe, within the red box.',
+          );
           this.elements.guide.state = {
             data: {
-              title: 'Please raise one of your hands to continue.',
-              showIndefinitely: true,
+              title: 'Ensure your whole body is in the red box to continue.',
+              titleDuration: 3000,
             },
             attributes: {
               visibility: 'visible',
             },
           };
-          await this.elements.sleep(3000);
-          this.elements.guide.attributes = {
-            visibility: 'hidden',
-          };
-          this.elements.guide.data = {
-            showIndefinitely: false,
-          };
-          this.calibrationStartTime = new Date();
-        } else {
-          if (this.benchmarkId) {
-            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
-              window.parent.postMessage(
-                {
-                  type: 'end-game',
-                  ...result,
-                },
-                '*',
-              );
-            });
-          } else {
-            this.startGame();
-          }
         }
-      }
-      if (this.calibrationStatus === 'error') {
-        if (this.calibrationStartTime) this.updateCalibrationDuration();
-        this.elements.timer.data = {
-          mode: 'pause',
-        };
-        this.ttsService.tts(
-          'To resume the game, please get your whole body, from head to toe, within the red box.',
-        );
-        this.elements.guide.state = {
-          data: {
-            title: 'Ensure your whole body is in the red box to continue.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-          },
-        };
-      }
-    });
+      });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
       this.reCalibrationCount = count;
     });
+  }
+
+  updateRecalibrationCount() {
+    this.calibrationService._reCalibrationCount += 1;
+    this.calibrationService.reCalibrationCount.next(this.calibrationService._reCalibrationCount);
   }
 
   updateCalibrationDuration() {
@@ -472,6 +510,8 @@ export class GameService {
     elm.height = box.bottomLeft.y - box.topLeft.y;
   }
 
+  // Refactor: Rewrite this probably
+  // Create separate methods for these 2 cases to avoid complicated checks like in ln:599
   async findNextGame(): Promise<{ name: Activities; settings: ActivityConfiguration } | undefined> {
     // will be called in two cases...
     // once one game is finished
@@ -533,7 +573,7 @@ export class GameService {
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
     let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.apiService.getOnboardingStatus();
-    if (onboardingStatus[0]?.onboardingStatus[nextGame]) {
+    if (onboardingStatus && onboardingStatus[0]?.onboardingStatus[nextGame]) {
       allStages = allStages.filter((stage) => stage !== 'tutorial');
     }
     return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
@@ -562,11 +602,12 @@ export class GameService {
       }
 
       for (let i = 0; i < remainingStages.length; i++) {
-        if (reCalibrationCount !== this.reCalibrationCount) {
+        if (this.reCalibrationCount !== reCalibrationCount) {
           return;
           // throw new Error('Re-calibration occurred');
         }
         if (remainingStages[i] === 'welcome' && !this.isNewGame) {
+          // Refactor: handle pre game hook in a new method
           const response = await this.apiService.newGame(nextGame.name).catch((err) => {
             console.log(err);
           });
@@ -608,6 +649,7 @@ export class GameService {
           };
         }
 
+        // Refactor: Make sure only one instance is running at a given time.
         await this.executeBatch(
           reCalibrationCount,
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -623,6 +665,8 @@ export class GameService {
       // // Store the number of reps completed in the game state (and server)
       // await this.executeBatch(reCalibrationCount, activity.loop());
       // await this.executeBatch(reCalibrationCount, activity.postLoop());
+
+      // Refactor: Create to a separate method to handle the game end or just move this to postLoopHook()
       this.isNewGame = false;
       this.store.dispatch(game.gameCompleted());
       this.googleAnalyticsService.sendEvent('level_end', {
@@ -640,7 +684,10 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
-      if (!this.benchmarkId) this.startGame();
+      if (!this.benchmarkId) {
+        console.log('starting game inside startGame');
+        this.startGame();
+      }
     }
 
     // Each object in the array will be a breakpoint. If something goes wrong, the loop will be started.
@@ -678,6 +725,7 @@ export class GameService {
     });
   }
 
+  //Refactor: Why do we need the recalibrationCount when calibrationStatus does the same job?
   async executeBatch(
     reCalibrationCount: number,
     batch: Array<(reCalibrationCount: number) => Promise<any>>,
