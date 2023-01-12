@@ -4,10 +4,8 @@ import { Howl } from 'howler';
 import { BehaviorSubject, distinctUntilChanged, Subject, Subscription, take } from 'rxjs';
 import { HandTrackerService } from 'src/app/services/classifiers/hand-tracker/hand-tracker.service';
 import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
-import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import {
-  AudioSprite,
   Coordinate,
   GameObjectWithBodyAndTexture,
   MovingTonesTweenData,
@@ -15,7 +13,9 @@ import {
   MovingTonesCircleEvent as CircleEvent,
   MovingTonesCircleSettings,
   MovingTonesCircleData,
+  Genre,
 } from 'src/app/types/pointmotion';
+import { movingTonesAudio } from './moving-tones.sprite';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -52,15 +52,7 @@ export class MovingTonesScene extends Phaser.Scene {
   private enabled = false;
   private poseSubscription: Subscription;
   private music = false;
-  private alto: Howl;
-  private soprano: Howl;
-  private bass: Howl;
-  private tenor: Howl;
   private failureMusic: Howl;
-  private holdSuccessMusic: Howl;
-  private holdEntrySound: Howl;
-  private greenEntrySound: Howl;
-  private holdSound: Howl;
   private altoId: number;
   private sopranoId: number;
   private bassId: number;
@@ -68,12 +60,13 @@ export class MovingTonesScene extends Phaser.Scene {
   private failureMusicId: number;
   private group: Phaser.Physics.Arcade.StaticGroup;
   private currentNote = 1;
+  private backtrack: Howl;
 
   score = new BehaviorSubject<number>(0);
 
   private designAssetsLoaded = false;
   private musicFilesLoaded = 0;
-  private totalMusicFiles = 9;
+  private totalMusicFiles!: number;
   private loadError = false;
 
   private isBlueHeld = false;
@@ -106,6 +99,7 @@ export class MovingTonesScene extends Phaser.Scene {
   ) => {
     if (!gameObject.texture || !hand.texture) return;
     let pathNumber = 0;
+    let variationNumber = 1;
 
     const gameObjectTexture = gameObject.texture.key;
     const handTexture = hand.texture.key;
@@ -208,7 +202,11 @@ export class MovingTonesScene extends Phaser.Scene {
                   if (tween.elapsed >= stepDuration * (pathNumber + 1)) {
                     if (path[pathNumber] && !alreadyShown.includes(path[pathNumber])) {
                       alreadyShown.push(path[pathNumber]);
-                      this.showGreenCircle(path[pathNumber]);
+                      if (data.variation) {
+                        this.showGreenCircle(path[pathNumber], data.variation);
+                      } else {
+                        this.showGreenCircle(path[pathNumber]);
+                      }
                       pathNumber += 1;
                     }
                   }
@@ -235,6 +233,11 @@ export class MovingTonesScene extends Phaser.Scene {
               graphics.destroy(true);
               tween.remove();
               gameObject.destroy(true);
+
+              if (data.variation) {
+                this.playSuccessMusic(data.variation, variationNumber);
+                variationNumber += 1;
+              }
 
               if (type === 'start') {
                 const endTexture =
@@ -290,12 +293,15 @@ export class MovingTonesScene extends Phaser.Scene {
               return;
             } else {
               this.score.next(1);
+              const variation = gameObject.getData('variation');
+              this.playSuccessMusic(variation, variationNumber);
+              variationNumber += 1;
             }
+
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
             rippleAnim.destroy(true);
 
             const { x, y } = gameObject.body.center;
-            this.playSuccessMusic(Phaser.Utils.Array.GetRandom(this.musicTypes));
             gameObject.destroy(true);
 
             this.circleEvents.next({ name: 'collisionCompleted', circle });
@@ -446,67 +452,6 @@ export class MovingTonesScene extends Phaser.Scene {
         this.loadError = true;
       }
     });
-
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.alto = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Alto.mp3',
-      sprite: soundExporerAudio.classical[1].alto as AudioSprite,
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.bass = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Bass.mp3',
-      sprite: soundExporerAudio.classical[1].bass as AudioSprite,
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.soprano = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Soprano.mp3',
-      sprite: soundExporerAudio.classical[1].soprano as AudioSprite,
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.tenor = new Howl({
-      src: 'assets/sounds/soundsprites/sound-explorer/classical/set2/Tenor.mp3',
-      sprite: soundExporerAudio.classical[1].tenor as AudioSprite,
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.holdSuccessMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_calibrated.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-    this.holdEntrySound = new Howl({
-      src: 'assets/images/moving-tones/music/hold_entry_sound.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-
-    this.holdSound = new Howl({
-      src: 'assets/images/moving-tones/music/hold_sound.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
-
-    this.greenEntrySound = new Howl({
-      src: 'assets/images/moving-tones/music/green_entry_sound.mp3',
-      html5: true,
-      onload: this.onLoadCallback,
-      onloaderror: this.onLoadErrorCallback,
-    });
   }
 
   create() {
@@ -599,12 +544,15 @@ export class MovingTonesScene extends Phaser.Scene {
 
   initPath(start: Circle, end: Circle, path: Circle[], settings: MovingTonesCircleSettings) {
     const { collisionDebounce } = settings;
+    const pathLength = path.length + 2;
+    const variation = 'variation' + this.getVariation(pathLength);
 
     this.showCircle(start, 'start', {
       circle: start,
       collisionDebounce,
       end,
       path,
+      variation,
     });
   }
 
@@ -621,14 +569,6 @@ export class MovingTonesScene extends Phaser.Scene {
     const gameObject = this.physics.add.staticSprite(x, y, textureKey).setScale(this.circleScale);
 
     if (!gameObject || !this.group) return;
-
-    // entry music for shapes
-    if (type === 'start') {
-      this.playHoldCircleMusic('entry');
-      this.setNextNote();
-    } else {
-      this.playMusicCirlceEntryMusic();
-    }
 
     const gameObjectData: {
       type: 'start' | 'end';
@@ -655,7 +595,7 @@ export class MovingTonesScene extends Phaser.Scene {
     return gameObject;
   }
 
-  showGreenCircle(circle: Circle) {
+  showGreenCircle(circle: Circle, variation?: string) {
     const { x, y, hand } = circle;
     const interactableWith = hand === 'right' ? 'red' : 'blue';
 
@@ -668,7 +608,6 @@ export class MovingTonesScene extends Phaser.Scene {
     if (!gameObject || !this.group) return;
 
     // entry music and anim
-    this.playMusicCirlceEntryMusic();
     const anim = this.add
       .sprite(x, y, TextureKeys.GREEN_RIPPLE)
       .play(AnimationKeys.GREEN_RIPPLE_ANIM)
@@ -680,6 +619,7 @@ export class MovingTonesScene extends Phaser.Scene {
       rippleAnim: anim,
       interactableWith,
       circle,
+      variation,
     });
 
     gameObject.refreshBody();
@@ -875,10 +815,11 @@ export class MovingTonesScene extends Phaser.Scene {
     return this.designAssetsLoaded && this.musicFilesLoaded === this.totalMusicFiles;
   }
 
-  async loadAssets() {
+  async loadAssets(genre: Genre) {
     await this.ttsService.preLoadTts('moving_tones');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
+      this.loadMusicFiles(genre);
       const intervalId = setInterval(() => {
         if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
@@ -993,43 +934,6 @@ export class MovingTonesScene extends Phaser.Scene {
     this.currentNote = 1;
   }
 
-  private playSuccessMusic(type: 'alto' | 'bass' | 'soprano' | 'tenor'): void {
-    switch (type) {
-      case 'alto':
-        if (this.alto && this.alto.playing(this.altoId)) {
-          this.alto.stop();
-        }
-        if (this.alto && !this.alto.playing(this.altoId)) {
-          this.altoId = this.alto.play(`Alto_${this.currentNote}`);
-        }
-        break;
-      case 'bass':
-        if (this.bass && this.bass.playing(this.bassId)) {
-          this.bass.stop();
-        }
-        if (this.bass && !this.bass.playing(this.bassId)) {
-          this.bassId = this.bass.play(`Bass_${this.currentNote}`);
-        }
-        break;
-      case 'soprano':
-        if (this.soprano && this.soprano.playing(this.sopranoId)) {
-          this.soprano.stop();
-        }
-        if (this.soprano && !this.soprano.playing(this.sopranoId)) {
-          this.sopranoId = this.soprano.play(`Soprano_${this.currentNote}`);
-        }
-        break;
-      case 'tenor':
-        if (this.tenor && this.tenor.playing(this.tenorId)) {
-          this.tenor.stop();
-        }
-        if (this.tenor && !this.tenor.playing(this.tenorId)) {
-          this.tenorId = this.tenor.play(`Tenor_${this.currentNote}`);
-        }
-        break;
-    }
-  }
-
   private playFailureMusic(): void {
     if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
       this.failureMusic.stop();
@@ -1039,17 +943,7 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
-  private playHoldCircleMusic(type: 'entry' | 'exit') {
-    if (type === 'exit') {
-      this.holdSuccessMusic && this.holdSuccessMusic.play();
-    } else {
-      this.holdEntrySound && this.holdEntrySound.play();
-    }
-  }
-
-  private playMusicCirlceEntryMusic() {
-    this.greenEntrySound && this.greenEntrySound.play();
-  }
+  private playHoldMusic(type: 'entry' | 'exit') {}
 
   /**
    * @param value default `true`.
@@ -1059,16 +953,95 @@ export class MovingTonesScene extends Phaser.Scene {
 
     // unload music on disable.
     if (!value) {
-      this.alto && this.alto.unload();
-      this.bass && this.bass.unload();
-      this.soprano && this.soprano.unload();
-      this.tenor && this.tenor.unload();
       this.failureMusic && this.failureMusic.unload();
-      this.holdSuccessMusic && this.holdSuccessMusic.unload();
-      this.holdEntrySound && this.holdEntrySound.unload();
-      this.greenEntrySound && this.greenEntrySound.unload();
-      this.holdSound && this.holdSound.unload();
     }
+  }
+
+  private src: { [key in Genre]: string[] } = {
+    classical: ['assets/sounds/soundsprites/moving-tones/classical/set1/'],
+    'surprise me!': ['assets/sounds/soundsprites/moving-tones/ambient/set1/'],
+    rock: ['assets/sounds/soundsprites/moving-tones/rock/set1/'],
+    dance: ['assets/sounds/soundsprites/moving-tones/dance/set1/'],
+    jazz: ['assets/sounds/soundsprites/moving-tones/jazz/set1/'],
+  };
+
+  genre: Genre;
+  currentSet: number;
+  private loadMusicFiles(genre: Genre) {
+    this.musicFilesLoaded = 0;
+
+    this.totalMusicFiles = 3;
+
+    const randomSet = 0;
+    this.genre = genre;
+    this.currentSet = randomSet;
+
+    // common for all genres
+    this.failureMusic = new Howl({
+      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    const src = this.src['classical'][randomSet];
+
+    this.backtrack = new Howl({
+      src: src + 'backtrack.mp3',
+      loop: true,
+      html5: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+
+    this.successTrack = new Howl({
+      src: src + 'classical' + 'Triggers.mp3',
+      sprite: movingTonesAudio['classical'][randomSet].successTriggers,
+      html5: true,
+      onend: (id) => {
+        this.successTrack.stop(id);
+      },
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+  }
+
+  successTrack: Howl;
+  backtrackId!: number;
+  playBacktrack() {
+    if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
+      this.backtrackId = this.backtrack.play();
+    }
+    return this.backtrackId;
+  }
+
+  stopBacktrack() {
+    const endFadeoutDuration = 5000;
+    if (this.backtrack && this.backtrackId && this.backtrack.playing(this.backtrackId)) {
+      this.backtrack.fade(100, 0, endFadeoutDuration, this.backtrackId).on('fade', (id) => {
+        this.backtrack.stop(id);
+      });
+    }
+  }
+
+  playSuccessMusic(variation: string, variationNumber: number) {
+    if (this.successTrack) {
+      console.log('variation::', variation + '_' + variationNumber);
+      this.successTrack.play(variation + '_' + variationNumber);
+    }
+  }
+
+  getVariation(len: number): number {
+    const genre = this.genre;
+    const set = this.currentSet;
+    const variations: { classical: { [key: number]: number[] } } = {
+      classical: {
+        3: [3, 4, 5, 6, 15, 16, 17, 18],
+        4: [1, 2, 13, 14, 19, 20, 21],
+        5: [7, 8, 9, 11, 12, 10],
+      },
+    };
+    return Phaser.Utils.Array.GetRandom(variations.classical[len]);
   }
 
   center() {

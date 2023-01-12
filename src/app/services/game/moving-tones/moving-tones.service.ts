@@ -625,7 +625,7 @@ export class MovingTonesService implements ActivityBase {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.movingTonesScene.loadAssets();
+        await this.movingTonesScene.loadAssets(this.genre);
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -832,7 +832,9 @@ export class MovingTonesService implements ActivityBase {
           hand: 'right',
           type: 'start',
         };
-        this.movingTonesScene.showCircle(rightCircle, 'start', { circle: rightCircle });
+        this.movingTonesScene.showCircle(rightCircle, 'start', {
+          circle: rightCircle,
+        });
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
       },
@@ -1041,7 +1043,11 @@ export class MovingTonesService implements ActivityBase {
   }
 
   preLoop() {
-    return [];
+    return [
+      async (reCalibrationCount: number) => {
+        this.movingTonesScene.playBacktrack();
+      },
+    ];
   }
 
   loop() {
@@ -1206,6 +1212,7 @@ export class MovingTonesService implements ActivityBase {
       async (reCalibrationCount: number) => {
         this.movingTonesScene.disable();
         this.movingTonesScene.enableMusic(false);
+        this.movingTonesScene.stopBacktrack();
         this.movingTonesScene.scene.stop('movingTones');
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {
