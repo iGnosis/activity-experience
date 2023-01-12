@@ -1042,3 +1042,8 @@ export interface MovingTonesCircleData extends MovingTonesCircleSettings {
   path?: MovingTonesCircle[];
   variation?: string;
 }
+
+export interface QaBody {
+  event: 'ready' | 'request-game-info' | 'send-game-info' | 'edit-game';
+  payload: any;
+}
