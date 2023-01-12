@@ -27,7 +27,7 @@ const poseTrackerFn = () => {
           keyBodyPoints.filter((landmark: any) => landmark.visibility < 0.7).length > 0
         )
           return;
-        if (socket) socket.send({ t, g, u, p });
+        if (socket) socket.emit('posedata', { t, g, u, p });
         break;
     }
   };
