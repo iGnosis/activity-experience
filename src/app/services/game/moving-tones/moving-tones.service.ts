@@ -1117,6 +1117,7 @@ export class MovingTonesService implements ActivityBase {
           Math.abs(this.coinsCollected - highScore) <= 5 || Math.random() < 0.5;
 
         if (!shouldAllowReplay) return;
+        await this.elements.sleep(3000);
 
         this.ttsService.tts(
           'Raise both your hands if you want to add 30 more seconds to this activity.',
