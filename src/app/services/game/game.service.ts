@@ -360,6 +360,7 @@ export class GameService {
       this.poseTrackerWorker.postMessage({
         type: 'connect',
         websocketEndpoint: environment.websocketEndpoint,
+        token: window.localStorage.getItem('token'),
       });
 
       const poseSubscription = this.poseModelAdapter

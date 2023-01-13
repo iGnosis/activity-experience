@@ -10,7 +10,11 @@ const poseTrackerFn = () => {
       case 'connect':
         endpoint = data.websocketEndpoint;
         console.log('connecting to websocket endpoint!', endpoint);
-        socket = io(endpoint);
+        socket = io(endpoint, {
+          query: {
+            authToken: data.token,
+          },
+        });
         break;
       case 'update-pose':
         if (data.calibrationStatus !== 'success' || !data.gameId || data.endedAt) return;

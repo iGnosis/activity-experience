@@ -14,6 +14,7 @@ export class QaService {
     this.socket = io(environment.websocketEndpoint, {
       query: {
         userId: localStorage.getItem('patient'),
+        authToken: localStorage.getItem('token'),
       },
     });
   }
@@ -50,6 +51,10 @@ export class QaService {
             speed: 'currentSpeed',
           },
         });
+      }
+
+      if (body.event === 'change-music-preference') {
+        // update music preference in database
       }
     });
   }

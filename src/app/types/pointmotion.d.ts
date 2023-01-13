@@ -1044,6 +1044,6 @@ export interface MovingTonesCircleData extends MovingTonesCircleSettings {
 }
 
 export interface QaBody {
-  event: 'ready' | 'request-game-info' | 'send-game-info' | 'edit-game';
+  event: 'ready' | 'request-game-info' | 'send-game-info' | 'edit-game' | 'change-music-preference';
   payload: any;
 }
