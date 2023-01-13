@@ -1637,14 +1637,17 @@ export class SitToStandService implements ActivityBase {
     ];
   }
 
+  stopGame() {
+    this.sit2StandScene.stopBacktrack(this.genre);
+    this.sit2StandScene.enableMusic(false);
+  }
+
   postLoop() {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async (reCalibrationCount: number) => {
+        this.stopGame();
         // this.soundsService.stopGenreSound();
-        this.sit2StandScene.stopBacktrack(this.genre);
-
-        this.sit2StandScene.enableMusic(false);
         const achievementRatio = this.successfulReps / this.totalReps;
         const nextLevel = Number(this.currentLevel.charAt(this.currentLevel.length - 1)) + 1;
         if (achievementRatio < 0.6 || (this.shouldLevelUp && nextLevel <= 3)) {

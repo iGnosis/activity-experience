@@ -24,7 +24,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
   providedIn: 'root',
 })
 export class BeatBoxerService {
-  private isServiceSetup = false;
+  isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
@@ -1203,14 +1203,18 @@ export class BeatBoxerService {
     ];
   }
 
+  stopGame() {
+    this.beatBoxerScene.stopBacktrack();
+    this.beatBoxerScene.enableMusic(false);
+    this.beatBoxerScene.disable();
+    this.beatBoxerScene.scene.stop('beatBoxer');
+  }
+
   postLoop() {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
-        this.beatBoxerScene.stopBacktrack();
-        this.beatBoxerScene.enableMusic(false);
-        this.beatBoxerScene.disable();
-        this.beatBoxerScene.scene.stop('beatBoxer');
+        this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.apiService.updateOnboardingStatus({

@@ -167,6 +167,17 @@ export class ApiService {
       console.log(err);
     }
   }
+  async setGenre(genre: Genre) {
+    try {
+      const response = await this.client.req(GqlConstants.USER_DAILY_CHECKIN, {
+        type: 'genre',
+        value: genre,
+      });
+      return response;
+    } catch (err) {
+      console.log(err);
+    }
+  }
   async insertGameSettings(gameName: Activities, settings: ActivityConfiguration) {
     try {
       const insertSettingsResp = await this.client.req(GqlConstants.INSERT_GAME_SETTINGS, {
