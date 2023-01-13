@@ -28,7 +28,7 @@ import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.se
   providedIn: 'root',
 })
 export class MovingTonesService implements ActivityBase {
-  private isServiceSetup = false;
+  isServiceSetup = false;
   private genre: Genre = 'jazz';
   private coinsCollected = 0;
   private failedReps = 0;
@@ -1207,13 +1207,17 @@ export class MovingTonesService implements ActivityBase {
     ];
   }
 
+  stopGame() {
+    this.movingTonesScene.disable();
+    this.movingTonesScene.enableMusic(false);
+    this.movingTonesScene.stopBacktrack();
+    this.movingTonesScene.scene.stop('movingTones');
+  }
+
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.movingTonesScene.disable();
-        this.movingTonesScene.enableMusic(false);
-        this.movingTonesScene.stopBacktrack();
-        this.movingTonesScene.scene.stop('movingTones');
+        this.stopGame();
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {
           data: {

@@ -112,6 +112,12 @@ export const GqlConstants = {
     }
   }
 `,
+  USER_DAILY_CHECKIN: `mutation InsertCheckin($type: checkin_type_enum!, $value: String!) {
+    insert_checkin_one(object: {type: $type, value: $value}) {
+      id
+    }
+  }
+  `,
   INSERT_GAME_SETTINGS: `
   mutation InsertGameSettings(
     $gameName: game_name_enum = beat_boxer
