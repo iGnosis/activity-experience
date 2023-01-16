@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-import { debounceTime, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationBox, CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
 import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';

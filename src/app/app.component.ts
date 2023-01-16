@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ApiService } from './services/checkin/api.service';
+import { QaService } from './services/qa/qa.service';
 import { ThemeService } from './services/theme/theme.service';
 import { Theme } from './types/pointmotion';
 
@@ -11,7 +12,8 @@ import { Theme } from './types/pointmotion';
 })
 export class AppComponent {
   title = 'activities';
-  constructor(private themeService: ThemeService) {
+  constructor(private themeService: ThemeService, private qaService: QaService) {
     this.themeService.setTheme();
+    this.qaService.init();
   }
 }

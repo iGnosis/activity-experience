@@ -11,7 +11,7 @@ import {
   GameState,
   GameStatus,
   PreferenceState,
-  AvailableModelsEnum,
+  Genre,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -83,6 +83,8 @@ export class GameService {
     game: 'sit_stand_achieve',
   };
   private poseTrackerWorker: Worker;
+  allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+  gameStages: Array<ActivityStage> = [];
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -173,15 +175,59 @@ export class GameService {
       });
   }
 
-  // Refactor: Remove this method if not needed?
-  setGame(name: Activities) {
+  async setGame(name: Activities) {
+    // stop current game
+    this.store.dispatch(game.gameCompleted());
+    const activities = this.getActivities();
+    for (const activity of Object.values(activities)) {
+      if (typeof (activity as any).stopGame === 'function') {
+        (activity as any).stopGame();
+        (activity as any).isServiceSetup = false;
+      }
+    }
+
+    this.reCalibrationCount++;
     this.isNewGame = false;
+    await this.elements.sleep(2000);
+    // start new game
     this.gameStatus = {
       stage: 'welcome',
       breakpoint: 0,
       game: name,
     };
     this.currentGame = name;
+    this.startGame();
+  }
+
+  setStage(stage: ActivityStage) {
+    if (stage === 'welcome') {
+      this.gameStages = this.allStages;
+    } else {
+      const stageIdx = this.allStages.indexOf(stage);
+      this.gameStages = ['welcome', ...this.allStages.slice(stageIdx)];
+    }
+  }
+
+  async setConfig(config: Partial<ActivityConfiguration>) {
+    const currentGame = this.currentGame || 'sit_stand_achieve';
+    const newSettings = {
+      ...environment.settings[currentGame],
+      ...config,
+    };
+    const settings = await this.apiService.getGameSettings(currentGame);
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.apiService.updateGameSettings(currentGame, newSettings);
+    } else {
+      await this.apiService.insertGameSettings(currentGame, newSettings);
+    }
+  }
+
+  async setGenre(genre: Genre) {
+    try {
+      await this.apiService.setGenre(genre);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   setPoseModel(model: 'posenet' | 'mediapipe') {
@@ -360,6 +406,7 @@ export class GameService {
       this.poseTrackerWorker.postMessage({
         type: 'connect',
         websocketEndpoint: environment.websocketEndpoint,
+        token: window.localStorage.getItem('token'),
       });
 
       const poseSubscription = this.poseModelAdapter
@@ -571,12 +618,15 @@ export class GameService {
   }
 
   async getRemainingStages(nextGame: string): Promise<ActivityStage[]> {
-    let allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
+    this.allStages = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
     const onboardingStatus = await this.apiService.getOnboardingStatus();
     if (onboardingStatus && onboardingStatus[0]?.onboardingStatus[nextGame]) {
-      allStages = allStages.filter((stage) => stage !== 'tutorial');
+      this.allStages = this.allStages.filter((stage) => stage !== 'tutorial');
     }
-    return allStages.slice(allStages.indexOf(this.gameStatus.stage), allStages.length);
+    return this.allStages.slice(
+      this.allStages.indexOf(this.gameStatus.stage),
+      this.allStages.length,
+    );
   }
 
   async startGame() {
@@ -589,6 +639,11 @@ export class GameService {
 
     const activity = this.getActivities()[nextGame.name];
     const remainingStages = await this.getRemainingStages(nextGame.name);
+    if (this.gameStages.length) {
+      remainingStages.length = 0;
+      remainingStages.push(...this.gameStages);
+      this.gameStages = [];
+    }
     console.log('remainingStages', remainingStages);
 
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart

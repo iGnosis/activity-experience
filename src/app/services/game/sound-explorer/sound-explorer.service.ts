@@ -26,7 +26,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
   providedIn: 'root',
 })
 export class SoundExplorerService {
-  private isServiceSetup = false;
+  isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private currentLevel = environment.settings['sound_explorer'].currentLevel;
@@ -985,13 +985,17 @@ export class SoundExplorerService {
     ];
   }
 
+  stopGame() {
+    this.soundExplorerScene.enableMusic(false);
+    this.soundExplorerScene.stopBacktrack();
+    this.soundExplorerScene.disable();
+    this.soundExplorerScene.scene.stop('soundExplorer');
+  }
+
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.enableMusic(false);
-        this.soundExplorerScene.stopBacktrack();
-        this.soundExplorerScene.disable();
-        this.soundExplorerScene.scene.stop('soundExplorer');
+        this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.apiService.updateOnboardingStatus({
