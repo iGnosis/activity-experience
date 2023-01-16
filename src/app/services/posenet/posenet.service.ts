@@ -21,7 +21,7 @@ export class PosenetService {
      * What to scale the image by before feeding it through the network.
      * Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
      */
-    scaleFactor: 0.7,
+    scaleFactor: 0.5,
 
     /**
      * If the poses should be flipped/mirrored horizontally.
