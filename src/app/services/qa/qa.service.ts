@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { distinctUntilKeyChanged, take } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
-import { Activities, QaBody } from 'src/app/types/pointmotion';
+import { Activities, GameState, QaBody } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { GameService } from '../game/game.service';
 
@@ -11,32 +13,62 @@ export class QaService {
   isQaAppReady = false;
   socket: Socket;
 
-  constructor(private gameService: GameService) {
+  constructor(private gameService: GameService, private store: Store<{ game: GameState }>) {
     this.socket = io(environment.websocketEndpoint, {
       query: {
         userId: localStorage.getItem('patient'),
         authToken: localStorage.getItem('token'),
       },
     });
+    this.socket.on('connect', () => {
+      this.init();
+      this.sendGameChanges();
+      this.socket.onAny((eventName, ...args) =>
+        console.log('Event: ' + eventName, 'was fired with args: ', args),
+      );
+    });
+  }
+
+  sendGameChanges() {
+    this.store
+      .select((store) => store.game)
+      .pipe(distinctUntilKeyChanged('game'))
+      .subscribe((game) => {
+        const gameInfo = {
+          game: game.game,
+          stage: this.gameService.gameStatus.stage,
+          config: {
+            ...environment.settings[game.game as Activities],
+          },
+        };
+        this.socket.emit('qa', {
+          event: 'send-game-info',
+          payload: gameInfo,
+        });
+      });
   }
 
   init(): void {
     this.socket.on('qa', (body: QaBody) => {
-      // this will be in QA App:
-      // if (body.event === 'ready') {
-      //  console.log('QA App can now start with requesting the current game rules.');
-      // }
-
       if (body.event === 'request-game-info') {
         // fetch current game rules
+        let gameObj: GameState = {};
+        this.store
+          .select((store) => store.game)
+          .pipe(take(1))
+          .subscribe((game) => (gameObj = game));
+
+        const gameInfo = {
+          game: gameObj.game,
+          stage: this.gameService.gameStatus.stage,
+          config: {
+            ...environment.settings[gameObj.game as Activities],
+          },
+        };
 
         this.socket.emit('qa', {
           event: 'send-game-info',
-          payload: {
-            activity: 'activityName',
-            level: 'currentLevel',
-            speed: 'currentSpeed',
-          },
+          payload: gameInfo,
         });
       }
 

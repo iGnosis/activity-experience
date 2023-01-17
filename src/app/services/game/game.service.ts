@@ -77,7 +77,7 @@ export class GameService {
   calibrationStartTime: Date;
   isNewGame = false;
   currentGame?: Activities;
-  private gameStatus: GameStatus = {
+  gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
     game: 'sit_stand_achieve',
