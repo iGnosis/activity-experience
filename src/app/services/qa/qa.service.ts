@@ -19,8 +19,6 @@ export class QaService {
     private store: Store<{ game: GameState }>,
     private apiService: ApiService,
   ) {
-    if (!['stage', 'dev', 'local'].includes(environment.stageName)) return;
-
     this.socket = io(environment.websocketEndpoint, {
       query: {
         userId: localStorage.getItem('patient'),
