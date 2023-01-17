@@ -12,6 +12,7 @@ import {
   GameStatus,
   PreferenceState,
   Genre,
+  GameStage,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -28,6 +29,7 @@ import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import {
+  BehaviorSubject,
   combineLatest,
   combineLatestWith,
   debounceTime,
@@ -82,6 +84,7 @@ export class GameService {
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
+  gameStageSubject: BehaviorSubject<GameStage> = new BehaviorSubject<GameStage>('welcome');
   private poseTrackerWorker: Worker;
   allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
   gameStages: Array<ActivityStage> = [];
@@ -195,6 +198,7 @@ export class GameService {
       breakpoint: 0,
       game: name,
     };
+    this.gameStageSubject.next('welcome');
     this.currentGame = name;
     this.startGame();
   }
@@ -688,6 +692,7 @@ export class GameService {
             breakpoint: this.gameStatus.breakpoint,
             game: nextGame.name,
           };
+          this.gameStageSubject.next(this.gameStatus.stage);
         } else {
           if (i !== 0) {
             this.googleAnalyticsService.sendEvent('stage_end', {
@@ -702,6 +707,7 @@ export class GameService {
             breakpoint: 0,
             game: nextGame.name,
           };
+          this.gameStageSubject.next(this.gameStatus.stage);
         }
 
         // Refactor: Make sure only one instance is running at a given time.
@@ -739,6 +745,7 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
+      this.gameStageSubject.next(this.gameStatus.stage);
       if (!this.benchmarkId) {
         console.log('starting game inside startGame');
         this.startGame();
