@@ -1,38 +1,54 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { NormalizedLandmarkList, Results } from '@mediapipe/pose';
-import * as posenet from '@tensorflow-models/posenet';
 import { Subject, take } from 'rxjs';
 import { IsModelReady } from 'src/app/types/pointmotion';
+import * as posenet from '@tensorflow-models/posenet';
+import { DOCUMENT } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PosenetService {
+  private window: any;
+  private poseNet: any;
+
   private videoElm?: HTMLVideoElement;
-
-  /**
-   * A number between 0.2 and 1.
-   * What to scale the image by before feeding it through the network.
-   * Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-   */
-  private scaleFactor = 0.5;
-
-  /**
-   * If the poses should be flipped/mirrored horizontally.
-   * This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam),
-   * and you want the poses to be returned in the proper orientation.
-   */
-  private flipHorizontal = false;
-
-  /**
-   * Internally, this parameter affects the height and width of the layers in the neural network.
-   * At a high level, it affects the accuracy and speed of the pose estimation.
-   * The lower the value of the output stride the higher the accuracy but slower the speed,
-   * the higher the value the faster the speed but lower the accuracy.
-   */
-  private outputStride: posenet.PoseNetOutputStride = 16;
-
   private numOfResults = 0;
+
+  private poseNetOptions = {
+    /**
+     * A number between 0.2 and 1.
+     * What to scale the image by before feeding it through the network.
+     * Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
+     */
+    scaleFactor: 0.5,
+
+    /**
+     * If the poses should be flipped/mirrored horizontally.
+     * This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam),
+     * and you want the poses to be returned in the proper orientation.
+     */
+    flipHorizontal: false,
+
+    /**
+     * Can be one of 1.01, 1.0, 0.75, or 0.50
+     * (The value is used only by the MobileNetV1 architecture and not by the ResNet architecture).
+     * It is the float multiplier for the depth (number of channels) for all convolution ops.
+     * The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+     */
+    // multiplier: 0.75,
+
+    /**
+     * Can be one of 161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, and 801. Defaults to 257.
+     * It specifies the size the image is resized to before it is fed into the PoseNet model.
+     * The larger the value, the more accurate the model at the cost of speed.
+     * Set this to a smaller value to increase speed at the cost of accuracy.
+     */
+    // inputResolution: 257,
+
+    detectionType: 'single',
+  };
+
   private isReady = new Subject<IsModelReady>();
   private interval: any;
   private net: posenet.PoseNet;
@@ -73,7 +89,9 @@ export class PosenetService {
     rightFootIndex: 32,
   };
 
-  constructor() {}
+  constructor(@Inject(DOCUMENT) private document: Document) {
+    this.window = this.document.defaultView;
+  }
 
   // converts Posenet output to mediapipe output.
   private transformPosenetResults(pose: posenet.Pose, video: HTMLVideoElement): Results {
@@ -115,30 +133,23 @@ export class PosenetService {
       isModelReady: false,
       downloadSource: 'local',
     });
-    const net = await posenet.load({
-      inputResolution: {
-        height: this.videoElm.height,
-        width: this.videoElm.width,
-      },
-      architecture: 'MobileNetV1',
-      outputStride: this.outputStride,
-    });
-    // emit an event when posenet is ready.
-    this.isReady.next({
-      isModelReady: true,
-      downloadSource: 'local',
+
+    this.poseNet = this.window.ml5.poseNet(this.videoElm, this.poseNetOptions, () => {
+      console.log('posenet model loaded');
+      this.isReady.next({
+        isModelReady: true,
+        downloadSource: 'local', // workaround so UI popup stay right -- it's actually through CDN.
+      });
     });
 
-    this.interval = setInterval(async () => {
-      if (this.videoElm) {
-        const pose = await net.estimateSinglePose(this.videoElm, {
-          flipHorizontal: this.flipHorizontal,
-        });
-        const transformedRes = this.transformPosenetResults(pose, this.videoElm);
+    this.poseNet.on('pose', (results: any) => {
+      // posenet outputs multiple results if more than 1 people are detected.
+      // we consider results only when there is one person detected.
+      if (results && results.length === 1 && results[0].pose) {
+        const transformedRes = this.transformPosenetResults(results[0].pose, this.videoElm!);
         this.handleResults(transformedRes);
-        // console.log('transformedRes::', transformedRes);
       }
-    }, 30);
+    });
   }
 
   private handleResults(results: Results) {
