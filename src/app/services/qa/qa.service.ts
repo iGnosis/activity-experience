@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { combineLatestWith } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
-import { Activities, Activity, GameState, QaBody } from 'src/app/types/pointmotion';
+import { Activities, Activity, QaBody } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { ApiService } from '../checkin/api.service';
 import { GameService } from '../game/game.service';
@@ -14,11 +12,7 @@ export class QaService {
   isQaAppReady = false;
   socket: Socket;
 
-  constructor(
-    private gameService: GameService,
-    private store: Store<{ game: GameState }>,
-    private apiService: ApiService,
-  ) {
+  constructor(private gameService: GameService, private apiService: ApiService) {
     this.socket = io(environment.websocketEndpoint, {
       query: {
         userId: localStorage.getItem('patient'),
@@ -34,35 +28,27 @@ export class QaService {
   }
 
   sendGameChanges() {
-    this.store
-      .select((store) => store.game)
-      .pipe(combineLatestWith(this.gameService.gameStageSubject))
-      .subscribe(async ([_, gameStage]: any) => {
-        let game;
-        try {
-          const gameObj = await this.apiService.getLastGameForQA();
-          if (gameObj.length > 0) {
-            game = gameObj[0];
-          }
-        } catch (err) {
-          console.log(err);
-        }
+    this.gameService.gameStatusSubject.subscribe(async (gameStatus) => {
+      let settings;
+      try {
+        settings = await this.apiService.getGameSettings(gameStatus.game);
+      } catch (err) {
+        console.log(err);
+      }
 
-        if (game) {
-          const gameInfo: Activity = {
-            activity: game.game,
-            stage: gameStage,
-            config: {
-              ...environment.settings[game.game as Activities],
-              ...game.settings,
-            },
-          };
-          this.socket.emit('qa', {
-            event: 'send-game-info',
-            payload: gameInfo,
-          });
-        }
+      const gameInfo: Activity = {
+        activity: gameStatus.game,
+        stage: gameStatus.stage,
+        config: {
+          ...environment.settings[gameStatus.game],
+          ...(settings || {}),
+        },
+      };
+      this.socket.emit('qa', {
+        event: 'send-game-info',
+        payload: gameInfo,
       });
+    });
   }
 
   init(): void {
