@@ -145,6 +145,15 @@ export const GqlConstants = {
     }
   }
 `,
+  GET_LAST_GAME_FOR_QA: `
+  query GetLastGameForQA {
+    game(limit: 1, order_by: {createdAt: desc}) {
+      game
+      id
+      settings
+    }
+  }  
+  `,
   GET_BENCHMARK_GAME: `
   query GetBenchmarkGame($id: uuid = "") {
     game_by_pk(id: $id) {

@@ -214,6 +214,15 @@ export class ApiService {
     }
   }
 
+  async getLastGameForQA() {
+    try {
+      const lastGame = await this.client.req(GqlConstants.GET_LAST_GAME_FOR_QA);
+      return lastGame.game;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async getBenchmarkGame(id: string) {
     try {
       const nextGame = await this.client.req(GqlConstants.GET_BENCHMARK_GAME, { id });

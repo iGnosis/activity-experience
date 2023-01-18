@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { combineLatestWith } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
-import { Activities, QaBody } from 'src/app/types/pointmotion';
+import { Activities, Activity, GameState, QaBody } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
+import { ApiService } from '../checkin/api.service';
 import { GameService } from '../game/game.service';
 
 @Injectable({
@@ -11,33 +14,59 @@ export class QaService {
   isQaAppReady = false;
   socket: Socket;
 
-  constructor(private gameService: GameService) {
+  constructor(
+    private gameService: GameService,
+    private store: Store<{ game: GameState }>,
+    private apiService: ApiService,
+  ) {
     this.socket = io(environment.websocketEndpoint, {
       query: {
         userId: localStorage.getItem('patient'),
         authToken: localStorage.getItem('token'),
       },
     });
+    this.socket.on('connect', () => {
+      this.init();
+      this.sendGameChanges();
+      this.socket.onAny((eventName, ...args) =>
+        console.log('Event: ' + eventName, 'was fired with args: ', args),
+      );
+    });
+  }
+
+  sendGameChanges() {
+    this.store
+      .select((store) => store.game)
+      .pipe(combineLatestWith(this.gameService.gameStageSubject))
+      .subscribe(async ([_, gameStage]: any) => {
+        let game;
+        try {
+          const gameObj = await this.apiService.getLastGameForQA();
+          if (gameObj.length > 0) {
+            game = gameObj[0];
+          }
+        } catch (err) {
+          console.log(err);
+        }
+        const gameInfo: Activity = {
+          activity: game.game,
+          stage: gameStage,
+          config: {
+            ...environment.settings[game.game as Activities],
+            ...game.settings,
+          },
+        };
+        this.socket.emit('qa', {
+          event: 'send-game-info',
+          payload: gameInfo,
+        });
+      });
   }
 
   init(): void {
     this.socket.on('qa', (body: QaBody) => {
-      // this will be in QA App:
-      // if (body.event === 'ready') {
-      //  console.log('QA App can now start with requesting the current game rules.');
-      // }
-
       if (body.event === 'request-game-info') {
-        // fetch current game rules
-
-        this.socket.emit('qa', {
-          event: 'send-game-info',
-          payload: {
-            activity: 'activityName',
-            level: 'currentLevel',
-            speed: 'currentSpeed',
-          },
-        });
+        this.sendGameChanges();
       }
 
       if (body.event === 'edit-game') {
