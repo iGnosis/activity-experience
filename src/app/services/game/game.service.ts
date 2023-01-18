@@ -238,15 +238,17 @@ export class GameService {
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
-    if (
-      navigator.userAgent.match(/Mac/) &&
-      navigator.maxTouchPoints &&
-      navigator.maxTouchPoints > 2
-    ) {
-      this.setPoseModel('posenet');
-    } else {
-      this.setPoseModel('mediapipe');
-    }
+    // if (
+    //   navigator.userAgent.match(/Mac/) &&
+    //   navigator.maxTouchPoints &&
+    //   navigator.maxTouchPoints > 2
+    // ) {
+    //   this.setPoseModel('posenet');
+    // } else {
+    //   this.setPoseModel('mediapipe');
+    // }
+
+    this.setPoseModel('mediapipe');
 
     this.checkAuth();
     this.benchmarkId = benchmarkId;
