@@ -26,7 +26,6 @@ export class QaService {
       },
     });
     this.socket.on('connect', () => {
-      this.init();
       this.sendGameChanges();
       this.socket.onAny((eventName, ...args) =>
         console.log('Event: ' + eventName, 'was fired with args: ', args),
@@ -48,19 +47,21 @@ export class QaService {
         } catch (err) {
           console.log(err);
         }
-        if (!game) return;
-        const gameInfo: Activity = {
-          activity: game.game,
-          stage: gameStage,
-          config: {
-            ...environment.settings[game.game as Activities],
-            ...game.settings,
-          },
-        };
-        this.socket.emit('qa', {
-          event: 'send-game-info',
-          payload: gameInfo,
-        });
+
+        if (game) {
+          const gameInfo: Activity = {
+            activity: game.game,
+            stage: gameStage,
+            config: {
+              ...environment.settings[game.game as Activities],
+              ...game.settings,
+            },
+          };
+          this.socket.emit('qa', {
+            event: 'send-game-info',
+            payload: gameInfo,
+          });
+        }
       });
   }
 
@@ -76,7 +77,7 @@ export class QaService {
           this.gameService.setConfig(body.payload.config);
         }
         this.gameService.setStage(body.payload.stage);
-        this.gameService.setGame(body.payload.game);
+        this.gameService.setGame(body.payload.activity);
 
         // fetch current game info
         const gameInfo = {

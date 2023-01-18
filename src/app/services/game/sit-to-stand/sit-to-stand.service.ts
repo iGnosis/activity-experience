@@ -114,8 +114,7 @@ export class SitToStandService implements ActivityBase {
 
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
 
-  async setup() {
-    // setup game config
+  async setupConfig() {
     const settings = await this.apiService.getGameSettings('sit_stand_achieve');
     if (settings && settings.settings && settings.settings.currentLevel) {
       this.gameSettings = settings.settings;
@@ -133,6 +132,11 @@ export class SitToStandService implements ActivityBase {
     );
 
     this.sit2StandService.enable();
+  }
+
+  async setup() {
+    // setup game config
+    await this.setupConfig();
     return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');

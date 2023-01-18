@@ -24,7 +24,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
   providedIn: 'root',
 })
 export class BeatBoxerService {
-  isServiceSetup = false;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
@@ -102,11 +102,14 @@ export class BeatBoxerService {
     });
   }
 
-  async setup() {
+  async setupConfig() {
     this.beatBoxerScene.enable();
-    return new Promise<void>(async (resolve, reject) => {
-      this.beatBoxerScene.scene.start('beatBoxer');
+    this.beatBoxerScene.scene.start('beatBoxer');
+  }
 
+  async setup() {
+    await this.setupConfig();
+    return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {

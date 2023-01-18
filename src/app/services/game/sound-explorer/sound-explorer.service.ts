@@ -26,7 +26,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
   providedIn: 'root',
 })
 export class SoundExplorerService {
-  isServiceSetup = false;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private currentLevel = environment.settings['sound_explorer'].currentLevel;
@@ -145,11 +145,14 @@ export class SoundExplorerService {
     });
   }
 
-  async setup() {
+  async setupConfig() {
     this.soundExplorerScene.enable();
-    return new Promise<void>(async (resolve, reject) => {
-      this.soundExplorerScene.scene.start('soundExplorer');
+    this.soundExplorerScene.scene.start('soundExplorer');
+  }
 
+  async setup() {
+    await this.setupConfig();
+    return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {

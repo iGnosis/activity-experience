@@ -28,7 +28,7 @@ import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.se
   providedIn: 'root',
 })
 export class MovingTonesService implements ActivityBase {
-  isServiceSetup = false;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private coinsCollected = 0;
   private failedReps = 0;
@@ -609,7 +609,7 @@ export class MovingTonesService implements ActivityBase {
     };
   }
 
-  async setup() {
+  async setupConfig() {
     this.movingTonesScene.enable();
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
@@ -618,10 +618,12 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.circleScale *= heightRatio;
 
     this.center = this.movingTonesScene.center();
+    this.movingTonesScene.scene.start('movingTones');
+  }
 
+  async setup() {
+    await this.setupConfig();
     return new Promise<void>(async (resolve, reject) => {
-      this.movingTonesScene.scene.start('movingTones');
-
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {

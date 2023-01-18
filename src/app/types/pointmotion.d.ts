@@ -923,6 +923,10 @@ export type ElementsObservables = {
 
 export interface ActivityBase {
   /**
+   * initially sets up the activity. This function is needed only for QA purposes.
+   */
+  setupConfig(): Promise<void>;
+  /**
    * The screen showing the name of the next activity and waiting for the user input
    * such as raising one or two hands
    */
@@ -954,6 +958,10 @@ export interface ActivityBase {
    * activity
    */
   postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+  /**
+   * stops the game scene, music, etc. This function is needed only for QA purposes.
+   */
+  stopGame(): void;
 }
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
