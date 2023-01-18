@@ -470,14 +470,13 @@ export type Patient = {
 
 export interface Activity {
   activity?: string;
-  stage: GameStage;
+  stage: ActivityStage;
   settings?: {
     [key in string]: any;
   };
   config: ActivityConfiguration;
 }
 
-export type GameStage = 'welcome' | 'tutorial' | 'preLoop' | 'loop' | 'postLoop';
 export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
 export type GameLevels = 'level1' | 'level2' | 'level3';
 

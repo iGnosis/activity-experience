@@ -12,7 +12,6 @@ import {
   GameStatus,
   PreferenceState,
   Genre,
-  GameStage,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { CalibrationService } from '../calibration/calibration.service';
@@ -84,7 +83,7 @@ export class GameService {
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
-  gameStageSubject: BehaviorSubject<GameStage> = new BehaviorSubject<GameStage>('welcome');
+  gameStatusSubject: BehaviorSubject<GameStatus> = new BehaviorSubject<GameStatus>(this.gameStatus);
   private poseTrackerWorker: Worker;
   allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
   gameStages: Array<ActivityStage> = [];
@@ -197,7 +196,7 @@ export class GameService {
       breakpoint: 0,
       game: name,
     };
-    this.gameStageSubject.next('welcome');
+    this.gameStatusSubject.next(this.gameStatus);
     this.currentGame = name;
     this.startGame();
   }
@@ -695,7 +694,7 @@ export class GameService {
             breakpoint: this.gameStatus.breakpoint,
             game: nextGame.name,
           };
-          this.gameStageSubject.next(this.gameStatus.stage);
+          this.gameStatusSubject.next(this.gameStatus);
         } else {
           if (i !== 0) {
             this.googleAnalyticsService.sendEvent('stage_end', {
@@ -710,7 +709,7 @@ export class GameService {
             breakpoint: 0,
             game: nextGame.name,
           };
-          this.gameStageSubject.next(this.gameStatus.stage);
+          this.gameStatusSubject.next(this.gameStatus);
         }
 
         // Refactor: Make sure only one instance is running at a given time.
@@ -748,7 +747,7 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
-      this.gameStageSubject.next(this.gameStatus.stage);
+      this.gameStatusSubject.next(this.gameStatus);
       if (!this.benchmarkId) {
         console.log('starting game inside startGame');
         this.startGame();
