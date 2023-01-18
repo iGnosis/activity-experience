@@ -27,6 +27,10 @@ export class PoseModelAdapter {
   }
 
   setModel(model: 'mediapipe' | 'posenet') {
+    if (this.isMediapipeActivated || this.isPosenetActivated) {
+      throw new Error('Model already active.');
+    }
+
     console.log('setModel:', model);
     if (model === 'mediapipe') {
       this.isMediapipeActivated = true;
