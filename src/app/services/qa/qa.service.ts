@@ -48,6 +48,7 @@ export class QaService {
         } catch (err) {
           console.log(err);
         }
+        if (!game) return;
         const gameInfo: Activity = {
           activity: game.game,
           stage: gameStage,
