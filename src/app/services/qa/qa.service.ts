@@ -48,18 +48,21 @@ export class QaService {
         } catch (err) {
           console.log(err);
         }
-        const gameInfo: Activity = {
-          activity: game.game,
-          stage: gameStage,
-          config: {
-            ...environment.settings[game.game as Activities],
-            ...game.settings,
-          },
-        };
-        this.socket.emit('qa', {
-          event: 'send-game-info',
-          payload: gameInfo,
-        });
+
+        if (game) {
+          const gameInfo: Activity = {
+            activity: game.game,
+            stage: gameStage,
+            config: {
+              ...environment.settings[game.game as Activities],
+              ...game.settings,
+            },
+          };
+          this.socket.emit('qa', {
+            event: 'send-game-info',
+            payload: gameInfo,
+          });
+        }
       });
   }
 
