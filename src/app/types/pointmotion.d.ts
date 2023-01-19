@@ -495,6 +495,18 @@ export type ActivityLevel = {
        * Defines speed in milliseconds at which the activity should be run.
        */
       speed: number;
+      /**
+       * Genre of music which the game plays.
+       */
+      genre?: Genre;
+      /**
+       * Set of the music to play.
+       */
+      musicSet?: number;
+      /**
+       * Decides whether to allow extending game by X seconds or not
+       */
+      extendGameDuration?: boolean;
     };
     rules: string[];
   };

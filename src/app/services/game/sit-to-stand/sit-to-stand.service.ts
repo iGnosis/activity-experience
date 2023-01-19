@@ -74,6 +74,7 @@ export class SitToStandService implements ActivityBase {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         }
       });
@@ -142,6 +143,8 @@ export class SitToStandService implements ActivityBase {
       console.time('Waiting for assets to Load');
       try {
         await this.sit2StandScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.sit2StandScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -1588,6 +1591,8 @@ export class SitToStandService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1644,6 +1649,7 @@ export class SitToStandService implements ActivityBase {
   stopGame() {
     this.sit2StandScene.stopBacktrack(this.genre);
     this.sit2StandScene.enableMusic(false);
+    this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
   }
 
   postLoop() {

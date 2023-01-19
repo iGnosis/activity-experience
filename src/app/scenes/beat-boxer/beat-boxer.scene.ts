@@ -54,7 +54,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   private currentFailureTriggerId!: number;
   private currentSuccessTriggerId!: number;
   private genre!: Genre;
-  private currentSet!: number;
+  currentSet!: number;
   private backtrack!: Howl;
   private successTrack!: Howl;
   private failureTrack!: Howl;

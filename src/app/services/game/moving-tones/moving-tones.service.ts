@@ -37,6 +37,7 @@ export class MovingTonesService implements ActivityBase {
   private isGameComplete = false;
   private shouldReplay: boolean;
 
+  private gameSettings = environment.settings['moving_tones'];
   private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
     gameDuration:
@@ -75,6 +76,7 @@ export class MovingTonesService implements ActivityBase {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -628,6 +630,8 @@ export class MovingTonesService implements ActivityBase {
       console.time('Waiting for assets to Load');
       try {
         await this.movingTonesScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.movingTonesScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -1163,6 +1167,8 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1214,6 +1220,8 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.enableMusic(false);
     this.movingTonesScene.stopBacktrack();
     this.movingTonesScene.scene.stop('movingTones');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('moving_tones', this.gameSettings);
   }
 
   postLoop() {

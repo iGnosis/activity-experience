@@ -54,6 +54,7 @@ export class BeatBoxerService {
     right?: undefined | BagType | 'obstacle';
   } = {};
 
+  private gameSettings = environment.settings['beat_boxer'];
   private currentLevel = environment.settings['beat_boxer'].currentLevel;
   private config = {
     gameDuration:
@@ -92,6 +93,7 @@ export class BeatBoxerService {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -114,6 +116,8 @@ export class BeatBoxerService {
       console.time('Waiting for assets to Load');
       try {
         await this.beatBoxerScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.beatBoxerScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -1138,6 +1142,8 @@ export class BeatBoxerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1211,6 +1217,8 @@ export class BeatBoxerService {
     this.beatBoxerScene.enableMusic(false);
     this.beatBoxerScene.disable();
     this.beatBoxerScene.scene.stop('beatBoxer');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('beat_boxer', this.gameSettings);
   }
 
   postLoop() {
