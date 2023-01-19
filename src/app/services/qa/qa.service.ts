@@ -84,6 +84,19 @@ export class QaService {
         // update music preference in database
         this.gameService.setGenre(body.payload.genre);
       }
+
+      if (body.event === 'request-game-rules') {
+        if (body.payload.game) {
+          this.socket.emit('qa', {
+            event: 'send-game-rules',
+            payload: {
+              rules:
+                environment.settings[body.payload.game as Activities].levels[body.payload.level]
+                  .rules,
+            },
+          });
+        }
+      }
     });
   }
 }

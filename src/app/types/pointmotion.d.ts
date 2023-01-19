@@ -496,6 +496,7 @@ export type ActivityLevel = {
        */
       speed: number;
     };
+    rules: string[];
   };
 };
 
@@ -1061,6 +1062,15 @@ export interface MovingTonesCircleData extends MovingTonesCircleSettings {
 }
 
 export interface QaBody {
-  event: 'ready' | 'request-game-info' | 'send-game-info' | 'edit-game' | 'change-music-preference';
+  event: QaAppEvents | ActivityExperienceEvents;
   payload: any;
 }
+
+type QaAppEvents =
+  | 'ready'
+  | 'request-game-info'
+  | 'edit-game'
+  | 'change-music-preference'
+  | 'request-game-rules';
+
+type ActivityExperienceEvents = 'send-game-info' | 'send-game-rules';
