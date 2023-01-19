@@ -29,6 +29,7 @@ export class SoundExplorerService {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
+  private gameSettings = environment.settings['sound_explorer'];
   private currentLevel = environment.settings['sound_explorer'].currentLevel;
   private config = {
     gameDuration:
@@ -135,6 +136,7 @@ export class SoundExplorerService {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -157,6 +159,8 @@ export class SoundExplorerService {
       console.time('Waiting for assets to Load');
       try {
         await this.soundExplorerScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.soundExplorerScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -910,6 +914,8 @@ export class SoundExplorerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -993,6 +999,8 @@ export class SoundExplorerService {
     this.soundExplorerScene.stopBacktrack();
     this.soundExplorerScene.disable();
     this.soundExplorerScene.scene.stop('soundExplorer');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('sound_explorer', this.gameSettings);
   }
 
   postLoop() {
