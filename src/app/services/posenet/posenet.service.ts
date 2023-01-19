@@ -21,7 +21,7 @@ export class PosenetService {
      * What to scale the image by before feeding it through the network.
      * Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
      */
-    scaleFactor: 0.7,
+    scaleFactor: 0.8,
 
     /**
      * If the poses should be flipped/mirrored horizontally.
@@ -44,7 +44,7 @@ export class PosenetService {
      * The larger the value, the more accurate the model at the cost of speed.
      * Set this to a smaller value to increase speed at the cost of accuracy.
      */
-    // inputResolution: 257,
+    inputResolution: 481,
 
     detectionType: 'single',
   };
