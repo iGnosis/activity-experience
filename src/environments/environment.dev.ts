@@ -27,7 +27,7 @@ export const environment: Environment = {
             minCorrectReps: 10,
             speed: 5000,
           },
-          rules: [''],
+          rules: ['Sit down when you see an even number', 'Stand up when you see an odd number'],
         },
         level2: {
           configuration: {
