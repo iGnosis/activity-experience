@@ -15,31 +15,7 @@ import { GameService } from './game.service';
 
 describe('GameService', () => {
   let service: GameService;
-  const settings = {
-    settings: {
-      currentLevel: 'level1',
-      levels: {
-        level1: {
-          configuration: {
-            minCorrectReps: 10,
-            speed: 5000,
-          },
-        },
-        level2: {
-          configuration: {
-            minCorrectReps: 17,
-            speed: 6500,
-          },
-        },
-        level3: {
-          configuration: {
-            minCorrectReps: 20,
-            speed: 6500,
-          },
-        },
-      },
-    },
-  };
+  const settings = { settings: environment.settings.sit_stand_achieve };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
