@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   ActivityBase,
+  ActivityConfiguration,
   Coordinate,
   GameState,
   Genre,
@@ -38,6 +39,7 @@ export class MovingTonesService implements ActivityBase {
   private shouldReplay: boolean;
 
   private gameSettings = environment.settings['moving_tones'];
+  qaGameSettings?: any;
   private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
     gameDuration:
@@ -612,6 +614,25 @@ export class MovingTonesService implements ActivityBase {
   }
 
   async setupConfig() {
+    const settings = await this.apiService.getGameSettings('moving_tones');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.movingTonesScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.movingTonesScene.enable();
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
@@ -1167,6 +1188,9 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
         this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
           this.shouldReplay;
         this.elements.banner.attributes = {

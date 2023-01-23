@@ -54,6 +54,7 @@ export class BeatBoxerService {
     right?: undefined | BagType | 'obstacle';
   } = {};
 
+  qaGameSettings?: any;
   private gameSettings = environment.settings['beat_boxer'];
   private currentLevel = environment.settings['beat_boxer'].currentLevel;
   private config = {
@@ -105,6 +106,25 @@ export class BeatBoxerService {
   }
 
   async setupConfig() {
+    const settings = await this.apiService.getGameSettings('beat_boxer');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.beatBoxerScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.beatBoxerScene.enable();
     this.beatBoxerScene.scene.start('beatBoxer');
   }
@@ -1142,6 +1162,9 @@ export class BeatBoxerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
         this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
           this.shouldReplay;
         this.elements.banner.attributes = {

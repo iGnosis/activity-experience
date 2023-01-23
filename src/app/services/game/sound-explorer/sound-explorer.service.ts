@@ -29,6 +29,8 @@ export class SoundExplorerService {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
+
+  qaGameSettings?: any;
   private gameSettings = environment.settings['sound_explorer'];
   private currentLevel = environment.settings['sound_explorer'].currentLevel;
   private config = {
@@ -148,6 +150,25 @@ export class SoundExplorerService {
   }
 
   async setupConfig() {
+    const settings = await this.apiService.getGameSettings('sound_explorer');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.soundExplorerScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.soundExplorerScene.enable();
     this.soundExplorerScene.scene.start('soundExplorer');
   }
@@ -914,6 +935,9 @@ export class SoundExplorerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
         this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
           this.shouldReplay;
         this.elements.banner.attributes = {

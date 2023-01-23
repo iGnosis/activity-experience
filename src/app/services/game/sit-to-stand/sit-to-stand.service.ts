@@ -29,6 +29,7 @@ export class SitToStandService implements ActivityBase {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
 
+  qaGameSettings?: any;
   // init default config values.
   private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
@@ -124,6 +125,21 @@ export class SitToStandService implements ActivityBase {
         settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
       this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
+      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.minCorrectReps) {
+          this.config.minCorrectReps = this.qaGameSettings.minCorrectReps;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.sit2StandScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
     } else {
       await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
     }
@@ -1591,6 +1607,9 @@ export class SitToStandService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
         this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
           this.shouldReplay;
         this.elements.banner.attributes = {
