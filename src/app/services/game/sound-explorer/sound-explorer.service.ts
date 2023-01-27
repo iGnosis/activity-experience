@@ -152,7 +152,7 @@ export class SoundExplorerService {
   async setupConfig() {
     const settings = await this.apiService.getGameSettings('sound_explorer');
     if (settings && settings.settings && settings.settings.currentLevel) {
-      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
       if (this.qaGameSettings) {
         if (this.qaGameSettings.gameDuration) {
           this.config.gameDuration = this.qaGameSettings.gameDuration;

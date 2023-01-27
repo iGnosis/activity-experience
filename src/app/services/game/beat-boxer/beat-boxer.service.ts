@@ -108,7 +108,7 @@ export class BeatBoxerService {
   async setupConfig() {
     const settings = await this.apiService.getGameSettings('beat_boxer');
     if (settings && settings.settings && settings.settings.currentLevel) {
-      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
       if (this.qaGameSettings) {
         if (this.qaGameSettings.gameDuration) {
           this.config.gameDuration = this.qaGameSettings.gameDuration;

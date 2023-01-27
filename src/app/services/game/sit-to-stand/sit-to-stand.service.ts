@@ -125,7 +125,7 @@ export class SitToStandService implements ActivityBase {
         settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
       this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
-      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
       if (this.qaGameSettings) {
         if (this.qaGameSettings.minCorrectReps) {
           this.config.minCorrectReps = this.qaGameSettings.minCorrectReps;

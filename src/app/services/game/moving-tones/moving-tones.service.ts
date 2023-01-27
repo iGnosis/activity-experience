@@ -616,7 +616,7 @@ export class MovingTonesService implements ActivityBase {
   async setupConfig() {
     const settings = await this.apiService.getGameSettings('moving_tones');
     if (settings && settings.settings && settings.settings.currentLevel) {
-      this.qaGameSettings = settings.settings[this.currentLevel].configuration;
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
       if (this.qaGameSettings) {
         if (this.qaGameSettings.gameDuration) {
           this.config.gameDuration = this.qaGameSettings.gameDuration;
