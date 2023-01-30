@@ -29,6 +29,7 @@ export class SitToStandService implements ActivityBase {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
 
+  qaGameSettings?: any;
   // init default config values.
   private gameSettings = environment.settings['sit_stand_achieve'];
   private currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
@@ -74,6 +75,7 @@ export class SitToStandService implements ActivityBase {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         }
       });
@@ -114,8 +116,7 @@ export class SitToStandService implements ActivityBase {
 
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
 
-  async setup() {
-    // setup game config
+  async setupConfig() {
     const settings = await this.apiService.getGameSettings('sit_stand_achieve');
     if (settings && settings.settings && settings.settings.currentLevel) {
       this.gameSettings = settings.settings;
@@ -124,6 +125,21 @@ export class SitToStandService implements ActivityBase {
         settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
       this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.minCorrectReps) {
+          this.config.minCorrectReps = this.qaGameSettings.minCorrectReps;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.sit2StandScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
     } else {
       await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
     }
@@ -133,11 +149,18 @@ export class SitToStandService implements ActivityBase {
     );
 
     this.sit2StandService.enable();
+  }
+
+  async setup() {
+    // setup game config
+    await this.setupConfig();
     return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
         await this.sit2StandScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.sit2StandScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -1584,6 +1607,11 @@ export class SitToStandService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1640,6 +1668,7 @@ export class SitToStandService implements ActivityBase {
   stopGame() {
     this.sit2StandScene.stopBacktrack(this.genre);
     this.sit2StandScene.enableMusic(false);
+    this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
   }
 
   postLoop() {

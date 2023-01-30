@@ -28,6 +28,7 @@ import { SoundsService } from '../sounds/sounds.service';
 import { BeatBoxerService } from './beat-boxer/beat-boxer.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import {
+  BehaviorSubject,
   combineLatest,
   combineLatestWith,
   debounceTime,
@@ -77,11 +78,12 @@ export class GameService {
   calibrationStartTime: Date;
   isNewGame = false;
   currentGame?: Activities;
-  private gameStatus: GameStatus = {
+  gameStatus: GameStatus = {
     stage: 'welcome',
     breakpoint: 0,
     game: 'sit_stand_achieve',
   };
+  gameStatusSubject: BehaviorSubject<GameStatus> = new BehaviorSubject<GameStatus>(this.gameStatus);
   private poseTrackerWorker: Worker;
   allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
   gameStages: Array<ActivityStage> = [];
@@ -180,11 +182,10 @@ export class GameService {
     this.store.dispatch(game.gameCompleted());
     const activities = this.getActivities();
     for (const activity of Object.values(activities)) {
-      if (typeof (activity as any).stopGame === 'function') {
-        (activity as any).stopGame();
-        (activity as any).isServiceSetup = false;
-      }
+      activity.stopGame();
     }
+    await activities[name]?.setupConfig();
+    console.log('loading next game', name);
 
     this.reCalibrationCount++;
     this.isNewGame = false;
@@ -195,6 +196,7 @@ export class GameService {
       breakpoint: 0,
       game: name,
     };
+    this.gameStatusSubject.next(this.gameStatus);
     this.currentGame = name;
     this.startGame();
   }
@@ -279,10 +281,10 @@ export class GameService {
 
       // Refactor: Break this down or make it more readable
       // Refactor: Refresh the tab if files don't load within X seconds or if error happens
-      combineLatest([this.poseModelAdapter.getStatus(), this.handsService.getStatus()]).subscribe({
+      combineLatest([this.poseModelAdapter.getStatus()]).subscribe({
         next: async (res) => {
           console.log('this.poseModelAdapter.getMediapipeStatus:res', res);
-          if (res[0].isModelReady && res[1].isHandsModelReady) {
+          if (res[0].isModelReady) {
             await this.setPhaserDimensions(canvas);
             this.startCalibration();
             this.elements.banner.state.attributes.visibility = 'hidden';
@@ -308,7 +310,7 @@ export class GameService {
               },
             };
 
-            if (res[0].downloadSource == 'cdn' || res[1].downloadSource == 'cdn') {
+            if (res[0].downloadSource == 'cdn') {
               this.elements.banner.data.htmlStr = `
                 <div class="w-full h-full d-flex flex-column justify-content-center align-items-center px-10">
                   <h1 class="pt-4 display-3">Starting Session</h1>
@@ -347,7 +349,9 @@ export class GameService {
 
       this.updateDimensions(video);
       await this.startPoseDetection(video);
-      await this.startHandDetection(video);
+
+      // TODO: Enable hands model when it is required by patients to open their hand completely in order to interact with the Moving Tones circles.
+      // await this.startHandDetection(video);
 
       return 'success';
     } catch (err: any) {
@@ -688,6 +692,7 @@ export class GameService {
             breakpoint: this.gameStatus.breakpoint,
             game: nextGame.name,
           };
+          this.gameStatusSubject.next(this.gameStatus);
         } else {
           if (i !== 0) {
             this.googleAnalyticsService.sendEvent('stage_end', {
@@ -702,6 +707,7 @@ export class GameService {
             breakpoint: 0,
             game: nextGame.name,
           };
+          this.gameStatusSubject.next(this.gameStatus);
         }
 
         // Refactor: Make sure only one instance is running at a given time.
@@ -739,6 +745,7 @@ export class GameService {
         breakpoint: 0,
         game: nextGame.name,
       };
+      this.gameStatusSubject.next(this.gameStatus);
       if (!this.benchmarkId) {
         console.log('starting game inside startGame');
         this.startGame();

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   ActivityBase,
+  ActivityConfiguration,
   Coordinate,
   GameState,
   Genre,
@@ -28,7 +29,7 @@ import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.se
   providedIn: 'root',
 })
 export class MovingTonesService implements ActivityBase {
-  isServiceSetup = false;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private coinsCollected = 0;
   private failedReps = 0;
@@ -37,6 +38,8 @@ export class MovingTonesService implements ActivityBase {
   private isGameComplete = false;
   private shouldReplay: boolean;
 
+  private gameSettings = environment.settings['moving_tones'];
+  qaGameSettings?: any;
   private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
     gameDuration:
@@ -75,6 +78,7 @@ export class MovingTonesService implements ActivityBase {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -609,7 +613,26 @@ export class MovingTonesService implements ActivityBase {
     };
   }
 
-  async setup() {
+  async setupConfig() {
+    const settings = await this.apiService.getGameSettings('moving_tones');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.movingTonesScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.movingTonesScene.enable();
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
@@ -618,14 +641,18 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.circleScale *= heightRatio;
 
     this.center = this.movingTonesScene.center();
+    this.movingTonesScene.scene.start('movingTones');
+  }
 
+  async setup() {
+    await this.setupConfig();
     return new Promise<void>(async (resolve, reject) => {
-      this.movingTonesScene.scene.start('movingTones');
-
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
         await this.movingTonesScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.movingTonesScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -1161,6 +1188,11 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1212,6 +1244,8 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.enableMusic(false);
     this.movingTonesScene.stopBacktrack();
     this.movingTonesScene.scene.stop('movingTones');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('moving_tones', this.gameSettings);
   }
 
   postLoop() {

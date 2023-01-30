@@ -468,6 +468,15 @@ export type Patient = {
   onboardedBy: string;
 };
 
+export interface Activity {
+  activity?: string;
+  stage: ActivityStage;
+  settings?: {
+    [key in string]: any;
+  };
+  config: ActivityConfiguration;
+}
+
 export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
 export type GameLevels = 'level1' | 'level2' | 'level3';
 
@@ -486,7 +495,20 @@ export type ActivityLevel = {
        * Defines speed in milliseconds at which the activity should be run.
        */
       speed: number;
+      /**
+       * Genre of music which the game plays.
+       */
+      genre?: Genre;
+      /**
+       * Set of the music to play.
+       */
+      musicSet?: number;
+      /**
+       * Decides whether to allow extending game by X seconds or not
+       */
+      extendGameDuration?: boolean;
     };
+    rules: string[];
   };
 };
 
@@ -913,6 +935,10 @@ export type ElementsObservables = {
 
 export interface ActivityBase {
   /**
+   * initially sets up the activity. This function is needed only for QA purposes.
+   */
+  setupConfig(): Promise<void>;
+  /**
    * The screen showing the name of the next activity and waiting for the user input
    * such as raising one or two hands
    */
@@ -944,6 +970,10 @@ export interface ActivityBase {
    * activity
    */
   postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+  /**
+   * stops the game scene, music, etc. This function is needed only for QA purposes.
+   */
+  stopGame(): void;
 }
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -1044,6 +1074,15 @@ export interface MovingTonesCircleData extends MovingTonesCircleSettings {
 }
 
 export interface QaBody {
-  event: 'ready' | 'request-game-info' | 'send-game-info' | 'edit-game' | 'change-music-preference';
+  event: QaAppEvents | ActivityExperienceEvents;
   payload: any;
 }
+
+type QaAppEvents =
+  | 'ready'
+  | 'request-game-info'
+  | 'edit-game'
+  | 'change-music-preference'
+  | 'request-game-rules';
+
+type ActivityExperienceEvents = 'send-game-info' | 'send-game-rules';

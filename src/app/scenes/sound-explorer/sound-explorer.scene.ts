@@ -48,7 +48,7 @@ export class SoundExplorerScene extends Phaser.Scene {
   private musicFilesLoaded = 0;
   private totalMusicFiles!: number;
   private loadError = false;
-  private currentSet!: number;
+  currentSet!: number;
   private genre: Genre;
   private backtrack: Howl;
   private backtrackId!: number;

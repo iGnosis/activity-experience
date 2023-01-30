@@ -18,7 +18,8 @@ export class HandTrackerService {
   result = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
   debouncedStatus: HandTrackerStatus = undefined;
-  openHandStatus = new BehaviorSubject<OpenHandStatus>(undefined);
+  // setting default to both-hands as the hand model is disabled. status has to be undefined by default.
+  openHandStatus = new BehaviorSubject<OpenHandStatus>('both-hands');
 
   constructor(private handsService: HandsService, private poseModelAdapter: PoseModelAdapter) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {

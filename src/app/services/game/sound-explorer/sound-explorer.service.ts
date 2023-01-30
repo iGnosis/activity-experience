@@ -26,9 +26,12 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
   providedIn: 'root',
 })
 export class SoundExplorerService {
-  isServiceSetup = false;
+  private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
+
+  qaGameSettings?: any;
+  private gameSettings = environment.settings['sound_explorer'];
   private currentLevel = environment.settings['sound_explorer'].currentLevel;
   private config = {
     gameDuration:
@@ -135,6 +138,7 @@ export class SoundExplorerService {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -145,15 +149,39 @@ export class SoundExplorerService {
     });
   }
 
-  async setup() {
+  async setupConfig() {
+    const settings = await this.apiService.getGameSettings('sound_explorer');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.soundExplorerScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.soundExplorerScene.enable();
-    return new Promise<void>(async (resolve, reject) => {
-      this.soundExplorerScene.scene.start('soundExplorer');
+    this.soundExplorerScene.scene.start('soundExplorer');
+  }
 
+  async setup() {
+    await this.setupConfig();
+    return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
         await this.soundExplorerScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.soundExplorerScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -907,6 +935,11 @@ export class SoundExplorerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -990,6 +1023,8 @@ export class SoundExplorerService {
     this.soundExplorerScene.stopBacktrack();
     this.soundExplorerScene.disable();
     this.soundExplorerScene.scene.stop('soundExplorer');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('sound_explorer', this.gameSettings);
   }
 
   postLoop() {
