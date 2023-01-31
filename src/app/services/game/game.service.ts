@@ -451,12 +451,11 @@ export class GameService {
   }
 
   getActivities(): { [key in Activities]?: ActivityBase } {
-    const allowMovingTones = environment.stageName !== 'stage' && environment.stageName !== 'prod';
     return {
       sit_stand_achieve: this.sitToStandService,
       beat_boxer: this.beatBoxerService,
       sound_explorer: this.soundExplorerService,
-      ...(allowMovingTones ? { moving_tones: this.movingTonesService } : {}),
+      moving_tones: this.movingTonesService,
     };
   }
 
