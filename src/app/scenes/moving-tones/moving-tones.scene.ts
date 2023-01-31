@@ -99,7 +99,6 @@ export class MovingTonesScene extends Phaser.Scene {
   ) => {
     if (!gameObject.texture || !hand.texture) return;
     let pathNumber = 0;
-    let variationNumber = 1;
 
     const gameObjectTexture = gameObject.texture.key;
     const handTexture = hand.texture.key;
@@ -203,7 +202,10 @@ export class MovingTonesScene extends Phaser.Scene {
                     if (path[pathNumber] && !alreadyShown.includes(path[pathNumber])) {
                       alreadyShown.push(path[pathNumber]);
                       if (data.variation) {
-                        this.showGreenCircle(path[pathNumber], data.variation);
+                        this.showGreenCircle(path[pathNumber], {
+                          variation: data.variation,
+                          variationNumber: pathNumber + 2,
+                        });
                       } else {
                         this.showGreenCircle(path[pathNumber]);
                       }
@@ -234,9 +236,12 @@ export class MovingTonesScene extends Phaser.Scene {
               tween.remove();
               gameObject.destroy(true);
 
-              if (data.variation) {
-                this.playSuccessMusic(data.variation, variationNumber);
-                variationNumber += 1;
+              if (data.variation && data.path) {
+                if (type === 'start') {
+                  this.playSuccessMusic(data.variation, 1);
+                } else {
+                  this.playSuccessMusic(data.variation, data.path.length + 2);
+                }
               }
 
               if (type === 'start') {
@@ -294,8 +299,8 @@ export class MovingTonesScene extends Phaser.Scene {
             } else {
               this.score.next(1);
               const variation = gameObject.getData('variation');
+              const variationNumber = gameObject.getData('variationNumber');
               this.playSuccessMusic(variation, variationNumber);
-              variationNumber += 1;
             }
 
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
@@ -595,7 +600,7 @@ export class MovingTonesScene extends Phaser.Scene {
     return gameObject;
   }
 
-  showGreenCircle(circle: Circle, variation?: string) {
+  showGreenCircle(circle: Circle, data?: { variation: string; variationNumber: number }) {
     const { x, y, hand } = circle;
     const interactableWith = hand === 'right' ? 'red' : 'blue';
 
@@ -615,12 +620,18 @@ export class MovingTonesScene extends Phaser.Scene {
       .setDepth(-1)
       .setAlpha(0.5);
 
-    gameObject.setData({
+    const greenCircleData: any = {
       rippleAnim: anim,
       interactableWith,
       circle,
-      variation,
-    });
+    };
+
+    if (data) {
+      greenCircleData['variation'] = data.variation;
+      greenCircleData['variationNumber'] = data.variationNumber;
+    }
+
+    gameObject.setData(greenCircleData);
 
     gameObject.refreshBody();
     this.circleEvents.next({ name: 'visible', circle });
