@@ -21,7 +21,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set env to production
         if: endsWith(github.ref, '/main')
@@ -45,8 +45,8 @@ jobs:
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
       # Uncomment this if you want to debug Github action using SSH.
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
+      # - name: Setup tmate sessions
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: npm install and npm run build
         run: |
