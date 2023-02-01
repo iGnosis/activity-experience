@@ -46,6 +46,10 @@ jobs:
           echo "NODE_ENV=development" >> $GITHUB_ENV
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
+      # Uncomment this if you want to debug Github action using SSH.
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
       - name: npm install and npm run build
         run: |
           # Print current env
