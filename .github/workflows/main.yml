@@ -59,8 +59,9 @@ jobs:
           # Listing files
           ls -la
 
+          # Include the devDependencies irrespective of the NODE_ENV
+          npm install --include dev --legacy-peer-deps
           npm install -g @angular/cli
-          npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "$ENVIRONMENT"
 
       - name: running unit tests
