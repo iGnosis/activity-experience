@@ -14,7 +14,7 @@ import { ElementAttributes, PromptElementState } from 'src/app/types/pointmotion
         'start',
         style({ height: '250px', width: '250px', 'line-height': '250px', opacity: '0' }),
       ),
-      state('open', style({ left: '50%', right: '50%', opacity: '1' })),
+      state('open', style({ left: '50%', top: '50%', opacity: '1' })),
       state('exit', style({ left: '85%', top: '50%' })),
       transition('start => open', animate('0.5s ease-in')),
       transition('open => exit', animate('0.5s ease-in')),

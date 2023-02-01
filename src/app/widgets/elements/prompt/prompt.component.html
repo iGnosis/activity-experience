@@ -1,5 +1,5 @@
 <div *ngIf="attributes && attributes.visibility == 'visible'" [@align-prompt]="{value: promptAnimationState }"
   class="prompt" [class.bg-danger]="state.repStatus === 'failure'">
-  <span *ngIf="!state.repStatus" class="d-inline-block m-auto">{{ state.value }}</span>
+  <span *ngIf="!state.repStatus" class="d-inline-block m-auto px-3 text-nowrap">{{ state.value }}</span>
   <img *ngIf="state.repStatus" [src]="state.repStatus === 'success' ?  '/assets/images/checkmark.png' : '/assets/images/cross.png'" alt="rep status" class="m-auto w-1/2 h-1/2">
 </div>

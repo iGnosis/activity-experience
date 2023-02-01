@@ -1,7 +1,7 @@
 @import '../../../variables';
 
 .info {
-  color: $primary;
+  color: $primary_color;
   font-size: 32px;
 }
 
@@ -14,11 +14,11 @@
 
   .header-text {
     margin-bottom: 2px;
-    color: $primary;
+    color: $primary_color;
     font-weight: bold;
   }
 
   .body-text {
-    color: $primary;
+    color: $primary_color;
   }
 }

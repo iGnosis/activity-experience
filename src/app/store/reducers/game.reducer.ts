@@ -24,40 +24,46 @@ const _gameReducer = createReducer(
       id: data.id,
     };
   }),
-  on(game.updateGame, (state, data) => {
+  on(game.setScore, (state, data) => {
     return {
-      ...state,
-      ...data,
+      id: state.id,
+      repsCompleted: data.score,
     };
   }),
-  on(game.repCompleted, (state) => {
+  on(game.repCompleted, (state, data) => {
     return {
-      ...state,
-      repsCompleted: (state.repsCompleted || 0) + 1,
+      id: state.id,
+      repsCompleted: data.repsCompleted,
     };
   }),
   on(game.pushAnalytics, (state, data) => {
     return {
-      ...state,
+      id: state.id,
       analytics: data.analytics,
     };
   }),
   on(game.setCalibrationDuration, (state, data) => {
     return {
-      ...state,
+      id: state.id,
       calibrationDuration: (state.calibrationDuration || 0) + (data.calibrationDuration || 0),
     };
   }),
   on(game.setTotalElapsedTime, (state, data) => {
     return {
-      ...state,
+      id: state.id,
       totalDuration: data.totalDuration,
     };
   }),
   on(game.gameCompleted, (state) => {
     return {
-      ...state,
+      id: state.id,
       endedAt: new Date().toISOString(),
+    };
+  }),
+  on(game.saveGameSettings, (state, data) => {
+    return {
+      id: state.id,
+      settings: data.settings,
     };
   }),
 );

@@ -7,8 +7,6 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main, dev, stage ]
-  pull_request:
-    branches: [ main, dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -46,6 +44,10 @@ jobs:
           echo "NODE_ENV=development" >> $GITHUB_ENV
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+
       - name: npm install and npm run build
         run: |
           # Print current env
@@ -57,10 +59,12 @@ jobs:
           # Listing files
           ls -la
 
-          # Include the devDependencies irrespective of the NODE_ENV
-          npm install --include dev --legacy-peer-deps
           npm install -g @angular/cli
+          npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "$ENVIRONMENT"
+
+      - name: running unit tests
+        run: npm run test:chromeheadless
 
       - uses: jakejarvis/s3-sync-action@v0.5.1
         with:
@@ -71,3 +75,24 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'us-east-1'
           SOURCE_DIR: /home/runner/work/activity-experience/activity-experience/dist/activities
+
+  update-coverage-badge:
+    runs-on: ubuntu-latest
+    needs: ci-cd
+    if: github.ref == 'refs/heads/dev' # runs only on `dev` branch
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: npm install
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: running unit tests
+        run: npm run test:chromeheadless
+
+      - name: update code coverage badge
+        run: npx update-badge
+
+      - uses: mikeal/publish-to-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.ref_name }}

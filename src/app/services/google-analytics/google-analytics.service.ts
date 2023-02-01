@@ -30,7 +30,7 @@ export class GoogleAnalyticsService {
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
     
-      gtag('config', '${environment.googleAnalyticsTrackingID}', {send_page_view: false});`;
+      gtag('config', '${environment.googleAnalyticsTrackingID}', {send_page_view: false, cookie_flags: 'secure;samesite=none'});`;
       document.body.appendChild(script);
     }, 500);
   }
@@ -43,6 +43,36 @@ export class GoogleAnalyticsService {
         page_path: event.url,
         send_to: environment.googleAnalyticsTrackingID,
       });
+    }
+  }
+
+  setUserId(user_id: string) {
+    try {
+      if (window.gtag && user_id) {
+        window.gtag('config', environment.googleAnalyticsTrackingID, {
+          user_id,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  /**
+   * Sends an event to Google Analytics
+   *
+   * @param {string} name
+   * @param {{ [key: string]: any } | undefined} params?
+   * @returns {void}
+   */
+  sendEvent(name: string, params?: { [key: string]: any }) {
+    try {
+      if (window.gtag) {
+        if (params) window.gtag('event', name, { ...params });
+        else window.gtag('event', name);
+      }
+    } catch (e) {
+      console.log(e);
     }
   }
 }

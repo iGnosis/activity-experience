@@ -18,9 +18,9 @@ import { TtsService } from 'src/app/services/tts/tts.service';
       transition('open => exit', animate('{{duration}}ms ease-in')),
     ]),
     trigger('bgFadeIn', [
-      state('enter', style({ transform: 'translateY(-50%) scale(0.3)', opacity: 0 })),
-      state('open', style({ transform: 'translateY(-50%) scale(1)', opacity: 1 })),
-      state('exit', style({ transform: 'translateY(-50%) scale(0.3)', opacity: 0 })),
+      state('enter', style({ opacity: 0 })),
+      state('open', style({ opacity: 1 })),
+      state('exit', style({ opacity: 0 })),
       transition('* => open', animate('0.2s ease-in')),
       transition('* => exit', animate('0.2s ease-in')),
     ]),

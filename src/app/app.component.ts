@@ -1,5 +1,9 @@
 import { Component } from '@angular/core';
-import { GoogleAnalyticsService } from './services/google-analytics/google-analytics.service';
+import { environment } from 'src/environments/environment';
+import { ApiService } from './services/checkin/api.service';
+import { QaService } from './services/qa/qa.service';
+import { ThemeService } from './services/theme/theme.service';
+import { Theme } from './types/pointmotion';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +12,8 @@ import { GoogleAnalyticsService } from './services/google-analytics/google-analy
 })
 export class AppComponent {
   title = 'activities';
-  constructor(private ga: GoogleAnalyticsService) {}
+  constructor(private themeService: ThemeService, private qaService: QaService) {
+    this.themeService.setTheme();
+    this.qaService.init();
+  }
 }

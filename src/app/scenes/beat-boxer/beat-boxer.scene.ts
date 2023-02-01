@@ -1,55 +1,161 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { left } from '@popperjs/core';
 import { Howl } from 'howler';
-import { max, Subscription } from 'rxjs';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { Subscription } from 'rxjs';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
+import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
+import { TtsService } from 'src/app/services/tts/tts.service';
+import {
+  BagType,
+  CenterOfMotion,
+  GameObjectWithBodyAndTexture,
+  Genre,
+} from 'src/app/types/pointmotion';
 
-export type CenterOfMotion = 'left' | 'right';
-export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+enum TextureKeys {
+  HEAVY_BLUE = 'heavy-blue',
+  SPEED_BLUE = 'speed-blue',
+  HEAVY_RED = 'heavy-red',
+  SPEED_RED = 'speed-red',
+  OBSTACLE = 'obstacle',
+  LEFT_HAND = 'left-hand',
+  RIGHT_HAND = 'right-hand',
+  WRONG_SIGN = 'wrong_sign',
+  CONFETTI = 'confetti',
+  MUSIC = 'music',
+  WRONG_SIGN_ATLAS = 'wrog_sign_atlas',
+}
+
+enum AnimationKeys {
+  CONFETTI_ANIM = 'confetti_anim',
+  MUSIC_ANIM = 'music_anim',
+  WRONG_SIGN_ANIM = 'wrong_sign_anim',
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class BeatBoxerScene extends Phaser.Scene {
-  enabled = false;
-  collisions = false;
-  collisionDetected?: {
-    bagType: BagType | 'obstacle';
+  private enabled = false;
+
+  private collisions = false;
+  private enableLeft = false;
+  private enableRight = false;
+  private collisionDetected?: {
+    bagType: string;
     gloveColor: 'blue' | 'red';
     result: 'success' | 'failure';
   };
-  subscription: Subscription;
+  private poseSubscription: Subscription;
+  private results?: Results;
 
-  onCollision?: (value: {
-    type: BagType | 'obstacle-top' | 'obstacle-bottom';
-    result: 'success' | 'failure';
-  }) => void;
-  music = false;
-  enableLeft = false;
-  enableRight = false;
-  results?: Results;
+  private music = false;
+  private currentFailureTriggerId!: number;
+  private currentSuccessTriggerId!: number;
+  private genre!: Genre;
+  currentSet!: number;
+  private backtrack!: Howl;
+  private successTrack!: Howl;
+  private failureTrack!: Howl;
+  private backtrackId: number;
+  private currentSuccessTrigger = 1;
+  private currentFailureTrigger = 1;
 
-  blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  heavyBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  heavyRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  speedRed: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  speedBlue: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  obstacle: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private blueGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private redGlove: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
+  private group: Phaser.Physics.Arcade.StaticGroup;
 
-  wrongSign?: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
-  confettiAnim?: Phaser.GameObjects.Sprite;
-  musicAnim?: Phaser.GameObjects.Sprite;
+  private designAssetsLoaded = false;
+  private musicFilesLoaded = 0;
+  private totalMusicFiles!: number;
+  private loadError = false;
 
-  constructor(private poseService: PoseService) {
+  private blueGloveCollisionCallback = async (
+    _blueGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!_gameObject || !_gameObject.texture) {
+      return;
+    }
+    const [x, y] = this.getCenter(_gameObject);
+    const textureKey = _gameObject.texture.key;
+    const exitAnimComplete = await this.animateExit(
+      _gameObject as Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    );
+    // play confetti/wrong animation and music only after the animation is complete
+    if (exitAnimComplete) {
+      if (textureKey === TextureKeys.HEAVY_BLUE || textureKey === TextureKeys.SPEED_BLUE) {
+        console.log(`collision::blueGlove::${textureKey}`);
+        this.music && this.playSuccessMusic();
+        this.playConfettiAnim(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'blue',
+          result: 'success',
+        };
+      } else {
+        this.music && this.playFailureMusic();
+        this.showWrongSign(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'blue',
+          result: 'failure',
+        };
+      }
+    }
+  };
+
+  private redGloveCollisionCallback = async (
+    _redGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _gameObject: GameObjectWithBodyAndTexture,
+  ) => {
+    if (!_gameObject || !_gameObject.texture) {
+      return;
+    }
+    const [x, y] = this.getCenter(_gameObject);
+    const textureKey = _gameObject.texture.key;
+    const exitAnimComplete = await this.animateExit(
+      _gameObject as Phaser.Types.Physics.Arcade.ImageWithStaticBody,
+    );
+    if (exitAnimComplete) {
+      if (textureKey === TextureKeys.HEAVY_RED || textureKey === TextureKeys.SPEED_RED) {
+        console.log(`collision::redGlove::${textureKey}`);
+        this.music && this.playSuccessMusic();
+        this.playConfettiAnim(x, y);
+
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'red',
+          result: 'success',
+        };
+      } else {
+        this.music && this.playFailureMusic();
+        this.showWrongSign(x, y);
+        this.collisionDetected = {
+          bagType: textureKey,
+          gloveColor: 'red',
+          result: 'failure',
+        };
+      }
+    }
+  };
+
+  constructor(private poseModelAdapter: PoseModelAdapter, private ttsService: TtsService) {
     super({ key: 'beatBoxer' });
   }
 
   preload() {
+    this.designAssetsLoaded = false;
+    // default scale of desing assets (fine-tuned based on sujit's feedback)
+    const heavyBagScale = 1;
+    const speedBagScale = 0.8;
+    const handOverlayScale = 0.6;
+    const obstacleScale = 1.1;
+
     this.load.atlas(
-      'confetti',
+      TextureKeys.CONFETTI,
       'assets/images/beat-boxer/confetti.png',
       'assets/images/beat-boxer/confetti.json',
     );
@@ -58,76 +164,123 @@ export class BeatBoxerScene extends Phaser.Scene {
       'assets/images/beat-boxer/music.png',
       'assets/images/beat-boxer/music.json',
     );
+
+    this.load.atlas(
+      TextureKeys.WRONG_SIGN_ATLAS,
+      'assets/images/beat-boxer/wrong_sign.png',
+      'assets/images/beat-boxer/wrong_sign.json',
+    );
+
     this.load.svg({
-      key: 'left_hand_overlay',
+      key: TextureKeys.LEFT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
-      key: 'right_hand_overlay',
+      key: TextureKeys.RIGHT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_RIGHT.svg',
       svgConfig: {
-        scale: 0.6,
+        scale: handOverlayScale,
       },
     });
     this.load.svg({
-      key: 'heavy_bag_blue',
+      key: TextureKeys.HEAVY_BLUE,
       url: 'assets/images/beat-boxer/HEAVY_BAG_BLUE.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
-      key: 'heavy_bag_red',
+      key: TextureKeys.HEAVY_RED,
       url: 'assets/images/beat-boxer/HEAVY_BAG_RED.svg',
       svgConfig: {
-        scale: 1,
+        scale: heavyBagScale,
       },
     });
     this.load.svg({
-      key: 'speed_bag_red',
+      key: TextureKeys.SPEED_RED,
       url: 'assets/images/beat-boxer/SPEED_BAG_RED.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
-      key: 'speed_bag_blue',
+      key: TextureKeys.SPEED_BLUE,
       url: 'assets/images/beat-boxer/SPEED_BAG_BLUE.svg',
       svgConfig: {
-        scale: 0.8,
+        scale: speedBagScale,
       },
     });
     this.load.svg({
-      key: 'obstacle_top',
+      key: TextureKeys.OBSTACLE,
       url: 'assets/images/beat-boxer/OBSTACLE_TOP.svg',
       svgConfig: {
-        scale: 1.1,
+        scale: obstacleScale,
       },
     });
     this.load.svg({
-      key: 'obstacle_bottom',
-      url: 'assets/images/beat-boxer/OBSTACLE_BOTTOM.svg',
-      svgConfig: {
-        scale: 1.1,
-      },
-    });
-    this.load.svg({
-      key: 'wrong_sign',
+      key: TextureKeys.WRONG_SIGN,
       url: 'assets/images/beat-boxer/WRONG_HIT.svg',
       svgConfig: {
-        scale: 1,
+        scale: obstacleScale,
       },
+    });
+
+    this.load.once('complete', (_id: number, _completed: number, failed: number) => {
+      if (failed === 0) {
+        this.designAssetsLoaded = true;
+      } else {
+        console.log('Design Assets Failed to Load', failed);
+        this.loadError = true;
+      }
+    });
+  }
+
+  private onLoadCallback = () => {
+    this.musicFilesLoaded += 1;
+  };
+
+  private onLoadErrorCallback = () => {
+    this.loadError = true;
+  };
+
+  private checkIfAssetsAreLoaded() {
+    return (
+      this.totalMusicFiles &&
+      this.designAssetsLoaded &&
+      this.musicFilesLoaded === this.totalMusicFiles
+    );
+  }
+
+  async loadAssets(genre: Genre) {
+    await this.ttsService.preLoadTts('beat_boxer');
+    return new Promise<void>((resolve, reject) => {
+      const startTime = new Date().getTime();
+      this.loadMusicFiles(genre);
+      const intervalId = setInterval(() => {
+        if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
+          clearInterval(intervalId);
+          resolve();
+          return;
+        }
+        if (this.loadError) {
+          clearInterval(intervalId);
+          reject('Failed to load some design assets.');
+          return;
+        }
+      }, 200);
     });
   }
 
   create() {
     // creating confetti and music anims from the sprite sheet texture/atlas.
+    this.group = this.physics.add.staticGroup({});
+
     this.anims.create({
-      key: 'confetti_anim',
-      frames: this.anims.generateFrameNames('confetti', {
+      key: AnimationKeys.CONFETTI_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.CONFETTI, {
         start: 1,
         end: 42,
         prefix: 'tile0',
@@ -135,10 +288,12 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
     });
+
     this.anims.create({
-      key: 'music_anim',
-      frames: this.anims.generateFrameNames('music', {
+      key: AnimationKeys.MUSIC_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.MUSIC, {
         start: 68,
         end: 121,
         prefix: 'tile0',
@@ -146,96 +301,105 @@ export class BeatBoxerScene extends Phaser.Scene {
         suffix: '.png',
       }),
       duration: 1000,
+      hideOnComplete: true,
+    });
+
+    this.anims.create({
+      key: AnimationKeys.WRONG_SIGN_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.WRONG_SIGN_ATLAS, {
+        start: 1,
+        end: 3,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
     });
   }
 
   enable(): void {
     this.enabled = true;
-    this.poseService.getPose().subscribe((results) => {
+    this.enableLeftHand();
+    this.enableRightHand();
+    this.enableCollisionDetection();
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       this.results = results;
-      if (this.blueGlove) {
-        this.blueGlove.destroy(true);
-      }
-      if (this.redGlove) {
-        this.redGlove.destroy(true);
-      }
+      this.destroyGloves();
       this.drawGloves(results);
     });
   }
 
-  /**
-   * Function to calculate distance between two coordinates.
-   */
-  calcDist(x1: number, y1: number, x2: number, y2: number): number {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
+  private destroyGloves() {
+    if (this.blueGlove) {
+      this.blueGlove.destroy(true);
+    }
+    if (this.redGlove) {
+      this.redGlove.destroy(true);
+    }
   }
 
-  calculateReach(
+  disable(): void {
+    this.enabled = false;
+    this.enableLeft = false;
+    this.enableRight = false;
+    this.destroyGloves();
+    if (this.poseSubscription) {
+      this.poseSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * @param results Pose results from @mediapipe/.
+   * @param position can be left or right (based on the side you want to place the bag).
+   * @returns an Object with shoulderX, wristX and maxReach of the user.
+   */
+  private calculateReach(
     results: Results,
     position: CenterOfMotion,
-  ): { shoulderX: number; wristX: number; maxReach: number } {
-    const { width, height } = this.game.canvas;
+  ): { shoulderX: number; wristX: number } {
+    const width = this.game.canvas.width;
+
+    // if results or results.poseLandmarks are not present.. return default values.
+    if (!results || !Array.isArray(results.poseLandmarks)) {
+      return {
+        wristX: 250,
+        shoulderX: width / 2,
+      };
+    }
+
     if (
       position === 'left' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[11] &&
       results.poseLandmarks[13] &&
       results.poseLandmarks[15]
     ) {
       const leftShoulder = results.poseLandmarks[11];
-      const leftElbow = results.poseLandmarks[13];
       const leftWrist = results.poseLandmarks[15];
-      const maxReach =
-        this.calcDist(
-          width - leftShoulder.x * width,
-          leftShoulder.y * height,
-          width - leftElbow.x * width,
-          leftElbow.y * height,
-        ) +
-        this.calcDist(
-          width - leftElbow.x * width,
-          leftElbow.y * height,
-          width - leftWrist.x * width,
-          leftWrist.y * height,
-        );
       return {
         shoulderX: width - leftShoulder.x * width,
         wristX: width - leftWrist.x * width,
-        maxReach,
       };
     } else if (
       position === 'right' &&
+      results &&
+      results.poseLandmarks &&
       results.poseLandmarks[12] &&
       results.poseLandmarks[14] &&
       results.poseLandmarks[16]
     ) {
       const rightShoulder = results.poseLandmarks[12];
-      const rightElbow = results.poseLandmarks[14];
       const rightWrist = results.poseLandmarks[16];
-      const maxReach =
-        this.calcDist(
-          width - rightShoulder.x * width,
-          rightShoulder.y * height,
-          width - rightElbow.x * width,
-          rightElbow.y * height,
-        ) +
-        this.calcDist(
-          width - rightElbow.x * width,
-          rightElbow.y * height,
-          width - rightWrist.x * width,
-          rightWrist.y * height,
-        );
       return {
         shoulderX: width - rightShoulder.x * width,
         wristX: width - rightWrist.x * width,
-        maxReach,
       };
     }
     return {
       wristX: 250,
       shoulderX: width / 2,
-      maxReach: 200,
     };
   }
 
@@ -245,128 +409,67 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param object game object to destroy.
    */
   async destroyGameObjects(object?: BagType | 'obstacle' | 'wrong-sign') {
-    switch (object) {
-      case 'heavy-blue':
-        if (this.heavyBlue) {
-          await this.animateExit(this.heavyBlue);
+    console.log('Destroy Game Objects::', object);
+    if (!object) {
+      this.group.clear(true, true);
+    } else {
+      this.group.getChildren().forEach((child: any) => {
+        if (!child || !child.texture || !child.texture.key) {
+          return;
         }
-        break;
-      case 'heavy-red':
-        if (this.heavyRed) {
-          await this.animateExit(this.heavyRed);
+        if (child.texture.key === object) {
+          this.animateExit(child);
         }
-        break;
-      case 'speed-blue':
-        if (this.speedBlue) {
-          await this.animateExit(this.speedBlue);
-        }
-        break;
-      case 'speed-red':
-        if (this.speedRed) {
-          await this.animateExit(this.speedRed);
-        }
-        break;
-      case 'obstacle':
-        if (this.obstacle) {
-          await this.animateExit(this.obstacle);
-        }
-        break;
-      case 'wrong-sign':
-        if (this.wrongSign) {
-          this.wrongSign.destroy(true);
-        }
-        break;
-      default:
-        console.log('destroying all objects');
-        if (this.heavyBlue) {
-          await this.animateExit(this.heavyBlue);
-        }
-        if (this.speedBlue) {
-          await this.animateExit(this.speedBlue);
-        }
-        if (this.heavyRed) {
-          await this.animateExit(this.heavyRed);
-        }
-        if (this.speedRed) {
-          await this.animateExit(this.speedRed);
-        }
-        if (this.obstacle) {
-          await this.animateExit(this.obstacle);
-        }
-        if (this.wrongSign) {
-          this.wrongSign.destroy(true);
-        }
+      });
     }
   }
 
-  midPoint(x1: number, y1: number, x2: number, y2: number) {
+  private midPoint(x1: number, y1: number, x2: number, y2: number) {
     return [(x1 + x2) / 2, (y1 + y2) / 2];
   }
+
   /**
    * Function to draw hand overlays.
    * @param results pose results
    */
-  drawGloves(results: Results) {
+  private drawGloves(results: Results) {
     const { width, height } = this.game.canvas;
     if (!results || !Array.isArray(results.poseLandmarks)) {
       return;
     }
     if (results.poseLandmarks[15] && results.poseLandmarks[19] && this.enableLeft) {
       const leftWrist = results.poseLandmarks[15];
-      const leftIndex = results.poseLandmarks[19];
-      const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
-
       this.blueGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
-        'left_hand_overlay',
+        width - leftWrist.x * width,
+        leftWrist.y * height,
+        TextureKeys.LEFT_HAND,
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
-      const rightIndex = results.poseLandmarks[20];
-      const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
-
       this.redGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
-        'right_hand_overlay',
+        width - rightWrist.x * width,
+        rightWrist.y * height,
+        TextureKeys.RIGHT_HAND,
       );
     }
   }
 
   /**
-   * @param gameObjectWithBody the gameObject to calculate width
-   * @returns width of the gameObject
-   */
-  getWidth(
-    gameObjectWithBody: Phaser.Types.Physics.Arcade.ImageWithStaticBody,
-  ): number | undefined {
-    if (gameObjectWithBody && gameObjectWithBody.body) {
-      const { right, left } = gameObjectWithBody.body;
-      if (right && left) return gameObjectWithBody.body.right - gameObjectWithBody.body.left;
-    }
-    return undefined;
-  }
-
-  /**
-   * @param bag the bag that has to be checked
    * @param point the x coordination of the bag position
    * @param level level of the bag
    * @returns it will return `newX` if it is out of bounds.
    */
-  isInBounds(point: number, level: number) {
+  private isInBounds(point: number, level: number) {
     const { width } = this.game.canvas;
     const bagWidth = 160;
 
     if (point > width || point + bagWidth > width) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: width - bagWidth - 16,
       };
     } else if (point < 0 || point - bagWidth < 0) {
-      console.log('point + bagWidth ', point + bagWidth, ' width ', width);
       return {
         isInBounds: false,
         newX: bagWidth + 16,
@@ -384,11 +487,11 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
   showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
-    console.log(`position: ${centerOfMotion}, type: ${type}`);
+    console.log(`position: ${centerOfMotion}, type: ${type}, level: ${level}`);
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      const { shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
       let tmpX = 0;
       if (centerOfMotion === 'right') {
         // pick whichever is the maximum, to reduce the chances of collision.
@@ -408,71 +511,24 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       x = tmpX * level;
     }
-    switch (type) {
-      case 'heavy-blue':
-        this.heavyBlue && this.heavyBlue.destroy(true);
-        const isHeavyBlueInBounds = this.isInBounds(x, level);
-        if (isHeavyBlueInBounds.isInBounds) {
-          this.heavyBlue = this.physics.add.staticImage(x, y, 'heavy_bag_blue').setOrigin(0.5, 0.1);
-        } else {
-          if (isHeavyBlueInBounds.newX) {
-            this.heavyBlue = this.physics.add
-              .staticImage(isHeavyBlueInBounds.newX, y, 'heavy_bag_blue')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.heavyBlue && this.animateEntry(this.heavyBlue);
-        this.heavyBlue && this.heavyBlue.refreshBody();
-        break;
-      case 'heavy-red':
-        this.heavyRed && this.heavyRed.destroy(true);
-        const isHeavyRedInBounds = this.isInBounds(x, level);
-        if (isHeavyRedInBounds.isInBounds) {
-          this.heavyRed = this.physics.add.staticImage(x, y, 'heavy_bag_red').setOrigin(0.5, 0.1);
-        } else {
-          if (isHeavyRedInBounds.newX) {
-            this.heavyRed = this.physics.add
-              .staticImage(isHeavyRedInBounds.newX, y, 'heavy_bag_red')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.heavyRed && this.animateEntry(this.heavyRed);
-        this.heavyRed && this.heavyRed.refreshBody();
-        break;
-      case 'speed-red':
-        this.speedRed && this.speedRed.destroy(true);
-        const isSpeedRedInBounds = this.isInBounds(x, level);
-        if (isSpeedRedInBounds.isInBounds) {
-          this.speedRed = this.physics.add.staticImage(x, y, 'speed_bag_red').setOrigin(0.5, 0.1);
-        } else {
-          if (isSpeedRedInBounds.newX) {
-            this.speedRed = this.physics.add
-              .staticImage(isSpeedRedInBounds.newX, y, 'speed_bag_red')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.speedRed && this.animateEntry(this.speedRed);
-        this.speedRed && this.speedRed.refreshBody();
-        break;
-      case 'speed-blue':
-        this.speedBlue && this.speedBlue.destroy(true);
-        const isSpeedBlueInBounds = this.isInBounds(x, level);
-        if (isSpeedBlueInBounds.isInBounds) {
-          this.speedBlue = this.physics.add.staticImage(x, y, 'speed_bag_blue').setOrigin(0.5, 0.1);
-        } else {
-          if (isSpeedBlueInBounds.newX) {
-            this.speedBlue = this.physics.add
-              .staticImage(isSpeedBlueInBounds.newX, y, 'speed_bag_blue')
-              .setOrigin(0.5, 0.1);
-          }
-        }
-        this.speedBlue && this.animateEntry(this.speedBlue);
-        this.speedBlue && this.speedBlue.refreshBody();
-        break;
+
+    let gameObject!: Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+    const isBagInBounds = this.isInBounds(x, level);
+    if (isBagInBounds.isInBounds) {
+      gameObject = this.physics.add.staticSprite(x, y, type).setOrigin(0.5, 0.1);
+    } else {
+      if (isBagInBounds.newX) {
+        gameObject = this.physics.add.staticSprite(isBagInBounds.newX, y, type).setOrigin(0.5, 0.1);
+      }
+    }
+    if (gameObject) {
+      this.group && this.group.add(gameObject);
+      this.animateEntry(gameObject);
+      gameObject.refreshBody();
     }
   }
 
-  getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
+  private getCenter(gameObject: Phaser.Types.Physics.Arcade.GameObjectWithBody): [number, number] {
     return [
       (gameObject.body.right + gameObject.body.left) / 2,
       (gameObject.body.top + gameObject.body.bottom) / 2,
@@ -488,7 +544,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     let x = 0;
     const y = 0;
     if (this.results) {
-      const { maxReach, shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
+      const { shoulderX, wristX } = this.calculateReach(this.results, centerOfMotion);
 
       let tmpX = 0;
       if (centerOfMotion === 'right') {
@@ -509,251 +565,51 @@ export class BeatBoxerScene extends Phaser.Scene {
 
       x = tmpX * level;
     }
-    this.obstacle && this.obstacle.destroy(true);
+
+    let gameObject!: Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+
     const isObstacleInBounds = this.isInBounds(x, level);
     if (isObstacleInBounds.isInBounds) {
-      this.obstacle = this.physics.add.staticImage(x, y, 'obstacle_top').setOrigin(0.5, 0.1);
+      gameObject = this.physics.add.staticSprite(x, y, TextureKeys.OBSTACLE).setOrigin(0.5, 0.1);
     } else {
       if (isObstacleInBounds.newX) {
-        this.obstacle = this.physics.add
-          .staticImage(isObstacleInBounds.newX, y, 'obstacle_top')
+        gameObject = this.physics.add
+          .staticSprite(isObstacleInBounds.newX, y, TextureKeys.OBSTACLE)
           .setOrigin(0.5, 0.1);
       }
     }
-    this.obstacle && this.animateEntry(this.obstacle);
-    this.obstacle && this.obstacle.refreshBody();
+    if (gameObject) {
+      this.group && this.group.add(gameObject);
+      this.animateEntry(gameObject);
+      gameObject.refreshBody();
+    }
   }
 
   override update(time: number, delta: number): void {
     if (this.collisions) {
-      if (this.blueGlove && this.heavyBlue) {
-        this.physics.overlap(this.blueGlove, this.heavyBlue, async (_blueGlove, _heavyBlue) => {
-          const [x, y] = this.getCenter(_heavyBlue);
-          await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-blue',
-            gloveColor: 'blue',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-blue',
-              result: 'success',
-            });
-        });
+      if (this.blueGlove && this.group) {
+        this.physics.overlap(this.blueGlove, this.group, this.blueGloveCollisionCallback);
       }
-      if (this.blueGlove && this.speedBlue) {
-        this.physics.overlap(this.blueGlove, this.speedBlue, async (_blueGlove, _speedBlue) => {
-          const [x, y] = this.getCenter(_speedBlue);
-          await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-blue',
-            gloveColor: 'blue',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-blue',
-              result: 'success',
-            });
-        });
-      }
-      if (this.redGlove && this.heavyRed) {
-        this.physics.overlap(this.redGlove, this.heavyRed, async (_redGlove, _heavyRed) => {
-          const [x, y] = this.getCenter(_heavyRed);
-          await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-red',
-            gloveColor: 'red',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-red',
-              result: 'success',
-            });
-        });
-      }
-      if (this.redGlove && this.speedRed) {
-        this.physics.overlap(this.redGlove, this.speedRed, async (_redGlove, _speedRed) => {
-          const [x, y] = this.getCenter(_speedRed);
-          await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playSuccessMusic();
-          this.playConfettiAnim(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-red',
-            gloveColor: 'red',
-            result: 'success',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-red',
-              result: 'success',
-            });
-        });
-      }
-
-      if (this.redGlove && this.obstacle) {
-        this.physics.overlap(this.redGlove, this.obstacle, async (_redGlove, _obstacleTop) => {
-          const [x, y] = this.getCenter(_obstacleTop);
-          await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'obstacle',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'obstacle-top',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.blueGlove && this.obstacle) {
-        this.physics.overlap(this.blueGlove, this.obstacle, async (_blueGlove, _obstacleTop) => {
-          const [x, y] = this.getCenter(_obstacleTop);
-          await this.animateExit(_obstacleTop as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'obstacle',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'obstacle-top',
-              result: 'failure',
-            });
-        });
-      }
-
-      // wrong collisions...
-      // punching blue bags with red glove or red bags with blue glove..
-      if (this.blueGlove && this.heavyRed) {
-        this.physics.overlap(this.blueGlove, this.heavyRed, async (_blueGlove, _heavyRed) => {
-          const [x, y] = this.getCenter(_heavyRed);
-          await this.animateExit(_heavyRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-red',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-red',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.blueGlove && this.speedRed) {
-        this.physics.overlap(this.blueGlove, this.speedRed, async (_blueGlove, _speedRed) => {
-          const [x, y] = this.getCenter(_speedRed);
-          await this.animateExit(_speedRed as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-red',
-            gloveColor: 'blue',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-red',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.redGlove && this.heavyBlue) {
-        this.physics.overlap(this.redGlove, this.heavyBlue, async (_redGlove, _heavyBlue) => {
-          const [x, y] = this.getCenter(_heavyBlue);
-          await this.animateExit(_heavyBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.music && this.playFailureMusic();
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'heavy-blue',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'heavy-blue',
-              result: 'failure',
-            });
-        });
-      }
-
-      if (this.redGlove && this.speedBlue) {
-        this.physics.overlap(this.redGlove, this.speedBlue, async (_redGlove, _speedBlue) => {
-          this.music && this.playFailureMusic();
-          const [x, y] = this.getCenter(_speedBlue);
-          await this.animateExit(_speedBlue as Phaser.Types.Physics.Arcade.ImageWithStaticBody);
-          this.showWrongSign(x, y);
-          this.collisionDetected = {
-            bagType: 'speed-blue',
-            gloveColor: 'red',
-            result: 'failure',
-          };
-          this.onCollision &&
-            this.onCollision({
-              type: 'speed-blue',
-              result: 'failure',
-            });
-        });
+      if (this.redGlove && this.group) {
+        this.physics.overlap(this.redGlove, this.group, this.redGloveCollisionCallback);
       }
     }
   }
 
-  playConfettiAnim(x: number, y: number) {
-    // stopping the exisiting confetti..
-    if (this.confettiAnim || this.musicAnim) {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }
-    this.confettiAnim = this.add.sprite(x, y, 'confetti').play('confetti_anim', true);
-    this.musicAnim = this.add.sprite(x, y, 'music').setScale(0.8).play('music_anim', true);
-    setTimeout(() => {
-      this.confettiAnim && this.confettiAnim.destroy(true);
-      this.musicAnim && this.musicAnim.destroy(true);
-    }, 1000);
+  private playConfettiAnim(x: number, y: number) {
+    this.add.sprite(x, y, TextureKeys.CONFETTI).play(AnimationKeys.CONFETTI_ANIM);
+    this.add.sprite(x, y, TextureKeys.MUSIC).play(AnimationKeys.MUSIC_ANIM);
   }
 
-  showWrongSign(x: number, y: number) {
-    if (this.wrongSign) {
-      this.wrongSign.destroy(true);
-    }
-    this.wrongSign = this.physics.add.staticImage(x, y, 'wrong_sign');
-    setTimeout(() => {
-      this.wrongSign && this.wrongSign.destroy(true);
-    }, 1000);
-  }
-
-  setUpCallbacks(callbacks: {
-    onCollision: (value: {
-      type: BagType | 'obstacle-top' | 'obstacle-bottom';
-      result: 'success' | 'failure';
-    }) => void;
-  }) {
-    this.onCollision = callbacks.onCollision;
+  private showWrongSign(x: number, y: number) {
+    this.add.sprite(x, y, TextureKeys.WRONG_SIGN_ATLAS).play(AnimationKeys.WRONG_SIGN_ANIM);
   }
 
   /**
    * @param bag bag object to tween.
    */
-  animateEntry(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+  private animateEntry(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+    // chaining tweens
     this.tweens.addCounter({
       from: -120,
       to: 20,
@@ -806,9 +662,12 @@ export class BeatBoxerScene extends Phaser.Scene {
   /**
    * @param bag bag object to tween.
    */
-  async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
-    return new Promise((resolve) => {
-      const bagHeight = bag.body.bottom - bag.body.top || 700;
+  private async animateExit(bag: Phaser.Types.Physics.Arcade.ImageWithStaticBody) {
+    return new Promise<boolean>((resolve) => {
+      let bagHeight = 700;
+      if (bag.body) {
+        bagHeight = bag.body.bottom - bag.body.top;
+      }
       this.tweens.addCounter({
         from: 0,
         to: -bagHeight,
@@ -822,7 +681,9 @@ export class BeatBoxerScene extends Phaser.Scene {
         onComplete: () => {
           if (bag.body) {
             bag.destroy(true);
-            resolve({});
+            resolve(true);
+          } else {
+            resolve(false);
           }
         },
       });
@@ -838,8 +699,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     bag2?: BagType | 'obstacle',
     timeout?: number,
   ): Promise<
-    | { result: undefined }
-    | { bagType: BagType | 'obstacle'; gloveColor: string; result: 'success' | 'failure' }
+    { result: undefined } | { bagType: string; gloveColor: string; result: 'success' | 'failure' }
   > {
     return new Promise((resolve) => {
       const startTime = new Date().getTime();
@@ -886,41 +746,143 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.collisions = value;
   }
 
-  successMusic: Howl;
-  successMusicId: number;
-  failureMusic: Howl;
-  failureMusicId: number;
-  configureMusic() {
-    this.successMusic = new Howl({
-      src: 'assets/sounds/soundsprites/beat-boxer/beatBoxer.mp3',
-      sprite: audioSprites.beatBoxer,
-      html5: true,
-    });
+  private getDurationOfNote(note: number) {
+    return audioSprites['beatBoxer'][`note_${note}`][1];
+  }
 
-    this.failureMusic = new Howl({
-      src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+  private src: { [key in Genre]: string } = {
+    classical: 'assets/sounds/soundsprites/beat-boxer/classical/',
+    'surprise me!': 'assets/sounds/soundsprites/beat-boxer/ambient/',
+    rock: 'assets/sounds/soundsprites/beat-boxer/rock/',
+    dance: 'assets/sounds/soundsprites/beat-boxer/dance/',
+    jazz: 'assets/sounds/soundsprites/beat-boxer/jazz/',
+  };
+
+  private loadMusicFiles(genre: Genre) {
+    this.musicFilesLoaded = 0;
+
+    const randomSet = genre === 'classical' ? Math.floor(Math.random() * 2) : 0;
+    this.genre = genre;
+    this.currentSet = randomSet;
+
+    if (genre === 'classical' && randomSet === 1) {
+      this.totalMusicFiles = 2;
+
+      this.failureTrack = new Howl({
+        src: 'assets/sounds/soundscapes/Sound Health Soundscape_decalibrate.mp3',
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+      });
+
+      this.successTrack = new Howl({
+        src: 'assets/sounds/soundsprites/beat-boxer/classical/set1/beatBoxer.mp3',
+        sprite: audioSprites.beatBoxer,
+        html5: true,
+        loop: false,
+        onfade: (id) => {
+          this.successTrack.stop(id);
+        },
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+      });
+      return;
+    }
+
+    this.totalMusicFiles = 3;
+    const src: string = this.src[genre] + `set${randomSet}/`;
+    this.backtrack = new Howl({
+      src: src + 'backtrack.mp3',
       html5: true,
+      loop: true,
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.successTrack = new Howl({
+      src: src + genre + 'Triggers.mp3',
+      sprite: beatBoxerAudio[genre][randomSet].successTriggers,
+      html5: true,
+      onend: (id) => {
+        this.successTrack.stop(id);
+      },
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
+    });
+    this.failureTrack = new Howl({
+      src: src + genre + 'Error.mp3',
+      sprite: beatBoxerAudio[genre][randomSet].errorTriggers,
+      html5: true,
+      onend: (id) => {
+        this.failureTrack.stop(id);
+      },
+      onload: this.onLoadCallback,
+      onloaderror: this.onLoadErrorCallback,
     });
   }
 
-  nextPianoNote = 1;
-  playSuccessMusic() {
-    if (this.successMusic && this.successMusic.playing(this.successMusicId)) {
-      this.successMusic.stop();
+  playBacktrack() {
+    if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
+      this.backtrackId = this.backtrack.play();
     }
-    if (this.successMusic && !this.successMusic.playing(this.successMusicId)) {
-      console.log('playing piano note, ', this.nextPianoNote);
-      this.successMusicId = this.successMusic.play(`note_${this.nextPianoNote}`);
-      this.nextPianoNote += 1;
+    return this.backtrackId;
+  }
+
+  stopBacktrack() {
+    const endFadeoutDuration = 5000;
+    if (this.backtrack && this.backtrackId && this.backtrack.playing(this.backtrackId)) {
+      this.backtrack.fade(100, 0, endFadeoutDuration, this.backtrackId).on('fade', (id) => {
+        this.backtrack.stop(id);
+      });
     }
   }
 
-  playFailureMusic() {
-    if (this.failureMusic && this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusic.stop();
+  private playSuccessMusic() {
+    if (this.genre === 'classical' && this.currentSet === 1) {
+      const fadeOutDuration = 750;
+      const noteDuration = this.getDurationOfNote(this.currentSuccessTrigger);
+      const durationBeforeFadeOut = noteDuration - fadeOutDuration;
+      console.log('playing piano note, ', this.currentSuccessTrigger);
+      this.successTrack.volume(1);
+      const successToneId = this.successTrack.play(`note_${this.currentSuccessTrigger}`);
+      setTimeout(() => {
+        this.successTrack.fade(1, 0, fadeOutDuration, successToneId);
+      }, durationBeforeFadeOut);
+      this.currentSuccessTrigger += 1;
+      if (this.currentSuccessTrigger === 149) {
+        this.currentSuccessTrigger = 1;
+      }
+      return successToneId;
+    } else {
+      // if (this.successTrack.playing(this.currentSuccessTriggerId)) {
+      //   this.successTrack.stop(this.currentSuccessTriggerId);
+      // }
+      this.currentSuccessTriggerId = this.successTrack.play('trigger' + this.currentSuccessTrigger);
+      this.currentSuccessTrigger += 1;
+      const totalTriggers = Object.entries(
+        beatBoxerAudio[this.genre][this.currentSet].successTriggers,
+      ).length;
+      if (this.currentSuccessTrigger === totalTriggers + 1) {
+        this.currentSuccessTrigger = 1;
+      }
+      return this.currentSuccessTriggerId;
     }
-    if (this.failureMusic && !this.failureMusic.playing(this.failureMusicId)) {
-      this.failureMusicId = this.failureMusic.play();
+  }
+
+  private playFailureMusic() {
+    if (this.genre === 'classical' && this.currentSet === 1) {
+      console.log('playFailureTrack:: classical');
+      return this.failureTrack.play();
+    } else {
+      console.log('playFailureTrack:: classical');
+      this.currentFailureTriggerId = this.failureTrack.play('error' + this.currentFailureTrigger);
+      this.currentFailureTrigger += 1;
+      const totalTriggers = Object.entries(
+        beatBoxerAudio[this.genre][this.currentSet].errorTriggers,
+      ).length;
+      if (this.currentFailureTrigger === totalTriggers + 1) {
+        this.currentFailureTrigger = 1;
+      }
+      return this.currentFailureTriggerId;
     }
   }
 
@@ -929,5 +891,12 @@ export class BeatBoxerScene extends Phaser.Scene {
    */
   enableMusic(value = true) {
     this.music = value;
+
+    // if disabled... unload music files
+    if (!value) {
+      this.successTrack && this.successTrack.unload();
+      this.failureTrack && this.failureTrack.unload();
+      this.backtrack && this.backtrack.unload();
+    }
   }
 }

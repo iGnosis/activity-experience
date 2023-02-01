@@ -25,6 +25,8 @@ export class BannerComponent implements OnInit, OnDestroy {
   attributes: ElementAttributes;
   progressBarWidth = 0;
   bannerAnimationState = 'start';
+  progressBarAnimationState: 'start' | 'progress' = 'start';
+  progressDuration: number;
 
   constructor(private bannerService: BannerService) {}
 
@@ -45,7 +47,9 @@ export class BannerComponent implements OnInit, OnDestroy {
           this.bannerAnimationState = 'end';
           setTimeout(() => {
             this.state.buttons?.forEach((button) => {
-              this.animateProgressBar(button.progressDurationMs || 3000);
+              if (!button.infiniteProgress) {
+                this.animateProgressBar(button.progressDurationMs || 3000);
+              }
             });
           }, 500);
         }, 100);
@@ -54,20 +58,14 @@ export class BannerComponent implements OnInit, OnDestroy {
   }
 
   animateProgressBar(duration: number) {
-    const increaseWidthPerMs = duration / 100;
+    this.progressDuration = duration / 1000;
+    this.progressBarAnimationState = 'progress';
 
-    const animationInterval = setInterval(() => {
-      if (this.progressBarWidth >= 100) {
-        clearInterval(animationInterval);
-        setTimeout(() => {
-          this.bannerService.hide();
-          this.progressBarWidth = 0;
-          this.bannerAnimationState = 'start';
-        }, 500);
-      } else {
-        this.progressBarWidth += 1;
-      }
-    }, increaseWidthPerMs);
+    setTimeout(() => {
+      this.bannerService.hide();
+      this.bannerAnimationState = 'start';
+      this.progressBarAnimationState = 'start';
+    }, duration);
   }
 
   onButtonClick(button: BannerButton) {

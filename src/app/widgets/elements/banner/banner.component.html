@@ -1,12 +1,12 @@
 <div [@animate-banner]="{value: bannerAnimationState}" *ngIf="attributes && attributes.visibility === 'visible'"
-  class="banner">
-  <div class="pt-4" [innerHTML]="state.htmlStr | safeHtml"></div>
+  class="banner" [class.loader]="state.type === 'loader'" [class.status]="state.type === 'status'" [class.action]="state.type === 'action'">
+  <div class="pt-4" [innerHTML]="state.htmlStr || '' | safe: 'html'"></div>
   <div class="row pt-6">
     <div class="col-12 pt-2" *ngFor="let button of state.buttons">
-      <div class="progress" style="height: 40px; width: 85%;">
-        <div class="progress-bar bg-success" (click)="onButtonClick(button)" role="progressbar"
-          [ngStyle]="{'width': progressBarWidth + '%'}"
-          [attr.aria-valuenow]=progressBarWidth aria-valuemin="0" aria-valuemax="100"><span>{{ button.title }}</span></div>
+      <div class="progress">
+        <div class="progress-bar bg-success"
+          [style.animation]="progressBarAnimationState === 'progress' ? 'progress '+ progressDuration +'s linear' : null"
+          (click)="onButtonClick(button)" role="progressbar"><span>{{ button.title }}</span></div>
       </div>
     </div>
   </div>

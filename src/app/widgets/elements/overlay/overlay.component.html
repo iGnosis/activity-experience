@@ -6,9 +6,9 @@
             *ngFor="let item of state.data.cards; let i=index" 
             class="col mx-5 rounded-5 bg-white d-flex flex-column justify-content-center align-items-center py-14"
             [class.invisible]="i >= cardCount">
-            <img class="w-40" [src]="item.icon" alt="card icon">
+            <img class="h-40" [src]="item.icon" alt="card icon">
             <div>&nbsp;</div>
-            <h1 class="text-primary text-nowrap">{{item.message || ''}}</h1>
+            <h2 class="text-primary text-nowrap">{{item.message || ''}}</h2>
         </div>
     </div>
 </div>
