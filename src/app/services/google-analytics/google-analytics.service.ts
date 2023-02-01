@@ -45,9 +45,10 @@ export class GoogleAnalyticsService {
       });
     }
   }
+
   setUserId(user_id: string) {
     try {
-      if (window.gtag) {
+      if (window.gtag && user_id) {
         window.gtag('config', environment.googleAnalyticsTrackingID, {
           user_id,
         });
@@ -56,7 +57,15 @@ export class GoogleAnalyticsService {
       console.log(e);
     }
   }
-  sendEvent(name: string, params?: any) {
+
+  /**
+   * Sends an event to Google Analytics
+   *
+   * @param {string} name
+   * @param {{ [key: string]: any } | undefined} params?
+   * @returns {void}
+   */
+  sendEvent(name: string, params?: { [key: string]: any }) {
     try {
       if (window.gtag) {
         if (params) window.gtag('event', name, { ...params });

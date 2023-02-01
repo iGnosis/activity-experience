@@ -37,12 +37,18 @@ export class GameElement<T, M> {
       console.error(this._state.attributes);
       return;
     }
+    let recalibrationTimeout;
+    // Refactor: Avoid workaround to debounce recalibration
     if (this.reCalibrationCount !== this.attributes.reCalibrationCount) {
-      console.error('Global::reCalibrationCount', this.reCalibrationCount);
-      console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);
-      console.error(this._state.data);
-      console.error(this._state.attributes);
-      throw new Error('Recalibration count changed');
+      recalibrationTimeout = setTimeout(() => {
+        console.error('Global::reCalibrationCount', this.reCalibrationCount);
+        console.error('Local::reCalibrationCount', this.attributes.reCalibrationCount);
+        console.error(this._state.data);
+        console.error(this._state.attributes);
+        throw new Error('Recalibration count changed from elements');
+      }, 2000);
+    } else {
+      clearTimeout(recalibrationTimeout);
     }
     this._state = Object.assign(this._state, state);
     this._subject.next(this._state);

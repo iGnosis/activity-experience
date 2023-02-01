@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { LandmarkList, NormalizedLandmarkList, Results } from '@mediapipe/pose';
-
+import { Results } from '@mediapipe/pose';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { HandTrackerService } from './hand-tracker.service';
 
 describe('HandRaisedService', () => {
   let service: HandTrackerService;
+  let poseModelAdapter: PoseModelAdapter;
 
   // mock results from mediapipe pose to test the service.
   const noHandsRaised: Pick<Results, 'poseLandmarks'> = {
@@ -820,6 +821,8 @@ describe('HandRaisedService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(HandTrackerService);
+    poseModelAdapter = TestBed.inject(PoseModelAdapter);
+    poseModelAdapter.setModel('mediapipe');
   });
 
   it('should be created', () => {
@@ -849,68 +852,76 @@ describe('HandRaisedService', () => {
     expect(service._isElbowsVisible(noHandsRaised.poseLandmarks)).toEqual(true);
   });
 
-  it('should check nose elbow distance', () => {
+  it('should check shoulder elbow distance', () => {
     expect(
-      service._noseElbowYDist(
-        leftHandRaised.poseLandmarks[0],
+      service._shoulderElbowYDist(
+        leftHandRaised.poseLandmarks[11],
+        leftHandRaised.poseLandmarks[12],
         leftHandRaised.poseLandmarks[13],
         leftHandRaised.poseLandmarks[14],
       ),
     ).toEqual('left-hand');
 
     expect(
-      service._noseElbowYDist(
-        noHandsRaised.poseLandmarks[0],
+      service._shoulderElbowYDist(
+        noHandsRaised.poseLandmarks[11],
+        noHandsRaised.poseLandmarks[12],
         noHandsRaised.poseLandmarks[13],
         noHandsRaised.poseLandmarks[14],
       ),
     ).toEqual(undefined);
 
     expect(
-      service._noseElbowYDist(
-        rightHandRaised.poseLandmarks[0],
+      service._shoulderElbowYDist(
+        rightHandRaised.poseLandmarks[11],
+        rightHandRaised.poseLandmarks[12],
         rightHandRaised.poseLandmarks[13],
         rightHandRaised.poseLandmarks[14],
       ),
     ).toEqual('right-hand');
 
     expect(
-      service._noseElbowYDist(
-        bothHandsRaised.poseLandmarks[0],
+      service._shoulderElbowYDist(
+        bothHandsRaised.poseLandmarks[11],
+        bothHandsRaised.poseLandmarks[12],
         bothHandsRaised.poseLandmarks[13],
         bothHandsRaised.poseLandmarks[14],
       ),
     ).toEqual('both-hands');
   });
 
-  it('should check nose wrist distance', () => {
+  it('should check shoulder wrist distance', () => {
     expect(
-      service._noseWristYDist(
-        leftHandRaised.poseLandmarks[0],
+      service._shoulderWristYDist(
+        leftHandRaised.poseLandmarks[11],
+        leftHandRaised.poseLandmarks[12],
         leftHandRaised.poseLandmarks[15],
         leftHandRaised.poseLandmarks[16],
       ),
     ).toEqual('left-hand');
 
     expect(
-      service._noseWristYDist(
-        noHandsRaised.poseLandmarks[0],
+      service._shoulderWristYDist(
+        noHandsRaised.poseLandmarks[11],
+        noHandsRaised.poseLandmarks[12],
         noHandsRaised.poseLandmarks[15],
         noHandsRaised.poseLandmarks[16],
       ),
     ).toEqual(undefined);
 
     expect(
-      service._noseWristYDist(
-        rightHandRaised.poseLandmarks[0],
+      service._shoulderWristYDist(
+        rightHandRaised.poseLandmarks[11],
+        rightHandRaised.poseLandmarks[12],
         rightHandRaised.poseLandmarks[15],
         rightHandRaised.poseLandmarks[16],
       ),
     ).toEqual('right-hand');
 
     expect(
-      service._noseWristYDist(
-        bothHandsRaised.poseLandmarks[0],
+      service._shoulderWristYDist(
+        bothHandsRaised.poseLandmarks[11],
+        bothHandsRaised.poseLandmarks[12],
         bothHandsRaised.poseLandmarks[15],
         bothHandsRaised.poseLandmarks[16],
       ),

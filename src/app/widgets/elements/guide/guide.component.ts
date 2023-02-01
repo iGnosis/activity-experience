@@ -11,8 +11,10 @@ import { ElementAttributes, GuideElementState } from 'src/app/types/pointmotion'
 export class GuideComponent implements OnInit, OnDestroy {
   state: { data: GuideElementState; attributes: object & ElementAttributes };
   subscription: Subscription;
+  logoUrl = '/assets/images/sound_health_logo.jpg';
 
   constructor(private guideService: GuideService) {}
+
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

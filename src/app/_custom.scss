@@ -1,6 +1,29 @@
 @import '/src/app/variables';
 
 body {
-    margin: 0;
-    background-color: darken($primary, 10%);
+  margin: 0;
+  background-color: $primary_color;
+}
+body:before {
+  content: '\A';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 1;
+}
+
+.bg-primary {
+  background-color: $primary_color !important;
+}
+.bg-success {
+  background-color: $success_color !important;
+}
+.btn-primary {
+  background-color: $primary_color !important;
+}
+.text-primary {
+  color: $primary_color !important;
 }

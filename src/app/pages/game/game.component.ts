@@ -2,11 +2,9 @@ import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { take } from 'rxjs';
-import { ElementsService } from 'src/app/services/elements/elements.service';
-import { GameStateService } from 'src/app/services/game-state/game-state.service';
+import { ApiService } from 'src/app/services/checkin/api.service';
 import { GameService } from 'src/app/services/game/game.service';
 import { GoogleAnalyticsService } from 'src/app/services/google-analytics/google-analytics.service';
-import { UiHelperService } from 'src/app/services/ui-helper/ui-helper.service';
 import { UserService } from 'src/app/services/user/user.service';
 
 @Component({
@@ -22,13 +20,11 @@ export class GameComponent implements OnInit {
   cameraStatus?: 'success' | 'failure';
 
   constructor(
-    private elements: ElementsService,
-    private uiHelperService: UiHelperService,
     private gameService: GameService,
     private userService: UserService,
     private route: ActivatedRoute,
     private store: Store,
-    private gameStateService: GameStateService,
+    private apiService: ApiService,
     private googleAnalyticsService: GoogleAnalyticsService,
   ) {}
   async ngOnInit(): Promise<void> {
@@ -47,11 +43,17 @@ export class GameComponent implements OnInit {
     window.addEventListener(
       'message',
       async (data) => {
+        if (data?.data?.type === 'set-game') {
+          // for testing
+          this.gameService.setGame(data.data.game);
+          return;
+        }
         const tokenHandled = this.userService.handleToken(data);
         if (tokenHandled) {
           this.cameraStatus = await this.gameService.bootstrap(
             this.video.nativeElement,
             this.canvas.nativeElement,
+            data.data.benchmarkId,
           );
           this.videoAvailable = true;
           if (this.cameraStatus === 'failure') {
@@ -81,7 +83,7 @@ export class GameComponent implements OnInit {
       .subscribe((game) => {
         if (game.id) {
           const { id, ...gameState } = game;
-          this.gameStateService.updateGame(id, gameState);
+          this.apiService.updateGame(id, gameState);
         }
       });
     return false;

@@ -1,24 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { CalibrationStatusType } from 'src/app/types/pointmotion';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CalibrationScene extends Scene {
-  invalid = false;
-  webcam: any;
-  frame$?: Observable<any>;
-  calibration$?: Observable<any>;
-  texture?: string;
   showCalibration = true;
   checkImage?: Phaser.GameObjects.Image;
   wrongImage?: Phaser.GameObjects.Image;
   graphics?: Phaser.GameObjects.Graphics = undefined;
-  calibrationStatus = 'success';
 
   //calibration box dimensions
   calibrationBox: {
@@ -36,7 +29,7 @@ export class CalibrationScene extends Scene {
     center?: Phaser.GameObjects.Rectangle;
   } = {};
 
-  constructor() {
+  constructor(private poseModelAdapter: PoseModelAdapter) {
     super({ key: 'calibration' });
   }
 
@@ -195,51 +188,6 @@ export class CalibrationScene extends Scene {
     const leftAnkle = poseResults.poseLandmarks[27];
     const rightWrist = poseResults.poseLandmarks[16];
     const leftWrist = poseResults.poseLandmarks[15];
-    const leftIndex = poseResults.poseLandmarks[19];
-    const rightIndex = poseResults.poseLandmarks[20];
-    const rightFootIndex = poseResults.poseLandmarks[32];
-    const rightHeel = poseResults.poseLandmarks[30];
-    const leftFootIndex = poseResults.poseLandmarks[31];
-    const leftHeel = poseResults.poseLandmarks[29];
-
-    // foot connections
-    graphics.lineBetween(
-      width - rightAnkle.x * width,
-      rightAnkle.y * height,
-      width - rightFootIndex.x * width,
-      rightFootIndex.y * height,
-    );
-    graphics.lineBetween(
-      width - rightAnkle.x * width,
-      rightAnkle.y * height,
-      width - rightHeel.x * width,
-      rightHeel.y * height,
-    );
-    graphics.lineBetween(
-      width - rightFootIndex.x * width,
-      rightFootIndex.y * height,
-      width - rightHeel.x * width,
-      rightHeel.y * height,
-    );
-
-    graphics.lineBetween(
-      width - leftAnkle.x * width,
-      leftAnkle.y * height,
-      width - leftFootIndex.x * width,
-      leftFootIndex.y * height,
-    );
-    graphics.lineBetween(
-      width - leftAnkle.x * width,
-      leftAnkle.y * height,
-      width - leftHeel.x * width,
-      leftHeel.y * height,
-    );
-    graphics.lineBetween(
-      width - leftFootIndex.x * width,
-      leftFootIndex.y * height,
-      width - leftHeel.x * width,
-      leftHeel.y * height,
-    );
 
     // connection between left and right shoulders
     if (leftShoulder && rightShoulder) {
@@ -279,21 +227,6 @@ export class CalibrationScene extends Scene {
       leftElbow.y * height,
       width - leftWrist.x * width,
       leftWrist.y * height,
-    );
-
-    // connection between wrists to index fingers
-    graphics.lineBetween(
-      width - rightWrist.x * width,
-      rightWrist.y * height,
-      width - rightIndex.x * width,
-      rightIndex.y * height,
-    );
-
-    graphics.lineBetween(
-      width - leftWrist.x * width,
-      leftWrist.y * height,
-      width - leftIndex.x * width,
-      leftIndex.y * height,
     );
 
     // connection between shoulders and hip
@@ -349,8 +282,20 @@ export class CalibrationScene extends Scene {
     );
   }
 
+  private getFillColor(colorType: Exclude<CalibrationStatusType, 'disabled'>): number {
+    if (colorType === 'error') {
+      return 0x000066;
+    } else if (colorType === 'warning') {
+      return 0xffff00;
+    } else {
+      return 0x00bd3e;
+    }
+  }
+
   drawCalibrationBox(type: CalibrationStatusType) {
     if (!this.game || !this.showCalibration) return;
+    // no need to draw calibration box if calibrationservice is disabled.
+    if (type === 'disabled') return;
 
     const { width, height } = this.sys.game.canvas;
 
@@ -361,18 +306,7 @@ export class CalibrationScene extends Scene {
     this.add.existing(this.calibrationRectangle.center as Phaser.GameObjects.Rectangle);
 
     console.log(`drawCalibrationBox: ${width} X ${height}`);
-    let fillColor = 0x000066;
-
-    switch (type) {
-      case 'error':
-        fillColor = 0x000066;
-        break;
-      case 'warning':
-        fillColor = 0xffff00;
-        break;
-      case 'success':
-        fillColor = 0x00bd3e;
-    }
+    const fillColor = this.getFillColor(type);
 
     ['top', 'right', 'bottom', 'left'].forEach((rect) => {
       this.calibrationRectangle[rect as keyof typeof this.calibrationRectangle]!.setAlpha(1);
@@ -399,8 +333,6 @@ export class CalibrationScene extends Scene {
           alpha: 0.9,
           duration: 1000,
           onComplete: () => {
-            // this.eventsService.dispatchEventName('calibration.scene', 'completed', {})
-            // Move to whatever activity was going on...
             this.scene.start('sit2stand');
           },
         });

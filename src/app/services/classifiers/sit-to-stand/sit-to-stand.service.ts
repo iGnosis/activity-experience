@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Subscription } from 'rxjs';
-import { PoseService } from '../../pose/pose.service';
+import { ActivityHelperService } from '../../game/activity-helper/activity-helper.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -11,17 +13,14 @@ export class SitToStandService {
   distanceThreshold: any;
   subscription: Subscription;
 
-  public static calcDist(x1: number, y1: number, x2: number, y2: number): any {
-    // distance = √[(x2 – x1)^2 + (y2 – y1)^2]
-    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    return distance;
-  }
-
-  constructor(private poseService: PoseService) {}
+  constructor(
+    private poseModelAdapter: PoseModelAdapter,
+    private activityHelperService: ActivityHelperService,
+  ) {}
 
   enable() {
     this.enabled = true;
-    this.subscription = this.poseService.getPose().subscribe((results) => {
+    this.subscription = this.poseModelAdapter.getPose().subscribe((results) => {
       this.currentClass = this.classify(results).result;
     });
   }
@@ -39,39 +38,25 @@ export class SitToStandService {
       const rightHip = postLandmarkArray[24];
       const rightKnee = postLandmarkArray[26];
 
-      // make sure that body parts are visible
-      if (
-        (leftShoulder.visibility && leftShoulder.visibility < 0.6) ||
-        (leftHip.visibility && leftHip.visibility < 0.6) ||
-        (leftKnee.visibility && leftKnee.visibility < 0.6) ||
-        (rightShoulder.visibility && rightShoulder.visibility < 0.6) ||
-        (rightHip.visibility && rightHip.visibility < 0.6) ||
-        (rightKnee.visibility && rightKnee.visibility < 0.6)
-      ) {
-        return {
-          result: 'unknown',
-        };
-      }
-
-      const distanceBetweenLeftShoulderAndHip = SitToStandService.calcDist(
+      const distanceBetweenLeftShoulderAndHip = this.activityHelperService.calcDist(
         leftShoulder.x,
         leftShoulder.y,
         leftHip.x,
         leftHip.y,
       );
-      const distanceBetweenRightShoulderAndHip = SitToStandService.calcDist(
+      const distanceBetweenRightShoulderAndHip = this.activityHelperService.calcDist(
         rightShoulder.x,
         rightShoulder.y,
         rightHip.x,
         rightHip.y,
       );
-      const distanceBetweenLeftHipAndKnee = SitToStandService.calcDist(
+      const distanceBetweenLeftHipAndKnee = this.activityHelperService.calcDist(
         leftHip.x,
         leftHip.y,
         leftKnee.x,
         leftKnee.y,
       );
-      const distanceBetweenRightHipAndKnee = SitToStandService.calcDist(
+      const distanceBetweenRightHipAndKnee = this.activityHelperService.calcDist(
         rightHip.x,
         rightHip.y,
         rightKnee.x,
@@ -110,7 +95,10 @@ export class SitToStandService {
   async waitForClassChangeOrTimeOut(
     desiredClass: string,
     timeout = 3000,
-  ): Promise<{ result: 'success' | 'failure' }> {
+  ): Promise<{
+    result: 'success' | 'failure';
+    currentClass: 'unknown' | 'disabled' | 'sit' | 'stand';
+  }> {
     return new Promise((resolve) => {
       if (this.currentClass === desiredClass) {
         const startTime = new Date().getTime();
@@ -119,11 +107,13 @@ export class SitToStandService {
             if (this.currentClass === desiredClass) {
               resolve({
                 result: 'success',
+                currentClass: this.currentClass,
               });
               clearInterval(interval);
             } else {
               resolve({
                 result: 'failure',
+                currentClass: this.currentClass,
               });
               clearInterval(interval);
             }
@@ -131,6 +121,7 @@ export class SitToStandService {
           if (this.currentClass !== desiredClass) {
             resolve({
               result: 'failure',
+              currentClass: this.currentClass,
             });
             clearInterval(interval);
           }
@@ -138,15 +129,17 @@ export class SitToStandService {
       } else {
         const startTime = new Date().getTime();
         const interval = setInterval(() => {
-          if (new Date().getTime() - startTime > timeout) {
-            resolve({
-              result: 'failure',
-            });
-            clearInterval(interval);
-          }
           if (this.currentClass == desiredClass) {
             resolve({
               result: 'success',
+              currentClass: this.currentClass,
+            });
+            clearInterval(interval);
+          }
+          if (new Date().getTime() - startTime > timeout) {
+            resolve({
+              result: 'failure',
+              currentClass: this.currentClass,
             });
             clearInterval(interval);
           }

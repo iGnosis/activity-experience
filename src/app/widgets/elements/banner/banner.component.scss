@@ -15,7 +15,7 @@
   h1,
   h2,
   h3 {
-    color: $primary;
+    color: $primary_color;
   }
 
   button {
@@ -27,7 +27,7 @@
     margin-left: auto;
     margin-right: auto;
     border-radius: 5px;
-    background-color: $primary;
+    background-color: $primary_color;
     height: 40px;
     width: 85%;
 
@@ -55,6 +55,10 @@
     .progress {
       width: 50%;
     }
+  }
+
+  &.action {
+    height: 350px;
   }
 
   @keyframes progress {

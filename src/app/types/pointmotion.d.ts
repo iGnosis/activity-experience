@@ -1,7 +1,11 @@
-import { IconDefinition } from '@fortawesome/fontawesome-common-types';
-import { Observable, Subject } from 'rxjs';
-import { environment } from 'src/environments/environment';
-import { Shape } from '../scenes/sound-explorer.scene';
+import {
+  SafeHtml,
+  SafeResourceUrl,
+  SafeScript,
+  SafeStyle,
+  SafeUrl,
+} from '@angular/platform-browser';
+import { Observable } from 'rxjs';
 
 declare global {
   interface Window {
@@ -10,46 +14,17 @@ declare global {
   }
 }
 
-export type ActionHook = {
-  beforeAction?: Array<Action>;
-  afterAction?: Array<Action>;
-  onSuccess?: Array<Action>;
-  onFailure?: Array<Action>;
-};
-
-export type BoundingBox = {
-  topLeft: { x: number; y: number };
-  topRight: { x: number; y: number };
-  bottomLeft: { x: number; y: number };
-  bottomRight: { x: number; y: number };
-};
-
-export type Action = {
-  component: string;
-  handler: string;
-  params?: ActionParams;
-  hooks?: ActionHook;
-};
-
-declare type ActionParams = {
-  id?: string;
-  data?: any;
-};
-
-export declare class Calibration {
-  status: CalibrationStatusType;
-  details: CalibrationDetails;
-}
-
-// export interface CalibrationStatusType {
-//   SUCCESS: 'success';
-//   WARNING: 'warning';
-//   ERROR: 'error';
-// }
-
 export type CalibrationStatusType = 'error' | 'success' | 'warning' | 'disabled';
 
 export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-hands' | undefined;
+
+export type OpenHandStatus =
+  | 'both-hands'
+  | 'left-hand'
+  | 'right-hand'
+  | 'none'
+  | 'unknown'
+  | undefined;
 
 /**
  * We support two modes: 'full' | 'fast'.
@@ -59,143 +34,12 @@ export type HandTrackerStatus = 'left-hand' | 'right-hand' | 'any-hand' | 'both-
  */
 export type CalibrationMode = 'full' | 'fast';
 
-export declare enum CalibrationDetails {
-  MULTIPLE_PEOPLE_DETECTED = '1',
-  NO_PERSON_DETECTED = '2',
-  REQUIRED_POINTS_MISSING = '3',
-  CALIBRATED = '4',
-}
-
-export type CarePlan = {
-  name: string;
-  createdBy?: Therapist;
-  assets: any;
-  events: Array<SessionEvent>;
-  calibration: CalibrationConfig;
-  careplan_activities: Array<{
-    activity: string;
-    activityByActivity: {
-      name: string;
-    };
-  }>;
-  config: any;
-  // trigger: Trigger
-  // actions: Array<Action>
+export type CalibrationBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
-
-export type CalibrationConfig = {
-  type: string;
-};
-
-// export const EventSource = {
-//     Read: 'r',
-//     Write: 'w',
-//     Execute: 'x'
-//   } as const;
-//   type Permission = typeof EventSource[keyof typeof EventSource]; // 'r' | 'w' | 'x'
-
-// export enum EventSource {
-//     system = 'system',
-//     user = 'user',
-//     activity = 'activity',
-//     spotlight = 'spotlight',
-//     guide = 'guide'
-// }
-
-export type Logging = {
-  level?: LogLevel;
-  debug?: boolean;
-  error?: boolean;
-  info?: boolean;
-  verbose?: boolean;
-};
-
-declare enum LogLevel {
-  verbose = 'verbose',
-  debug = 'debug',
-  info = 'info',
-  error = 'error',
-}
-
-export type SessionEvent = {
-  id?: string;
-  source?: string;
-  description?: string;
-  logging?: Logging;
-  trigger: Trigger;
-  actions: Array<Action>;
-};
-
-export type Therapist = {
-  id: string;
-  firstName: string;
-  lastName: string;
-};
-
-/**
- * Each trigger must have an id or (name, source) pair
- */
-export type Trigger = {
-  /**
-   * events can be dispatched using an event id.
-   */
-  id?: string;
-
-  /**
-   * name of the event
-   */
-  name?: string;
-  source?: string;
-
-  comment?: string;
-};
-
-export type SpotlightActionShowMessagesDTO = {
-  id?: string;
-  data: {
-    messages: Array<SpotlightActionShowMessageDTO>;
-  };
-};
-
-export type SpotlightActionShowMessageDTO = {
-  text: string;
-  icon: string;
-  timeout: number;
-};
-
-export type GuideActionShowMessagesDTO = {
-  id?: string;
-  data: {
-    messages: Array<GuideActionShowMessageDTO>;
-  };
-};
-
-export type GuideActionShowMessageDTO = {
-  title?: string;
-  text?: string;
-  icon?: string;
-  prompt?: string;
-  timeout?: number;
-  entryAnimation?: string;
-  exitAnimation?: string;
-  id?: string; // merged text to watch
-};
-
-export type EventActionDispatchEventNameDTO = {
-  name: string;
-  source?: string;
-  data?: any;
-};
-
-export type EventActionDispatchEventIdDTO = {
-  id: string;
-  data?: any;
-};
-
-export type HolisticDTO = {
-  pose: Results;
-};
-
 /**
  * Source: https://github.com/google/mediapipe/issues/1408#issuecomment-810652766
  * @fileoverview Declarations for the Holistic API.
@@ -523,6 +367,7 @@ export interface Options {
   refineFaceLandmarks?: boolean;
   minDetectionConfidence?: number;
   minTrackingConfidence?: number;
+  useCpuInference?: boolean;
 }
 
 /**
@@ -598,138 +443,18 @@ export declare class Holistic implements HolisticInterface {
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
 export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
-export interface CalibrationState {
-  pose?: Results;
-  status: string;
-  reason: string;
-  poseHash?: number;
+export interface IsModelReady {
+  isModelReady: boolean;
+  downloadSource: 'local' | 'cdn';
 }
 
-export interface IsMediaPipeReady {
-  isMediaPipeReady: boolean;
+export interface IsHandsModelReady {
+  isHandsModelReady: boolean;
   downloadSource: 'local' | 'cdn';
 }
 
 export type TaskName = 'calibration' | 'sit' | 'stand' | 'unknown';
-export type AnalyticsEventType =
-  | 'sessionStarted'
-  | 'activityStarted'
-  | 'taskStarted'
-  | 'taskReacted'
-  | 'taskEnded'
-  | 'activityEnded'
-  | 'sessionEnded';
-
-export type AnalyticsRow = {
-  patient: string;
-  session: string;
-  activity?: string;
-  task_id?: string;
-  attempt_id?: string;
-  task_name?: TaskName;
-  event_type: AnalyticsEventType;
-  created_at: number;
-  score?: number;
-};
-
-// A light-weight version of what different context will send
-export type AnalyticsEvent = {
-  activity?: string;
-  task_id?: string;
-  attempt_id?: string;
-  task_name?: TaskName;
-  event_type: AnalyticsEventType;
-  score?: number;
-};
-
-export type AnalyticsSessionEventType = 'sessionStarted' | 'sessionEnded';
-export type AnalyticsSessionEventRow = {
-  patient: string;
-  session: string;
-  event_type: AnalyticsSessionEventType;
-  created_at: number;
-};
-export type AnalyticsSessionEvent = {
-  event_type: AnalyticsSessionEventType;
-};
-
-export type ActivityEventType = 'activityStarted' | 'activityEnded';
-
-export type ActivityEventRow = {
-  patient: string;
-  session: string;
-  activity: string;
-  event_type: ActivityEventType;
-  created_at: number;
-};
-
-export type ActivityEvent = {
-  event_type: ActivityEventType;
-  activity: string;
-};
-
-export type TaskEventType = 'taskStarted' | 'taskReacted' | 'taskEnded';
-
-export type TaskEventRow = {
-  patient: string;
-  session: string;
-  activity: string;
-  task_id: string;
-  attempt_id: string;
-  task_name: TaskName;
-  event_type: TaskEventType;
-  created_at: number;
-  score?: number;
-};
-
-export type TaskEvent = {
-  activity: string;
-  task_id: string;
-  attempt_id: string;
-  task_name: any; // TODO: Fix this later.
-  event_type: TaskEventType;
-  score?: number;
-};
-
-export type SessionState = {
-  session?: SessionRow;
-  currentActivity?: ActivityState;
-  nextActivity?: ActivityState;
-  isSessionEnded?: boolean;
-  stage?: ActivityStage;
-};
-
-export type SessionStateField = {
-  stage?: ActivityStage;
-  currentActivity?: ActivityState;
-};
-
 export type ActivityStage = 'welcome' | 'tutorial' | 'preLoop' | 'loop' | 'postLoop';
-
-export type ActivityState = {
-  name?: string;
-  totalReps?: number;
-  repsCompleted: number;
-  timeElapsed?: number;
-};
-
-export type SessionRow = {
-  id?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  endedAt?: Date;
-  patient?: string;
-  careplan?: string;
-  preSessionMood?: string;
-  postSessionMood?: string;
-  genre?: Genre;
-  patientByPatient?: Patient;
-  careplanByCareplan?: CarePlan;
-  state?: {
-    stage?: ActivityStage;
-    currentActivity?: ActivityState;
-  };
-};
 
 export type Patient = {
   id: string;
@@ -743,26 +468,57 @@ export type Patient = {
   onboardedBy: string;
 };
 
-export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer';
-export interface ActivityConfiguration {
-  configuration: {
-    /**
-     * Number of correct reps required for an activity to end.
-     */
-    minCorrectReps?: number;
-    /**
-     * Duration for which the game should run.
-     */
-    gameDuration?: number;
-    /**
-     * Defines speed in milliseconds at which the activity should be run.
-     */
-    speed: number;
+export interface Activity {
+  activity?: string;
+  stage: ActivityStage;
+  settings?: {
+    [key in string]: any;
   };
-  handler?: any;
+  config: ActivityConfiguration;
+}
+
+export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
+export type GameLevels = 'level1' | 'level2' | 'level3';
+
+export type ActivityLevel = {
+  [level: string]: {
+    configuration: {
+      /**
+       * Number of correct reps required for an activity to end.
+       */
+      minCorrectReps?: number;
+      /**
+       * Duration for which the game should run.
+       */
+      gameDuration?: number;
+      /**
+       * Defines speed in milliseconds at which the activity should be run.
+       */
+      speed: number;
+      /**
+       * Genre of music which the game plays.
+       */
+      genre?: Genre;
+      /**
+       * Set of the music to play.
+       */
+      musicSet?: number;
+      /**
+       * Decides whether to allow extending game by X seconds or not
+       */
+      extendGameDuration?: boolean;
+    };
+    rules: string[];
+  };
+};
+
+export interface ActivityConfiguration {
+  currentLevel: GameLevels;
+  levels: ActivityLevel;
 }
 
 export interface Environment {
+  organizationName: string;
   stageName: string;
   production: boolean;
   speedUpSession?: boolean;
@@ -788,83 +544,6 @@ export interface Environment {
 
 export type EntryAnimation = 'fadeIn' | 'slideIn';
 export type ExitAnimation = 'fadeOut' | 'slideOut';
-export type GuideAvatarDTO = {
-  name: 'kevin' | 'mila';
-  expression?: 'neutral' | 'happy' | 'sad';
-  position?: 'center' | 'bottom';
-  className?: string;
-  entryAnimation?: EntryAnimation;
-  exitAnimation?: ExitAnimation;
-};
-
-export type GuideMessageDTO = {
-  text?: string;
-  className?: string;
-  position: 'center' | 'bottom';
-  entryAnimation?: EntryAnimation;
-  exitAnimation?: ExitAnimation;
-};
-
-export type GuideSpotlightDTO = {
-  text: string;
-  className?: string;
-  entryAnimation?: EntryAnimation;
-  exitAnimation?: ExitAnimation;
-};
-
-export type GuidePromptDTO = {
-  text?: string;
-  icon?: IconDefinition; // font-awesome icon only
-  className?: string;
-  promptType?: string;
-  position:
-    | 'left'
-    | 'right'
-    | 'top'
-    | 'bottom'
-    | 'center'
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right';
-  entryAnimation?: EntryAnimation;
-  exitAnimation?: ExitAnimation;
-};
-
-export type GuideVideoDTO = {
-  url: string;
-  size: 'md' | 'lg';
-};
-
-export type GuideTimerDTO = {
-  timeout: number;
-  position?: 'top' | 'bottom';
-  color?: string;
-};
-
-export type GuideState = {
-  avatar?: GuideAvatarDTO;
-  message?: GuideMessageDTO;
-  spotlight?: GuideSpotlightDTO;
-  prompt?: GuidePromptDTO;
-  video?: GuideVideoDTO;
-  timer?: GuideTimerDTO;
-};
-
-export type AnnouncementState = {
-  message: string;
-  timeout?: number;
-  background?: string;
-};
-
-export type DebugTaskEvent = {
-  event_type: TaskEventType;
-  task_id: string;
-  task_name: TaskName;
-  reacted: boolean;
-};
-
-export type DebugStackEvents = AnalyticsSessionEvent | ActivityEvent | DebugTaskEvent;
 
 export type AnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
@@ -873,16 +552,22 @@ export type AnalyticsDTO = {
 };
 
 export type AnalyticsPromptDTO = {
+  id: string;
   type: string;
   timestamp: number;
-  data: Sit2StandAnalyticsDTO | BeatboxerAnalyticsDTO | SoundExplorerAnalyticsDTO;
+  data:
+    | Sit2StandAnalyticsDTO
+    | BeatboxerAnalyticsDTO
+    | SoundExplorerAnalyticsDTO
+    | MovingTonesAnalyticsDTO
+    | GameStartAnalyticsDTO;
 };
 
 export type AnalyticsReactionDTO = {
   type: string;
   timestamp: number; // placeholder value.
   startTime: number; // placeholder value.
-  completionTime: number | null; // completion time in seconds.
+  completionTimeInMs: number | null;
 };
 
 export type AnalyticsResultDTO = {
@@ -903,6 +588,33 @@ export type BeatboxerAnalyticsDTO = {
 
 export type SoundExplorerAnalyticsDTO = {
   shapes: Shape[];
+};
+
+export type MovingTonesAnalyticsDTO = {
+  leftPath: MovingTonesCircle[];
+  rightPath: MovingTonesCircle[];
+};
+
+export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
+
+export type Coordinate = {
+  x: number;
+  y: number;
+};
+
+export type MovingTonesConfiguration = {
+  startLeft?: Coordinate;
+  endLeft?: Coordinate;
+  startRight?: Coordinate;
+  endRight?: Coordinate;
+  curveType: MovingTonesCurve;
+  pointsInBetween: number;
+};
+
+export type GameStartAnalyticsDTO = {
+  gameStartTime: number | null;
+  loopStartTime: number | null;
+  firstPromptTime: number | null;
 };
 
 export type PreferenceState = {
@@ -957,6 +669,11 @@ export type GameState = {
    * Indicates the amount of time for which the user was calibrated. (in seconds)
    */
   calibrationDuration?: number;
+
+  /**
+   * Stores game settings. such as timeout, and game current level.
+   */
+  settings?: any;
 };
 
 export type ScoreElementState = {
@@ -964,6 +681,10 @@ export type ScoreElementState = {
    * Inputs a string that appears as label for the score element
    */
   label?: string;
+  /**
+   * Inputs the file path for an icon to be displayed in the score element
+   */
+  icon?: string;
   /**
    * Inputs a number or string as the current score
    */
@@ -1056,7 +777,7 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
 };
 
 export type GuideElementState = {
@@ -1122,14 +843,20 @@ export type PromptElementState = {
 export type TimeoutElementState = {
   /**
    * Timeout can be controlled using the modes.
-   * * Note: During 'start' mode the 'duration' has to be specified.
+   * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
-  mode: 'start' | 'stop';
+  mode?: 'start' | 'stop';
   /**
    * Duration of the timeout in ms.
    */
   timeout?: number;
+  /**
+   * Determines the number of progress bars and the color of each bar (max 2)
+   */
+  bars?: [TimeoutColor?, TimeoutColor?];
 };
+
+export type TimeoutColor = 'red' | 'blue' | 'yellow';
 
 export type ElementAttributes = {
   visibility?: 'visible' | 'hidden';
@@ -1208,6 +935,10 @@ export type ElementsObservables = {
 
 export interface ActivityBase {
   /**
+   * initially sets up the activity. This function is needed only for QA purposes.
+   */
+  setupConfig(): Promise<void>;
+  /**
    * The screen showing the name of the next activity and waiting for the user input
    * such as raising one or two hands
    */
@@ -1239,10 +970,15 @@ export interface ActivityBase {
    * activity
    */
   postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+  /**
+   * stops the game scene, music, etc. This function is needed only for QA purposes.
+   */
+  stopGame(): void;
 }
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
+export type CenterOfMotion = 'left' | 'right';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 
 export type GameStatus = {
@@ -1250,3 +986,103 @@ export type GameStatus = {
   breakpoint: number;
   game: Activities;
 };
+
+export type GameObjectWithBodyAndTexture = Phaser.GameObjects.GameObject & {
+  body: Phaser.Physics.Arcade.Body | Phaser.Physics.Arcade.StaticBody;
+  texture?: {
+    key: string;
+  };
+};
+
+export interface AudioSprite {
+  [audio: string]: [number, number] | [number, number, boolean];
+}
+
+export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
+export type Origin =
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'left-center'
+  | 'right-center'
+  | 'top-left'
+  | 'top-right';
+
+export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
+export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
+
+export enum GenreEnum {
+  CLASSICAL = 'classical',
+  JAZZ = 'jazz',
+  ROCK = 'rock',
+  DANCE = 'dance',
+  SURPRISE = 'surprise me!',
+}
+
+export interface Theme {
+  colors: {
+    [key: string]: any;
+  };
+  font: {
+    family: string;
+    url: string;
+  };
+}
+
+export enum AvailableModelsEnum {
+  MEDIAPIPE = 'mediapipe',
+  POSENET = 'posenet',
+}
+
+export interface MovingTonesTweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type MovingTonesCircle = {
+  id: string;
+  x: number;
+  y: number;
+  type: 'start' | 'end' | 'coin';
+  hand: 'left' | 'right';
+};
+
+export type MovingTonesCircleEventName =
+  | 'hidden'
+  | 'visible'
+  | 'collisionStarted'
+  | 'collisionEnded'
+  | 'collisionCompleted'
+  | 'invalidCollision';
+
+export type MovingTonesCircleEvent = {
+  name: MovingTonesCircleEventName;
+  circle: MovingTonesCircle;
+};
+
+export type MovingTonesCircleSettings = {
+  collisionDebounce?: number;
+};
+
+export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  circle: MovingTonesCircle;
+  end?: MovingTonesCircle;
+  path?: MovingTonesCircle[];
+  variation?: string;
+}
+
+export interface QaBody {
+  event: QaAppEvents | ActivityExperienceEvents;
+  payload: any;
+}
+
+type QaAppEvents =
+  | 'ready'
+  | 'request-game-info'
+  | 'edit-game'
+  | 'change-music-preference'
+  | 'request-game-rules';
+
+type ActivityExperienceEvents = 'send-game-info' | 'send-game-rules';

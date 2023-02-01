@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { RouterTestingModule } from '@angular/router/testing';
+import { provideMockStore } from '@ngrx/store/testing';
 import { GameComponent } from './game.component';
 
 describe('GameComponent', () => {
@@ -8,7 +9,9 @@ describe('GameComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [RouterTestingModule],
       declarations: [GameComponent],
+      providers: [provideMockStore({})],
     }).compileComponents();
   });
 
