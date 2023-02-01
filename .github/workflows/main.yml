@@ -60,7 +60,7 @@ jobs:
           ls -la
 
           npm install -g @angular/cli
-          npm i --ignore-scripts --legacy-peer-deps --save-dev
+          npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "$ENVIRONMENT"
 
       - name: running unit tests
