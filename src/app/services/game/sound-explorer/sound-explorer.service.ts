@@ -603,9 +603,9 @@ export class SoundExplorerService {
         };
         await this.elements.sleep(8000);
         // Todo: 30 seconds of tutorial
-        let isGameComplete = false;
+        this.isGameComplete = false;
         const onComplete = () => {
-          isGameComplete = true;
+          this.isGameComplete = true;
         };
         this.elements.timer.state = {
           data: {
@@ -619,9 +619,19 @@ export class SoundExplorerService {
             reCalibrationCount,
           },
         };
+      },
+      async (reCalibrationCount: number) => {
+        if (this.elements.timer.data.mode === 'pause') {
+          this.elements.timer.data = {
+            mode: 'resume',
+          };
+        }
         let difficulty = 1;
         let successfulReps = 0;
-        while (!isGameComplete) {
+        while (!this.isGameComplete) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           this.drawShapes(difficulty);
           const shouldShowXMark = Math.random() > 0.5;
           if (shouldShowXMark) this.drawObstacle();
@@ -631,7 +641,10 @@ export class SoundExplorerService {
           if (successfulReps !== 0 && successfulReps % 3 === 0 && difficulty < 4) difficulty++;
           await this.elements.sleep(1000);
         }
+        this.isGameComplete = false;
         await this.elements.sleep(2000);
+      },
+      async (reCalibrationCount: number) => {
         this.elements.timer.state = {
           data: {
             mode: 'stop',
