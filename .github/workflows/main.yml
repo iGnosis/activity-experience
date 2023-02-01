@@ -7,8 +7,6 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main, dev, stage ]
-  pull_request:
-    branches: [ main, dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -46,6 +44,10 @@ jobs:
           echo "NODE_ENV=development" >> $GITHUB_ENV
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+
       - name: npm install and npm run build
         run: |
           # Print current env
@@ -57,6 +59,7 @@ jobs:
           # Listing files
           ls -la
 
+          npm install -g @angular/cli
           npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "$ENVIRONMENT"
 
