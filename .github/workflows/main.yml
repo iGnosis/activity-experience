@@ -45,8 +45,8 @@ jobs:
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
       # Uncomment this if you want to debug Github action using SSH.
-      - name: Setup tmate sessions
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate sessions
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: npm install and npm run build
         run: |
@@ -60,7 +60,7 @@ jobs:
           ls -la
 
           npm install -g @angular/cli
-          npm i --ignore-scripts --legacy-peer-deps --save-dev
+          npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "$ENVIRONMENT"
 
       - name: running unit tests
