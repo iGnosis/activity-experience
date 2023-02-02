@@ -102,7 +102,7 @@ export class HandsService {
     clearInterval(this.interval);
   }
 
-  getMediapipeStatus() {
+  getStatus() {
     return this.isReady;
   }
 

@@ -7,8 +7,6 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main, dev, stage ]
-  pull_request:
-    branches: [ main, dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -23,7 +21,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set env to production
         if: endsWith(github.ref, '/main')
@@ -46,6 +44,10 @@ jobs:
           echo "NODE_ENV=development" >> $GITHUB_ENV
           echo "S3_ENV=dev" >> $GITHUB_ENV
 
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup tmate sessions
+      #   uses: mxschmitt/action-tmate@v3
+
       - name: npm install and npm run build
         run: |
           # Print current env
@@ -57,7 +59,9 @@ jobs:
           # Listing files
           ls -la
 
-          npm ci --ignore-scripts --legacy-peer-deps
+          # Include the devDependencies irrespective of the NODE_ENV
+          npm install --include dev --legacy-peer-deps
+          npm install -g @angular/cli
           npm run build -- -c "$ENVIRONMENT"
 
       - name: running unit tests

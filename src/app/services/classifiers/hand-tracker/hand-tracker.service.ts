@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { NormalizedLandmark, NormalizedLandmarkList, Results } from '@mediapipe/pose';
 import { BehaviorSubject, debounceTime, Subject, Subscription } from 'rxjs';
 import { Coordinate, HandTrackerStatus, OpenHandStatus } from 'src/app/types/pointmotion';
-import { PoseService } from '../../pose/pose.service';
 import { Results as HandResults } from '@mediapipe/hands';
 import { HandsService } from '../../hands/hands.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,9 +18,10 @@ export class HandTrackerService {
   result = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
   debouncedStatus: HandTrackerStatus = undefined;
-  openHandStatus = new BehaviorSubject<OpenHandStatus>(undefined);
+  // setting default to both-hands as the hand model is disabled. status has to be undefined by default.
+  openHandStatus = new BehaviorSubject<OpenHandStatus>('both-hands');
 
-  constructor(private poseService: PoseService, private handsService: HandsService) {
+  constructor(private handsService: HandsService, private poseModelAdapter: PoseModelAdapter) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
       this.debouncedStatus = status;
       console.log('HandTrackerService:debouncedStatus:', this.status);
@@ -29,19 +30,18 @@ export class HandTrackerService {
 
   enable() {
     this.isEnabled = true;
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.handSubscription = this.handsService.getHands().subscribe((results) => {
+      const newStatus = this.checkIfHandsAreOpen(results);
+      this.openHandStatus.next(newStatus);
+      // console.log('Check If Hands Are Open::', newStatus);
+    });
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       const newStatus = this.classify(results);
       if (!newStatus) return;
       if (newStatus.status != this.status) {
         this.result.next(newStatus.status);
       }
       this.status = newStatus.status;
-    });
-
-    this.handSubscription = this.handsService.getHands().subscribe((results) => {
-      const newStatus = this.checkIfHandsAreOpen(results);
-      this.openHandStatus.next(newStatus);
-      // console.log('Check If Hands Are Open::', newStatus);
     });
   }
 
@@ -92,16 +92,15 @@ export class HandTrackerService {
     const leftShoulder = poseLandmarkArray[11];
 
     // First, considers nose - elbow. As, the elbow is more likely to be always visible.
-    if (this._isElbowsVisible(poseLandmarkArray)) {
-      const status = this._shoulderElbowYDist(leftShoulder, rightShoulder, leftElbow, rightElbow);
-      if (status) {
-        return { status };
-      }
-    }
-
-    // We then consider nose - wrist.
-    if (this._isWristsVisible(poseLandmarkArray)) {
-      const status = this._shoulderWristYDist(leftShoulder, rightShoulder, leftWrist, rightWrist);
+    if (this._isElbowsVisible(poseLandmarkArray) && this._isWristsVisible(poseLandmarkArray)) {
+      const status = this._shoulderWristElbowYDist(
+        leftShoulder,
+        rightShoulder,
+        leftElbow,
+        rightElbow,
+        leftWrist,
+        rightWrist,
+      );
       if (status) {
         return { status };
       }
@@ -136,6 +135,32 @@ export class HandTrackerService {
       return false;
     }
     return true;
+  }
+
+  _shoulderWristElbowYDist(
+    leftShoulder: NormalizedLandmark,
+    rightShoulder: NormalizedLandmark,
+    leftElbow: NormalizedLandmark,
+    rightElbow: NormalizedLandmark,
+    leftWrist: NormalizedLandmark,
+    rightWrist: NormalizedLandmark,
+  ): HandTrackerStatus {
+    const yShoulderLeftElbowDiff = parseFloat((leftShoulder.y - leftElbow.y).toFixed(1));
+    const yShoulderRightElbowDiff = parseFloat((rightShoulder.y - rightElbow.y).toFixed(1));
+    const yShoulderLeftWristDiff = parseFloat((leftShoulder.y - leftWrist.y).toFixed(1));
+    const yShoulderRightWristDiff = parseFloat((rightShoulder.y - rightWrist.y).toFixed(1));
+    if (yShoulderLeftElbowDiff > 0 && yShoulderRightElbowDiff > 0) {
+      if (yShoulderLeftWristDiff > 0 && yShoulderRightWristDiff > 0) {
+        return 'both-hands';
+      }
+    }
+    if (yShoulderLeftWristDiff >= 0) {
+      return 'left-hand';
+    }
+    if (yShoulderRightWristDiff >= 0) {
+      return 'right-hand';
+    }
+    return undefined;
   }
 
   _shoulderElbowYDist(

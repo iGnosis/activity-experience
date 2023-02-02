@@ -2,11 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Results } from '@mediapipe/pose';
 import { provideMockStore } from '@ngrx/store/testing';
-
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { SitToStandService } from './sit-to-stand.service';
 
 describe('SitToStandService', () => {
   let service: SitToStandService;
+  let poseModelAdapter: PoseModelAdapter;
 
   const stand: Pick<Results, 'poseLandmarks'> = {
     poseLandmarks: [
@@ -420,6 +421,8 @@ describe('SitToStandService', () => {
       providers: [provideMockStore({})],
     });
     service = TestBed.inject(SitToStandService);
+    poseModelAdapter = TestBed.inject(PoseModelAdapter);
+    poseModelAdapter.setModel('mediapipe');
   });
 
   it('should be created', () => {

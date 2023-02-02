@@ -112,6 +112,12 @@ export const GqlConstants = {
     }
   }
 `,
+  USER_DAILY_CHECKIN: `mutation InsertCheckin($type: checkin_type_enum!, $value: String!) {
+    insert_checkin_one(object: {type: $type, value: $value}) {
+      id
+    }
+  }
+  `,
   INSERT_GAME_SETTINGS: `
   mutation InsertGameSettings(
     $gameName: game_name_enum = beat_boxer
@@ -139,6 +145,15 @@ export const GqlConstants = {
     }
   }
 `,
+  GET_LAST_GAME_FOR_QA: `
+  query GetLastGameForQA {
+    game(limit: 1, order_by: {createdAt: desc}) {
+      game
+      id
+      settings
+    }
+  }  
+  `,
   GET_BENCHMARK_GAME: `
   query GetBenchmarkGame($id: uuid = "") {
     game_by_pk(id: $id) {

@@ -54,6 +54,8 @@ export class BeatBoxerService {
     right?: undefined | BagType | 'obstacle';
   } = {};
 
+  qaGameSettings?: any;
+  private gameSettings = environment.settings['beat_boxer'];
   private currentLevel = environment.settings['beat_boxer'].currentLevel;
   private config = {
     gameDuration:
@@ -92,6 +94,7 @@ export class BeatBoxerService {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -102,15 +105,39 @@ export class BeatBoxerService {
     });
   }
 
-  async setup() {
+  async setupConfig() {
+    const settings = await this.apiService.getGameSettings('beat_boxer');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.beatBoxerScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.beatBoxerScene.enable();
-    return new Promise<void>(async (resolve, reject) => {
-      this.beatBoxerScene.scene.start('beatBoxer');
+    this.beatBoxerScene.scene.start('beatBoxer');
+  }
 
+  async setup() {
+    await this.setupConfig();
+    return new Promise<void>(async (resolve, reject) => {
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
         await this.beatBoxerScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.beatBoxerScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -274,10 +301,10 @@ export class BeatBoxerService {
         );
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Did you hear that?',
             description: 'You just created sound by punching the punching bag!',
-            src: 'assets/images/beat-boxer/did-you-hear-that.png',
+            src: 'assets/videos/beat-boxer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -532,7 +559,7 @@ export class BeatBoxerService {
             type: 'video',
             title: 'Be the musician!',
             description: 'Try following a rhythm when you play the notes.',
-            src: 'assets/videos/beat-boxer/be-the-musician.mp4',
+            src: 'assets/videos/beat-boxer/did-you-hear-that.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -743,7 +770,7 @@ export class BeatBoxerService {
               <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Beat Boxer</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="py-2">Endurance and Coordination</h2>
+              <h1 class="pt-2">Endurance and Coordination</h2>
             </div>
             `,
             buttons: [
@@ -920,10 +947,10 @@ export class BeatBoxerService {
         await this.elements.sleep(2000);
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Right hand for red',
             description: 'Use your right hand to punch the red punching bags.',
-            src: 'assets/images/beat-boxer/red-bag.png',
+            src: 'assets/videos/beat-boxer/red-for-right.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -945,10 +972,10 @@ export class BeatBoxerService {
         await this.elements.sleep(3000);
         this.elements.video.state = {
           data: {
-            type: 'gif',
+            type: 'video',
             title: 'Left hand for blue',
             description: 'Use your left hand to punch the blue punching bags.',
-            src: 'assets/images/beat-boxer/blue-bag.png',
+            src: 'assets/videos/beat-boxer/blue-for-left.mp4',
           },
           attributes: {
             visibility: 'visible',
@@ -1135,6 +1162,11 @@ export class BeatBoxerService {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1203,14 +1235,20 @@ export class BeatBoxerService {
     ];
   }
 
+  stopGame() {
+    this.beatBoxerScene.stopBacktrack();
+    this.beatBoxerScene.enableMusic(false);
+    this.beatBoxerScene.disable();
+    this.beatBoxerScene.scene.stop('beatBoxer');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('beat_boxer', this.gameSettings);
+  }
+
   postLoop() {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
-        this.beatBoxerScene.stopBacktrack();
-        this.beatBoxerScene.enableMusic(false);
-        this.beatBoxerScene.disable();
-        this.beatBoxerScene.scene.stop('beatBoxer');
+        this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.6) {
           await this.apiService.updateOnboardingStatus({

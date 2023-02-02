@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
 import { Subscription } from 'rxjs';
-import { PoseService } from 'src/app/services/pose/pose.service';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
@@ -24,11 +24,13 @@ enum TextureKeys {
   WRONG_SIGN = 'wrong_sign',
   CONFETTI = 'confetti',
   MUSIC = 'music',
+  WRONG_SIGN_ATLAS = 'wrog_sign_atlas',
 }
 
 enum AnimationKeys {
   CONFETTI_ANIM = 'confetti_anim',
   MUSIC_ANIM = 'music_anim',
+  WRONG_SIGN_ANIM = 'wrong_sign_anim',
 }
 
 @Injectable({
@@ -52,7 +54,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   private currentFailureTriggerId!: number;
   private currentSuccessTriggerId!: number;
   private genre!: Genre;
-  private currentSet!: number;
+  currentSet!: number;
   private backtrack!: Howl;
   private successTrack!: Howl;
   private failureTrack!: Howl;
@@ -140,7 +142,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
   };
 
-  constructor(private poseService: PoseService, private ttsService: TtsService) {
+  constructor(private poseModelAdapter: PoseModelAdapter, private ttsService: TtsService) {
     super({ key: 'beatBoxer' });
   }
 
@@ -162,6 +164,13 @@ export class BeatBoxerScene extends Phaser.Scene {
       'assets/images/beat-boxer/music.png',
       'assets/images/beat-boxer/music.json',
     );
+
+    this.load.atlas(
+      TextureKeys.WRONG_SIGN_ATLAS,
+      'assets/images/beat-boxer/wrong_sign.png',
+      'assets/images/beat-boxer/wrong_sign.json',
+    );
+
     this.load.svg({
       key: TextureKeys.LEFT_HAND,
       url: 'assets/images/beat-boxer/HAND_OVERLAY_LEFT.svg',
@@ -294,6 +303,19 @@ export class BeatBoxerScene extends Phaser.Scene {
       duration: 1000,
       hideOnComplete: true,
     });
+
+    this.anims.create({
+      key: AnimationKeys.WRONG_SIGN_ANIM,
+      frames: this.anims.generateFrameNames(TextureKeys.WRONG_SIGN_ATLAS, {
+        start: 1,
+        end: 3,
+        prefix: 'tile0',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      duration: 1000,
+      hideOnComplete: true,
+    });
   }
 
   enable(): void {
@@ -301,7 +323,7 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.enableLeftHand();
     this.enableRightHand();
     this.enableCollisionDetection();
-    this.poseSubscription = this.poseService.getPose().subscribe((results) => {
+    this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       this.results = results;
       this.destroyGloves();
       this.drawGloves(results);
@@ -417,23 +439,17 @@ export class BeatBoxerScene extends Phaser.Scene {
     }
     if (results.poseLandmarks[15] && results.poseLandmarks[19] && this.enableLeft) {
       const leftWrist = results.poseLandmarks[15];
-      const leftIndex = results.poseLandmarks[19];
-      const [x, y] = this.midPoint(leftWrist.x, leftWrist.y, leftIndex.x, leftIndex.y);
-
       this.blueGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
+        width - leftWrist.x * width,
+        leftWrist.y * height,
         TextureKeys.LEFT_HAND,
       );
     }
     if (results.poseLandmarks[16] && results.poseLandmarks[20] && this.enableRight) {
       const rightWrist = results.poseLandmarks[16];
-      const rightIndex = results.poseLandmarks[20];
-      const [x, y] = this.midPoint(rightWrist.x, rightWrist.y, rightIndex.x, rightIndex.y);
-
       this.redGlove = this.physics.add.staticImage(
-        width - x * width,
-        y * height,
+        width - rightWrist.x * width,
+        rightWrist.y * height,
         TextureKeys.RIGHT_HAND,
       );
     }
@@ -586,13 +602,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   }
 
   private showWrongSign(x: number, y: number) {
-    if (this.wrongSign) {
-      this.wrongSign.destroy(true);
-    }
-    this.wrongSign = this.physics.add.staticImage(x, y, TextureKeys.WRONG_SIGN);
-    setTimeout(() => {
-      this.wrongSign && this.wrongSign.destroy(true);
-    }, 1000);
+    this.add.sprite(x, y, TextureKeys.WRONG_SIGN_ATLAS).play(AnimationKeys.WRONG_SIGN_ANIM);
   }
 
   /**
@@ -860,9 +870,11 @@ export class BeatBoxerScene extends Phaser.Scene {
 
   private playFailureMusic() {
     if (this.genre === 'classical' && this.currentSet === 1) {
+      console.log('playFailureTrack:: classical');
       return this.failureTrack.play();
     } else {
-      this.currentFailureTriggerId = this.successTrack.play('error' + this.currentFailureTrigger);
+      console.log('playFailureTrack:: classical');
+      this.currentFailureTriggerId = this.failureTrack.play('error' + this.currentFailureTrigger);
       this.currentFailureTrigger += 1;
       const totalTriggers = Object.entries(
         beatBoxerAudio[this.genre][this.currentSet].errorTriggers,

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
-import { Observable } from 'rxjs';
 import { Scene } from 'phaser';
+import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { CalibrationStatusType } from 'src/app/types/pointmotion';
 
 @Injectable({
@@ -29,7 +29,7 @@ export class CalibrationScene extends Scene {
     center?: Phaser.GameObjects.Rectangle;
   } = {};
 
-  constructor() {
+  constructor(private poseModelAdapter: PoseModelAdapter) {
     super({ key: 'calibration' });
   }
 
@@ -188,51 +188,6 @@ export class CalibrationScene extends Scene {
     const leftAnkle = poseResults.poseLandmarks[27];
     const rightWrist = poseResults.poseLandmarks[16];
     const leftWrist = poseResults.poseLandmarks[15];
-    const leftIndex = poseResults.poseLandmarks[19];
-    const rightIndex = poseResults.poseLandmarks[20];
-    const rightFootIndex = poseResults.poseLandmarks[32];
-    const rightHeel = poseResults.poseLandmarks[30];
-    const leftFootIndex = poseResults.poseLandmarks[31];
-    const leftHeel = poseResults.poseLandmarks[29];
-
-    // foot connections
-    graphics.lineBetween(
-      width - rightAnkle.x * width,
-      rightAnkle.y * height,
-      width - rightFootIndex.x * width,
-      rightFootIndex.y * height,
-    );
-    graphics.lineBetween(
-      width - rightAnkle.x * width,
-      rightAnkle.y * height,
-      width - rightHeel.x * width,
-      rightHeel.y * height,
-    );
-    graphics.lineBetween(
-      width - rightFootIndex.x * width,
-      rightFootIndex.y * height,
-      width - rightHeel.x * width,
-      rightHeel.y * height,
-    );
-
-    graphics.lineBetween(
-      width - leftAnkle.x * width,
-      leftAnkle.y * height,
-      width - leftFootIndex.x * width,
-      leftFootIndex.y * height,
-    );
-    graphics.lineBetween(
-      width - leftAnkle.x * width,
-      leftAnkle.y * height,
-      width - leftHeel.x * width,
-      leftHeel.y * height,
-    );
-    graphics.lineBetween(
-      width - leftFootIndex.x * width,
-      leftFootIndex.y * height,
-      width - leftHeel.x * width,
-      leftHeel.y * height,
-    );
 
     // connection between left and right shoulders
     if (leftShoulder && rightShoulder) {
@@ -272,21 +227,6 @@ export class CalibrationScene extends Scene {
       leftElbow.y * height,
       width - leftWrist.x * width,
       leftWrist.y * height,
-    );
-
-    // connection between wrists to index fingers
-    graphics.lineBetween(
-      width - rightWrist.x * width,
-      rightWrist.y * height,
-      width - rightIndex.x * width,
-      rightIndex.y * height,
-    );
-
-    graphics.lineBetween(
-      width - leftWrist.x * width,
-      leftWrist.y * height,
-      width - leftIndex.x * width,
-      leftIndex.y * height,
     );
 
     // connection between shoulders and hip

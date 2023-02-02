@@ -74,8 +74,9 @@ export class TtsService {
         autoplay: true,
         html5: true,
         format: ['mpeg'],
-        onplayerror: () => {
+        onplayerror: (id, err) => {
           console.log('Cannot play', text);
+          console.log('id:', id, 'error:', err);
           this.isTtsPlaying = false;
           backtrack && backtrack.volume(1);
           reject();

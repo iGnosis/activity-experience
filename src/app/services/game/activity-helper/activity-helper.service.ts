@@ -59,26 +59,29 @@ export class ActivityHelperService {
    * @returns {Promise<void>}
    */
   async exitGame(activityName: Activities, reCalibrationCount?: number): Promise<void> {
-    this.ttsService.tts(
-      "Great job on the progress you've made today. I hope to see you back very soon.",
-    );
+    this.store.dispatch(game.gameCompleted());
+    this.googleAnalyticsService.sendEvent('level_end', {
+      level_name: activityName,
+    });
+    await this.gameStateService.postLoopHook();
     this.elements.guide.state = {
       data: {
         title: "Great job on the progress you've made today. I hope to see you back very soon.",
-        titleDuration: 2500,
+        showIndefinitely: true,
       },
       attributes: {
         visibility: 'visible',
         reCalibrationCount,
       },
     };
-    await this.elements.sleep(4000);
-
-    this.store.dispatch(game.gameCompleted());
-    this.googleAnalyticsService.sendEvent('level_end', {
-      level_name: activityName,
-    });
-    await this.gameStateService.postLoopHook();
+    await this.ttsService.tts(
+      "Great job on the progress you've made today. I hope to see you back very soon.",
+    );
+    await this.elements.sleep(10000);
+    this.elements.guide.state.attributes = {
+      visibility: 'hidden',
+      reCalibrationCount,
+    };
 
     window.parent.postMessage(
       {

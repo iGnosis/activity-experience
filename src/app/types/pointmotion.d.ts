@@ -367,6 +367,7 @@ export interface Options {
   refineFaceLandmarks?: boolean;
   minDetectionConfidence?: number;
   minTrackingConfidence?: number;
+  useCpuInference?: boolean;
 }
 
 /**
@@ -442,8 +443,8 @@ export declare class Holistic implements HolisticInterface {
 export type PreSessionMood = 'Irritated' | 'Anxious' | 'Okay' | 'Good' | 'Daring';
 export type Genre = 'classical' | 'jazz' | 'rock' | 'dance' | 'surprise me!';
 
-export interface IsMediaPipeReady {
-  isMediaPipeReady: boolean;
+export interface IsModelReady {
+  isModelReady: boolean;
   downloadSource: 'local' | 'cdn';
 }
 
@@ -467,6 +468,15 @@ export type Patient = {
   onboardedBy: string;
 };
 
+export interface Activity {
+  activity?: string;
+  stage: ActivityStage;
+  settings?: {
+    [key in string]: any;
+  };
+  config: ActivityConfiguration;
+}
+
 export type Activities = 'sit_stand_achieve' | 'beat_boxer' | 'sound_explorer' | 'moving_tones';
 export type GameLevels = 'level1' | 'level2' | 'level3';
 
@@ -485,7 +495,20 @@ export type ActivityLevel = {
        * Defines speed in milliseconds at which the activity should be run.
        */
       speed: number;
+      /**
+       * Genre of music which the game plays.
+       */
+      genre?: Genre;
+      /**
+       * Set of the music to play.
+       */
+      musicSet?: number;
+      /**
+       * Decides whether to allow extending game by X seconds or not
+       */
+      extendGameDuration?: boolean;
     };
+    rules: string[];
   };
 };
 
@@ -568,8 +591,8 @@ export type SoundExplorerAnalyticsDTO = {
 };
 
 export type MovingTonesAnalyticsDTO = {
-  leftCoordinates: Coordinate[];
-  rightCoordinates: Coordinate[];
+  leftPath: MovingTonesCircle[];
+  rightPath: MovingTonesCircle[];
 };
 
 export type MovingTonesCurve = 'line' | 'semicircle' | 'triangle' | 'zigzag';
@@ -646,6 +669,11 @@ export type GameState = {
    * Indicates the amount of time for which the user was calibrated. (in seconds)
    */
   calibrationDuration?: number;
+
+  /**
+   * Stores game settings. such as timeout, and game current level.
+   */
+  settings?: any;
 };
 
 export type ScoreElementState = {
@@ -907,6 +935,10 @@ export type ElementsObservables = {
 
 export interface ActivityBase {
   /**
+   * initially sets up the activity. This function is needed only for QA purposes.
+   */
+  setupConfig(): Promise<void>;
+  /**
    * The screen showing the name of the next activity and waiting for the user input
    * such as raising one or two hands
    */
@@ -938,6 +970,10 @@ export interface ActivityBase {
    * activity
    */
   postLoop(): ((reCalibrationCount: number) => Promise<void>)[];
+  /**
+   * stops the game scene, music, etc. This function is needed only for QA purposes.
+   */
+  stopGame(): void;
 }
 
 export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -972,13 +1008,6 @@ export type Origin =
   | 'top-left'
   | 'top-right';
 
-export interface TweenData {
-  stoppedAt?: number;
-  remainingDuration?: number;
-  totalTimeElapsed: number;
-  tween?: Phaser.Tweens.Tween;
-}
-
 export type SafePipeResult = SafeHtml | SafeStyle | SafeScript | SafeUrl | SafeResourceUrl;
 export type SafePipeTransformType = 'html' | 'style' | 'script' | 'url' | 'resourceUrl';
 
@@ -999,3 +1028,61 @@ export interface Theme {
     url: string;
   };
 }
+
+export enum AvailableModelsEnum {
+  MEDIAPIPE = 'mediapipe',
+  POSENET = 'posenet',
+}
+
+export interface MovingTonesTweenData {
+  stoppedAt?: number;
+  remainingDuration?: number;
+  totalTimeElapsed: number;
+  tween?: Phaser.Tweens.Tween;
+}
+
+export type MovingTonesCircle = {
+  id: string;
+  x: number;
+  y: number;
+  type: 'start' | 'end' | 'coin';
+  hand: 'left' | 'right';
+};
+
+export type MovingTonesCircleEventName =
+  | 'hidden'
+  | 'visible'
+  | 'collisionStarted'
+  | 'collisionEnded'
+  | 'collisionCompleted'
+  | 'invalidCollision';
+
+export type MovingTonesCircleEvent = {
+  name: MovingTonesCircleEventName;
+  circle: MovingTonesCircle;
+};
+
+export type MovingTonesCircleSettings = {
+  collisionDebounce?: number;
+};
+
+export interface MovingTonesCircleData extends MovingTonesCircleSettings {
+  circle: MovingTonesCircle;
+  end?: MovingTonesCircle;
+  path?: MovingTonesCircle[];
+  variation?: string;
+}
+
+export interface QaBody {
+  event: QaAppEvents | ActivityExperienceEvents;
+  payload: any;
+}
+
+type QaAppEvents =
+  | 'ready'
+  | 'request-game-info'
+  | 'edit-game'
+  | 'change-music-preference'
+  | 'request-game-rules';
+
+type ActivityExperienceEvents = 'send-game-info' | 'send-game-rules';

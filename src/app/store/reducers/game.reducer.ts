@@ -60,6 +60,12 @@ const _gameReducer = createReducer(
       endedAt: new Date().toISOString(),
     };
   }),
+  on(game.saveGameSettings, (state, data) => {
+    return {
+      id: state.id,
+      settings: data.settings,
+    };
+  }),
 );
 
 export function gameReducer(state: any, action: any) {

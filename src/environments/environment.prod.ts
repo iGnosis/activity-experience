@@ -23,18 +23,21 @@ export const environment: Environment = {
             minCorrectReps: 10,
             speed: 5000,
           },
+          rules: [''],
         },
         level2: {
           configuration: {
             minCorrectReps: 17,
             speed: 6500,
           },
+          rules: [''],
         },
         level3: {
           configuration: {
             minCorrectReps: 20,
             speed: 6500,
           },
+          rules: [''],
         },
       },
     },
@@ -46,6 +49,7 @@ export const environment: Environment = {
             gameDuration: 3 * 60,
             speed: 2500,
           },
+          rules: [''],
         },
       },
     },
@@ -57,6 +61,7 @@ export const environment: Environment = {
             gameDuration: 3 * 60,
             speed: 400,
           },
+          rules: [''],
         },
       },
     },
@@ -66,8 +71,9 @@ export const environment: Environment = {
         level1: {
           configuration: {
             gameDuration: 3 * 60,
-            speed: 400,
+            speed: 1500,
           },
+          rules: [''],
         },
       },
     },

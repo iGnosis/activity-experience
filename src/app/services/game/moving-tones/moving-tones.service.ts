@@ -2,18 +2,17 @@ import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   ActivityBase,
-  AnalyticsDTO,
+  ActivityConfiguration,
+  Coordinate,
   GameState,
   Genre,
-  Coordinate,
-  PreferenceState,
-  MovingTonesCurve,
+  MovingTonesCircle,
   MovingTonesConfiguration,
-  TimeoutColor,
+  MovingTonesCurve,
+  PreferenceState,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
@@ -22,10 +21,9 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
-import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
-import { distinctUntilChanged, firstValueFrom, Subscription } from 'rxjs';
-import { PoseService } from '../../pose/pose.service';
+import { Subscription } from 'rxjs';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +38,8 @@ export class MovingTonesService implements ActivityBase {
   private isGameComplete = false;
   private shouldReplay: boolean;
 
+  private gameSettings = environment.settings['moving_tones'];
+  qaGameSettings?: any;
   private currentLevel = environment.settings['moving_tones'].currentLevel;
   private config = {
     gameDuration:
@@ -48,6 +48,9 @@ export class MovingTonesService implements ActivityBase {
   };
   private gameDuration = this.config.gameDuration || 0;
   private totalDuration = this.config.gameDuration || 0;
+
+  private collisionDebounce = this.config.speed || 1500;
+  private progressBarSubscription: Subscription;
 
   private center: Coordinate;
   private updateElapsedTime = (elapsedTime: number) => {
@@ -61,14 +64,13 @@ export class MovingTonesService implements ActivityBase {
       preference: PreferenceState;
     }>,
     private elements: ElementsService,
-    private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
-    private poseService: PoseService,
+    private poseModelAdapter: PoseModelAdapter,
     private activityHelperService: ActivityHelperService,
   ) {
     this.store
@@ -76,6 +78,7 @@ export class MovingTonesService implements ActivityBase {
       .subscribe((preference) => {
         if (preference && preference.genre && this.genre !== preference.genre) {
           this.genre = preference.genre;
+          this.gameSettings.levels[this.currentLevel].configuration.genre = this.genre;
           this.soundsService.loadMusicFiles(this.genre);
         } else {
           this.genre === 'jazz' && this.soundsService.loadMusicFiles('jazz');
@@ -96,12 +99,13 @@ export class MovingTonesService implements ActivityBase {
     });
   }
 
-  private getCoordinates(
+  private getCirclesInPath(
     start: Coordinate,
     end: Coordinate,
     curveType: MovingTonesCurve,
     pointsInBetween: number,
-  ): Coordinate[] {
+    hand: 'left' | 'right',
+  ): MovingTonesCircle[] {
     const coordinates: Coordinate[] = [];
     const pointsIncludingLast = pointsInBetween + 1;
 
@@ -172,14 +176,21 @@ export class MovingTonesService implements ActivityBase {
       coordinates.push(end);
     }
 
-    return coordinates;
+    const circlesInPath: MovingTonesCircle[] = coordinates.map((coordinate, idx) => ({
+      x: coordinate.x,
+      y: coordinate.y,
+      id: uuidv4(),
+      type: idx === 0 ? 'start' : idx === coordinates.length - 1 ? 'end' : 'coin',
+      hand,
+    }));
+    return circlesInPath;
   }
 
   private async getRelativeCoordinates(
     start: Coordinate,
     end: Coordinate,
   ): Promise<[start: Coordinate, end: Coordinate]> {
-    const ratio = await this.poseService.getHeightRatio();
+    const ratio = await this.poseModelAdapter.getHeightRatio();
 
     const newEnd: Coordinate = {
       x: (1 - ratio) * start.x + ratio * end.x,
@@ -189,179 +200,11 @@ export class MovingTonesService implements ActivityBase {
     return [start, newEnd];
   }
 
-  private async showCircles({
-    left,
-    right,
-    reCalibrationCount,
-  }: {
-    left?: Coordinate[];
-    right?: Coordinate[];
-    reCalibrationCount?: number;
-  }): Promise<{
-    blueSubscription: Subscription | undefined;
-    redSubscription: Subscription | undefined;
+  private async getRandomPath(): Promise<{
+    leftPath: MovingTonesCircle[];
+    rightPath: MovingTonesCircle[];
   }> {
-    if (left?.length) {
-      this.movingTonesScene.showHoldCircle(left[0].x, left[0].y, 'blue', 'start');
-    }
-    if (right?.length) {
-      this.movingTonesScene.showHoldCircle(right[0].x, right[0].y, 'red', 'start');
-    }
-
-    let blueSubscription: Subscription | undefined;
-    let redSubscription: Subscription | undefined;
-
-    if (left?.length) {
-      // reduced sleep time to avoid loading glitches
-      const sleepTime = 200;
-
-      blueSubscription = this.movingTonesScene.blueHoldState
-        .pipe(distinctUntilChanged())
-        .subscribe(async (state) => {
-          if (state) {
-            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-
-            if (
-              !(
-                this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
-                ['left-hand', 'both-hands'].includes(handStatus || '')
-              )
-            )
-              return;
-
-            const isRedProgressBarShown =
-              this.elements.timeout.state.data.bars &&
-              this.elements.timeout.state.data.bars.includes('red');
-
-            if (isRedProgressBarShown) {
-              this.elements.timeout.state.data.bars = ['blue', 'red'];
-            } else {
-              this.elements.timeout.state = {
-                data: {
-                  mode: 'start',
-                  timeout: this.movingTonesScene.holdDuration,
-                  bars: ['blue'],
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-            }
-            for (let i = 1; i < left.length; i++) {
-              await this.elements.sleep(sleepTime);
-
-              if (
-                !(
-                  this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
-                  ['left-hand', 'both-hands'].includes(handStatus || '')
-                )
-              )
-                break;
-
-              if (i === left.length - 1) {
-                this.movingTonesScene.showHoldCircle(left[i].x, left[i].y, 'blue', 'end');
-              } else {
-                this.movingTonesScene.showMusicCircle(left[i].x, left[i].y, 'blue');
-              }
-            }
-          } else {
-            // remove blue bar
-            this.elements.timeout.state = {
-              data: {
-                bars: [
-                  ...((this.elements.timeout.state.data.bars?.filter(
-                    (color) => color !== 'blue',
-                  ) as [TimeoutColor?]) || []),
-                ],
-              },
-              attributes: {
-                visibility: this.elements.timeout.state.data.bars ? 'visible' : 'hidden',
-                reCalibrationCount,
-              },
-            };
-          }
-        });
-    }
-    if (right?.length) {
-      // reduced sleep time to avoid loading glitches
-      const sleepTime = 200;
-
-      redSubscription = this.movingTonesScene.redHoldState
-        .pipe(distinctUntilChanged())
-        .subscribe(async (state) => {
-          if (state) {
-            const handStatus = await firstValueFrom(this.handTrackerService.openHandStatus);
-
-            if (
-              !(
-                this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
-                ['right-hand', 'both-hands'].includes(handStatus || 'none')
-              )
-            )
-              return;
-
-            const isBlueProgressBarShown =
-              this.elements.timeout.state.data.bars &&
-              this.elements.timeout.state.data.bars.includes('blue');
-
-            if (isBlueProgressBarShown) {
-              this.elements.timeout.state.data.bars = ['blue', 'red'];
-            } else {
-              this.elements.timeout.state = {
-                data: {
-                  mode: 'start',
-                  timeout: this.movingTonesScene.holdDuration,
-                  bars: ['red'],
-                },
-                attributes: {
-                  visibility: 'visible',
-                  reCalibrationCount,
-                },
-              };
-            }
-            for (let i = 1; i < right.length; i++) {
-              await this.elements.sleep(sleepTime);
-
-              if (
-                !(
-                  this.movingTonesScene.allowClosedHandsWhileHoldingPose ||
-                  ['right-hand', 'both-hands'].includes(handStatus || 'none')
-                )
-              )
-                break;
-
-              if (i === right.length - 1) {
-                this.movingTonesScene.showHoldCircle(right[i].x, right[i].y, 'red', 'end');
-              } else {
-                this.movingTonesScene.showMusicCircle(right[i].x, right[i].y, 'red');
-              }
-            }
-          } else {
-            // remove red progress bar
-            this.elements.timeout.state = {
-              data: {
-                bars: [
-                  ...((this.elements.timeout.state.data.bars?.filter(
-                    (color) => color !== 'red',
-                  ) as [TimeoutColor?]) || []),
-                ],
-              },
-              attributes: {
-                visibility: this.elements.timeout.state.data.bars ? 'visible' : 'hidden',
-                reCalibrationCount,
-              },
-            };
-          }
-        });
-    }
-
-    return { blueSubscription, redSubscription };
-  }
-
-  private async getRandomConfiguration(): Promise<MovingTonesConfiguration> {
     this.center = await this.movingTonesScene.getCenterFromPose();
-    console.log('center: ', this.center);
     const configurations: MovingTonesConfiguration[] = [
       {
         startLeft: {
@@ -573,61 +416,142 @@ export class MovingTonesService implements ActivityBase {
       }, // line
     ];
 
-    const randomConfiguration = configurations[Math.floor(Math.random() * configurations.length)];
-    return randomConfiguration;
+    const { startLeft, endLeft, startRight, endRight, curveType, pointsInBetween } =
+      configurations[Math.floor(Math.random() * configurations.length)];
+
+    let leftPath: MovingTonesCircle[] = [];
+    let rightPath: MovingTonesCircle[] = [];
+
+    if (startLeft && endLeft) {
+      const relativeCoordinates = await this.getRelativeCoordinates(startLeft, endLeft);
+      leftPath = this.getCirclesInPath(...relativeCoordinates, curveType, pointsInBetween, 'left');
+    }
+    if (startRight && endRight) {
+      const relativeCoordinates = await this.getRelativeCoordinates(startRight, endRight);
+      rightPath = this.getCirclesInPath(
+        ...relativeCoordinates,
+        curveType,
+        pointsInBetween,
+        'right',
+      );
+    }
+
+    const isSemicircle =
+      endLeft && endLeft.x === this.center.x - 100 && endLeft.y === this.center.y + 150;
+
+    if (isSemicircle) {
+      const shouldReverseOneSide = Math.random() > 0.5;
+
+      if (shouldReverseOneSide) {
+        leftPath.reverse();
+      }
+    }
+
+    const shouldReverse = Math.random() > 0.5;
+
+    if (shouldReverse && curveType !== 'zigzag') {
+      leftPath.reverse();
+      rightPath.reverse();
+    }
+    return { leftPath, rightPath };
+  }
+
+  private initProgressBars(reCalibrationCount?: number) {
+    this.progressBarSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+      console.log('circle event: ', event);
+      if (event.name === 'collisionStarted' && event.circle.type !== 'coin') {
+        if (event.circle.hand === 'left') {
+          const isRedProgressBarShown =
+            this.elements.timeout.state.data.bars &&
+            this.elements.timeout.state.data.bars.includes('red');
+          if (isRedProgressBarShown) {
+            this.elements.timeout.state.data.bars = ['blue', 'red'];
+          } else {
+            this.elements.timeout.state = {
+              data: {
+                mode: 'start',
+                timeout: this.collisionDebounce,
+                bars: ['blue'],
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        } else {
+          const isBlueProgressBarShown =
+            this.elements.timeout.state.data.bars &&
+            this.elements.timeout.state.data.bars.includes('blue');
+          if (isBlueProgressBarShown) {
+            this.elements.timeout.state.data.bars = ['blue', 'red'];
+          } else {
+            this.elements.timeout.state = {
+              data: {
+                mode: 'start',
+                timeout: this.collisionDebounce,
+                bars: ['red'],
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        }
+      } else if (
+        (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
+        event.circle.type !== 'coin'
+      ) {
+        this.elements.timeout.state = {
+          data: {
+            mode: 'stop',
+          },
+          attributes: {
+            visibility: 'hidden',
+            reCalibrationCount,
+          },
+        };
+      }
+    });
   }
 
   private async game(reCalibrationCount?: number) {
+    this.initProgressBars(reCalibrationCount);
     while (!this.isGameComplete) {
       if (reCalibrationCount !== this.globalReCalibrationCount) {
         this.movingTonesScene.destroyGameObjects();
+        this.progressBarSubscription.unsubscribe();
         throw new Error('reCalibrationCount changed');
       }
 
-      const { startLeft, endLeft, startRight, endRight, curveType, pointsInBetween } =
-        await this.getRandomConfiguration();
+      const paths = await this.getRandomPath();
+      const { leftPath, rightPath } = paths;
 
-      let leftCoordinates: Coordinate[] = [];
-      let rightCoordinates: Coordinate[] = [];
+      const startLeft = leftPath.filter((circle) => circle.type === 'start')[0];
+      const endLeft = leftPath.filter((circle) => circle.type === 'end')[0];
+      const leftCoins = leftPath.filter((circle) => circle.type === 'coin');
 
-      if (startLeft && endLeft) {
-        const relativeCoordinates = await this.getRelativeCoordinates(startLeft, endLeft);
-        leftCoordinates = this.getCoordinates(...relativeCoordinates, curveType, pointsInBetween);
+      const startRight = rightPath.filter((circle) => circle.type === 'start')[0];
+      const endRight = rightPath.filter((circle) => circle.type === 'end')[0];
+      const rightCoins = rightPath.filter((circle) => circle.type === 'coin');
+
+      console.log('right hand: ', leftPath, startRight, endRight, rightCoins);
+      console.log('left hand: ', rightPath, startLeft, endLeft, leftCoins);
+
+      if (leftPath.length > 0) {
+        this.movingTonesScene.initPath(startLeft, endLeft, leftCoins, {
+          collisionDebounce: this.collisionDebounce,
+        });
       }
-      if (startRight && endRight) {
-        const relativeCoordinates = await this.getRelativeCoordinates(startRight, endRight);
-        rightCoordinates = this.getCoordinates(...relativeCoordinates, curveType, pointsInBetween);
+      if (rightPath.length > 0) {
+        this.movingTonesScene.initPath(startRight, endRight, rightCoins, {
+          collisionDebounce: this.collisionDebounce,
+        });
       }
-
-      const isSemicircle =
-        endLeft && endLeft.x === this.center.x - 100 && endLeft.y === this.center.y + 150;
-
-      if (isSemicircle) {
-        const shouldReverseOneSide = Math.random() > 0.5;
-
-        if (shouldReverseOneSide) {
-          leftCoordinates = leftCoordinates.reverse();
-        }
-      }
-
-      const shouldReverse = Math.random() > 0.5;
-
-      if (shouldReverse && curveType !== 'zigzag') {
-        leftCoordinates.reverse();
-        rightCoordinates.reverse();
-      }
-
-      const subscriptions = await this.showCircles({
-        left: leftCoordinates,
-        right: rightCoordinates,
-        reCalibrationCount,
-      });
       const promptTimestamp = Date.now();
 
       const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
-
-      subscriptions.blueSubscription?.unsubscribe();
-      subscriptions.redSubscription?.unsubscribe();
 
       if (result === 'recalibrated') {
         this.movingTonesScene.destroyGameObjects();
@@ -646,8 +570,8 @@ export class MovingTonesService implements ActivityBase {
           type: 'circles',
           timestamp: promptTimestamp,
           data: {
-            leftCoordinates,
-            rightCoordinates,
+            leftPath,
+            rightPath,
           },
         },
         reaction: {
@@ -689,23 +613,46 @@ export class MovingTonesService implements ActivityBase {
     };
   }
 
-  async setup() {
+  async setupConfig() {
+    const settings = await this.apiService.getGameSettings('moving_tones');
+    if (settings && settings.settings && settings.settings.currentLevel) {
+      this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
+      if (this.qaGameSettings) {
+        if (this.qaGameSettings.gameDuration) {
+          this.config.gameDuration = this.qaGameSettings.gameDuration;
+          this.gameDuration = this.qaGameSettings.gameDuration;
+        }
+        if (this.qaGameSettings.speed) {
+          this.config.speed = this.qaGameSettings.speed;
+        }
+        if (this.qaGameSettings.genre) {
+          this.genre = this.qaGameSettings.genre;
+        }
+        if (this.qaGameSettings.musicSet) {
+          this.movingTonesScene.currentSet = this.qaGameSettings.musicSet;
+        }
+      }
+    }
     this.movingTonesScene.enable();
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
 
-    const heightRatio = await this.poseService.getHeightRatio();
+    const heightRatio = await this.poseModelAdapter.getHeightRatio();
     this.movingTonesScene.circleScale *= heightRatio;
 
     this.center = this.movingTonesScene.center();
+    this.movingTonesScene.scene.start('movingTones');
+  }
 
+  async setup() {
+    await this.setupConfig();
     return new Promise<void>(async (resolve, reject) => {
-      this.movingTonesScene.scene.start('movingTones');
-
       console.log('Waiting for assets to Load');
       console.time('Waiting for assets to Load');
       try {
-        await this.movingTonesScene.loadAssets();
+        await this.movingTonesScene.loadAssets(this.genre);
+        this.gameSettings.levels[this.currentLevel].configuration.musicSet =
+          this.movingTonesScene.currentSet;
         console.log('Design Assets and Music files are Loaded!!');
       } catch (err) {
         console.error(err);
@@ -905,7 +852,16 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
-        this.movingTonesScene.showHoldCircle(this.center.x + 100, 100, 'red', 'start');
+        const rightCircle: MovingTonesCircle = {
+          id: uuidv4(),
+          x: this.center.x + 100,
+          y: 100,
+          hand: 'right',
+          type: 'start',
+        };
+        this.movingTonesScene.showCircle(rightCircle, 'start', {
+          circle: rightCircle,
+        });
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
       },
@@ -947,7 +903,14 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
-        this.movingTonesScene.showHoldCircle(this.center.x - 100, 100, 'blue', 'start');
+        const leftCircle: MovingTonesCircle = {
+          id: uuidv4(),
+          x: this.center.x - 100,
+          y: 100,
+          hand: 'left',
+          type: 'start',
+        };
+        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
       },
@@ -965,8 +928,22 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(4000);
 
-        this.movingTonesScene.showHoldCircle(this.center.x - 100, 100, 'blue', 'start');
-        this.movingTonesScene.showHoldCircle(this.center.x + 100, 100, 'red', 'start');
+        const leftCircle: MovingTonesCircle = {
+          id: uuidv4(),
+          x: this.center.x - 100,
+          y: 100,
+          hand: 'left',
+          type: 'start',
+        };
+        const rightCircle: MovingTonesCircle = {
+          id: uuidv4(),
+          x: this.center.x + 100,
+          y: 100,
+          hand: 'right',
+          type: 'start',
+        };
+        this.movingTonesScene.showCircle(rightCircle, 'start', { circle: rightCircle });
+        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
 
         await this.movingTonesScene.waitForCollisionOrTimeout();
         this.soundsService.playCalibrationSound('success');
@@ -1013,18 +990,35 @@ export class MovingTonesService implements ActivityBase {
           x: 2 * this.center.x - 50,
           y: this.center.y + 100,
         };
-        const leftCoordinates = this.getCoordinates(startLeft, endLeft, 'semicircle', 2);
-        const rightCoordinates = this.getCoordinates(startRight, endRight, 'semicircle', 2);
+        const leftCoordinates = this.getCirclesInPath(startLeft, endLeft, 'semicircle', 2, 'left');
+        const rightCoordinates = this.getCirclesInPath(
+          startRight,
+          endRight,
+          'semicircle',
+          2,
+          'right',
+        );
 
-        const subscriptions = await this.showCircles({
-          left: leftCoordinates,
-          right: rightCoordinates,
+        const startLeftCircle = leftCoordinates.filter((c) => c.type === 'start')[0];
+        const endLeftCircle = leftCoordinates.filter((c) => c.type === 'end')[0];
+        const leftCoins = leftCoordinates.filter((c) => c.type === 'coin');
+
+        this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
+          collisionDebounce: this.collisionDebounce,
+        });
+
+        const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
+        const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
+        const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+
+        this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
+          collisionDebounce: this.collisionDebounce,
+        });
+        this.movingTonesScene.initPath(startRightCircle, endRightCircle, rightCoins, {
+          collisionDebounce: this.collisionDebounce,
         });
 
         await this.movingTonesScene.waitForCollisionOrTimeout();
-
-        subscriptions.blueSubscription?.unsubscribe();
-        subscriptions.redSubscription?.unsubscribe();
 
         this.ttsService.tts('Well done!');
 
@@ -1076,7 +1070,11 @@ export class MovingTonesService implements ActivityBase {
   }
 
   preLoop() {
-    return [];
+    return [
+      async (reCalibrationCount: number) => {
+        this.movingTonesScene.playBacktrack();
+      },
+    ];
   }
 
   loop() {
@@ -1152,6 +1150,7 @@ export class MovingTonesService implements ActivityBase {
           Math.abs(this.coinsCollected - highScore) <= 5 || Math.random() < 0.5;
 
         if (!shouldAllowReplay) return;
+        await this.elements.sleep(3000);
 
         this.ttsService.tts(
           'Raise both your hands if you want to add 30 more seconds to this activity.',
@@ -1189,6 +1188,11 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+          this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        }
+        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
+          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1235,12 +1239,19 @@ export class MovingTonesService implements ActivityBase {
     ];
   }
 
+  stopGame() {
+    this.movingTonesScene.disable();
+    this.movingTonesScene.enableMusic(false);
+    this.movingTonesScene.stopBacktrack();
+    this.movingTonesScene.scene.stop('movingTones');
+    this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
+    this.apiService.updateGameSettings('moving_tones', this.gameSettings);
+  }
+
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
-        this.movingTonesScene.disable();
-        this.movingTonesScene.enableMusic(false);
-        this.movingTonesScene.scene.stop('movingTones');
+        this.stopGame();
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {
           data: {
