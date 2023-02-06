@@ -70,7 +70,7 @@
     "@types/howler": "^2.2.7",
     "@types/jasmine": "~3.10.0",
     "@types/jquery": "^3.5.14",
-    "@types/long": "4.0.0",
+    "@types/long": "5.0.0",
     "@types/node": "^12.11.1",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
