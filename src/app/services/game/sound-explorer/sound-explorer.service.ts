@@ -1061,9 +1061,6 @@ export class SoundExplorerService {
         // eslint-disable-next-line prefer-const
         totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
 
-        const isLastActivity =
-          environment.stageName === 'stage' || environment.stageName === 'prod';
-
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -1086,7 +1083,7 @@ export class SoundExplorerService {
           `,
             buttons: [
               {
-                title: isLastActivity ? 'Back to Homepage' : 'Next Activity',
+                title: 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],
@@ -1094,10 +1091,6 @@ export class SoundExplorerService {
         };
 
         await this.elements.sleep(12000);
-
-        if (isLastActivity) {
-          await this.activityHelperService.exitGame('sound_explorer');
-        }
       },
     ];
   }
