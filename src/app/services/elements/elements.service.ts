@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 import { BannerService } from './banner/banner.service';
+import { CalibrationTutorialService } from './calibration-tutorial/calibration-tutorial.service';
 import { ConfettiService } from './confetti/confetti.service';
 import { GuideService } from './guide/guide.service';
 import { OverlayService } from './overlay/overlay.service';
@@ -28,6 +29,7 @@ export class ElementsService {
     public guide: GuideService,
     public confetti: ConfettiService,
     public toast: ToastService,
+    public calibrationTutorialService: CalibrationTutorialService,
   ) {}
 
   async sleep(timeout: number) {
@@ -51,6 +53,7 @@ export class ElementsService {
       guide: this.guide.subject,
       confetti: this.confetti.subject,
       toast: this.toast.subject,
+      calibrationTutorial: this.calibrationTutorialService.subject,
     };
   }
 
@@ -67,6 +70,7 @@ export class ElementsService {
       guide: this.guide.state,
       confetti: this.confetti.state,
       toast: this.toast.state,
+      calibrationTutorial: this.calibrationTutorialService.state,
     };
   }
 }

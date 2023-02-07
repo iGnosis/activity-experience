@@ -237,6 +237,15 @@ export class GameService {
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+    // show calibration tutorial
+    this.elements.calibrationTutorialService.state = {
+      data: {},
+      attributes: {
+        visibility: 'visible',
+        reCalibrationCount: -1,
+      },
+    };
+
     if (
       navigator.userAgent.match(/Mac/) &&
       navigator.maxTouchPoints &&
@@ -758,8 +767,19 @@ export class GameService {
     // const items = await this.sitToStandService.preLoop();
   }
 
+  async isCalibrationTutorialCompleted() {
+    return new Promise((resolve) => {
+      setInterval(() => {
+        if (this.elements.calibrationTutorialService.attributes.visibility === 'hidden') {
+          resolve(true);
+        }
+      }, 1000);
+    });
+  }
+
   async startCalibration() {
     // TODO: Start the calibration process.
+    await this.isCalibrationTutorialCompleted();
     this.ttsService.tts(
       'To start, please get your whole body, from head to toe, within the red box.',
     );

@@ -821,6 +821,8 @@ export type ToastElementState = {
   delay?: number;
 };
 
+export type CalibrationTutorialElementState = unknown;
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -917,6 +919,7 @@ export type ElementsState = {
   guide: { data: GuideElementState; attributes: ElementAttributes };
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
   toast: { data: ToastElementState; attributes: ElementAttributes };
+  calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -931,6 +934,10 @@ export type ElementsObservables = {
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
   confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
   toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
+  calibrationTutorial: Observable<{
+    data: CalibrationTutorialElementState;
+    attributes: ElementAttributes;
+  }>;
 };
 
 export interface ActivityBase {

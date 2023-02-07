@@ -1,0 +1,49 @@
+
+<div *ngIf="state && state.attributes.visibility === 'visible'" class="w-screen h-screen position-absolute bg-white d-flex overflow-auto">
+        <div class="container row mx-auto mt-3 gx-5">
+            <img src="assets/images/sound_health_logo_alpha.png" alt="sound health alpha logo" class="col-2 px-2" style="object-fit: contain;">
+            <h2 class="col-8 text-center text-primary my-auto">CAMERA SETUP</h2>
+            <div class="col-2 d-flex">
+            <button class="w-full btn btn-primary my-auto font-bold position-relative" (click)="hide()">Continue
+                <i class="bi bi-arrow-right position-absolute top-1/2 end-3 translate-middle-y text-xl"></i>
+            </button>
+        </div>
+        <div class="col-12">&nbsp;</div>
+        <div class="col-4">
+            <div>
+                <video (waiting)="videoEnded(1)" class="w-full h-full rounded bg-secondary" style="object-fit: fill;" [controls]="false" [autoplay]="true" [muted]="true" loop>
+                    <source src="assets/videos/calibration-tutorial/step-1.mp4" type="video/mp4" />
+                    Video not loaded
+                </video>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="position-relative">
+                <video (waiting)="videoEnded(2)" class="w-full h-full rounded bg-secondary" style="object-fit: fill;" [controls]="false" [muted]="true" loop #videoStep2>
+                    <source src="assets/videos/calibration-tutorial/step-2.mp4" type="video/mp4" />
+                    Video not loaded
+                </video>
+                <div class="overlay position-absolute w-full h-full bg-secondary rounded top-0 start-0"></div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="position-relative">
+                <video (waiting)="videoEnded(3)" class="w-full h-full rounded bg-secondary" style="object-fit: fill;" [controls]="false" [muted]="true" loop #videoStep3>
+                    <source src="assets/videos/calibration-tutorial/step-3.mp4" type="video/mp4" />
+                    Video not loaded
+                </video>
+                <div class="overlay position-absolute w-full h-full bg-secondary rounded top-0 start-0"></div>
+            </div>
+        </div>
+        <p class=" h3 col-4 text-center h-8">1</p>
+        <p class=" h3 col-4 text-center h-8">2</p>
+        <p class=" h3 col-4 text-center h-8">3</p>
+        <h3 class="col-4 text-center h-8 text-primary">Decide standing position</h3>
+        <h3 class="col-4 text-center h-8 text-primary">Adjust the screen</h3>
+        <h3 class="col-4 text-center h-8 text-primary">Move into red box</h3>
+        <p class="col-4 text-center font-bold">Find a good position where the whole body will be visible and you can freely move.</p>
+        <p class="col-4 text-center font-bold">Align the bottom of the screen to be in line with your feet.</p>
+        <p class="col-4 text-center font-bold">Move your whole body into the red box until the box turns green.</p>
+        <div class="col-12">&nbsp;</div>
+    </div>
+</div>
