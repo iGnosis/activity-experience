@@ -157,28 +157,36 @@ export class SitToStandScene extends Phaser.Scene {
   pauseBacktrack(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (this.classicalBacktrackId && this.classical.playing(this.classicalBacktrackId)) {
+        if (
+          this.classical &&
+          this.classicalBacktrackId &&
+          this.classical.playing(this.classicalBacktrackId)
+        ) {
           this.classical.pause(this.classicalBacktrackId);
         }
         break;
       case 'dance':
-        if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
+        if (this.dance && this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
           this.dance.pause(this.danceBacktrackId);
         }
         break;
       case 'rock':
-        if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
+        if (this.rock && this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
           this.rock.pause(this.rockBacktrackId);
         }
         break;
       case 'surprise me!':
-        if (this.surpriseBacktrackId && this.surprise.playing(this.surpriseBacktrackId)) {
+        if (
+          this.surprise &&
+          this.surpriseBacktrackId &&
+          this.surprise.playing(this.surpriseBacktrackId)
+        ) {
           this.surprise.pause(this.surpriseBacktrackId);
         }
         break;
       case 'jazz':
       default:
-        if (this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
+        if (this.jazz && this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
           this.jazz.pause(this.jazzBacktrackId);
         }
         break;
@@ -220,36 +228,36 @@ export class SitToStandScene extends Phaser.Scene {
     switch (genre) {
       case 'classical':
         if (this.currentSet === 0) {
-          if (!this.classical.playing(this.classicalBacktrackId)) {
+          if (this.classical && !this.classical.playing(this.classicalBacktrackId)) {
             this.classicalBacktrackId = this.classical.play(
               `classicalBacktrack${this.currentClassicalSet}`,
             );
           }
           return this.classicalBacktrackId;
         } else {
-          if (!this.classical.playing(this.classicalBacktrackId)) {
+          if (this.classical && !this.classical.playing(this.classicalBacktrackId)) {
             this.classicalBacktrackId = this.classical.play('classicalBacktrack');
           }
           return this.classicalBacktrackId;
         }
       case 'dance':
-        if (!this.dance.playing(this.danceBacktrackId)) {
+        if (this.dance && !this.dance.playing(this.danceBacktrackId)) {
           this.danceBacktrackId = this.dance.play('danceBacktrack');
         }
         return this.danceBacktrackId;
       case 'rock':
-        if (!this.rock.playing(this.rockBacktrackId)) {
+        if (this.rock && !this.rock.playing(this.rockBacktrackId)) {
           this.rockBacktrackId = this.rock.play('rockBacktrack');
         }
         return this.rockBacktrackId;
       case 'surprise me!':
-        if (!this.surprise.playing(this.surpriseBacktrackId)) {
+        if (this.surprise && !this.surprise.playing(this.surpriseBacktrackId)) {
           this.surpriseBacktrackId = this.surprise.play('ambientBacktrack');
         }
         return this.surpriseBacktrackId;
       case 'jazz':
       default:
-        if (!this.jazz.playing(this.jazzBacktrackId)) {
+        if (this.jazz && !this.jazz.playing(this.jazzBacktrackId)) {
           this.jazzBacktrackId = this.jazz.play('jazzBacktrack');
         }
         return this.jazzBacktrackId;
@@ -259,6 +267,7 @@ export class SitToStandScene extends Phaser.Scene {
   playTrigger(genre: Genre) {
     switch (genre) {
       case 'classical':
+        if (!this.classical) return;
         // to fade we need to know duration to fade. All the triggers have the same duration.
         const classicTriggerFadeoutDuration = 1519.183673469399;
 
@@ -319,6 +328,7 @@ export class SitToStandScene extends Phaser.Scene {
           return this.classicalTriggerId;
         }
       case 'dance':
+        if (!this.dance) return;
         this.danceTriggerId = this.dance.play(`dance${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -326,6 +336,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.danceTriggerId;
       case 'rock':
+        if (!this.rock) return;
         this.rockTriggerId = this.rock.play(`rock${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -333,6 +344,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.rockTriggerId;
       case 'surprise me!':
+        if (!this.surprise) return;
         this.surpriseTriggerId = this.surprise.play(`ambient${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -341,6 +353,7 @@ export class SitToStandScene extends Phaser.Scene {
         return this.surpriseTriggerId;
       case 'jazz':
       default:
+        if (!this.jazz) return;
         this.jazzTriggerId = this.jazz.play(`jazz${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
