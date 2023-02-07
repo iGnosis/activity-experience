@@ -77,31 +77,31 @@ export class SoundsService {
     const volume = 0.15;
     switch (genre) {
       case 'classical':
-        if (!this.classicalInstructionsSound.playing()) {
+        if (this.classicalInstructionsSound && !this.classicalInstructionsSound.playing()) {
           this.classicalInstructionsSound.volume(volume);
           this.classicalInstructionsSound.play();
         }
         break;
       case 'jazz':
-        if (!this.jazzInstructionsSound.playing()) {
+        if (this.jazzInstructionsSound && !this.jazzInstructionsSound.playing()) {
           this.jazzInstructionsSound.volume(volume);
           this.jazzInstructionsSound.play();
         }
         break;
       case 'rock':
-        if (!this.rockInstructionsSound.playing()) {
+        if (this.rockInstructionsSound && !this.rockInstructionsSound.playing()) {
           this.rockInstructionsSound.volume(volume);
           this.rockInstructionsSound.play();
         }
         break;
       case 'dance':
-        if (!this.danceInstructionsSound.playing()) {
+        if (this.danceInstructionsSound && !this.danceInstructionsSound.playing()) {
           this.danceInstructionsSound.volume(volume);
           this.danceInstructionsSound.play();
         }
         break;
       case 'surprise me!':
-        if (!this.surpriseInstructionsSound.playing()) {
+        if (this.surpriseInstructionsSound && !this.surpriseInstructionsSound.playing()) {
           this.surpriseInstructionsSound.volume(volume);
           this.surpriseInstructionsSound.play();
         }
