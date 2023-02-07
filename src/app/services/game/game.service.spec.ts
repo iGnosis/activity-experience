@@ -289,12 +289,17 @@ describe('GameService', () => {
     });
   });
 
-  it('should start calibration', fakeAsync(() => {
+  it('should start calibration after calibration tutorial', fakeAsync(() => {
     spyOn(TtsService.prototype, 'tts');
+    spyOn(service, 'isCalibrationTutorialCompleted').and.returnValue(
+      new Promise((resolve) => resolve(true)),
+    );
     spyOn(CalibrationService.prototype, 'startCalibrationScene');
     spyOn(service, 'setupSubscriptions');
 
     service.startCalibration();
+    tick(1000);
+    expect(service.isCalibrationTutorialCompleted).toHaveBeenCalled();
     expect(CalibrationService.prototype.startCalibrationScene).toHaveBeenCalledWith(
       service.game as Phaser.Game,
     );
