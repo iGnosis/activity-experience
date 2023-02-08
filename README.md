@@ -1,4 +1,4 @@
-# Activities ![check-code-coverage](https://img.shields.io/badge/code--coverage-24.41%25-red)
+# Activities ![check-code-coverage](https://img.shields.io/badge/code--coverage-24.37%25-red)
 
 ![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
