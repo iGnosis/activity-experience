@@ -724,6 +724,15 @@ export type TimerElementState = {
    * @param elapsedTime gives the time elapsed time since the start of the timer.
    */
   onPause?: (elapsedTime: number) => void;
+  /**
+   * Functions to trigger after certain duration of the timer.
+   */
+  intermediateFns?: {
+    /**
+     * Function triggers when timer reaches certain duration.
+     */
+    [key: number]: () => void;
+  };
 };
 
 export type OverlayElementState = {

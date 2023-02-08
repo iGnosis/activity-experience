@@ -1277,6 +1277,20 @@ export class SitToStandService implements ActivityBase {
       let promptNum = result.promptNum;
       let stringExpression = result.stringExpression;
 
+      if (this.targetReps! - this.successfulReps === 3) {
+        this.ttsService.tts('Last few reps remaining.');
+        this.elements.guide.state = {
+          data: {
+            title: 'Last few reps remaining.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+      }
+
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
         const prevReps = this.analytics.slice(-2);
