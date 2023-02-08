@@ -32,7 +32,9 @@ export class AppComponent {
       originalConsoleLog.apply(console, args);
     };
     console.error = (...args) => {
-      this.socketService.sendLogsToServer('[ERROR] ' + JSON.stringify(args));
+      this.socketService.sendLogsToServer(
+        '[ERROR] ' + JSON.stringify(args, Object.getOwnPropertyNames(args)),
+      );
       originalConsoleError.apply(console, args);
     };
     console.warn = (...args) => {
