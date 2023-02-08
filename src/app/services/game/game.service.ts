@@ -201,6 +201,16 @@ export class GameService {
     this.startGame();
   }
 
+  async setFirstGame(game: Activities) {
+    this.currentGame = game;
+    this.gameStatus = {
+      stage: 'welcome',
+      breakpoint: 0,
+      game,
+    };
+    this.gameStatusSubject.next(this.gameStatus);
+  }
+
   setStage(stage: ActivityStage) {
     if (stage === 'welcome') {
       this.gameStages = this.allStages;

@@ -55,6 +55,9 @@ export class GameComponent implements OnInit {
             this.canvas.nativeElement,
             data.data.benchmarkId,
           );
+          if (data?.data?.game) {
+            this.gameService.setFirstGame(data.data.game);
+          }
           this.videoAvailable = true;
           if (this.cameraStatus === 'failure') {
             this.googleAnalyticsService.sendEvent('camera_not_found');
