@@ -724,6 +724,15 @@ export type TimerElementState = {
    * @param elapsedTime gives the time elapsed time since the start of the timer.
    */
   onPause?: (elapsedTime: number) => void;
+  /**
+   * Functions to trigger after certain duration of the timer.
+   */
+  intermediateFns?: {
+    /**
+     * Function triggers when timer reaches certain duration.
+     */
+    [key: number]: () => void;
+  };
 };
 
 export type OverlayElementState = {
@@ -821,6 +830,8 @@ export type ToastElementState = {
   delay?: number;
 };
 
+export type CalibrationTutorialElementState = unknown;
+
 export type PromptPosition = 'center' | 'top-right';
 
 export type PromptElementState = {
@@ -917,6 +928,7 @@ export type ElementsState = {
   guide: { data: GuideElementState; attributes: ElementAttributes };
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
   toast: { data: ToastElementState; attributes: ElementAttributes };
+  calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -931,6 +943,10 @@ export type ElementsObservables = {
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
   confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
   toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
+  calibrationTutorial: Observable<{
+    data: CalibrationTutorialElementState;
+    attributes: ElementAttributes;
+  }>;
 };
 
 export interface ActivityBase {

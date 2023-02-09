@@ -1038,6 +1038,21 @@ export class BeatBoxerService {
             mode: 'start',
             isCountdown: true,
             duration: this.gameDuration! * 1000,
+            intermediateFns: {
+              [this.gameDuration! - 11]: () => {
+                this.ttsService.tts('Last few seconds left.');
+                this.elements.guide.state = {
+                  data: {
+                    title: 'Last few seconds left.',
+                    titleDuration: 3000,
+                  },
+                  attributes: {
+                    visibility: 'visible',
+                    reCalibrationCount,
+                  },
+                };
+              },
+            },
             onPause: this.updateElapsedTime,
             onComplete: this.updateElapsedTime,
           },

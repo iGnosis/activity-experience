@@ -24,6 +24,7 @@ import { preferenceReducer } from './store/reducers/preference.reducer';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { environment } from 'src/environments/environment';
 import { ToastComponent } from './widgets/elements/toast/toast.component';
+import { CalibrationTutorialComponent } from './widgets/elements/calibration-tutorial/calibration-tutorial.component';
 
 export let AppInjector: Injector;
 
@@ -44,6 +45,7 @@ export let AppInjector: Injector;
     OverlayComponent,
     BannerComponent,
     SafePipe,
+    CalibrationTutorialComponent,
   ],
   imports: [
     BrowserModule,

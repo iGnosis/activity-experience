@@ -104,8 +104,8 @@ export class SitToStandService implements ActivityBase {
       // decrease timeout by 10%
       this.config.speed = this.getPercentageChange(-10, this.config.speed);
       // minimum fixed speed... for better UX.
-      if (this.config.speed < 1500) {
-        this.config.speed = 1500;
+      if (this.config.speed < 3000) {
+        this.config.speed = 3000;
       }
     } else {
       // increase timeout by 10%
@@ -312,6 +312,20 @@ export class SitToStandService implements ActivityBase {
     ];
   }
 
+  optimizeSpeedTutorial(speedChange: 'decrease' | 'increase') {
+    if (speedChange === 'increase') {
+      // decrease timeout by 10% to increase speed
+      this.config.speed = this.getPercentageChange(-10, this.config.speed);
+      // minimum fixed speed... for better UX.
+      if (this.config.speed < 3000) {
+        this.config.speed = 3000;
+      }
+    } else {
+      // increase timeout by 10%
+      this.config.speed = this.getPercentageChange(10, this.config.speed);
+    }
+  }
+
   onboardingByLevel: { [key in GameLevels]: ((reCalibrationCount: number) => Promise<void>)[] } = {
     level1: [
       async (reCalibrationCount: number) => {
@@ -495,7 +509,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          if (res.result === 'failure') --i; //repeat current prompt if failure
+          if (res.result === 'failure') {
+            --i; //repeat current prompt if failure
+            this.optimizeSpeedTutorial('decrease');
+          } else {
+            this.optimizeSpeedTutorial('increase');
+          }
 
           await this.elements.sleep(1000);
         }
@@ -586,7 +605,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          if (res.result === 'failure') --i;
+          if (res.result === 'failure') {
+            --i; //repeat current prompt if failure
+            this.optimizeSpeedTutorial('decrease');
+          } else {
+            this.optimizeSpeedTutorial('increase');
+          }
           await this.elements.sleep(1000);
         }
         this.elements.prompt.attributes = {
@@ -893,7 +917,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          if (res.result === 'failure') --i; //repeat current prompt if failure
+          if (res.result === 'failure') {
+            --i; //repeat current prompt if failure
+            this.optimizeSpeedTutorial('decrease');
+          } else {
+            this.optimizeSpeedTutorial('increase');
+          }
 
           await this.elements.sleep(1000);
         }
@@ -1081,7 +1110,12 @@ export class SitToStandService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          if (res.result === 'failure') --i; //repeat current prompt if failure
+          if (res.result === 'failure') {
+            --i; //repeat current prompt if failure
+            this.optimizeSpeedTutorial('decrease');
+          } else {
+            this.optimizeSpeedTutorial('increase');
+          }
 
           await this.elements.sleep(1000);
         }
@@ -1276,6 +1310,20 @@ export class SitToStandService implements ActivityBase {
       const result = this.getRandomPromptExpression();
       let promptNum = result.promptNum;
       let stringExpression = result.stringExpression;
+
+      if (this.targetReps! - this.successfulReps === 3) {
+        this.ttsService.tts('Last few reps remaining.');
+        this.elements.guide.state = {
+          data: {
+            title: 'Last few reps remaining.',
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+      }
 
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
