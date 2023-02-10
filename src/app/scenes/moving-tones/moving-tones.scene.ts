@@ -218,6 +218,8 @@ export class MovingTonesScene extends Phaser.Scene {
 
             tween.once('complete', () => {
               this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
+
+              this.setHeldState(handTexture, false);
               if (type === 'start') {
                 if (data.end) {
                   this.showCircle(data.end, 'end', {
