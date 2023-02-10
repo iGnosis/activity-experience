@@ -1098,7 +1098,9 @@ export class SoundExplorerService {
           `,
             buttons: [
               {
-                title: 'Next Activity',
+                title: this.activityHelperService.isLastActivity
+                  ? 'Back to Homepage'
+                  : 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],

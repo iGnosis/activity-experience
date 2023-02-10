@@ -20,6 +20,7 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -69,6 +70,7 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -246,7 +248,7 @@ export class SitToStandService implements ActivityBase {
             type: 'intro',
             htmlStr: `
             <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">First Activity</h2>
+              <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
               <h1 class="pt-2">Balance and Reaction Time</h2>
@@ -1796,7 +1798,9 @@ export class SitToStandService implements ActivityBase {
             `,
               buttons: [
                 {
-                  title: 'Next Activity',
+                  title: this.activityHelperService.isLastActivity
+                    ? 'Back to Homepage'
+                    : 'Next Activity',
                   progressDurationMs: 10000,
                 },
               ],

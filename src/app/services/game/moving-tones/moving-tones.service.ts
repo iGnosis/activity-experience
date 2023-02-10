@@ -700,7 +700,7 @@ export class MovingTonesService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Last activity. Moving Tones.');
+        this.ttsService.tts('Next activity. Moving Tones.');
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
@@ -710,7 +710,7 @@ export class MovingTonesService implements ActivityBase {
             type: 'intro',
             htmlStr: `
             <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Last Activity</h2>
+              <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Moving Tones</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
               <h1 class="py-2">Range of Motion</h2>
@@ -1318,7 +1318,9 @@ export class MovingTonesService implements ActivityBase {
           `,
             buttons: [
               {
-                title: 'Back to Homepage',
+                title: this.activityHelperService.isLastActivity
+                  ? 'Back to Homepage'
+                  : 'Next Activity',
                 progressDurationMs: 10000,
               },
             ],
@@ -1330,8 +1332,6 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
-
-        await this.activityHelperService.exitGame('moving_tones');
       },
     ];
   }
