@@ -164,6 +164,16 @@ export class MovingTonesScene extends Phaser.Scene {
                 ? this.animateHeld(x, y, circleRadius, color, 0, holdDuration)
                 : this.animateHeld(x, y, circleRadius, color, stoppedAt, remainingDuration);
 
+            let successMusicId: number | undefined;
+            if (data.variation && data.path) {
+              if (type === 'start') {
+                successMusicId = this.playSuccessMusic(data.variation, 1);
+              } else {
+                console.log('playing::', data.variation, '::', data.path.length + 2);
+                successMusicId = this.playSuccessMusic(data.variation, data.path.length + 2);
+              }
+            }
+
             tween.on('update', (tween: Phaser.Tweens.Tween) => {
               if (!this.getHeldState(handTexture)) {
                 this.circleEvents.next({
@@ -174,6 +184,9 @@ export class MovingTonesScene extends Phaser.Scene {
                 if (startFromBeginning) {
                   graphics.destroy(true);
                   tween.remove();
+
+                  successMusicId && this.stopSuccessMusic(successMusicId);
+
                   // remove circles if interrupted when holding the start circles
                   if (type === 'start') {
                     this.destroyGameObjects('allExceptStartCircle', gameObjectTexture);
@@ -225,6 +238,8 @@ export class MovingTonesScene extends Phaser.Scene {
                   this.showCircle(data.end, 'end', {
                     collisionDebounce: holdDuration,
                     circle: data.end,
+                    path: data.path,
+                    variation: data.variation,
                   });
                 }
               }
@@ -238,13 +253,14 @@ export class MovingTonesScene extends Phaser.Scene {
               tween.remove();
               gameObject.destroy(true);
 
-              if (data.variation && data.path) {
-                if (type === 'start') {
-                  this.playSuccessMusic(data.variation, 1);
-                } else {
-                  this.playSuccessMusic(data.variation, data.path.length + 2);
-                }
-              }
+              // if (data.variation && data.path) {
+              //   this.stopSuccessMusic();
+              //   if (type === 'start') {
+              //     // this.playSuccessMusic(data.variation, 1);
+              //   } else {
+              //     // this.playSuccessMusic(data.variation, data.path.length + 2);
+              //   }
+              // }
 
               if (type === 'start') {
                 const endTexture =
@@ -1023,7 +1039,7 @@ export class MovingTonesScene extends Phaser.Scene {
   backtrackId!: number;
   playBacktrack() {
     if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
-      this.backtrackId = this.backtrack.play();
+      this.backtrackId = this.backtrack.fade(1, 0.5, 0).play();
     }
     return this.backtrackId;
   }
@@ -1038,9 +1054,17 @@ export class MovingTonesScene extends Phaser.Scene {
   }
 
   playSuccessMusic(variation: string, variationNumber: number) {
+    if (!this.successTrack) return;
+
+    console.log('variation::', variation + '_' + variationNumber);
+    const successTrackId = this.successTrack.play(variation + '_' + variationNumber);
+    this.successTrack.volume(1, successTrackId);
+    return successTrackId;
+  }
+
+  stopSuccessMusic(id?: number) {
     if (this.successTrack) {
-      console.log('variation::', variation + '_' + variationNumber);
-      this.successTrack.play(variation + '_' + variationNumber);
+      this.successTrack.stop(id);
     }
   }
 
@@ -1054,7 +1078,9 @@ export class MovingTonesScene extends Phaser.Scene {
         5: [7, 8, 9, 11, 12, 10],
       },
     };
-    return Phaser.Utils.Array.GetRandom(variations.classical[len]);
+    const randomVariation = Phaser.Utils.Array.GetRandom(variations.classical[len]);
+    console.log('randomVariations::', randomVariation);
+    return randomVariation;
   }
 
   center() {
