@@ -1660,8 +1660,6 @@ export class SitToStandService implements ActivityBase {
         if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
           this.shouldReplay = this.qaGameSettings.extendGameDuration;
         }
-        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
-          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
