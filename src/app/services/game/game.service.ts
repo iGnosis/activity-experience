@@ -597,7 +597,7 @@ export class GameService {
         settings: settings ? settings.settings : environment.settings[game],
       };
     }
-    const lastGame = await this.apiService.getLastGame();
+    const lastGame = await this.apiService.getLastPlayedGame();
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
