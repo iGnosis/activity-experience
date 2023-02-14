@@ -57,10 +57,10 @@ export class SoundExplorerService {
   private currentScore = 0;
   private pointsGained = 0;
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
-  private originsWithAngleRange: { [key in Origin]: number[] } = {
-    'bottom-right': [-110, -115],
-    'bottom-left': [-70, -75],
-    'bottom-center': [-120, -70],
+  private originsWithAngleRange: { [key in Origin]?: number[] } = {
+    // 'bottom-right': [-110, -115],
+    // 'bottom-left': [-70, -75],
+    // 'bottom-center': [-120, -70],
     'left-center': [-65, -60],
     'right-center': [-110, -105],
     'top-left': [40, 50],
@@ -93,7 +93,7 @@ export class SoundExplorerService {
     const randomAngle: number =
       typeof promptDetails?.angle === 'number'
         ? promptDetails?.angle
-        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]!);
     for (let i = 0; i < numberOfShapes; i++) {
       const shape = shapes[i];
       this.soundExplorerScene.showShapes([shape], randomPosition, randomAngle, this.config.speed);
@@ -108,7 +108,7 @@ export class SoundExplorerService {
     const randomAngle =
       typeof angle === 'number'
         ? angle
-        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]);
+        : this.getRandomNumberBetweenRange(...this.originsWithAngleRange[randomPosition]!);
     this.soundExplorerScene.showShapes(['wrong'], randomPosition, randomAngle, this.config.speed);
     return { obstacleAngle: randomAngle, obstaclePosition: randomPosition };
   };
@@ -905,6 +905,8 @@ export class SoundExplorerService {
         };
         this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
 
+        this.isGameComplete = false;
+
         while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
@@ -1065,9 +1067,7 @@ export class SoundExplorerService {
             sound_explorer: false,
           });
         }
-        this.ttsService.tts(
-          `Your score is ${this.currentScore}, time completed ${this.totalDuration} seconds.`,
-        );
+
         const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
           minutes: string;
@@ -1075,6 +1075,12 @@ export class SoundExplorerService {
         };
         // eslint-disable-next-line prefer-const
         totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
+
+        this.ttsService.tts(
+          `Your score is ${this.currentScore}, time completed: ${Number(
+            totalDuration.minutes,
+          )} minutes and ${Number(totalDuration.seconds)} seconds`,
+        );
 
         this.elements.banner.state = {
           attributes: {

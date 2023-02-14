@@ -1299,7 +1299,9 @@ export class MovingTonesService implements ActivityBase {
         const highScore = Math.max(this.coinsCollected, prevHighScore);
 
         this.ttsService.tts(
-          `Coins collected: ${this.coinsCollected}, time completed: ${this.totalDuration} seconds.`,
+          `Coins collected: ${this.coinsCollected}, time completed: ${Number(
+            totalDuration.minutes,
+          )} minutes and ${Number(totalDuration.seconds)} seconds.`,
         );
         this.elements.banner.state = {
           attributes: {
