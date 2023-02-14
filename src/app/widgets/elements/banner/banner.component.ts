@@ -11,11 +11,17 @@ import { BannerButton, BannerElementState, ElementAttributes } from 'src/app/typ
   encapsulation: ViewEncapsulation.None,
   animations: [
     trigger('animate-banner', [
-      state('start', style({ width: '300px', height: '200px', opacity: 0.0 })),
-      state('mid', style({ width: '450px', height: '300px', opacity: 0.5 })),
-      state('end', style({ opacity: 1 })),
-      transition('start => mid', animate('0.3s ease-out')),
-      transition('mid => end', animate('0.3s ease-out')),
+      transition(':enter', [
+        style({ transform: 'scale(0.5) translate(-100%, -100%)', opacity: 0 }),
+        animate('0.6s ease-out', style({ transform: 'translate(-50%, -50%)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        style({ transform: 'translate(-50%, -50%)', opacity: 1 }),
+        animate(
+          '0.6s ease-out',
+          style({ transform: 'scale(0.5) translate(-100%, -100%)', opacity: 0 }),
+        ),
+      ]),
     ]),
   ],
 })
