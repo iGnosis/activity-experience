@@ -1067,9 +1067,7 @@ export class SoundExplorerService {
             sound_explorer: false,
           });
         }
-        this.ttsService.tts(
-          `Your score is ${this.currentScore}, time completed ${this.totalDuration} seconds.`,
-        );
+
         const highScore = await this.apiService.getHighScore('sound_explorer');
         let totalDuration: {
           minutes: string;
@@ -1077,6 +1075,12 @@ export class SoundExplorerService {
         };
         // eslint-disable-next-line prefer-const
         totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
+
+        this.ttsService.tts(
+          `Your score is ${this.currentScore}, time completed: ${Number(
+            totalDuration.minutes,
+          )} minutes and ${Number(totalDuration.seconds)} seconds`,
+        );
 
         this.elements.banner.state = {
           attributes: {
