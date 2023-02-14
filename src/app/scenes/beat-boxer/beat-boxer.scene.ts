@@ -53,7 +53,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   private music = false;
   private currentFailureTriggerId!: number;
   private currentSuccessTriggerId!: number;
-  private genre!: Genre;
+  private genre!: Genre | 'afro';
   currentSet!: number;
   private backtrack!: Howl;
   private successTrack!: Howl;
@@ -750,15 +750,16 @@ export class BeatBoxerScene extends Phaser.Scene {
     return audioSprites['beatBoxer'][`note_${note}`][1];
   }
 
-  private src: { [key in Genre]: string } = {
+  private src: { [key in Genre | 'afro']: string } = {
     classical: 'assets/sounds/soundsprites/beat-boxer/classical/',
     'surprise me!': 'assets/sounds/soundsprites/beat-boxer/ambient/',
     rock: 'assets/sounds/soundsprites/beat-boxer/rock/',
     dance: 'assets/sounds/soundsprites/beat-boxer/dance/',
     jazz: 'assets/sounds/soundsprites/beat-boxer/jazz/',
+    afro: 'assets/sounds/soundsprites/beat-boxer/afro/',
   };
 
-  private loadMusicFiles(genre: Genre) {
+  private loadMusicFiles(genre: Genre | 'afro') {
     this.musicFilesLoaded = 0;
 
     const randomSet = genre === 'classical' ? Math.floor(Math.random() * 2) : 0;
@@ -786,6 +787,40 @@ export class BeatBoxerScene extends Phaser.Scene {
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
       });
+      return;
+    }
+
+    if (genre === 'afro') {
+      const src: string = this.src[genre];
+      this.totalMusicFiles = 3;
+
+      this.backtrack = new Howl({
+        src: src + `backtracks/afro_backtrack_${randomSet + 1}.mp3`,
+        html5: true,
+        loop: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+      });
+
+      this.failureTrack = new Howl({
+        src: src + 'triggers/errorTriggers.mp3',
+        sprite: beatBoxerAudio[genre][randomSet].errorTriggers,
+        html5: true,
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+      });
+
+      this.successTrack = new Howl({
+        src: src + 'triggers/successTriggers.mp3',
+        sprite: beatBoxerAudio[genre][randomSet].successTriggers,
+        html5: true,
+        onend: (id) => {
+          this.successTrack.stop(id);
+        },
+        onload: this.onLoadCallback,
+        onloaderror: this.onLoadErrorCallback,
+      });
+
       return;
     }
 
@@ -873,7 +908,6 @@ export class BeatBoxerScene extends Phaser.Scene {
       console.log('playFailureTrack:: classical');
       return this.failureTrack.play();
     } else {
-      console.log('playFailureTrack:: classical');
       this.currentFailureTriggerId = this.failureTrack.play('error' + this.currentFailureTrigger);
       this.currentFailureTrigger += 1;
       const totalTriggers = Object.entries(

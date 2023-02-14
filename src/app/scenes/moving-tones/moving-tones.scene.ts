@@ -848,7 +848,14 @@ export class MovingTonesScene extends Phaser.Scene {
     await this.ttsService.preLoadTts('moving_tones');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
-      this.loadMusicFiles(genre);
+
+      // as afro music is unavailable, we are using classical music for afro.
+      if ((genre as Genre | 'afro') === 'afro') {
+        this.loadMusicFiles('jazz');
+      } else {
+        this.loadMusicFiles(genre);
+      }
+
       const intervalId = setInterval(() => {
         if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
