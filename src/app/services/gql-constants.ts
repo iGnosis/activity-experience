@@ -46,6 +46,13 @@ export const GqlConstants = {
     }
   }
 `,
+  GET_GENRE_CHOICE: `
+  query GetGenreChoice {
+    patient {
+      genreChoice
+    }
+  }
+  `,
   GET_ONBOARDING_STATUS: `
   query GetOnboardingStatus {
     patient {

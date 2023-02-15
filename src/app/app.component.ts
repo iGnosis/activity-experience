@@ -32,9 +32,17 @@ export class AppComponent {
       originalConsoleLog.apply(console, args);
     };
     console.error = (...args) => {
-      this.socketService.sendLogsToServer(
-        '[ERROR] ' + JSON.stringify(args, Object.getOwnPropertyNames(args)),
-      );
+      const message: string =
+        JSON.stringify(args[0], Object.getOwnPropertyNames(args[0])).length > 2
+          ? JSON.stringify(args[0], Object.getOwnPropertyNames(args[0]))
+          : JSON.stringify(args).length > 2
+          ? JSON.stringify(args)
+          : args.toString().length > 2
+          ? args.toString()
+          : JSON.stringify(args[0]).length > 2
+          ? JSON.stringify(args[0])
+          : 'Unknown Error Occured';
+      this.socketService.sendLogsToServer('[ERROR] ' + message);
       originalConsoleError.apply(console, args);
     };
     console.warn = (...args) => {
