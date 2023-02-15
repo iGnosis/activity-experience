@@ -1666,9 +1666,6 @@ export class SitToStandService implements ActivityBase {
           });
         }
 
-        console.log('updating game settings:', this.gameSettings);
-        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
-
         if (this.shouldLevelUp && nextLevel <= 3) {
           this.currentLevel = ('level' + nextLevel) as GameLevels;
           this.gameSettings.currentLevel = this.currentLevel;
@@ -1699,6 +1696,9 @@ export class SitToStandService implements ActivityBase {
           this.ttsService.tts("Hope you're ready for a new challenge tomorrow.");
           await this.elements.sleep(3000);
         }
+
+        console.log('updating game settings:', this.gameSettings);
+        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         let totalDuration: {
           minutes: string;
