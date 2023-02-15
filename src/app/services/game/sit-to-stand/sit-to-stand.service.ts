@@ -20,6 +20,7 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -69,6 +70,7 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.store
       .select((state) => state.preference)
@@ -84,36 +86,6 @@ export class SitToStandService implements ActivityBase {
     });
   }
 
-  getPercentageChange(percentage: number, value: number) {
-    return (percentage * Math.abs(value)) / 100 + value;
-  }
-
-  optimizeSpeed(pastNPromptsToConsider = 1) {
-    const pastNPrompts = this.analytics.slice(this.analytics.length - pastNPromptsToConsider);
-
-    if (pastNPrompts.length < pastNPromptsToConsider) {
-      return;
-    }
-
-    const numOfSuccessPrompts = pastNPrompts.filter(
-      (prompt) => prompt.result.type === 'success',
-    ).length;
-    const avgSuccess = numOfSuccessPrompts / pastNPrompts.length;
-
-    if (avgSuccess > 0.5) {
-      // decrease timeout by 10%
-      this.config.speed = this.getPercentageChange(-10, this.config.speed);
-      // minimum fixed speed... for better UX.
-      if (this.config.speed < 3000) {
-        this.config.speed = 3000;
-      }
-    } else {
-      // increase timeout by 10%
-      this.config.speed = this.getPercentageChange(10, this.config.speed);
-    }
-    console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
-  }
-
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
 
   async setupConfig() {
@@ -121,10 +93,12 @@ export class SitToStandService implements ActivityBase {
     if (settings && settings.settings && settings.settings.currentLevel) {
       this.gameSettings = settings.settings;
       this.currentLevel = settings.settings.currentLevel;
+
       this.config.minCorrectReps =
         settings.settings.levels[this.currentLevel].configuration.minCorrectReps;
       this.config.speed = settings.settings.levels[this.currentLevel].configuration.speed;
       console.log('setup::config::', this.config);
+
       this.qaGameSettings = settings.settings.levels[this.currentLevel]?.configuration;
       if (this.qaGameSettings) {
         if (this.qaGameSettings.minCorrectReps) {
@@ -246,7 +220,7 @@ export class SitToStandService implements ActivityBase {
             type: 'intro',
             htmlStr: `
             <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">First Activity</h2>
+              <h1 class="pt-2">Next Activity</h2>
               <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
               <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
               <h1 class="pt-2">Balance and Reaction Time</h2>
@@ -310,20 +284,6 @@ export class SitToStandService implements ActivityBase {
         }
       },
     ];
-  }
-
-  optimizeSpeedTutorial(speedChange: 'decrease' | 'increase') {
-    if (speedChange === 'increase') {
-      // decrease timeout by 10% to increase speed
-      this.config.speed = this.getPercentageChange(-10, this.config.speed);
-      // minimum fixed speed... for better UX.
-      if (this.config.speed < 3000) {
-        this.config.speed = 3000;
-      }
-    } else {
-      // increase timeout by 10%
-      this.config.speed = this.getPercentageChange(10, this.config.speed);
-    }
   }
 
   onboardingByLevel: { [key in GameLevels]: ((reCalibrationCount: number) => Promise<void>)[] } = {
@@ -511,11 +471,7 @@ export class SitToStandService implements ActivityBase {
           };
           if (res.result === 'failure') {
             --i; //repeat current prompt if failure
-            this.optimizeSpeedTutorial('decrease');
-          } else {
-            this.optimizeSpeedTutorial('increase');
           }
-
           await this.elements.sleep(1000);
         }
 
@@ -607,9 +563,6 @@ export class SitToStandService implements ActivityBase {
           };
           if (res.result === 'failure') {
             --i; //repeat current prompt if failure
-            this.optimizeSpeedTutorial('decrease');
-          } else {
-            this.optimizeSpeedTutorial('increase');
           }
           await this.elements.sleep(1000);
         }
@@ -919,11 +872,7 @@ export class SitToStandService implements ActivityBase {
           };
           if (res.result === 'failure') {
             --i; //repeat current prompt if failure
-            this.optimizeSpeedTutorial('decrease');
-          } else {
-            this.optimizeSpeedTutorial('increase');
           }
-
           await this.elements.sleep(1000);
         }
 
@@ -1112,11 +1061,7 @@ export class SitToStandService implements ActivityBase {
           };
           if (res.result === 'failure') {
             --i; //repeat current prompt if failure
-            this.optimizeSpeedTutorial('decrease');
-          } else {
-            this.optimizeSpeedTutorial('increase');
           }
-
           await this.elements.sleep(1000);
         }
 
@@ -1362,14 +1307,6 @@ export class SitToStandService implements ActivityBase {
       );
       this.analytics.push(analyticsObj);
 
-      if (
-        this.analytics.length >= 2 &&
-        this.analytics.slice(this.analytics.length - 2)[0].prompt.type !=
-          this.analytics.slice(this.analytics.length - 2)[1].prompt.type
-      ) {
-        this.optimizeSpeed();
-      }
-
       this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
       if (res.result === 'success') {
         this.sit2StandScene.playTrigger(this.genre);
@@ -1411,8 +1348,6 @@ export class SitToStandService implements ActivityBase {
         this.failedReps += 1;
         this.streak = 0;
         if (this.failedReps >= 3) {
-          // for better user experience - increase timeout duration by 2 second.
-          this.config.speed += 2000;
           this.elements.timer.state = {
             data: {
               mode: 'pause',
@@ -1658,8 +1593,6 @@ export class SitToStandService implements ActivityBase {
         if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
           this.shouldReplay = this.qaGameSettings.extendGameDuration;
         }
-        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
-          this.shouldReplay;
         this.elements.banner.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
@@ -1734,7 +1667,6 @@ export class SitToStandService implements ActivityBase {
         }
 
         console.log('updating game settings:', this.gameSettings);
-        this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
         await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         if (this.shouldLevelUp && nextLevel <= 3) {
@@ -1796,7 +1728,9 @@ export class SitToStandService implements ActivityBase {
             `,
               buttons: [
                 {
-                  title: 'Next Activity',
+                  title: this.activityHelperService.isLastActivity
+                    ? 'Back to Homepage'
+                    : 'Next Activity',
                   progressDurationMs: 10000,
                 },
               ],

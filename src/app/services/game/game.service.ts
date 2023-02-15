@@ -44,6 +44,7 @@ import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene
 import { BenchmarkService } from '../benchmark/benchmark.service';
 import { HandsService } from '../hands/hands.service';
 import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
+import { ActivityHelperService } from './activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -153,6 +154,7 @@ export class GameService {
     private googleAnalyticsService: GoogleAnalyticsService,
     private benchmarkService: BenchmarkService,
     private handsService: HandsService,
+    private activityHelperService: ActivityHelperService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -595,7 +597,7 @@ export class GameService {
         settings: settings ? settings.settings : environment.settings[game],
       };
     }
-    const lastGame = await this.apiService.getLastGame();
+    const lastGame = await this.apiService.getLastPlayedGame();
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
@@ -752,12 +754,19 @@ export class GameService {
         level_name: nextGame.name,
       });
       this.gamesCompleted.push(nextGame.name);
-      this.gameStateService.postLoopHook();
+      if (this.gamesCompleted.length === environment.order.length) {
+        await this.activityHelperService.exitGame(nextGame.name);
+      } else {
+        this.gameStateService.postLoopHook();
+      }
       console.log('game.service:gameCompleted:', nextGame.name);
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
     if (nextGame) {
+      if (this.gamesCompleted.length === environment.order.length - 1) {
+        this.activityHelperService.isLastActivity = true;
+      }
       this.gameStatus = {
         stage: 'welcome',
         breakpoint: 0,
