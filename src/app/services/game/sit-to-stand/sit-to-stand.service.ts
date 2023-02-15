@@ -232,7 +232,23 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
           data: {
-            ...this.elements.overlay.state.data,
+            cards: [
+              {
+                icon: '/assets/images/overlay_icons/Protect.jpg',
+                message: 'Safety above all',
+                tts: "Please make sure you're in a safe environment.",
+              },
+              {
+                icon: '/assets/images/overlay_icons/T_Pose.jpg',
+                message: 'Space to move',
+                tts: "You'll need enough space to freely move.",
+              },
+              {
+                icon: '/assets/images/overlay_icons/Waiting.jpg',
+                message: 'Rest if you feel tired',
+                tts: 'Take a break if you feel tired.',
+              },
+            ],
             transitionDuration: 4000,
           },
         };
@@ -1735,9 +1751,7 @@ export class SitToStandService implements ActivityBase {
           });
         }
 
-        console.log('updating game settings:', this.gameSettings);
         this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
-        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         if (this.shouldLevelUp && nextLevel <= 3) {
           this.currentLevel = ('level' + nextLevel) as GameLevels;
@@ -1769,6 +1783,10 @@ export class SitToStandService implements ActivityBase {
           this.ttsService.tts("Hope you're ready for a new challenge tomorrow.");
           await this.elements.sleep(3000);
         }
+        this.shouldLevelUp = false;
+
+        console.log('updating game settings:', this.gameSettings);
+        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         let totalDuration: {
           minutes: string;
