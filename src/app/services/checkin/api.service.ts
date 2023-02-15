@@ -59,8 +59,11 @@ export class ApiService {
   async getUserGenre(): Promise<Genre | void> {
     try {
       const userGenre = await this.client.req(GqlConstants.GET_CHECKIN_DATA);
+      const genreChoice = await this.client.req(GqlConstants.GET_GENRE_CHOICE);
 
-      const genre: Genre = userGenre.genre[0].value;
+      const genre: Genre = genreChoice.patient[0].genreChoice
+        ? genreChoice.patient[0].genreChoice
+        : userGenre.genre[0].value;
       this.store.dispatch(
         preference.updateGenre({
           genre,

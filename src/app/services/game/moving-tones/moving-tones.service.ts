@@ -1261,6 +1261,14 @@ export class MovingTonesService implements ActivityBase {
     this.movingTonesScene.scene.stop('movingTones');
     this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
     this.apiService.updateGameSettings('moving_tones', this.gameSettings);
+    this.elements.timer.state = {
+      data: {
+        mode: 'stop',
+      },
+      attributes: {
+        visibility: 'hidden',
+      },
+    };
   }
 
   postLoop() {
