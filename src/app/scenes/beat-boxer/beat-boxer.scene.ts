@@ -798,6 +798,7 @@ export class BeatBoxerScene extends Phaser.Scene {
         src: src + `backtracks/afro_backtrack_${randomSet + 1}.mp3`,
         html5: true,
         loop: true,
+        volume: 0.5,
         onload: this.onLoadCallback,
         onloaderror: this.onLoadErrorCallback,
       });
