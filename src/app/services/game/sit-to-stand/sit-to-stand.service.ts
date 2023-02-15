@@ -1348,8 +1348,6 @@ export class SitToStandService implements ActivityBase {
         this.failedReps += 1;
         this.streak = 0;
         if (this.failedReps >= 3) {
-          // for better user experience - increase timeout duration by 2 second.
-          this.config.speed += 2000;
           this.elements.timer.state = {
             data: {
               mode: 'pause',
@@ -1669,7 +1667,6 @@ export class SitToStandService implements ActivityBase {
         }
 
         console.log('updating game settings:', this.gameSettings);
-        this.gameSettings.levels[this.currentLevel].configuration.speed = this.config.speed;
         await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
 
         if (this.shouldLevelUp && nextLevel <= 3) {
