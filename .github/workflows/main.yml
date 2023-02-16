@@ -34,7 +34,7 @@ jobs:
           echo "GITHUB_REF: $GITHUB_REF"
 
       - name: Set env to production
-        if: ${{ github.base_ref == 'main' }} && github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: ${{ github.base_ref == 'main' && github.event_name == 'pull_request' && github.event.pull_request.merged == true }}
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
