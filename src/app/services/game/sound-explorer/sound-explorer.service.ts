@@ -161,12 +161,6 @@ export class SoundExplorerService {
         if (this.qaGameSettings.speed) {
           this.config.speed = this.qaGameSettings.speed;
         }
-        if (this.qaGameSettings.genre) {
-          this.genre = this.qaGameSettings.genre;
-        }
-        if (this.qaGameSettings.musicSet) {
-          this.soundExplorerScene.currentSet = this.qaGameSettings.musicSet;
-        }
       }
     }
     this.soundExplorerScene.enable();

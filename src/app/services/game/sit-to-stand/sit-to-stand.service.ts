@@ -107,12 +107,6 @@ export class SitToStandService implements ActivityBase {
         if (this.qaGameSettings.speed) {
           this.config.speed = this.qaGameSettings.speed;
         }
-        if (this.qaGameSettings.genre) {
-          this.genre = this.qaGameSettings.genre;
-        }
-        if (this.qaGameSettings.musicSet) {
-          this.sit2StandScene.currentSet = this.qaGameSettings.musicSet;
-        }
       }
     } else {
       await this.apiService.insertGameSettings('sit_stand_achieve', this.gameSettings);
