@@ -625,12 +625,6 @@ export class MovingTonesService implements ActivityBase {
         if (this.qaGameSettings.speed) {
           this.config.speed = this.qaGameSettings.speed;
         }
-        if (this.qaGameSettings.genre) {
-          this.genre = this.qaGameSettings.genre;
-        }
-        if (this.qaGameSettings.musicSet) {
-          this.movingTonesScene.currentSet = this.qaGameSettings.musicSet;
-        }
       }
     }
     this.movingTonesScene.enable();

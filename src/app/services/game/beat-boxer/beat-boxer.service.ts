@@ -117,12 +117,6 @@ export class BeatBoxerService {
         if (this.qaGameSettings.speed) {
           this.config.speed = this.qaGameSettings.speed;
         }
-        if (this.qaGameSettings.genre) {
-          this.genre = this.qaGameSettings.genre;
-        }
-        if (this.qaGameSettings.musicSet) {
-          this.beatBoxerScene.currentSet = this.qaGameSettings.musicSet;
-        }
       }
     }
     this.beatBoxerScene.enable();
