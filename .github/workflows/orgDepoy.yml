@@ -31,14 +31,14 @@ jobs:
           npm run build -- -c "${GITHUB_REF#*/*/}"
 
           # Create `version.json` file...
-          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > ./dist/version.json
+          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > cp version.json ./dist/activities/
 
           ls -la
           ls -la dist
 
       - name: Printing app version
         run: |
-          cat dist/version.json | jq
+          cat dist/activities/version.json | jq
 
       - name: running unit tests
         run: npm run test:chromeheadless
