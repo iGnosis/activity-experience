@@ -4,13 +4,9 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - 'main'
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ dev, stage ]
+    branches: [ main, dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -27,19 +23,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Debug GH branch names
-        run: |
-          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
-          echo "GITHUB_HEAD_REF##*/: ${GITHUB_HEAD_REF##*/}"
-          echo "GITHUB_REF: $GITHUB_REF"
-
       - name: Set env to production
-        if: ${{ github.base_ref == 'main' }} && github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: endsWith(github.ref, '/main')
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
           echo "S3_ENV=prod" >> $GITHUB_ENV
-          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set env to staging
         if: endsWith(github.ref, '/stage')
@@ -47,7 +36,6 @@ jobs:
           echo "ENVIRONMENT=staging" >> $GITHUB_ENV
           echo "NODE_ENV=staging" >> $GITHUB_ENV
           echo "S3_ENV=stage" >> $GITHUB_ENV
-          echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set env to development
         if: endsWith(github.ref, '/dev')
@@ -55,7 +43,6 @@ jobs:
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
           echo "NODE_ENV=development" >> $GITHUB_ENV
           echo "S3_ENV=dev" >> $GITHUB_ENV
-          echo "{\"version\":\"dev-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       # Uncomment this if you want to debug Github action using SSH.
       # - name: Setup tmate sessions
@@ -69,21 +56,13 @@ jobs:
           # Printing current path
           echo "Current path: $(pwd)"
 
+          # Listing files
+          ls -la
+
           # Include the devDependencies irrespective of the NODE_ENV
           npm install --include dev --legacy-peer-deps
           npm install -g @angular/cli
           npm run build -- -c "$ENVIRONMENT"
-          cp version.json ./dist
-
-          # Listing files...
-          ls -la
-
-          # Listing dist...
-          ls -la dist
-
-      - name: Printing app version
-        run: |
-          cat dist/version.json | jq
 
       - name: running unit tests
         run: npm run test:chromeheadless
