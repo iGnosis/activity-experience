@@ -102,9 +102,12 @@ export class SoundExplorerService {
     return { angle: randomAngle, shapes, position: randomPosition };
   };
 
-  private drawObstacle = async (position?: Origin, angle?: number) => {
-    const randomPosition =
-      position || this.getRandomItemFromArray(Object.keys(this.originsWithAngleRange) as Origin[]);
+  private drawObstacle = async (position?: Origin, angle?: number, promptPosition?: Origin) => {
+    const availablePositions: Origin[] = (
+      Object.keys(this.originsWithAngleRange) as Origin[]
+    ).filter((pos) => pos !== promptPosition);
+
+    const randomPosition = position || this.getRandomItemFromArray(availablePositions);
     const randomAngle =
       typeof angle === 'number'
         ? angle
@@ -749,6 +752,7 @@ export class SoundExplorerService {
       obstaclePromptDetails = await this.drawObstacle(
         promptDetails.obstaclePosition,
         promptDetails.obstacleAngle,
+        currentPromptDetails.position,
       );
 
     await this.soundExplorerScene.waitForCollisionOrTimeout();
