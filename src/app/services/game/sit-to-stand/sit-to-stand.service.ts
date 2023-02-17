@@ -57,6 +57,31 @@ export class SitToStandService implements ActivityBase {
 
   private analytics: AnalyticsDTO[] = [];
 
+  /**
+   * @description
+   * Gets an even/odd random number between min and max.
+   * @param min - minimum number (inclusive)
+   * @param max - maximum number (inclusive)
+   * @param type - 'odd' | 'even' | 'any'
+   * @returns number
+   */
+  private getRandomNumBetween(
+    min: number,
+    max: number,
+    type: 'odd' | 'even' | 'any' = 'any',
+  ): number {
+    const num = Math.floor(Math.random() * (max - min + 1) + min);
+    return type === 'odd'
+      ? num % 2 === 0
+        ? num + 1
+        : num
+      : type === 'even'
+      ? num % 2 === 0
+        ? num
+        : num + 1
+      : num;
+  }
+
   constructor(
     private store: Store<{
       game: GameState;
@@ -424,11 +449,11 @@ export class SitToStandService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         const promptNums = [
-          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
+          this.getRandomNumBetween(1, 100, 'odd').toString(),
+          this.getRandomNumBetween(1, 100, 'even').toString(),
+          this.getRandomNumBetween(1, 100, 'odd').toString(),
+          this.getRandomNumBetween(1, 100, 'even').toString(),
+          this.getRandomNumBetween(1, 100, 'odd').toString(),
         ];
         for (let i = 0; i < promptNums.length; i++) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
@@ -520,9 +545,9 @@ export class SitToStandService implements ActivityBase {
         };
 
         const promptNums = [
-          (Math.floor((Math.random() * 100) / 2) * 2 + 1).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
-          (Math.floor((Math.random() * 100) / 2) * 2).toString(),
+          this.getRandomNumBetween(1, 100, 'odd').toString(),
+          this.getRandomNumBetween(1, 100, 'even').toString(),
+          this.getRandomNumBetween(1, 100, 'even').toString(),
         ];
         for (let i = 0; i < promptNums.length; i++) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
@@ -624,13 +649,13 @@ export class SitToStandService implements ActivityBase {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          let promptNum = Math.floor(Math.random() * 100);
+          let promptNum = this.getRandomNumBetween(1, 100);
           if (prevPrompts && prevPrompts.length >= 2) {
             const prevReps = prevPrompts.slice(-2);
             if (prevReps[0].class === prevReps[1].class) {
               prevReps[0].class === 'sit'
-                ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
-                : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+                ? (promptNum = this.getRandomNumBetween(1, 100, 'odd'))
+                : (promptNum = this.getRandomNumBetween(1, 100, 'even'));
             }
           }
           const promptClass = promptNum % 2 === 0 ? 'sit' : 'stand';
@@ -1233,24 +1258,26 @@ export class SitToStandService implements ActivityBase {
     if (this.currentLevel === 'level2') {
       const isSumOperation = Math.random() > 0.5;
 
-      const num1 = Math.floor(Math.random() * 9);
-      const num2 = Math.floor(isSumOperation ? Math.random() * 9 : Math.random() * num1);
+      const num1 = this.getRandomNumBetween(1, 9);
+      const num2 = isSumOperation
+        ? this.getRandomNumBetween(1, 9)
+        : this.getRandomNumBetween(1, Math.max(num1 - 1, 1));
 
       stringExpression = num1 + (isSumOperation ? '+' : '-') + num2;
     } else if (this.currentLevel === 'level3') {
       const isDivisionOperation = Math.random() > 0.5;
 
-      const num1 = Math.floor(Math.random() * 9);
+      const num1 = this.getRandomNumBetween(1, 9);
 
       const num1Factors = this.factors(num1);
       const randomFactor =
         num1 === 0 ? 1 : num1Factors[Math.floor(Math.random() * num1Factors.length)];
 
-      const num2 = Math.floor(isDivisionOperation ? randomFactor : Math.random() * 9);
+      const num2 = Math.floor(isDivisionOperation ? randomFactor : this.getRandomNumBetween(1, 9));
 
       stringExpression = num1 + (isDivisionOperation ? '/' : '*') + num2;
     }
-    const promptNum = stringExpression ? eval(stringExpression) : Math.floor(Math.random() * 100);
+    const promptNum = stringExpression ? eval(stringExpression) : this.getRandomNumBetween(1, 100);
 
     return { promptNum, stringExpression };
   }
@@ -1287,8 +1314,8 @@ export class SitToStandService implements ActivityBase {
           // if two even or two odd in a row, we generate the opposite class number.
           if (this.currentLevel === 'level1') {
             prevReps[0].prompt.type === 'sit'
-              ? (promptNum = Math.floor((Math.random() * 100) / 2) * 2 + 1)
-              : (promptNum = Math.floor((Math.random() * 100) / 2) * 2);
+              ? (promptNum = this.getRandomNumBetween(1, 100, 'odd'))
+              : (promptNum = this.getRandomNumBetween(1, 100, 'even'));
           } else {
             // for level 2 and 3
             if (prevReps[0].prompt.type === 'sit') {
