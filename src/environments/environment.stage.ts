@@ -25,21 +25,21 @@ export const environment: Environment = {
         level1: {
           configuration: {
             minCorrectReps: 10,
-            speed: 5000,
+            speed: 7000,
           },
           rules: [''],
         },
         level2: {
           configuration: {
             minCorrectReps: 17,
-            speed: 6500,
+            speed: 7000,
           },
           rules: [''],
         },
         level3: {
           configuration: {
             minCorrectReps: 20,
-            speed: 6500,
+            speed: 7000,
           },
           rules: [''],
         },
