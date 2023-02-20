@@ -552,7 +552,7 @@ export class GameService {
           };
           this.elements.banner.state = {
             data: {
-              htmlStr: `<button class="btn btn-light text-primary w-64 top-5 end-10 position-fixed text-xl font-bold py-2 d-flex justify-content-center align-items-center" id="exit-btn"><i class="bi bi-box-arrow-left text-primary h2 me-3"></i>Exit to Home</button>`,
+              htmlStr: `<div class="position-fixed top-5 start-1/2 translate-middle-x cursor-pointer" id="exit-btn"><i class="bi bi-x-circle-fill display-5 text-dark"></i></div>`,
               type: 'custom',
               customActions: {
                 'exit-btn': () => {
