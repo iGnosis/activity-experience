@@ -1,5 +1,6 @@
-<div [@animate-banner] *ngIf="attributes && attributes.visibility === 'visible'"
-  class="banner" [class.loader]="state.type === 'loader'" [class.status]="state.type === 'status'" [class.action]="state.type === 'action'">
+<div [@animate-banner] [@.disabled]="state.type === 'custom'" *ngIf="attributes && attributes.visibility === 'visible'"
+  class="banner" [class.loader]="state.type === 'loader'" [class.status]="state.type === 'status'" [class.action]="state.type === 'action'"
+  [ngClass]="{ 'custom w-full h-full': state.type === 'custom' }">
   <div class="pt-4" [innerHTML]="state.htmlStr || '' | safe: 'html'"></div>
   <div class="row pt-6">
     <div class="col-12 pt-2" *ngFor="let button of state.buttons">

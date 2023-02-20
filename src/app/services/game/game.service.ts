@@ -491,6 +491,10 @@ export class GameService {
         this.updateRecalibrationCount();
         this.calibrationStatus = status;
         if (this.calibrationStatus === 'success') {
+          // Hide exit activity banner
+          this.elements.banner.attributes = {
+            visibility: 'hidden',
+          };
           if (this.gameStatus.stage === 'loop') {
             this.ttsService.tts('Now I can see you again.');
             await this.elements.sleep(3000);
@@ -541,6 +545,56 @@ export class GameService {
             data: {
               title: 'Ensure your whole body is in the red box to continue.',
               titleDuration: 3000,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+          this.elements.banner.state = {
+            data: {
+              htmlStr: `<button class="btn btn-light text-primary w-64 top-5 end-10 position-fixed text-xl font-bold py-2 d-flex justify-content-center align-items-center" id="exit-btn"><i class="bi bi-box-arrow-left text-primary h2 me-3"></i>Exit to Home</button>`,
+              type: 'custom',
+              customActions: {
+                'exit-btn': () => {
+                  this.elements.banner.state = {
+                    data: {
+                      htmlStr: `
+                      <div class="w-1/4 h-auto position-absolute text-center translate-middle top-1/2 start-1/2 rounded-1 row bg-white p-8" style="border: 1px solid #000033;">
+                        <i class="bi bi-x-lg position-absolute end-5 top-5 cursor-pointer w-auto text-black" id="hide-btn"></i>
+                        <p>
+                          <i class="bi bi-box-arrow-left text-primary h1"></i>
+                        </p>
+                        <h2 class="text-black">Exit to Home</h2>
+                        <hr class="divider my-1">
+                        <p class="text-muted">Are you sure you want to exit back to the homepage?</p>
+                        <div class="col-12">&nbsp;</div>
+                        <button class="btn btn-light text-primary w-full rounded-0 font-bold" style="border: 1px solid #000033;" id="exit-btn">Exit</button>
+                      </div>
+                      `,
+                      type: 'custom',
+                      customActions: {
+                        'exit-btn': () => {
+                          window.parent.postMessage(
+                            {
+                              type: 'end-game',
+                            },
+                            '*',
+                          );
+                        },
+                        'hide-btn': () => {
+                          this.elements.banner.attributes = {
+                            visibility: 'hidden',
+                          };
+                        },
+                      },
+                    },
+                    attributes: {
+                      visibility: 'visible',
+                      reCalibrationCount: this.reCalibrationCount,
+                    },
+                  };
+                },
+              },
             },
             attributes: {
               visibility: 'visible',
