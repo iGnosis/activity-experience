@@ -786,7 +786,13 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action' | 'custom';
+  customActions?: {
+    /**
+     * Function triggers when banner an element with id (key) is clicked.
+     */
+    [key: string]: () => void;
+  };
 };
 
 export type GuideElementState = {

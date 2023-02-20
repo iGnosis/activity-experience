@@ -20,7 +20,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   timer: Subscription;
   attributes: ElementAttributes;
   isCountdown: boolean;
-  intermediateFns: { [key: number]: () => void };
+  intermediateFns?: { [key: number]: () => void };
   onComplete?: (elapsedTime: number) => void;
   onPause?: (elapsedTime: number) => void;
   constructor(private timerService: TimerService) {}
@@ -37,6 +37,8 @@ export class TimerComponent implements OnInit, OnDestroy {
       const { mode, duration, isCountdown, onComplete, onPause, intermediateFns } = state.data;
       if (typeof isCountdown === 'boolean') {
         this.isCountdown = isCountdown;
+      } else {
+        this.isCountdown = false;
       }
       switch (mode) {
         case 'start':
@@ -63,6 +65,8 @@ export class TimerComponent implements OnInit, OnDestroy {
       }
       if (intermediateFns) {
         this.intermediateFns = intermediateFns;
+      } else {
+        this.intermediateFns = undefined;
       }
     });
   }

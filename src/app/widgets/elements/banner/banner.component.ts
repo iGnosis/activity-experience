@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { ViewEncapsulation, Component, OnDestroy, OnInit } from '@angular/core';
+import { ViewEncapsulation, Component, OnDestroy, OnInit, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { BannerService } from 'src/app/services/elements/banner/banner.service';
 import { BannerButton, BannerElementState, ElementAttributes } from 'src/app/types/pointmotion';
@@ -34,7 +34,7 @@ export class BannerComponent implements OnInit, OnDestroy {
   progressBarAnimationState: 'start' | 'progress' = 'start';
   progressDuration: number;
 
-  constructor(private bannerService: BannerService) {}
+  constructor(private bannerService: BannerService, private elmRef: ElementRef) {}
 
   ngOnDestroy(): void {
     console.log('banner ngOnDestroy');
@@ -46,6 +46,8 @@ export class BannerComponent implements OnInit, OnDestroy {
       console.log('BannerComponent:subscription:results:', results);
       this.state = results.data;
       this.attributes = results.attributes;
+
+      this.bindActions();
 
       setTimeout(() => {
         this.bannerAnimationState = 'mid';
@@ -61,6 +63,20 @@ export class BannerComponent implements OnInit, OnDestroy {
         }, 100);
       }, 100);
     });
+  }
+
+  bindActions() {
+    setTimeout(() => {
+      if (this.state.customActions) {
+        for (const id of Object.keys(this.state.customActions)) {
+          this.bindMethod(id, this.state.customActions[id]);
+        }
+      }
+    }, 200);
+  }
+
+  bindMethod(id: string, method: () => void) {
+    this.elmRef.nativeElement.querySelector(`#${id}`).addEventListener('click', method.bind(this));
   }
 
   animateProgressBar(duration: number) {

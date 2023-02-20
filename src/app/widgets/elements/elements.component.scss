@@ -6,8 +6,12 @@
   left: 0;
   // background-color: rgba(0, 0, 0, 0.5);
 
-  .calibration-tutorial {
-    z-index: 1;
+  ::ng-deep {
+    .calibration-tutorial {
+      &:has(div.ct-container) {
+        z-index: 1;
+      }
+    }
   }
   .reps {
     height: 60px;
