@@ -1060,7 +1060,7 @@ export class SoundExplorerService {
       async (reCalibrationCount: number) => {
         this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
-        if (achievementRatio < 0.6) {
+        if (achievementRatio < 0.25) {
           await this.apiService.updateOnboardingStatus({
             sound_explorer: false,
           });

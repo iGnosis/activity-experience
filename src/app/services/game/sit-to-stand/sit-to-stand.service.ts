@@ -1697,7 +1697,7 @@ export class SitToStandService implements ActivityBase {
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         const nextLevel = Number(this.currentLevel.charAt(this.currentLevel.length - 1)) + 1;
-        if (achievementRatio < 0.6 || (this.shouldLevelUp && nextLevel <= 3)) {
+        if (achievementRatio < 0.25 || (this.shouldLevelUp && nextLevel <= 3)) {
           await this.apiService.updateOnboardingStatus({
             sit_stand_achieve: false,
           });

@@ -1286,7 +1286,7 @@ export class MovingTonesService implements ActivityBase {
         const totalReps = this.coinsCollected + this.failedReps;
         const achievementRatio = this.coinsCollected / totalReps;
 
-        if (achievementRatio < 0.6) {
+        if (achievementRatio < 0.25) {
           await this.apiService.updateOnboardingStatus({
             moving_tones: false,
           });
