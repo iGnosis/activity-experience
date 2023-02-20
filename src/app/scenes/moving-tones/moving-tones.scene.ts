@@ -1037,6 +1037,9 @@ export class MovingTonesScene extends Phaser.Scene {
       onend: (id) => {
         this.successTrack.stop(id);
       },
+      onstop: (id) => {
+        this.successTrack.stop(id);
+      },
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });

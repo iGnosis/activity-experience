@@ -375,32 +375,36 @@ export class SitToStandScene extends Phaser.Scene {
     switch (genre) {
       case 'classical':
         this.classical &&
-          this.classical.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
-            this.classical.stop(id);
-          });
+          this.classical
+            .fade(100, 0, endFadeoutDuration, this.classicalBacktrackId)
+            .on('fade', (id) => {
+              this.classical.stop(id);
+            });
         break;
       case 'dance':
         this.dance &&
-          this.dance.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.dance.fade(100, 0, endFadeoutDuration, this.danceBacktrackId).on('fade', (id) => {
             this.dance.stop(id);
           });
         break;
       case 'rock':
         this.rock &&
-          this.rock.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.rock.fade(100, 0, endFadeoutDuration, this.rockBacktrackId).on('fade', (id) => {
             this.rock.stop(id);
           });
         break;
       case 'surprise me!':
         this.surprise &&
-          this.surprise.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
-            this.surprise.stop(id);
-          });
+          this.surprise
+            .fade(100, 0, endFadeoutDuration, this.surpriseBacktrackId)
+            .on('fade', (id) => {
+              this.surprise.stop(id);
+            });
         return;
       case 'jazz':
       default:
         this.jazz &&
-          this.jazz.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.jazz.fade(100, 0, endFadeoutDuration, this.jazzBacktrackId).on('fade', (id) => {
             this.jazz.stop(id);
           });
         return;
