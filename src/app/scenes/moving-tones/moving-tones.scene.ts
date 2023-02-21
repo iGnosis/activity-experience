@@ -16,6 +16,7 @@ import {
   Genre,
 } from 'src/app/types/pointmotion';
 import { movingTonesAudio } from './moving-tones.sprite';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -165,12 +166,14 @@ export class MovingTonesScene extends Phaser.Scene {
                 : this.animateHeld(x, y, circleRadius, color, stoppedAt, remainingDuration);
 
             let successMusicId: number | undefined;
-            if (data.variation && data.path) {
-              if (type === 'start') {
-                successMusicId = this.playSuccessMusic(data.variation, 1);
-              } else {
-                console.log('playing::', data.variation, '::', data.path.length + 2);
-                successMusicId = this.playSuccessMusic(data.variation, data.path.length + 2);
+            if (this.music) {
+              if (data.variation && data.path) {
+                if (type === 'start') {
+                  successMusicId = this.playSuccessMusic(data.variation, 1);
+                } else {
+                  console.log('playing::', data.variation, '::', data.path.length + 2);
+                  successMusicId = this.playSuccessMusic(data.variation, data.path.length + 2);
+                }
               }
             }
 
@@ -262,6 +265,10 @@ export class MovingTonesScene extends Phaser.Scene {
               //   }
               // }
 
+              if (!this.music) {
+                this.soundsService.playCalibrationSound('success');
+              }
+
               if (type === 'start') {
                 const endTexture =
                   handTexture === TextureKeys.RIGHT_HAND
@@ -318,7 +325,12 @@ export class MovingTonesScene extends Phaser.Scene {
               this.score.next(1);
               const variation = gameObject.getData('variation');
               const variationNumber = gameObject.getData('variationNumber');
-              this.playSuccessMusic(variation, variationNumber);
+
+              if (this.music) {
+                this.playSuccessMusic(variation, variationNumber);
+              } else {
+                this.soundsService.playCalibrationSound('success');
+              }
             }
 
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
@@ -390,6 +402,7 @@ export class MovingTonesScene extends Phaser.Scene {
     private ttsService: TtsService,
     private poseModelAdapter: PoseModelAdapter,
     private handTrackerService: HandTrackerService,
+    private soundsService: SoundsService,
   ) {
     super({ key: 'movingTones' });
   }
@@ -989,6 +1002,8 @@ export class MovingTonesScene extends Phaser.Scene {
 
     // unload music on disable.
     if (!value) {
+      this.backtrack && this.backtrack.unload();
+      this.successTrack && this.successTrack.unload();
       this.failureMusic && this.failureMusic.unload();
     }
   }
@@ -1035,9 +1050,6 @@ export class MovingTonesScene extends Phaser.Scene {
       sprite: movingTonesAudio['classical'][randomSet].successTriggers,
       html5: true,
       onend: (id) => {
-        this.successTrack.stop(id);
-      },
-      onstop: (id) => {
         this.successTrack.stop(id);
       },
       onload: this.onLoadCallback,
