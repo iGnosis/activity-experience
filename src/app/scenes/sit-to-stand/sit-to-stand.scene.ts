@@ -415,12 +415,14 @@ export class SitToStandScene extends Phaser.Scene {
     this.music = value;
 
     // if disabled... unload music files
-    if (!value) {
-      this.surprise && this.surprise.unload();
-      this.classical && this.classical.unload();
-      this.dance && this.dance.unload();
-      this.rock && this.rock.unload();
-      this.jazz && this.jazz.unload();
-    }
+
+    // Commenting this for now.. as unloading music is causing the fade out to stop abruptly
+    // if (!value) {
+    //   this.surprise && this.surprise.unload();
+    //   this.classical && this.classical.unload();
+    //   this.dance && this.dance.unload();
+    //   this.rock && this.rock.unload();
+    //   this.jazz && this.jazz.unload();
+    // }
   }
 }
