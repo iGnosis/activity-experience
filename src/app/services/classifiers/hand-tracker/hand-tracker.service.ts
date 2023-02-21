@@ -55,18 +55,21 @@ export class HandTrackerService {
 
   async waitUntilHandRaised(hand: HandTrackerStatus) {
     return new Promise((resolve, _) => {
-      const interval = setInterval(() => {
-        if (
-          hand === 'any-hand' &&
-          ['left-hand', 'right-hand', 'both-hands'].includes(this.debouncedStatus!)
-        ) {
-          clearInterval(interval);
-          resolve({});
-        } else if (this.debouncedStatus === hand) {
-          clearInterval(interval);
-          resolve({});
-        }
-      }, 300);
+      if (hand === 'any-hand') {
+        const resultSubscription = this.result.subscribe((status: HandTrackerStatus) => {
+          if (status !== undefined && ['left-hand', 'right-hand', 'both-hands'].includes(status)) {
+            resultSubscription.unsubscribe();
+            resolve({});
+          }
+        });
+      } else {
+        const resultSubscription = this.result.subscribe((status: HandTrackerStatus) => {
+          if (status !== undefined && status === hand) {
+            resultSubscription.unsubscribe();
+            resolve({});
+          }
+        });
+      }
     });
   }
 
