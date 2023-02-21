@@ -1050,8 +1050,11 @@ export class MovingTonesScene extends Phaser.Scene {
       sprite: movingTonesAudio['classical'][randomSet].successTriggers,
       html5: true,
       onend: (id) => {
+        console.log('successTrackId::ended', id);
+        // forcefully stopping when the track ends. this will prevent the track from looping.
         this.successTrack.stop(id);
       },
+      volume: 1,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
@@ -1061,7 +1064,8 @@ export class MovingTonesScene extends Phaser.Scene {
   backtrackId!: number;
   playBacktrack() {
     if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
-      this.backtrackId = this.backtrack.fade(1, 0.5, 0).play();
+      this.backtrackId = this.backtrack.play();
+      this.backtrack.volume(0.5, this.backtrackId);
     }
     return this.backtrackId;
   }
@@ -1075,13 +1079,19 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
+  successTrackId!: number;
   playSuccessMusic(variation: string, variationNumber: number) {
     if (!this.successTrack) return;
 
+    if (this.successTrackId && this.successTrack.playing(this.successTrackId)) {
+      this.successTrack.stop(this.successTrackId);
+    }
+
     console.log('variation::', variation + '_' + variationNumber);
-    const successTrackId = this.successTrack.play(variation + '_' + variationNumber);
-    this.successTrack.volume(1, successTrackId);
-    return successTrackId;
+    this.successTrackId = this.successTrack.play(variation + '_' + variationNumber);
+    console.log('successTrackId::', this.successTrackId);
+    this.successTrack.volume(1, this.successTrackId);
+    return this.successTrackId;
   }
 
   stopSuccessMusic(id?: number) {
