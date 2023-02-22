@@ -94,6 +94,22 @@ export class MovingTonesService implements ActivityBase {
       setInterval(() => {
         if (reCalibrationCount !== this.globalReCalibrationCount) resolve('recalibrated');
       }, 100);
+      const interval = setInterval(() => {
+        if (this.isGameComplete) {
+          clearInterval(interval);
+          this.ttsService.tts('Do the last movement to complete the activity');
+          this.elements.guide.state = {
+            data: {
+              title: 'Do the last movement to complete the activity',
+              titleDuration: 2000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+        }
+      }, 400);
 
       this.movingTonesScene.waitForCollisionOrTimeout().then((result) => resolve(result), reject);
     });
