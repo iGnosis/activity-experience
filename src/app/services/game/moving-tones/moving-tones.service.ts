@@ -50,6 +50,7 @@ export class MovingTonesService implements ActivityBase {
   private totalDuration = this.config.gameDuration || 0;
 
   private timedOut = false;
+  private timeOutFirstTime = false;
   private lastRepPrompted = false;
 
   private collisionDebounce = this.config.speed || 1500;
@@ -133,6 +134,19 @@ export class MovingTonesService implements ActivityBase {
       setTimeout(() => {
         this.movingTonesScene.destroyGameObjects();
         this.timedOut = true;
+        if (this.timeOutFirstTime) {
+          this.timeOutFirstTime = false;
+          this.ttsService.tts('Try touching the circles in 10 seconds or we move to the next set.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Try touching the circles in 10 seconds or we move to the next set.',
+              titleDuration: 3000,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+        }
       }, timeoutDuration);
     let timeout = startTimeout();
 
@@ -797,8 +811,8 @@ export class MovingTonesService implements ActivityBase {
           data: {
             cards: [
               {
-                icon: '/assets/images/overlay_icons/hand.png',
-                message: 'Fingers stretched wide',
+                icon: '/assets/images/overlay_icons/raise-hand.jpg',
+                message: 'Space to raise hands',
               },
               {
                 icon: '/assets/images/overlay_icons/dorsal.png',
@@ -814,7 +828,7 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(2000);
         this.ttsService.tts(
-          'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
+          'Make sure you have enough space to raise your hands. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
         );
         await this.elements.sleep(15000);
       },
@@ -1313,6 +1327,7 @@ export class MovingTonesService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         // game starts
+        this.timeOutFirstTime = true;
         this.elements.timer.state = {
           data: {
             mode: 'start',
