@@ -18,7 +18,7 @@ import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
-import { Subscription } from 'rxjs';
+import { skip, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
@@ -256,10 +256,24 @@ export class SoundExplorerService {
       async (reCalibrationCount: number) => {
         // this.soundExplorerScene.enableMusic();
         this.soundsService.playActivityInstructionSound(this.genre);
-        this.ttsService.tts('Use your hands to interact with the shapes you see on the screen.');
+
+        this.elements.ribbon.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            titles: ['A Guide to Sound Slicer'],
+          },
+        };
+        await this.elements.sleep(2500);
+
+        this.ttsService.tts(
+          'The objective of this game is to interact with the green shapes that appear on the screen.',
+        );
         this.elements.guide.state = {
           data: {
-            title: 'Use your hands to interact with the shapes on screen.',
+            title: 'The objective of this game is to interact with the shapes on screen.',
             titleDuration: 5000,
           },
           attributes: {
@@ -268,48 +282,12 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(5000);
-        let score = 0;
-        this.soundExplorerScene.score.next(0);
-        const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
-        );
-        while (score === 0) {
-          const randomPosition = this.getRandomItemFromArray(
-            Object.keys(this.originsWithAngleRange) as Origin[],
-          );
-          this.drawShapes(1, 500);
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-          await this.elements.sleep(1000);
-        }
-        scoreSubscription.unsubscribe();
-        this.ttsService.tts(
-          'Did you hear that? You just created musical note by interacting with the shape.',
-        );
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: 'Did you hear that?',
-            description: 'You just created music by interacting with the shape.',
-            src: 'assets/videos/sound-explorer/did-you-hear-that.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
-        this.elements.video.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("Let's try a few more.");
+
+        this.ttsService.tts('Let’s try it out.');
         this.elements.guide.state = {
           data: {
-            title: "Let's try a few more.",
-            titleDuration: 2000,
+            title: 'Let’s try it out.',
+            titleDuration: 2500,
           },
           attributes: {
             visibility: 'visible',
@@ -317,331 +295,146 @@ export class SoundExplorerService {
           },
         };
         await this.elements.sleep(2500);
-        this.elements.score.state = {
-          data: {
-            label: '',
-            value: 0,
-            goal: 3,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        // Todo: 3 reps with single notes
-        let repCount = -1;
-        const scoreSubscription = this.soundExplorerScene.score.subscribe(() => {
-          repCount++;
-          this.elements.score.state = {
-            data: {
-              label: '',
-              value: repCount,
-              goal: 3,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-        });
-        while (repCount < 3) {
+      },
+      async (reCalibrationCount: number) => {
+        // one prompt
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
+        );
+        while (score === 0) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
           this.drawShapes(1);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
-        }
-        scoreSubscription.unsubscribe();
-        await this.elements.sleep(2000);
-        this.elements.score.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        this.ttsService.tts('Good job. But single notes are just the beginning.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Good job but single notes are just the beginning.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(3500);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("Let's try interacting with more than 1 shape now.");
-        this.elements.guide.state = {
-          data: {
-            title: "Let's try interacting with more than 1 shape now.",
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(3500);
-        let score = 0;
-        this.soundExplorerScene.score.next(0);
-        const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
-        );
-        while (score === 0) {
-          this.drawShapes(2);
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-          await this.elements.sleep(1000);
-        }
-        scoreSubscription.unsubscribe();
-        this.ttsService.tts('When you play multiple notes at the same time you create a harmony.');
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: 'You created harmony!',
-            description: 'When multiple notes are played together you create a harmony.',
-            src: 'assets/videos/sound-explorer/harmony.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
-        this.elements.video.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("Now let's try interacting with 3 shapes in one motion.");
-        this.elements.guide.state = {
-          data: {
-            title: 'Try interacting with 3 shapes in one motion.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(3500);
-        let score = 0;
-        this.soundExplorerScene.score.next(0);
-        const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
-        );
-        while (score === 0) {
-          this.drawShapes(3);
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-          await this.elements.sleep(1000);
-        }
-        scoreSubscription.unsubscribe();
-        this.ttsService.tts(
-          'When you interact with 3 or more shapes in one motion, you create a chord.',
-        );
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: 'You created a chord!',
-            description: 'When 3 or more shapes are interacted with, you create a chord',
-            src: 'assets/videos/sound-explorer/chord.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
-        this.elements.video.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
-        this.ttsService.tts('Playing chords will give you extra points.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Playing chords will give you extra points.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(3500);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("Let's play a few more chords.");
-        this.elements.guide.state = {
-          data: {
-            title: "Let's play a few chords.",
-            titleDuration: 2000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(2500);
-        this.elements.score.state = {
-          data: {
-            label: '',
-            value: 0,
-            goal: 3,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        // Todo: 3 reps with chords
-        let repCount = 0;
-        let currentScore = 0;
-        let prevScore = 0;
-        const scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
-          currentScore = score;
-        });
-        while (repCount < 3) {
-          this.drawShapes(3);
-          if (repCount === 3) this.drawObstacle();
-          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-          if (prevScore !== currentScore) {
-            repCount++;
-            this.elements.score.state = {
+          if (score === 0) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
               data: {
-                label: '',
-                value: repCount,
-                goal: 3,
+                title: "Let's try that again.",
+                titleDuration: 2500,
               },
               attributes: {
                 visibility: 'visible',
                 reCalibrationCount,
               },
             };
-            prevScore = currentScore;
+            await this.elements.sleep(2500);
           }
-          await this.elements.sleep(1000);
         }
         scoreSubscription.unsubscribe();
-        await this.elements.sleep(2000);
-        this.elements.score.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts(
-          'If you touch the X shape, you will lose your chord streak. Try to avoid them.',
+        // 2 prompts
+        this.ttsService.tts('The more shapes you interact with, the more will appear on screen.');
+        this.elements.guide.state = {
+          data: {
+            title: 'The more shapes you interact with, the more will appear on screen.',
+            titleDuration: 4000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
         );
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: "Avoid the 'X' shape.",
-            description:
-              "If you interact with an 'X' shape, you have to build up to playing the chords again.",
-            src: 'assets/videos/sound-explorer/avoid-x-shape.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
-        this.elements.video.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(1000);
+        while (score === 0) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
+          this.drawShapes(2);
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+          if (score === 0) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+        }
+        scoreSubscription.unsubscribe();
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts("Looks like you're ready to put it all together now.");
+        // 3 prompts
+        this.ttsService.tts('Helping you get a higher score.');
         this.elements.guide.state = {
           data: {
-            title: "Looks like you're ready to put it all together.",
-            titleDuration: 3000,
+            title: 'Helping you get a higher score.',
+            titleDuration: 2500,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(3500);
-        this.ttsService.tts("Raise one of your hands when you're ready to start.");
-        this.elements.guide.state = {
-          data: {
-            title: "Raise your hand when you're ready to start.",
-            showIndefinitely: true,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score.subscribe(
+          (currentScore) => (score = currentScore),
+        );
+        while (score === 0) {
+          if (reCalibrationCount !== this.globalReCalibrationCount) {
+            throw new Error('reCalibrationCount changed');
+          }
+          this.drawShapes(3);
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+          if (score === 0) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+        }
+        scoreSubscription.unsubscribe();
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Ready?');
-        await this.elements.sleep(1500);
-        this.elements.ribbon.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            titles: ['3', '2', '1', 'GO!'],
-            titleDuration: 1200,
-            tts: true,
-          },
-        };
-        await this.elements.sleep(8000);
-        // Todo: 30 seconds of tutorial
-        this.isGameComplete = false;
-        const onComplete = () => {
-          this.isGameComplete = true;
-        };
+        let trialComplete = false;
         this.elements.timer.state = {
           data: {
             mode: 'start',
             isCountdown: true,
-            duration: 30 * 1000,
-            onComplete,
+            duration: 10 * 1000,
+            onComplete: () => {
+              trialComplete = true;
+            },
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-      },
-      async (reCalibrationCount: number) => {
-        if (this.elements.timer.data.mode === 'pause') {
-          this.elements.timer.data = {
-            mode: 'resume',
-          };
-        }
-        let difficulty = 1;
-        let successfulReps = 0;
-        while (!this.isGameComplete) {
+        while (!trialComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
-          this.drawShapes(difficulty);
-          const shouldShowXMark = Math.random() > 0.5;
-          if (shouldShowXMark) this.drawObstacle();
+          this.drawShapes(3);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
-          // if successful rep 3 times, increase difficulty
-          successfulReps++;
-          if (successfulReps !== 0 && successfulReps % 3 === 0 && difficulty < 4) difficulty++;
           await this.elements.sleep(1000);
         }
-        this.isGameComplete = false;
-        await this.elements.sleep(2000);
-      },
-      async (reCalibrationCount: number) => {
         this.elements.timer.state = {
           data: {
             mode: 'stop',
@@ -651,28 +444,62 @@ export class SoundExplorerService {
             reCalibrationCount,
           },
         };
-        this.ttsService.tts("Your time's up");
-        this.elements.ribbon.state = {
+      },
+      async (reCalibrationCount: number) => {
+        // obstacle
+        this.ttsService.tts('If you see a red shape on your screen, try to avoid them.');
+        this.elements.guide.state = {
+          data: {
+            title: 'If you see a red shape on your screen, try to avoid them.',
+            titleDuration: 3500,
+          },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
-          },
-          data: {
-            titles: ['TIMES UP!'],
           },
         };
         await this.elements.sleep(3500);
-        this.ttsService.tts('The guide is complete.');
-        this.elements.ribbon.state = {
+        let score = 0;
+        this.soundExplorerScene.score.next(0);
+        const scoreSubscription = this.soundExplorerScene.score
+          .pipe(skip(1))
+          .subscribe(() => (score = -1));
+        do {
+          score = 0;
+          this.drawObstacle();
+          const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
+          await this.elements.sleep(1000);
+          if (score < 0) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+        } while (score < 0);
+        scoreSubscription.unsubscribe();
+        this.soundExplorerScene.score.next(0);
+      },
+      async (reCalibrationCount: number) => {
+        this.ttsService.tts("Good job! Looks like you're ready to start the activity.");
+        this.elements.guide.state = {
+          data: {
+            title: "Good job! Looks like you're ready to start the activity.",
+            titleDuration: 3000,
+          },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
-          data: {
-            titles: ['GUIDE COMPLETED'],
-            titleDuration: 2000,
-          },
         };
+        await this.elements.sleep(3500);
         await this.apiService.updateOnboardingStatus({
           sound_explorer: true,
         });
@@ -729,10 +556,7 @@ export class SoundExplorerService {
         await this.handTrackerService.waitUntilHandRaised('any-hand');
         this.firstPromptTime = Date.now();
         this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
+        this.elements.guide.hide();
       },
     ];
   }
@@ -808,21 +632,18 @@ export class SoundExplorerService {
       // Indicates user the start of the game.
       async (reCalibrationCount: number) => {
         // this.soundExplorerScene.enableMusic();
-        this.ttsService.tts('Ready?');
-        await this.elements.sleep(1500);
-
         this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
           data: {
-            titles: ['3', '2', '1', 'GO!'],
-            titleDuration: 1200,
+            titles: ['Get Ready to Start', 'On your mark', 'Get Set', 'GO!'],
+            titleDuration: 1600,
             tts: true,
           },
         };
-        await this.elements.sleep(8000);
+        await this.elements.sleep(9000);
       },
 
       // Initializes score & timer.

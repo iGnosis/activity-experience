@@ -94,6 +94,7 @@ export class SoundExplorerScene extends Phaser.Scene {
       }
     } else {
       // play failure animation
+      this.score.next(this.currentScore);
       this.add.sprite(x, y, TextureKeys.BURST).play(AnimationKeys.BURST_ANIM);
       if (this.music) {
         this.playFailureMusic();

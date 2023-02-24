@@ -1072,11 +1072,29 @@ export type MovingTonesCircle = {
 };
 
 export type MovingTonesCircleEventName =
+  /**
+   * if the circle is hidden from the user.
+   **/
   | 'hidden'
+  /**
+   * if the circle is being shown to the user.
+   **/
   | 'visible'
+  /**
+   * when user hand collided with the circle.
+   **/
   | 'collisionStarted'
+  /**
+   * if collision ended in middle. when he removed hand when loading is happening.
+   **/
   | 'collisionEnded'
+  /**
+   * when the user hold the hand until the circle is loaded.
+   **/
   | 'collisionCompleted'
+  /**
+   * when user interacted with wrong shape.
+   **/
   | 'invalidCollision';
 
 export type MovingTonesCircleEvent = {
