@@ -50,6 +50,7 @@ export class MovingTonesService implements ActivityBase {
   private totalDuration = this.config.gameDuration || 0;
 
   private timedOut = false;
+  private lastRepPrompted = false;
 
   private collisionDebounce = this.config.speed || 1500;
   private progressBarSubscription: Subscription;
@@ -97,8 +98,9 @@ export class MovingTonesService implements ActivityBase {
         if (reCalibrationCount !== this.globalReCalibrationCount) resolve('recalibrated');
       }, 100);
       const interval = setInterval(() => {
-        if (this.isGameComplete) {
+        if (this.isGameComplete && !this.lastRepPrompted) {
           clearInterval(interval);
+          this.lastRepPrompted = true;
           this.ttsService.tts('Do the last movement to complete the activity');
           this.elements.guide.state = {
             data: {
@@ -129,7 +131,7 @@ export class MovingTonesService implements ActivityBase {
 
     const startTimeout = () =>
       setTimeout(() => {
-        this.movingTonesScene.destroyAllGameObjects();
+        this.movingTonesScene.destroyGameObjects();
         this.timedOut = true;
       }, timeoutDuration);
     let timeout = startTimeout();
