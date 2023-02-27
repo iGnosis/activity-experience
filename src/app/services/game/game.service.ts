@@ -62,6 +62,10 @@ export class GameService {
     },
     transparent: true,
     // backgroundColor: 'rgba(0,0,0,0)',
+    scale: {
+      parent: 'phaser-canvas',
+      mode: Phaser.Scale.NONE,
+    },
     physics: {
       default: 'arcade',
       arcade: {
@@ -88,6 +92,8 @@ export class GameService {
   private poseTrackerWorker: Worker;
   allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
   gameStages: Array<ActivityStage> = [];
+  streamHeight: number;
+  streamWidth: number;
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -291,10 +297,10 @@ export class GameService {
       const videoTracks = stream.getTracks();
       if (Array.isArray(videoTracks) && videoTracks.length > 0) {
         const track = videoTracks[0];
-        const streamWidth = track.getSettings().width || 0;
-        const streamHeight = track.getSettings().height || 0;
+        this.streamWidth = track.getSettings().width || 0;
+        this.streamHeight = track.getSettings().height || 0;
 
-        this.uiHelperService.setBoundingBox(streamWidth, streamHeight, {
+        this.uiHelperService.setBoundingBox(this.streamWidth, this.streamHeight, {
           innerHeight: window.innerHeight,
           innerWidth: window.innerWidth,
         });
@@ -399,6 +405,31 @@ export class GameService {
       this.updateDimensions(canvas.querySelector('canvas') as HTMLCanvasElement);
       resolve({});
     });
+  }
+
+  updateDimensionsOnResize(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+    if (!this.streamWidth || !this.streamHeight) return;
+
+    // recalculating the bounding box as the window size changes
+    const boundingBox = this.uiHelperService.setBoundingBox(this.streamWidth, this.streamHeight, {
+      innerHeight: window.innerHeight,
+      innerWidth: window.innerWidth,
+    });
+    console.log('updated::bounding:box::', boundingBox);
+
+    // updating video and parent-canvas dimensions
+    this.updateDimensions(video);
+    const { width, height } = this.updateDimensions(
+      canvas.querySelector('canvas') as HTMLCanvasElement,
+    );
+
+    // if a game instance is already created, then resize/rescale the game
+    if (this.game) {
+      this.game.scale.setParentSize(width, height);
+      this.game.scale.resize(width, height);
+      // this.game.scale.canvasBounds.setTo(0, 0, width, height);
+      // this.game.scale.resizeInterval = 500;
+    }
   }
 
   startPoseDetection(video: HTMLVideoElement) {
@@ -633,6 +664,11 @@ export class GameService {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
+
+    return {
+      width: elm.width,
+      height: elm.height,
+    };
   }
 
   // Refactor: Rewrite this probably

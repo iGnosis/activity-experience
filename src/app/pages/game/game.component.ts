@@ -13,8 +13,8 @@ import { UserService } from 'src/app/services/user/user.service';
   styleUrls: ['./game.component.scss'],
 })
 export class GameComponent implements OnInit {
-  @ViewChild('videoElm') video!: ElementRef;
-  @ViewChild('canvasElm') canvas!: ElementRef;
+  @ViewChild('videoElm') video!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasElm') canvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('gameElm') gameElm!: ElementRef;
   videoAvailable = false;
   cameraStatus?: 'success' | 'failure';
@@ -94,5 +94,20 @@ export class GameComponent implements OnInit {
 
   refreshTab() {
     window.location.reload();
+  }
+
+  resizeTriggered = false;
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    // throttling the resize event
+    if (this.resizeTriggered) {
+      return;
+    }
+    this.resizeTriggered = true;
+    setTimeout(() => {
+      this.resizeTriggered = false;
+    }, 500);
+
+    this.gameService.updateDimensionsOnResize(this.video.nativeElement, this.canvas.nativeElement);
   }
 }
