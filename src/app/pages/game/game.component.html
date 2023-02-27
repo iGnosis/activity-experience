@@ -1,4 +1,4 @@
-<div #gameElm>
+<div #gameElm (window:resize)="onResize($event)">
   <video id="webcam" crossorigin="anonymous" #videoElm></video>
   <div id="phaser-canvas" #canvasElm></div>
   <app-elements></app-elements>

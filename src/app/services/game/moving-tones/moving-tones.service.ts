@@ -49,6 +49,10 @@ export class MovingTonesService implements ActivityBase {
   private gameDuration = this.config.gameDuration || 0;
   private totalDuration = this.config.gameDuration || 0;
 
+  private timedOut = false;
+  private timeOutFirstTime = false;
+  private lastRepPrompted = false;
+
   private collisionDebounce = this.config.speed || 1500;
   private progressBarSubscription: Subscription;
 
@@ -95,8 +99,9 @@ export class MovingTonesService implements ActivityBase {
         if (reCalibrationCount !== this.globalReCalibrationCount) resolve('recalibrated');
       }, 100);
       const interval = setInterval(() => {
-        if (this.isGameComplete) {
+        if (this.isGameComplete && !this.lastRepPrompted) {
           clearInterval(interval);
+          this.lastRepPrompted = true;
           this.ttsService.tts('Do the last movement to complete the activity');
           this.elements.guide.state = {
             data: {
@@ -111,7 +116,67 @@ export class MovingTonesService implements ActivityBase {
         }
       }, 400);
 
-      this.movingTonesScene.waitForCollisionOrTimeout().then((result) => resolve(result), reject);
+      this.movingTonesScene.waitForCollisionOrTimeout().then((result) => {
+        if (this.timedOut) {
+          this.timedOut = false;
+          return resolve('timeout');
+        }
+        resolve(result);
+      }, reject);
+    });
+  }
+
+  private initTimeoutForPaths(path1: MovingTonesCircle[], path2?: MovingTonesCircle[]) {
+    const timeoutDuration = 10_000;
+    let pathsCompleted = 0;
+
+    const startTimeout = () =>
+      setTimeout(() => {
+        this.movingTonesScene.destroyGameObjects();
+        this.timedOut = true;
+        if (this.timeOutFirstTime) {
+          this.timeOutFirstTime = false;
+          this.ttsService.tts('Try touching the circles in 10 seconds or we move to the next set.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Try touching the circles in 10 seconds or we move to the next set.',
+              titleDuration: 3000,
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
+        }
+      }, timeoutDuration);
+    let timeout = startTimeout();
+
+    const startCircle1 = path1.filter((circle) => circle.type === 'start')[0];
+    const endCircle1 = path1.filter((circle) => circle.type === 'end')[0];
+
+    const startCircle2 = path2?.filter((circle) => circle.type === 'start')[0];
+    const endCircle2 = path2?.filter((circle) => circle.type === 'end')[0];
+
+    const circleEventSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+      const hasCoinsLoaded =
+        (startCircle1.id === event.circle.id || startCircle2?.id === event.circle.id) &&
+        event.name === 'collisionCompleted';
+      const hasMotionCompleted =
+        (endCircle1.id === event.circle.id || endCircle2?.id === event.circle.id) &&
+        event.name === 'collisionCompleted';
+      const hasAllPathsCompleted = path2 ? pathsCompleted === 2 : pathsCompleted === 1;
+
+      if (hasCoinsLoaded) {
+        clearTimeout(timeout);
+        timeout = startTimeout();
+      } else if (hasMotionCompleted) {
+        pathsCompleted++;
+        clearTimeout(timeout);
+        timeout = startTimeout();
+      }
+      if (hasAllPathsCompleted) {
+        circleEventSubscription.unsubscribe();
+        clearTimeout(timeout);
+      }
     });
   }
 
@@ -565,6 +630,7 @@ export class MovingTonesService implements ActivityBase {
           collisionDebounce: this.collisionDebounce,
         });
       }
+      this.initTimeoutForPaths(leftPath, rightPath);
       const promptTimestamp = Date.now();
 
       const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
@@ -745,8 +811,8 @@ export class MovingTonesService implements ActivityBase {
           data: {
             cards: [
               {
-                icon: '/assets/images/overlay_icons/hand.png',
-                message: 'Fingers stretched wide',
+                icon: '/assets/images/overlay_icons/raise-hand.jpg',
+                message: 'Space to raise hands',
               },
               {
                 icon: '/assets/images/overlay_icons/dorsal.png',
@@ -762,7 +828,7 @@ export class MovingTonesService implements ActivityBase {
         };
         await this.elements.sleep(2000);
         this.ttsService.tts(
-          'Make sure to have your fingers stretched while playing this game. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
+          'Make sure you have enough space to raise your hands. Keep an upright posture and stay big. Move your feet if required to reach the objects on the screen.',
         );
         await this.elements.sleep(15000);
       },
@@ -773,24 +839,17 @@ export class MovingTonesService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         this.soundsService.playActivityInstructionSound(this.genre);
-        this.ttsService.tts('Raise one of your hands to start the tutorial.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Raise one of your hands to start the tutorial.',
-            showIndefinitely: true,
-          },
+
+        this.elements.ribbon.state = {
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
+          data: {
+            titles: ['A Guide to Moving Tones'],
+          },
         };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(2000);
+        await this.elements.sleep(2500);
       },
       async (reCalibrationCount: number) => {
         this.ttsService.tts(
@@ -807,36 +866,18 @@ export class MovingTonesService implements ActivityBase {
           },
         };
         await this.elements.sleep(6000);
-        this.elements.video.state = {
+        this.ttsService.tts('Let’s try it out.');
+        this.elements.guide.state = {
           data: {
-            type: 'gif',
-            title: 'Collect the Coins!',
-            description: `Follow your hand over the green coins to collect as many as you can within ${
-              (this.config.gameDuration || 3) / 60
-            } minutes.`,
-            src: 'assets/videos/moving-tones/first-collect.gif',
+            title: 'Let’s try it out.',
+            titleDuration: 2500,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        this.ttsService.tts(
-          `Move your hands over the green coins to collect as many as you can in ${
-            (this.config.gameDuration || 3) / 60
-          } minutes.`,
-        );
-        await this.elements.sleep(6000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(1000);
-      },
-      async (reCalibrationCount: number) => {
+        await this.elements.sleep(2500);
         this.elements.video.state = {
           data: {
             type: 'gif',
@@ -854,40 +895,128 @@ export class MovingTonesService implements ActivityBase {
           'Hold the right hand over the red circle when it first appears, to load the music coins.',
         );
         await this.elements.sleep(6000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
-        const rightCircle: MovingTonesCircle = {
-          id: uuidv4(),
-          x: this.center.x + 100,
-          y: 100,
-          hand: 'right',
-          type: 'start',
-        };
-        this.movingTonesScene.showCircle(rightCircle, 'start', {
-          circle: rightCircle,
-        });
-        await this.movingTonesScene.waitForCollisionOrTimeout();
-        this.soundsService.playCalibrationSound('success');
+        this.elements.video.hide();
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts("Now let's try the other hand.");
+        this.ttsService.tts('Hold your right hand over the red circle.');
         this.elements.guide.state = {
           data: {
-            title: "Now let's try the other hand.",
-            titleDuration: 3000,
+            title: 'Hold your right hand over the red circle.',
+            showIndefinitely: true,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(4000);
+
+        const startRight = {
+          x: this.center.x + 100,
+          y: this.center.y - 270,
+        };
+        const endRight = {
+          x: 2 * this.center.x - 50,
+          y: this.center.y + 100,
+        };
+        const rightCoordinates = this.getCirclesInPath(
+          startRight,
+          endRight,
+          'semicircle',
+          2,
+          'right',
+        );
+
+        const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
+        const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
+        const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+        const rightCoinIds = rightCoins.map((coin) => coin.id);
+
+        let coinsCollected = 0;
+        let motionCompleted = false;
+        let repCompleted = false;
+
+        while (!repCompleted) {
+          const circleEventSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+            if (event.circle.id === startRightCircle.id && event.name === 'collisionCompleted') {
+              this.ttsService.tts('Once loaded, you can collect the coins with your right hand.');
+              this.elements.guide.state = {
+                data: {
+                  title: 'Once loaded, you can collect the coins with your right hand.',
+                  showIndefinitely: true,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+            if (rightCoinIds.includes(event.circle.id) && event.name === 'collisionCompleted') {
+              coinsCollected++;
+            }
+            const holdFinalCircle: boolean =
+              event.circle.id === endRightCircle.id && event.name === 'collisionStarted';
+            const allCoinsCollected: boolean = coinsCollected === rightCoins.length;
+
+            if ((allCoinsCollected || holdFinalCircle) && !motionCompleted) {
+              motionCompleted = true;
+              this.ttsService.tts('Hold the pose at the end to complete the motion.');
+              this.elements.guide.state = {
+                data: {
+                  title: 'Hold the pose at the end to complete the motion.',
+                  showIndefinitely: true,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+          });
+
+          this.movingTonesScene.initPath(startRightCircle, endRightCircle, rightCoins, {
+            collisionDebounce: this.collisionDebounce,
+          });
+          this.initTimeoutForPaths(rightCoordinates);
+
+          const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
+          repCompleted = result !== 'timeout';
+
+          if (result === 'recalibrated') {
+            this.movingTonesScene.destroyGameObjects();
+            circleEventSubscription.unsubscribe();
+            throw new Error('reCalibrationCount changed');
+          }
+          if (!repCompleted) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+          circleEventSubscription.unsubscribe();
+        }
+
+        this.ttsService.tts('Well done!');
+        this.elements.guide.state = {
+          data: {
+            title: 'Well done!',
+            titleDuration: 2000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        await this.elements.sleep(2500);
+      },
+      async (reCalibrationCount: number) => {
         this.elements.video.state = {
           data: {
             type: 'gif',
@@ -905,85 +1034,20 @@ export class MovingTonesService implements ActivityBase {
           'Hold the left hand over the blue circle when it first appears, to load the music coins.',
         );
         await this.elements.sleep(6000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
-        const leftCircle: MovingTonesCircle = {
-          id: uuidv4(),
-          x: this.center.x - 100,
-          y: 100,
-          hand: 'left',
-          type: 'start',
-        };
-        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
-        await this.movingTonesScene.waitForCollisionOrTimeout();
-        this.soundsService.playCalibrationSound('success');
+        this.elements.video.hide();
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts("Let's try with both hands now.");
+        this.ttsService.tts('Hold your left hand over the blue circle.');
         this.elements.guide.state = {
           data: {
-            title: "Let's try with both hands now.",
-            titleDuration: 3000,
+            title: 'Hold your left hand over the blue circle.',
+            showIndefinitely: true,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(4000);
-
-        const leftCircle: MovingTonesCircle = {
-          id: uuidv4(),
-          x: this.center.x - 100,
-          y: 100,
-          hand: 'left',
-          type: 'start',
-        };
-        const rightCircle: MovingTonesCircle = {
-          id: uuidv4(),
-          x: this.center.x + 100,
-          y: 100,
-          hand: 'right',
-          type: 'start',
-        };
-        this.movingTonesScene.showCircle(rightCircle, 'start', { circle: rightCircle });
-        this.movingTonesScene.showCircle(leftCircle, 'start', { circle: leftCircle });
-
-        await this.movingTonesScene.waitForCollisionOrTimeout();
-        this.soundsService.playCalibrationSound('success');
-      },
-      async (reCalibrationCount: number) => {
-        this.elements.video.state = {
-          data: {
-            type: 'gif',
-            title: 'Collect the Coins!',
-            description:
-              'Follow your hand over the music coins to collect them and finish on the same colour you started with.',
-            src: 'assets/videos/moving-tones/second-collect.gif',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts(
-          'Follow your hand over the music coins to collect them and finish on the same colour on which you started.',
-        );
-        await this.elements.sleep(6000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
         const startLeft = {
           x: this.center.x - 100,
           y: this.center.y - 270,
@@ -992,88 +1056,214 @@ export class MovingTonesService implements ActivityBase {
           x: 50,
           y: this.center.y + 100,
         };
-        const startRight = {
-          x: this.center.x + 100,
-          y: this.center.y - 270,
-        };
-        const endRight = {
-          x: 2 * this.center.x - 50,
-          y: this.center.y + 100,
-        };
         const leftCoordinates = this.getCirclesInPath(startLeft, endLeft, 'semicircle', 2, 'left');
-        const rightCoordinates = this.getCirclesInPath(
-          startRight,
-          endRight,
-          'semicircle',
-          2,
-          'right',
-        );
 
         const startLeftCircle = leftCoordinates.filter((c) => c.type === 'start')[0];
         const endLeftCircle = leftCoordinates.filter((c) => c.type === 'end')[0];
         const leftCoins = leftCoordinates.filter((c) => c.type === 'coin');
+        const leftCoinIds = leftCoins.map((coin) => coin.id);
 
-        this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
-          collisionDebounce: this.collisionDebounce,
-        });
+        let coinsCollected = 0;
+        let motionCompleted = false;
+        let repCompleted = false;
 
-        const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
-        const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
-        const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+        while (!repCompleted) {
+          const circleEventSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+            if (event.circle.id === startLeftCircle.id && event.name === 'collisionCompleted') {
+              this.ttsService.tts('Once loaded, you can collect the coins with your left hand.');
+              this.elements.guide.state = {
+                data: {
+                  title: 'Once loaded, you can collect the coins with your left hand.',
+                  showIndefinitely: true,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+            if (leftCoinIds.includes(event.circle.id) && event.name === 'collisionCompleted') {
+              coinsCollected++;
+            }
+            const allCoinsCollected: boolean = coinsCollected === leftCoins.length;
+            const holdFinalCircle: boolean =
+              event.circle.id === endLeftCircle.id && event.name === 'collisionStarted';
+            if ((allCoinsCollected || holdFinalCircle) && !motionCompleted) {
+              motionCompleted = true;
+              this.ttsService.tts('Hold the pose at the end to complete the motion.');
+              this.elements.guide.state = {
+                data: {
+                  title: 'Hold the pose at the end to complete the motion.',
+                  showIndefinitely: true,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+          });
 
-        this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
-          collisionDebounce: this.collisionDebounce,
-        });
-        this.movingTonesScene.initPath(startRightCircle, endRightCircle, rightCoins, {
-          collisionDebounce: this.collisionDebounce,
-        });
+          this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
+            collisionDebounce: this.collisionDebounce,
+          });
 
-        await this.movingTonesScene.waitForCollisionOrTimeout();
+          this.initTimeoutForPaths(leftCoordinates);
+
+          const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
+          repCompleted = result !== 'timeout';
+
+          if (result === 'recalibrated') {
+            this.movingTonesScene.destroyGameObjects();
+            circleEventSubscription.unsubscribe();
+            throw new Error('reCalibrationCount changed');
+          }
+          if (!repCompleted) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+          circleEventSubscription.unsubscribe();
+        }
 
         this.ttsService.tts('Well done!');
-
         this.elements.guide.state = {
           data: {
             title: 'Well done!',
-            titleDuration: 2500,
+            titleDuration: 2000,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
+        await this.elements.sleep(2500);
+      },
+      async (reCalibrationCount: number) => {
+        // both hands
+        let repCompleted = false;
 
+        while (!repCompleted) {
+          this.ttsService.tts('Try stretching to touch both at the same time.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Try stretching to touch both at the same time.',
+              titleDuration: 3000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(4000);
+          this.ttsService.tts("If you can't you can touch them one after the other as well.");
+          this.elements.guide.state = {
+            data: {
+              title: "If you can't you can touch them one after the other as well.",
+              titleDuration: 4000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+
+          const startLeft = {
+            x: this.center.x - 100,
+            y: this.center.y - 270,
+          };
+          const endLeft = {
+            x: 50,
+            y: this.center.y + 100,
+          };
+          const leftCoordinates = this.getCirclesInPath(
+            startLeft,
+            endLeft,
+            'semicircle',
+            2,
+            'left',
+          );
+
+          const startLeftCircle = leftCoordinates.filter((c) => c.type === 'start')[0];
+          const endLeftCircle = leftCoordinates.filter((c) => c.type === 'end')[0];
+          const leftCoins = leftCoordinates.filter((c) => c.type === 'coin');
+
+          const startRight = {
+            x: this.center.x + 100,
+            y: this.center.y - 270,
+          };
+          const endRight = {
+            x: 2 * this.center.x - 50,
+            y: this.center.y + 100,
+          };
+          const rightCoordinates = this.getCirclesInPath(
+            startRight,
+            endRight,
+            'semicircle',
+            2,
+            'right',
+          );
+
+          const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
+          const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
+          const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+
+          this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
+            collisionDebounce: this.collisionDebounce,
+          });
+
+          this.movingTonesScene.initPath(startRightCircle, endRightCircle, rightCoins, {
+            collisionDebounce: this.collisionDebounce,
+          });
+
+          this.initTimeoutForPaths(leftCoordinates, rightCoordinates);
+
+          const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
+          repCompleted = result !== 'timeout';
+
+          if (result === 'recalibrated') {
+            this.movingTonesScene.destroyGameObjects();
+            throw new Error('reCalibrationCount changed');
+          }
+          if (!repCompleted) {
+            this.ttsService.tts("Let's try that again.");
+            this.elements.guide.state = {
+              data: {
+                title: "Let's try that again.",
+                titleDuration: 2500,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(2500);
+          }
+        }
+        this.ttsService.tts("Good job! Looks like you're ready to start the activity.");
+        this.elements.guide.state = {
+          data: {
+            title: "Good job! Looks like you're ready to start the activity.",
+            titleDuration: 3000,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
         await this.apiService.updateOnboardingStatus({
           moving_tones: true,
         });
-        await this.elements.sleep(3000);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("You're ready to start collecting some music coins.");
-        this.elements.guide.state = {
-          data: {
-            title: "You're ready to start collecting some music coins.",
-            titleDuration: 3500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(4000);
-        this.ttsService.tts('Tutorial Completed.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Tutorial Completed.',
-            titleDuration: 2500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(3000);
-
+        await this.elements.sleep(3500);
         this.soundsService.stopActivityInstructionSound(this.genre);
       },
     ];
@@ -1123,20 +1313,21 @@ export class MovingTonesService implements ActivityBase {
         });
 
         this.elements.ribbon.state = {
+          data: {
+            titles: ['Get Ready to Start', 'On your mark', 'Get Set', 'Go!'],
+            titleDuration: 1500,
+            tts: true,
+          },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
-          data: {
-            titles: ['3', '2', '1', "Let's Go!"],
-            titleDuration: 1000,
-            tts: true,
-          },
         };
-        await this.elements.sleep(7000);
+        await this.elements.sleep(9000);
       },
       async (reCalibrationCount: number) => {
         // game starts
+        this.timeOutFirstTime = true;
         this.elements.timer.state = {
           data: {
             mode: 'start',
