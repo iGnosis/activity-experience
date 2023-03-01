@@ -127,57 +127,52 @@ export class MovingTonesService implements ActivityBase {
   }
 
   private initTimeoutForPaths(path1: MovingTonesCircle[], path2?: MovingTonesCircle[]) {
-    const timeoutDuration = 10_000;
-    let pathsCompleted = 0;
-
-    const startTimeout = () =>
-      setTimeout(() => {
-        this.movingTonesScene.destroyGameObjects();
-        this.timedOut = true;
-        if (this.timeOutFirstTime) {
-          this.timeOutFirstTime = false;
-          this.ttsService.tts('Try touching the circles in 10 seconds or we move to the next set.');
-          this.elements.guide.state = {
-            data: {
-              title: 'Try touching the circles in 10 seconds or we move to the next set.',
-              titleDuration: 3000,
-            },
-            attributes: {
-              visibility: 'visible',
-            },
-          };
-        }
-      }, timeoutDuration);
-    let timeout = startTimeout();
-
-    const startCircle1 = path1.filter((circle) => circle.type === 'start')[0];
-    const endCircle1 = path1.filter((circle) => circle.type === 'end')[0];
-
-    const startCircle2 = path2?.filter((circle) => circle.type === 'start')[0];
-    const endCircle2 = path2?.filter((circle) => circle.type === 'end')[0];
-
-    const circleEventSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
-      const hasCoinsLoaded =
-        (startCircle1.id === event.circle.id || startCircle2?.id === event.circle.id) &&
-        event.name === 'collisionCompleted';
-      const hasMotionCompleted =
-        (endCircle1.id === event.circle.id || endCircle2?.id === event.circle.id) &&
-        event.name === 'collisionCompleted';
-      const hasAllPathsCompleted = path2 ? pathsCompleted === 2 : pathsCompleted === 1;
-
-      if (hasCoinsLoaded) {
-        clearTimeout(timeout);
-        timeout = startTimeout();
-      } else if (hasMotionCompleted) {
-        pathsCompleted++;
-        clearTimeout(timeout);
-        timeout = startTimeout();
-      }
-      if (hasAllPathsCompleted) {
-        circleEventSubscription.unsubscribe();
-        clearTimeout(timeout);
-      }
-    });
+    // const timeoutDuration = 10_000;
+    // let pathsCompleted = 0;
+    // const startTimeout = () =>
+    //   setTimeout(() => {
+    //     this.movingTonesScene.destroyGameObjects();
+    //     this.timedOut = true;
+    //     if (this.timeOutFirstTime) {
+    //       this.timeOutFirstTime = false;
+    //       this.ttsService.tts('Try touching the circles in 10 seconds or we move to the next set.');
+    //       this.elements.guide.state = {
+    //         data: {
+    //           title: 'Try touching the circles in 10 seconds or we move to the next set.',
+    //           titleDuration: 3000,
+    //         },
+    //         attributes: {
+    //           visibility: 'visible',
+    //         },
+    //       };
+    //     }
+    //   }, timeoutDuration);
+    // let timeout = startTimeout();
+    // const startCircle1 = path1.filter((circle) => circle.type === 'start')[0];
+    // const endCircle1 = path1.filter((circle) => circle.type === 'end')[0];
+    // const startCircle2 = path2?.filter((circle) => circle.type === 'start')[0];
+    // const endCircle2 = path2?.filter((circle) => circle.type === 'end')[0];
+    // const circleEventSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+    //   const hasCoinsLoaded =
+    //     (startCircle1.id === event.circle.id || startCircle2?.id === event.circle.id) &&
+    //     event.name === 'collisionCompleted';
+    //   const hasMotionCompleted =
+    //     (endCircle1.id === event.circle.id || endCircle2?.id === event.circle.id) &&
+    //     event.name === 'collisionCompleted';
+    //   const hasAllPathsCompleted = path2 ? pathsCompleted === 2 : pathsCompleted === 1;
+    //   if (hasCoinsLoaded) {
+    //     clearTimeout(timeout);
+    //     timeout = startTimeout();
+    //   } else if (hasMotionCompleted) {
+    //     pathsCompleted++;
+    //     clearTimeout(timeout);
+    //     timeout = startTimeout();
+    //   }
+    //   if (hasAllPathsCompleted) {
+    //     circleEventSubscription.unsubscribe();
+    //     clearTimeout(timeout);
+    //   }
+    // });
   }
 
   private getCirclesInPath(
