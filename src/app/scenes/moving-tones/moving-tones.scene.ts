@@ -14,6 +14,7 @@ import {
   MovingTonesCircleSettings,
   MovingTonesCircleData,
   Genre,
+  MovingTonesCircleEvent,
 } from 'src/app/types/pointmotion';
 import { movingTonesAudio } from './moving-tones.sprite';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
@@ -72,6 +73,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   private isBlueHeld = false;
   private isRedHeld = false;
+  private musicSubscription: Subscription;
 
   blueHoldState = new Subject<boolean>();
   redHoldState = new Subject<boolean>();
@@ -182,6 +184,7 @@ export class MovingTonesScene extends Phaser.Scene {
                 this.circleEvents.next({
                   name: 'collisionEnded',
                   circle: data.circle,
+                  trackId: successMusicId,
                 });
 
                 if (startFromBeginning) {
@@ -233,7 +236,11 @@ export class MovingTonesScene extends Phaser.Scene {
             });
 
             tween.once('complete', () => {
-              this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
+              this.circleEvents.next({
+                name: 'collisionCompleted',
+                circle: data.circle,
+                trackId: successMusicId,
+              });
 
               this.setHeldState(handTexture, false);
               if (type === 'start') {
@@ -255,15 +262,6 @@ export class MovingTonesScene extends Phaser.Scene {
               graphics.destroy(true);
               tween.remove();
               gameObject.destroy(true);
-
-              // if (data.variation && data.path) {
-              //   this.stopSuccessMusic();
-              //   if (type === 'start') {
-              //     // this.playSuccessMusic(data.variation, 1);
-              //   } else {
-              //     // this.playSuccessMusic(data.variation, data.path.length + 2);
-              //   }
-              // }
 
               if (!this.music) {
                 this.soundsService.playCalibrationSound('success');
@@ -697,9 +695,6 @@ export class MovingTonesScene extends Phaser.Scene {
           rippleAnim && rippleAnim.destroy(true);
         }
       });
-
-      // then remove all the remaining objects
-      this.group.clear(true, true);
     } else {
       if (object === TextureKeys.MUSIC_CIRCLE) {
         const idxList: number[] = [];
@@ -1000,11 +995,24 @@ export class MovingTonesScene extends Phaser.Scene {
   enableMusic(value = true) {
     this.music = value;
 
+    if (value) {
+      this.musicSubscription = this.circleEvents.subscribe((event: MovingTonesCircleEvent) => {
+        if (
+          (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
+          (event.circle.type === 'start' || event.circle.type === 'end') &&
+          event.trackId
+        ) {
+          this.successTrack && this.successTrack.stop(event.trackId);
+        }
+      });
+    }
+
     // unload music on disable.
     if (!value) {
       this.backtrack && this.backtrack.unload();
       this.successTrack && this.successTrack.unload();
       this.failureMusic && this.failureMusic.unload();
+      this.musicSubscription.unsubscribe();
     }
   }
 
@@ -1083,9 +1091,9 @@ export class MovingTonesScene extends Phaser.Scene {
   playSuccessMusic(variation: string, variationNumber: number) {
     if (!this.successTrack) return;
 
-    if (this.successTrackId && this.successTrack.playing(this.successTrackId)) {
-      this.successTrack.stop(this.successTrackId);
-    }
+    // if (this.successTrackId && this.successTrack.playing(this.successTrackId)) {
+    //   this.successTrack.stop(this.successTrackId);
+    // }
 
     console.log('variation::', variation + '_' + variationNumber);
     this.successTrackId = this.successTrack.play(variation + '_' + variationNumber);
