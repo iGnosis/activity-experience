@@ -1100,6 +1100,7 @@ export type MovingTonesCircleEventName =
 export type MovingTonesCircleEvent = {
   name: MovingTonesCircleEventName;
   circle: MovingTonesCircle;
+  trackId?: number;
 };
 
 export type MovingTonesCircleSettings = {
