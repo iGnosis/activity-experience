@@ -724,6 +724,15 @@ export type TimerElementState = {
    * @param elapsedTime gives the time elapsed time since the start of the timer.
    */
   onPause?: (elapsedTime: number) => void;
+  /**
+   * Functions to trigger after certain duration of the timer.
+   */
+  intermediateFns?: {
+    /**
+     * Function triggers when timer reaches certain duration.
+     */
+    [key: number]: () => void;
+  };
 };
 
 export type OverlayElementState = {
@@ -777,7 +786,13 @@ export type BannerElementState = {
    * * loader are to be rendered while loading an activity.
    * * status are to be rendered when user has to be notified about the status of an action.
    */
-  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action';
+  type?: 'intro' | 'outro' | 'loader' | 'status' | 'action' | 'custom';
+  customActions?: {
+    /**
+     * Function triggers when banner an element with id (key) is clicked.
+     */
+    [key: string]: () => void;
+  };
 };
 
 export type GuideElementState = {
@@ -820,6 +835,8 @@ export type ToastElementState = {
    */
   delay?: number;
 };
+
+export type CalibrationTutorialElementState = unknown;
 
 export type PromptPosition = 'center' | 'top-right';
 
@@ -917,6 +934,7 @@ export type ElementsState = {
   guide: { data: GuideElementState; attributes: ElementAttributes };
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
   toast: { data: ToastElementState; attributes: ElementAttributes };
+  calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -931,6 +949,10 @@ export type ElementsObservables = {
   guide: Observable<{ data: GuideElementState; attributes: ElementAttributes }>;
   confetti: Observable<{ data: ConfettiElementState; attributes: ElementAttributes }>;
   toast: Observable<{ data: ToastElementState; attributes: ElementAttributes }>;
+  calibrationTutorial: Observable<{
+    data: CalibrationTutorialElementState;
+    attributes: ElementAttributes;
+  }>;
 };
 
 export interface ActivityBase {
@@ -1050,16 +1072,35 @@ export type MovingTonesCircle = {
 };
 
 export type MovingTonesCircleEventName =
+  /**
+   * if the circle is hidden from the user.
+   **/
   | 'hidden'
+  /**
+   * if the circle is being shown to the user.
+   **/
   | 'visible'
+  /**
+   * when user hand collided with the circle.
+   **/
   | 'collisionStarted'
+  /**
+   * if collision ended in middle. when he removed hand when loading is happening.
+   **/
   | 'collisionEnded'
+  /**
+   * when the user hold the hand until the circle is loaded.
+   **/
   | 'collisionCompleted'
+  /**
+   * when user interacted with wrong shape.
+   **/
   | 'invalidCollision';
 
 export type MovingTonesCircleEvent = {
   name: MovingTonesCircleEventName;
   circle: MovingTonesCircle;
+  trackId?: number;
 };
 
 export type MovingTonesCircleSettings = {

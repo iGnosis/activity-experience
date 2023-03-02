@@ -20,6 +20,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   timer: Subscription;
   attributes: ElementAttributes;
   isCountdown: boolean;
+  intermediateFns?: { [key: number]: () => void };
   onComplete?: (elapsedTime: number) => void;
   onPause?: (elapsedTime: number) => void;
   constructor(private timerService: TimerService) {}
@@ -33,9 +34,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscription = this.timerService._subject.subscribe((state) => {
       this.attributes = state.attributes;
-      const { mode, duration, isCountdown, onComplete, onPause } = state.data;
+      const { mode, duration, isCountdown, onComplete, onPause, intermediateFns } = state.data;
       if (typeof isCountdown === 'boolean') {
         this.isCountdown = isCountdown;
+      } else {
+        this.isCountdown = false;
       }
       switch (mode) {
         case 'start':
@@ -60,6 +63,11 @@ export class TimerComponent implements OnInit, OnDestroy {
       if (onPause) {
         this.onPause = onPause;
       }
+      if (intermediateFns) {
+        this.intermediateFns = intermediateFns;
+      } else {
+        this.intermediateFns = undefined;
+      }
     });
   }
 
@@ -71,6 +79,9 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.source = timer(0, 1000);
     this.timer = this.source.subscribe((val) => {
       this.elapsedTime += 1;
+      if (this.intermediateFns && this.intermediateFns[this.elapsedTime]) {
+        this.intermediateFns[this.elapsedTime]();
+      }
       if (this.isCountdown) {
         this.updateTimer(this.duration / 1000 - val);
       } else {
@@ -98,6 +109,9 @@ export class TimerComponent implements OnInit, OnDestroy {
     const prevElapsedTime = this.elapsedTime;
     this.timer = this.source.subscribe((val) => {
       this.elapsedTime += 1;
+      if (this.intermediateFns && this.intermediateFns[this.elapsedTime]) {
+        this.intermediateFns[this.elapsedTime]();
+      }
       if (this.isCountdown) {
         this.updateTimer(this.duration / 1000 - (val + prevElapsedTime));
       } else {

@@ -1,0 +1,23 @@
+
+<div *ngIf="state && state.attributes.visibility === 'visible'" class="ct-container w-screen h-screen position-fixed bg-white d-flex overflow-auto">
+        <div class="container row mx-auto mt-3 gx-5">
+            <img src="assets/images/sound_health_logo_alpha.png" alt="sound health alpha logo" class="col-2 px-2" style="object-fit: contain;">
+            <h2 class="col-8 text-center text-primary my-auto">CAMERA SETUP</h2>
+            <div class="col-2 d-flex">
+            <button class="w-full btn btn-primary my-auto font-bold position-relative" (click)="hide()">Continue
+                <i class="bi bi-arrow-right position-absolute top-1/2 end-3 translate-middle-y text-xl"></i>
+            </button>
+        </div>
+        <div class="col-12">&nbsp;</div>
+        <div class="row">
+            <div class="col-12">
+                <video class="w-full h-full rounded bg-secondary" style="object-fit: fill;" [controls]="false" [autoplay]="true" [muted]="true" loop>
+                    <source src="assets/videos/calibration-tutorial/calibration-tutorial.mp4" type="video/mp4" />
+                    <source src="assets/videos/calibration-tutorial/calibration-tutorial.webm" type="video/webm" />
+                    Video not loaded
+                </video>
+            </div>
+        </div>
+        <div class="col-12">&nbsp;</div>
+    </div>
+</div>

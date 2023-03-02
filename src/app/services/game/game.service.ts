@@ -44,6 +44,7 @@ import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene
 import { BenchmarkService } from '../benchmark/benchmark.service';
 import { HandsService } from '../hands/hands.service';
 import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
+import { ActivityHelperService } from './activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -61,6 +62,10 @@ export class GameService {
     },
     transparent: true,
     // backgroundColor: 'rgba(0,0,0,0)',
+    scale: {
+      parent: 'phaser-canvas',
+      mode: Phaser.Scale.NONE,
+    },
     physics: {
       default: 'arcade',
       arcade: {
@@ -87,6 +92,8 @@ export class GameService {
   private poseTrackerWorker: Worker;
   allStages: Array<ActivityStage> = ['welcome', 'tutorial', 'preLoop', 'loop', 'postLoop'];
   gameStages: Array<ActivityStage> = [];
+  streamHeight: number;
+  streamWidth: number;
 
   get calibrationStatus() {
     return this._calibrationStatus;
@@ -153,6 +160,7 @@ export class GameService {
     private googleAnalyticsService: GoogleAnalyticsService,
     private benchmarkService: BenchmarkService,
     private handsService: HandsService,
+    private activityHelperService: ActivityHelperService,
   ) {
     window.onbeforeunload = () => {
       if (this.poseTrackerWorker) this.poseTrackerWorker.terminate();
@@ -201,6 +209,16 @@ export class GameService {
     this.startGame();
   }
 
+  async setFirstGame(game: Activities) {
+    this.currentGame = game;
+    this.gameStatus = {
+      stage: 'welcome',
+      breakpoint: 0,
+      game,
+    };
+    this.gameStatusSubject.next(this.gameStatus);
+  }
+
   setStage(stage: ActivityStage) {
     if (stage === 'welcome') {
       this.gameStages = this.allStages;
@@ -237,6 +255,15 @@ export class GameService {
   }
 
   async bootstrap(video: HTMLVideoElement, canvas: HTMLCanvasElement, benchmarkId?: string) {
+    // show calibration tutorial
+    this.elements.calibrationTutorialService.state = {
+      data: {},
+      attributes: {
+        visibility: 'visible',
+        reCalibrationCount: -1,
+      },
+    };
+
     if (
       navigator.userAgent.match(/Mac/) &&
       navigator.maxTouchPoints &&
@@ -270,10 +297,10 @@ export class GameService {
       const videoTracks = stream.getTracks();
       if (Array.isArray(videoTracks) && videoTracks.length > 0) {
         const track = videoTracks[0];
-        const streamWidth = track.getSettings().width || 0;
-        const streamHeight = track.getSettings().height || 0;
+        this.streamWidth = track.getSettings().width || 0;
+        this.streamHeight = track.getSettings().height || 0;
 
-        this.uiHelperService.setBoundingBox(streamWidth, streamHeight, {
+        this.uiHelperService.setBoundingBox(this.streamWidth, this.streamHeight, {
           innerHeight: window.innerHeight,
           innerWidth: window.innerWidth,
         });
@@ -380,6 +407,31 @@ export class GameService {
     });
   }
 
+  updateDimensionsOnResize(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+    if (!this.streamWidth || !this.streamHeight) return;
+
+    // recalculating the bounding box as the window size changes
+    const boundingBox = this.uiHelperService.setBoundingBox(this.streamWidth, this.streamHeight, {
+      innerHeight: window.innerHeight,
+      innerWidth: window.innerWidth,
+    });
+    console.log('updated::bounding:box::', boundingBox);
+
+    // updating video and parent-canvas dimensions
+    this.updateDimensions(video);
+    const { width, height } = this.updateDimensions(
+      canvas.querySelector('canvas') as HTMLCanvasElement,
+    );
+
+    // if a game instance is already created, then resize/rescale the game
+    if (this.game) {
+      this.game.scale.setParentSize(width, height);
+      this.game.scale.resize(width, height);
+      // this.game.scale.canvasBounds.setTo(0, 0, width, height);
+      // this.game.scale.resizeInterval = 500;
+    }
+  }
+
   startPoseDetection(video: HTMLVideoElement) {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -470,6 +522,10 @@ export class GameService {
         this.updateRecalibrationCount();
         this.calibrationStatus = status;
         if (this.calibrationStatus === 'success') {
+          // Hide exit activity banner
+          this.elements.banner.attributes = {
+            visibility: 'hidden',
+          };
           if (this.gameStatus.stage === 'loop') {
             this.ttsService.tts('Now I can see you again.');
             await this.elements.sleep(3000);
@@ -525,6 +581,56 @@ export class GameService {
               visibility: 'visible',
             },
           };
+          this.elements.banner.state = {
+            data: {
+              htmlStr: `<div class="position-fixed top-5 start-1/2 translate-middle-x cursor-pointer" id="exit-btn"><i class="bi bi-x-circle-fill display-5 text-dark"></i></div>`,
+              type: 'custom',
+              customActions: {
+                'exit-btn': () => {
+                  this.elements.banner.state = {
+                    data: {
+                      htmlStr: `
+                      <div class="w-1/4 h-auto position-absolute text-center translate-middle top-1/2 start-1/2 rounded-1 row bg-white p-8" style="border: 1px solid #000033;">
+                        <i class="bi bi-x-lg position-absolute end-5 top-5 cursor-pointer w-auto text-black" id="hide-btn"></i>
+                        <p>
+                          <i class="bi bi-box-arrow-left text-primary h1"></i>
+                        </p>
+                        <h2 class="text-black">Exit to Home</h2>
+                        <hr class="divider my-1">
+                        <p class="text-muted">Are you sure you want to exit back to the homepage?</p>
+                        <div class="col-12">&nbsp;</div>
+                        <button class="btn btn-light text-primary w-full rounded-0 font-bold" style="border: 1px solid #000033;" id="exit-btn">Exit</button>
+                      </div>
+                      `,
+                      type: 'custom',
+                      customActions: {
+                        'exit-btn': () => {
+                          window.parent.postMessage(
+                            {
+                              type: 'end-game',
+                            },
+                            '*',
+                          );
+                        },
+                        'hide-btn': () => {
+                          this.elements.banner.attributes = {
+                            visibility: 'hidden',
+                          };
+                        },
+                      },
+                    },
+                    attributes: {
+                      visibility: 'visible',
+                      reCalibrationCount: this.reCalibrationCount,
+                    },
+                  };
+                },
+              },
+            },
+            attributes: {
+              visibility: 'visible',
+            },
+          };
         }
       });
     this.calibrationService.reCalibrationCount.subscribe((count: number) => {
@@ -558,6 +664,11 @@ export class GameService {
 
     elm.width = box.topRight.x - box.topLeft.x;
     elm.height = box.bottomLeft.y - box.topLeft.y;
+
+    return {
+      width: elm.width,
+      height: elm.height,
+    };
   }
 
   // Refactor: Rewrite this probably
@@ -576,7 +687,7 @@ export class GameService {
         settings: settings ? settings.settings : environment.settings[game],
       };
     }
-    const lastGame = await this.apiService.getLastGame();
+    const lastGame = await this.apiService.getLastPlayedGame();
 
     if (!lastGame || !lastGame.length) {
       // No game played today...Play first game as per config.
@@ -733,12 +844,19 @@ export class GameService {
         level_name: nextGame.name,
       });
       this.gamesCompleted.push(nextGame.name);
-      this.gameStateService.postLoopHook();
+      if (this.gamesCompleted.length === environment.order.length) {
+        await this.activityHelperService.exitGame(nextGame.name);
+      } else {
+        this.gameStateService.postLoopHook();
+      }
       console.log('game.service:gameCompleted:', nextGame.name);
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
     if (nextGame) {
+      if (this.gamesCompleted.length === environment.order.length - 1) {
+        this.activityHelperService.isLastActivity = true;
+      }
       this.gameStatus = {
         stage: 'welcome',
         breakpoint: 0,
@@ -758,8 +876,19 @@ export class GameService {
     // const items = await this.sitToStandService.preLoop();
   }
 
+  async isCalibrationTutorialCompleted() {
+    return new Promise((resolve) => {
+      setInterval(() => {
+        if (this.elements.calibrationTutorialService.attributes.visibility === 'hidden') {
+          resolve(true);
+        }
+      }, 1000);
+    });
+  }
+
   async startCalibration() {
     // TODO: Start the calibration process.
+    await this.isCalibrationTutorialCompleted();
     this.ttsService.tts(
       'To start, please get your whole body, from head to toe, within the red box.',
     );

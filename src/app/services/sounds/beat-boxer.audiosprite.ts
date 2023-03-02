@@ -6,7 +6,7 @@ interface BeatBoxerAudioSprite {
 }
 
 export const beatBoxerAudio: {
-  [key in Genre]: BeatBoxerAudioSprite[];
+  [key in Genre | 'afro']: BeatBoxerAudioSprite[];
 } = {
   classical: [
     {
@@ -402,6 +402,23 @@ export const beatBoxerAudio: {
       errorTriggers: {
         error1: [0, 2690.612244897959],
         error2: [4000, 2690.6122448979595],
+      },
+    },
+  ],
+  afro: [
+    {
+      successTriggers: {
+        trigger1: [0, 715.1020408163265],
+        trigger2: [2000, 656.5532879818594],
+        trigger3: [4000, 606.3718820861678],
+        trigger4: [6000, 585.2834467120181],
+      },
+      errorTriggers: {
+        error1: [0, 1525.7596371882084],
+        error2: [3000, 1581.2471655328802],
+        error3: [6000, 1525.7596371882087],
+        error4: [9000, 1733.8095238095245],
+        error5: [12000, 1678.3219954648523],
       },
     },
   ],

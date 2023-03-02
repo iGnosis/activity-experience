@@ -1,3 +1,7 @@
+.title {
+  min-height: 6rem;
+  max-width: 82vw;
+}
 h1 {
   &::after {
     content: '';

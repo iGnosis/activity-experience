@@ -134,7 +134,14 @@ export class SitToStandScene extends Phaser.Scene {
     await this.ttsService.preLoadTts('sit_stand_achieve');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
-      this.loadMusicFiles(genre);
+
+      // as afro music is unavailable, we are using classical music for afro.
+      if ((genre as Genre | 'afro') === 'afro') {
+        this.loadMusicFiles('jazz');
+      } else {
+        this.loadMusicFiles(genre);
+      }
+
       const intervalId = setInterval(() => {
         if (this.checkIfAssetsAreLoaded(genre) && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
@@ -157,28 +164,36 @@ export class SitToStandScene extends Phaser.Scene {
   pauseBacktrack(genre: Genre) {
     switch (genre) {
       case 'classical':
-        if (this.classicalBacktrackId && this.classical.playing(this.classicalBacktrackId)) {
+        if (
+          this.classical &&
+          this.classicalBacktrackId &&
+          this.classical.playing(this.classicalBacktrackId)
+        ) {
           this.classical.pause(this.classicalBacktrackId);
         }
         break;
       case 'dance':
-        if (this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
+        if (this.dance && this.danceBacktrackId && this.dance.playing(this.danceBacktrackId)) {
           this.dance.pause(this.danceBacktrackId);
         }
         break;
       case 'rock':
-        if (this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
+        if (this.rock && this.rockBacktrackId && this.rock.playing(this.rockBacktrackId)) {
           this.rock.pause(this.rockBacktrackId);
         }
         break;
       case 'surprise me!':
-        if (this.surpriseBacktrackId && this.surprise.playing(this.surpriseBacktrackId)) {
+        if (
+          this.surprise &&
+          this.surpriseBacktrackId &&
+          this.surprise.playing(this.surpriseBacktrackId)
+        ) {
           this.surprise.pause(this.surpriseBacktrackId);
         }
         break;
       case 'jazz':
       default:
-        if (this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
+        if (this.jazz && this.jazzBacktrackId && this.jazz.playing(this.jazzBacktrackId)) {
           this.jazz.pause(this.jazzBacktrackId);
         }
         break;
@@ -220,36 +235,36 @@ export class SitToStandScene extends Phaser.Scene {
     switch (genre) {
       case 'classical':
         if (this.currentSet === 0) {
-          if (!this.classical.playing(this.classicalBacktrackId)) {
+          if (this.classical && !this.classical.playing(this.classicalBacktrackId)) {
             this.classicalBacktrackId = this.classical.play(
               `classicalBacktrack${this.currentClassicalSet}`,
             );
           }
           return this.classicalBacktrackId;
         } else {
-          if (!this.classical.playing(this.classicalBacktrackId)) {
+          if (this.classical && !this.classical.playing(this.classicalBacktrackId)) {
             this.classicalBacktrackId = this.classical.play('classicalBacktrack');
           }
           return this.classicalBacktrackId;
         }
       case 'dance':
-        if (!this.dance.playing(this.danceBacktrackId)) {
+        if (this.dance && !this.dance.playing(this.danceBacktrackId)) {
           this.danceBacktrackId = this.dance.play('danceBacktrack');
         }
         return this.danceBacktrackId;
       case 'rock':
-        if (!this.rock.playing(this.rockBacktrackId)) {
+        if (this.rock && !this.rock.playing(this.rockBacktrackId)) {
           this.rockBacktrackId = this.rock.play('rockBacktrack');
         }
         return this.rockBacktrackId;
       case 'surprise me!':
-        if (!this.surprise.playing(this.surpriseBacktrackId)) {
+        if (this.surprise && !this.surprise.playing(this.surpriseBacktrackId)) {
           this.surpriseBacktrackId = this.surprise.play('ambientBacktrack');
         }
         return this.surpriseBacktrackId;
       case 'jazz':
       default:
-        if (!this.jazz.playing(this.jazzBacktrackId)) {
+        if (this.jazz && !this.jazz.playing(this.jazzBacktrackId)) {
           this.jazzBacktrackId = this.jazz.play('jazzBacktrack');
         }
         return this.jazzBacktrackId;
@@ -259,6 +274,7 @@ export class SitToStandScene extends Phaser.Scene {
   playTrigger(genre: Genre) {
     switch (genre) {
       case 'classical':
+        if (!this.classical) return;
         // to fade we need to know duration to fade. All the triggers have the same duration.
         const classicTriggerFadeoutDuration = 1519.183673469399;
 
@@ -319,6 +335,7 @@ export class SitToStandScene extends Phaser.Scene {
           return this.classicalTriggerId;
         }
       case 'dance':
+        if (!this.dance) return;
         this.danceTriggerId = this.dance.play(`dance${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -326,6 +343,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.danceTriggerId;
       case 'rock':
+        if (!this.rock) return;
         this.rockTriggerId = this.rock.play(`rock${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -333,6 +351,7 @@ export class SitToStandScene extends Phaser.Scene {
         }
         return this.rockTriggerId;
       case 'surprise me!':
+        if (!this.surprise) return;
         this.surpriseTriggerId = this.surprise.play(`ambient${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -341,6 +360,7 @@ export class SitToStandScene extends Phaser.Scene {
         return this.surpriseTriggerId;
       case 'jazz':
       default:
+        if (!this.jazz) return;
         this.jazzTriggerId = this.jazz.play(`jazz${this.currentTrigger}`);
         this.currentTrigger += 1;
         if (this.currentTrigger === 10) {
@@ -355,32 +375,36 @@ export class SitToStandScene extends Phaser.Scene {
     switch (genre) {
       case 'classical':
         this.classical &&
-          this.classical.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
-            this.classical.stop(id);
-          });
+          this.classical
+            .fade(100, 0, endFadeoutDuration, this.classicalBacktrackId)
+            .on('fade', (id) => {
+              this.classical.stop(id);
+            });
         break;
       case 'dance':
         this.dance &&
-          this.dance.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.dance.fade(100, 0, endFadeoutDuration, this.danceBacktrackId).on('fade', (id) => {
             this.dance.stop(id);
           });
         break;
       case 'rock':
         this.rock &&
-          this.rock.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.rock.fade(100, 0, endFadeoutDuration, this.rockBacktrackId).on('fade', (id) => {
             this.rock.stop(id);
           });
         break;
       case 'surprise me!':
         this.surprise &&
-          this.surprise.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
-            this.surprise.stop(id);
-          });
+          this.surprise
+            .fade(100, 0, endFadeoutDuration, this.surpriseBacktrackId)
+            .on('fade', (id) => {
+              this.surprise.stop(id);
+            });
         return;
       case 'jazz':
       default:
         this.jazz &&
-          this.jazz.fade(100, 0, endFadeoutDuration).on('fade', (id) => {
+          this.jazz.fade(100, 0, endFadeoutDuration, this.jazzBacktrackId).on('fade', (id) => {
             this.jazz.stop(id);
           });
         return;
@@ -391,12 +415,14 @@ export class SitToStandScene extends Phaser.Scene {
     this.music = value;
 
     // if disabled... unload music files
-    if (!value) {
-      this.surprise && this.surprise.unload();
-      this.classical && this.classical.unload();
-      this.dance && this.dance.unload();
-      this.rock && this.rock.unload();
-      this.jazz && this.jazz.unload();
-    }
+
+    // Commenting this for now.. as unloading music is causing the fade out to stop abruptly
+    // if (!value) {
+    //   this.surprise && this.surprise.unload();
+    //   this.classical && this.classical.unload();
+    //   this.dance && this.dance.unload();
+    //   this.rock && this.rock.unload();
+    //   this.jazz && this.jazz.unload();
+    // }
   }
 }

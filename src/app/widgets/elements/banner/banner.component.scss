@@ -61,6 +61,10 @@
     height: 350px;
   }
 
+  &.custom {
+    background: transparent;
+  }
+
   @keyframes progress {
     0% {
       width: 0%;

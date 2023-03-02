@@ -1,26 +1,44 @@
 name: Org Deploy
 
 on:
-  push:
-    branches: [ 'org/**' ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'org/**'
 
 jobs:
   org-build:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Debug GH branch names
+        run: |
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_HEAD_REF##*/: ${GITHUB_HEAD_REF##*/}"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "Org: ${GITHUB_REF##*/}"
+
       - name: npm install and npm run build
         run: |
-          echo "Org: ${GITHUB_REF##*/}"
           echo "Current path: $(pwd)"
           ls -la
+
           npm ci --ignore-scripts --legacy-peer-deps
           npm run build -- -c "${GITHUB_REF#*/*/}"
+
+          # Create `version.json` file...
+          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > cp version.json ./dist/activities/
+
+          ls -la
+          ls -la dist
+
+      - name: Printing app version
+        run: |
+          cat dist/activities/version.json | jq
 
       - name: running unit tests
         run: npm run test:chromeheadless

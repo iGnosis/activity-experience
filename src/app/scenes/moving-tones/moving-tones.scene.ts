@@ -14,8 +14,10 @@ import {
   MovingTonesCircleSettings,
   MovingTonesCircleData,
   Genre,
+  MovingTonesCircleEvent,
 } from 'src/app/types/pointmotion';
 import { movingTonesAudio } from './moving-tones.sprite';
+import { SoundsService } from 'src/app/services/sounds/sounds.service';
 
 enum TextureKeys {
   RED_CIRCLE = 'red_circle',
@@ -71,6 +73,7 @@ export class MovingTonesScene extends Phaser.Scene {
 
   private isBlueHeld = false;
   private isRedHeld = false;
+  private musicSubscription: Subscription;
 
   blueHoldState = new Subject<boolean>();
   redHoldState = new Subject<boolean>();
@@ -164,16 +167,32 @@ export class MovingTonesScene extends Phaser.Scene {
                 ? this.animateHeld(x, y, circleRadius, color, 0, holdDuration)
                 : this.animateHeld(x, y, circleRadius, color, stoppedAt, remainingDuration);
 
+            let successMusicId: number | undefined;
+            if (this.music) {
+              if (data.variation && data.path) {
+                if (type === 'start') {
+                  successMusicId = this.playSuccessMusic(data.variation, 1);
+                } else {
+                  console.log('playing::', data.variation, '::', data.path.length + 2);
+                  successMusicId = this.playSuccessMusic(data.variation, data.path.length + 2);
+                }
+              }
+            }
+
             tween.on('update', (tween: Phaser.Tweens.Tween) => {
               if (!this.getHeldState(handTexture)) {
                 this.circleEvents.next({
                   name: 'collisionEnded',
                   circle: data.circle,
+                  trackId: successMusicId,
                 });
 
                 if (startFromBeginning) {
                   graphics.destroy(true);
                   tween.remove();
+
+                  successMusicId && this.stopSuccessMusic(successMusicId);
+
                   // remove circles if interrupted when holding the start circles
                   if (type === 'start') {
                     this.destroyGameObjects('allExceptStartCircle', gameObjectTexture);
@@ -217,12 +236,20 @@ export class MovingTonesScene extends Phaser.Scene {
             });
 
             tween.once('complete', () => {
-              this.circleEvents.next({ name: 'collisionCompleted', circle: data.circle });
+              this.circleEvents.next({
+                name: 'collisionCompleted',
+                circle: data.circle,
+                trackId: successMusicId,
+              });
+
+              this.setHeldState(handTexture, false);
               if (type === 'start') {
                 if (data.end) {
                   this.showCircle(data.end, 'end', {
                     collisionDebounce: holdDuration,
                     circle: data.end,
+                    path: data.path,
+                    variation: data.variation,
                   });
                 }
               }
@@ -236,12 +263,8 @@ export class MovingTonesScene extends Phaser.Scene {
               tween.remove();
               gameObject.destroy(true);
 
-              if (data.variation && data.path) {
-                if (type === 'start') {
-                  this.playSuccessMusic(data.variation, 1);
-                } else {
-                  this.playSuccessMusic(data.variation, data.path.length + 2);
-                }
+              if (!this.music) {
+                this.soundsService.playCalibrationSound('success');
               }
 
               if (type === 'start') {
@@ -300,7 +323,12 @@ export class MovingTonesScene extends Phaser.Scene {
               this.score.next(1);
               const variation = gameObject.getData('variation');
               const variationNumber = gameObject.getData('variationNumber');
-              this.playSuccessMusic(variation, variationNumber);
+
+              if (this.music) {
+                this.playSuccessMusic(variation, variationNumber);
+              } else {
+                this.soundsService.playCalibrationSound('success');
+              }
             }
 
             const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
@@ -372,6 +400,7 @@ export class MovingTonesScene extends Phaser.Scene {
     private ttsService: TtsService,
     private poseModelAdapter: PoseModelAdapter,
     private handTrackerService: HandTrackerService,
+    private soundsService: SoundsService,
   ) {
     super({ key: 'movingTones' });
   }
@@ -666,9 +695,6 @@ export class MovingTonesScene extends Phaser.Scene {
           rippleAnim && rippleAnim.destroy(true);
         }
       });
-
-      // then remove all the remaining objects
-      this.group.clear(true, true);
     } else {
       if (object === TextureKeys.MUSIC_CIRCLE) {
         const idxList: number[] = [];
@@ -830,7 +856,14 @@ export class MovingTonesScene extends Phaser.Scene {
     await this.ttsService.preLoadTts('moving_tones');
     return new Promise<void>((resolve, reject) => {
       const startTime = new Date().getTime();
-      this.loadMusicFiles(genre);
+
+      // as afro music is unavailable, we are using classical music for afro.
+      if ((genre as Genre | 'afro') === 'afro') {
+        this.loadMusicFiles('jazz');
+      } else {
+        this.loadMusicFiles(genre);
+      }
+
       const intervalId = setInterval(() => {
         if (this.checkIfAssetsAreLoaded() && new Date().getTime() - startTime >= 2500) {
           clearInterval(intervalId);
@@ -962,9 +995,24 @@ export class MovingTonesScene extends Phaser.Scene {
   enableMusic(value = true) {
     this.music = value;
 
+    if (value) {
+      this.musicSubscription = this.circleEvents.subscribe((event: MovingTonesCircleEvent) => {
+        if (
+          (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
+          (event.circle.type === 'start' || event.circle.type === 'end') &&
+          event.trackId
+        ) {
+          this.successTrack && this.successTrack.stop(event.trackId);
+        }
+      });
+    }
+
     // unload music on disable.
     if (!value) {
+      this.backtrack && this.backtrack.unload();
+      this.successTrack && this.successTrack.unload();
       this.failureMusic && this.failureMusic.unload();
+      this.musicSubscription.unsubscribe();
     }
   }
 
@@ -1010,8 +1058,11 @@ export class MovingTonesScene extends Phaser.Scene {
       sprite: movingTonesAudio['classical'][randomSet].successTriggers,
       html5: true,
       onend: (id) => {
+        console.log('successTrackId::ended', id);
+        // forcefully stopping when the track ends. this will prevent the track from looping.
         this.successTrack.stop(id);
       },
+      volume: 1,
       onload: this.onLoadCallback,
       onloaderror: this.onLoadErrorCallback,
     });
@@ -1022,6 +1073,7 @@ export class MovingTonesScene extends Phaser.Scene {
   playBacktrack() {
     if (this.backtrack && !this.backtrack.playing(this.backtrackId)) {
       this.backtrackId = this.backtrack.play();
+      this.backtrack.volume(0.5, this.backtrackId);
     }
     return this.backtrackId;
   }
@@ -1035,10 +1087,24 @@ export class MovingTonesScene extends Phaser.Scene {
     }
   }
 
+  successTrackId!: number;
   playSuccessMusic(variation: string, variationNumber: number) {
+    if (!this.successTrack) return;
+
+    // if (this.successTrackId && this.successTrack.playing(this.successTrackId)) {
+    //   this.successTrack.stop(this.successTrackId);
+    // }
+
+    console.log('variation::', variation + '_' + variationNumber);
+    this.successTrackId = this.successTrack.play(variation + '_' + variationNumber);
+    console.log('successTrackId::', this.successTrackId);
+    this.successTrack.volume(1, this.successTrackId);
+    return this.successTrackId;
+  }
+
+  stopSuccessMusic(id?: number) {
     if (this.successTrack) {
-      console.log('variation::', variation + '_' + variationNumber);
-      this.successTrack.play(variation + '_' + variationNumber);
+      this.successTrack.stop(id);
     }
   }
 
@@ -1052,7 +1118,9 @@ export class MovingTonesScene extends Phaser.Scene {
         5: [7, 8, 9, 11, 12, 10],
       },
     };
-    return Phaser.Utils.Array.GetRandom(variations.classical[len]);
+    const randomVariation = Phaser.Utils.Array.GetRandom(variations.classical[len]);
+    console.log('randomVariations::', randomVariation);
+    return randomVariation;
   }
 
   center() {

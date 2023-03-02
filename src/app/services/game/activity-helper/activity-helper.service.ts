@@ -11,6 +11,8 @@ import { TtsService } from '../../tts/tts.service';
   providedIn: 'root',
 })
 export class ActivityHelperService {
+  public isLastActivity = false;
+
   constructor(
     private ttsService: TtsService,
     private elements: ElementsService,
