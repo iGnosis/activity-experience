@@ -1,4 +1,12 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CalibrationTutorialService } from 'src/app/services/elements/calibration-tutorial/calibration-tutorial.service';
 import { CalibrationTutorialElementState, ElementAttributes } from 'src/app/types/pointmotion';
@@ -14,6 +22,7 @@ export class CalibrationTutorialComponent implements OnInit, OnDestroy {
   @ViewChild('videoStep2') videoStep2: ElementRef;
   @ViewChild('videoStep3') videoStep3: ElementRef;
   currentVideoStep = 0;
+  @Output() onHide = new EventEmitter<any>();
 
   constructor(private calibrationTutorialService: CalibrationTutorialService) {}
 
@@ -29,6 +38,7 @@ export class CalibrationTutorialComponent implements OnInit, OnDestroy {
 
   hide() {
     this.calibrationTutorialService.hide();
+    this.onHide.emit();
   }
 
   videoEnded(step: number) {

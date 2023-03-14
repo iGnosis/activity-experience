@@ -6,11 +6,9 @@
   left: 0;
   // background-color: rgba(0, 0, 0, 0.5);
 
-  ::ng-deep {
-    .calibration-tutorial {
-      &:has(div.ct-container) {
-        z-index: 1;
-      }
+  .calibration-tutorial {
+    &.show {
+      z-index: 1;
     }
   }
   .reps {

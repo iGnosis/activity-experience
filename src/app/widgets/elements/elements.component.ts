@@ -10,6 +10,7 @@ import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 export class ElementsComponent implements OnInit, OnDestroy {
   state: ElementsState;
   observables$: ElementsObservables;
+  showCalibrationTutorial = true;
 
   constructor(private elements: ElementsService) {
     this.state = elements.getElementsState();

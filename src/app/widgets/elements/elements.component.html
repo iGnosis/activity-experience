@@ -1,7 +1,7 @@
 <div class="elements">
   <!-- {{ state | json }} -->
-  <div class="calibration-tutorial">
-    <element-calibration-tutorial></element-calibration-tutorial>
+  <div class="calibration-tutorial" [class.show]="showCalibrationTutorial">
+    <element-calibration-tutorial (onHide)="showCalibrationTutorial = false"></element-calibration-tutorial>
   </div>
   <div class="score">
     <!-- <label>{{state.score.data.label}}</label>
