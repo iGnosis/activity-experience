@@ -662,6 +662,10 @@ export type GameState = {
    */
   totalDuration?: number;
   /**
+   * Indicates total coins collected during a game. It is updated by server on game end.
+   */
+  totalCoins?: number;
+  /**
    * Analytics for the game.
    */
   analytics?: AnalyticsDTO[];
@@ -675,7 +679,7 @@ export type GameState = {
   calibrationDuration?: number;
 
   /**
-   * Stores game settings. such as timeout, and game current level.
+   * Stores settings the game was played on. eg. such as timeout, and game level.
    */
   settings?: any;
 };
