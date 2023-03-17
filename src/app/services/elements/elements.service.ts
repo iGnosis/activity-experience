@@ -4,6 +4,7 @@ import { BannerService } from './banner/banner.service';
 import { CalibrationTutorialService } from './calibration-tutorial/calibration-tutorial.service';
 import { ConfettiService } from './confetti/confetti.service';
 import { GuideService } from './guide/guide.service';
+import { HealthService } from './health/health.service';
 import { OverlayService } from './overlay/overlay.service';
 import { PromptService } from './prompt/prompt.service';
 import { RibbonService } from './ribbon/ribbon.service';
@@ -30,6 +31,7 @@ export class ElementsService {
     public confetti: ConfettiService,
     public toast: ToastService,
     public calibrationTutorialService: CalibrationTutorialService,
+    public health: HealthService,
   ) {}
 
   async sleep(timeout: number) {
@@ -54,6 +56,7 @@ export class ElementsService {
       confetti: this.confetti.subject,
       toast: this.toast.subject,
       calibrationTutorial: this.calibrationTutorialService.subject,
+      health: this.health.subject,
     };
   }
 
@@ -71,6 +74,7 @@ export class ElementsService {
       confetti: this.confetti.state,
       toast: this.toast.state,
       calibrationTutorial: this.calibrationTutorialService.state,
+      health: this.health.state,
     };
   }
 }

@@ -1,0 +1,26 @@
+.lifelines {
+  > .life {
+    transition: all 0.4s ease;
+    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.64);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+  }
+  &.full {
+    > .life.left {
+      background: rgba(0, 189, 62, 0.64);
+      border: 2px solid #00bd3e;
+    }
+  }
+  &.mid {
+    > .life.left {
+      background: rgba(255, 176, 0, 0.64);
+      border: 2px solid #ffb000;
+    }
+  }
+  &.low {
+    > .life.left {
+      background: rgba(235, 0, 0, 0.64);
+      border: 2px solid #eb0000;
+    }
+  }
+}

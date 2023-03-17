@@ -25,6 +25,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { environment } from 'src/environments/environment';
 import { ToastComponent } from './widgets/elements/toast/toast.component';
 import { CalibrationTutorialComponent } from './widgets/elements/calibration-tutorial/calibration-tutorial.component';
+import { HealthComponent } from './widgets/elements/health/health.component';
 
 export let AppInjector: Injector;
 
@@ -46,6 +47,7 @@ export let AppInjector: Injector;
     BannerComponent,
     SafePipe,
     CalibrationTutorialComponent,
+    HealthComponent,
   ],
   imports: [
     BrowserModule,

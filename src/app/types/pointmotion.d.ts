@@ -922,6 +922,18 @@ export type RibbonElementState = {
   tts?: boolean;
 };
 
+export type HealthElementState = {
+  /**
+   * Set the health value.
+   * * Note: The value should be between 0 and total.
+   */
+  value: number;
+  /**
+   * Set the total health value.
+   */
+  total: number;
+};
+
 export type ElementsState = {
   score: { data: ScoreElementState; attributes: ElementAttributes };
   timer: { data: TimerElementState; attributes: ElementAttributes };
@@ -935,6 +947,7 @@ export type ElementsState = {
   confetti: { data: ConfettiElementState; attributes: ElementAttributes };
   toast: { data: ToastElementState; attributes: ElementAttributes };
   calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
+  health: { data: HealthElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -953,6 +966,7 @@ export type ElementsObservables = {
     data: CalibrationTutorialElementState;
     attributes: ElementAttributes;
   }>;
+  health: Observable<{ data: HealthElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
