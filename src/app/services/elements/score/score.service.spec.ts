@@ -22,8 +22,13 @@ describe('RepsService', () => {
   it('should setup initial state', () => {
     expect(service._state).toEqual({
       data: {
-        label: 'Score',
-        value: '0',
+        score: 0,
+        icon: '/assets/images/xp-coin.png',
+        position: {
+          top: '50%',
+          left: '75%',
+        },
+        showScoreGained: true,
       },
       attributes: {},
     });
