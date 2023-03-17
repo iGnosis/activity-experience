@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
+import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 import { Howl } from 'howler';
+import { Vector } from 'matter';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
@@ -69,13 +71,14 @@ export class SoundExplorerScene extends Phaser.Scene {
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     shape: GameObjectWithBodyAndTexture,
   ) => {
-    if (!shape.texture) return;
+    const texture: string = shape.getData('shape');
+    if (!texture) return;
 
     // coordinates to play the success and failure animations
     const [x, y] = this.getCenter(shape);
 
     // updating the score, if the shape is not X shape.
-    if (shape.texture.key !== TextureKeys.WRONG) {
+    if (texture !== 'wrong') {
       this.currentScore += 1;
       console.log('score: ', this.currentScore);
       this.score.next(this.currentScore);
@@ -85,10 +88,10 @@ export class SoundExplorerScene extends Phaser.Scene {
       this.add.sprite(x, y, TextureKeys.CONCENTRIC_CIRCLES).play(AnimationKeys.CIRCLES_ANIM);
 
       // to play success music based on the shape
-      console.log('play successMusic', shape.texture.key);
+      console.log('play successMusic', texture);
 
       if (this.music) {
-        this.playSuccessMusic(shape.texture.key, this.genre, this.currentSet);
+        this.playSuccessMusic(texture, this.genre, this.currentSet);
       } else {
         this.soundsService.playCalibrationSound('success');
       }
@@ -336,39 +339,59 @@ export class SoundExplorerScene extends Phaser.Scene {
   showShapes(shapes: Shape[], origin: Origin, angle: number, velocity: number) {
     if (!this.group) return;
     let shapeScale = 0.04;
+    let pulseColor = 0x00bd3e;
 
-    // this.setNextNote();
-
-    // const velocityX = velocity * Math.cos(angle);
-    // const velocityY = -velocity * Math.sin(angle);
     for (const shape of shapes) {
+      if (shape === undefined) return;
+
       if (shape === 'wrong') {
         shapeScale = 0.048;
+        pulseColor = 0xf73636;
       }
 
       const [originX, originY] = this.getOrigin(origin);
       const textureKey = this.getTextureKey(shape);
 
-      console.log('OriginPoint::x:', originX);
-      console.log('OriginPoint::y:', originY);
+      const container = this.add.container(originX, originY);
+      container.setSize(64, 64);
 
-      const gameObject = this.physics.add.sprite(originX, originY, textureKey).setScale(shapeScale);
-      // console.log('showShapes::gameObject:', gameObject);
-      gameObject.body.onWorldBounds = true;
-      this.group && this.group.add(gameObject);
+      const gameObject = this.add.sprite(0, 0, textureKey).setScale(shapeScale);
+      const pulse = this.add.circle(0, 0, 25, pulseColor).setDepth(-1).setAlpha(0.5);
+      this.tweens.addCounter({
+        from: 1.2,
+        to: 2,
+        duration: 300,
+        repeat: -1,
+        yoyo: true,
+        onUpdate: (tw) => {
+          pulse.setScale(tw.getValue());
+        },
+      });
+
+      container.add([pulse, gameObject]);
+      this.physics.world.enable(container);
+
+      (container.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true);
+      (container.body as Phaser.Physics.Arcade.Body).onWorldBounds = true;
+
+      // setting data to identify the shape in collisionCallback.
+      container.setData('shape', shape);
+
+      console.log('showShapes::gameObject:', gameObject);
+      this.group && this.group.add(container);
 
       if (origin === 'top-left' || origin === 'top-right') {
         // reducing the velocity of shapes falling from top..
         this.physics.velocityFromRotation(
           Phaser.Math.DegToRad(angle),
           velocity - 150,
-          gameObject.body.velocity,
+          container.body.velocity as Phaser.Math.Vector2,
         );
       } else {
         this.physics.velocityFromRotation(
           Phaser.Math.DegToRad(angle),
           velocity + 50,
-          gameObject.body.velocity,
+          container.body.velocity as Phaser.Math.Vector2,
         );
       }
     }

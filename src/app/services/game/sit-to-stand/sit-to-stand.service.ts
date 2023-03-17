@@ -1173,7 +1173,7 @@ export class SitToStandService implements ActivityBase {
     };
     const hasUserStateChanged: boolean =
       analytics.length > 0 ? analytics.slice(-1)[0].reaction.type !== res.currentClass : true;
-    const analyticsObj = {
+    const analyticsObj: AnalyticsDTO = {
       prompt: {
         id: promptId,
         type: promptClass,
@@ -1195,6 +1195,7 @@ export class SitToStandService implements ActivityBase {
         type: res.result,
         timestamp: resultTimestamp,
         score: res.result === 'success' ? 1 : 0,
+        coin: 0,
       },
     };
 
@@ -1510,6 +1511,7 @@ export class SitToStandService implements ActivityBase {
             type: startResult,
             timestamp: Date.now(),
             score: 0,
+            coin: 0,
           },
         };
         this.analytics.push(startPrompt);

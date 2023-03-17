@@ -573,7 +573,11 @@ export type AnalyticsReactionDTO = {
 export type AnalyticsResultDTO = {
   type: 'success' | 'failure';
   timestamp: number;
+  /**
+   * @deprecated Type `score` will be removed in future versions, please use `coin` instead.
+   */
   score: number;
+  coin: number;
 };
 
 // individual game data
@@ -658,6 +662,10 @@ export type GameState = {
    */
   totalDuration?: number;
   /**
+   * Indicates total coins collected during a game. It is updated by server on game end.
+   */
+  totalCoins?: number;
+  /**
    * Analytics for the game.
    */
   analytics?: AnalyticsDTO[];
@@ -671,7 +679,7 @@ export type GameState = {
   calibrationDuration?: number;
 
   /**
-   * Stores game settings. such as timeout, and game current level.
+   * Stores settings the game was played on. eg. such as timeout, and game level.
    */
   settings?: any;
 };

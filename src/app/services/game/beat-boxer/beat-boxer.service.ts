@@ -613,7 +613,7 @@ export class BeatBoxerService {
     this.totalReps++;
     // Todo: replace placeholder values with actual values
     const hasUserInteracted: boolean = rep.result !== undefined;
-    const analyticsObj = {
+    const analyticsObj: AnalyticsDTO = {
       prompt: {
         id: promptId,
         type: 'bag',
@@ -634,6 +634,7 @@ export class BeatBoxerService {
         type: rep.result || 'failure',
         timestamp: resultTimestamp,
         score: rep.result === 'success' ? 1 : 0,
+        coin: 0,
       },
     };
     if (rep.result === 'success') {
@@ -819,6 +820,7 @@ export class BeatBoxerService {
             type: startResult,
             timestamp: Date.now(),
             score: 0,
+            coin: 0,
           },
         };
         this.analytics.push(startPrompt);

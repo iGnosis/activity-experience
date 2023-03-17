@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import {
   ActivityBase,
   ActivityConfiguration,
+  AnalyticsDTO,
   Coordinate,
   GameState,
   Genre,
@@ -641,7 +642,7 @@ export class MovingTonesService implements ActivityBase {
       const resultStatus: 'success' | 'failure' = 'success';
 
       // Todo: store in analytics
-      const analyticsObj = {
+      const analyticsObj: AnalyticsDTO = {
         prompt: {
           id: uuidv4(),
           type: 'circles',
@@ -661,6 +662,7 @@ export class MovingTonesService implements ActivityBase {
           type: resultStatus,
           timestamp: resultTimestamp,
           score: 1,
+          coin: 0,
         },
       };
       this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));

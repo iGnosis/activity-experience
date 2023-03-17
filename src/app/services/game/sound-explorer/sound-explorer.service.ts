@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
+  AnalyticsDTO,
   AnalyticsResultDTO,
   GameState,
   Genre,
@@ -597,7 +598,7 @@ export class SoundExplorerService {
     }
 
     // Todo: replace placeholder analytics values.
-    const analyticsObj = {
+    const analyticsObj: AnalyticsDTO = {
       prompt: {
         id: promptId,
         type: this.difficulty === 1 ? 'single' : this.difficulty === 2 ? 'harmony' : 'chord',
@@ -619,6 +620,7 @@ export class SoundExplorerService {
         type: this.pointsGained <= 0 ? 'failure' : ('success' as AnalyticsResultDTO['type']),
         timestamp: resultTimestamp,
         score: this.pointsGained,
+        coin: this.pointsGained,
       },
     };
 
@@ -720,6 +722,7 @@ export class SoundExplorerService {
             type: startResult,
             timestamp: Date.now(),
             score: 0,
+            coin: 0,
           },
         };
         this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
