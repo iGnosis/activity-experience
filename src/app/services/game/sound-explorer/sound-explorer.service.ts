@@ -691,8 +691,8 @@ export class SoundExplorerService {
               reCalibrationCount,
             },
             data: {
-              label: 'Score',
-              value: score,
+              score,
+              showScoreGained: false,
             },
           };
           this.pointsGained += score - this.currentScore; // points obtained in current rep

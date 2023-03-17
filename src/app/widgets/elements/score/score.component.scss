@@ -1,3 +1,17 @@
-span {
-    opacity: 0;
+$outline-color: #ffb000;
+.text-outline {
+  text-shadow: -1px -1px 0 $outline-color, 1px -1px 0 $outline-color, -1px 1px 0 $outline-color,
+    1px 1px 0 $outline-color;
+}
+
+.collected-score {
+  top: 3rem;
+  left: 3rem;
+  opacity: 0;
+}
+.text-gradient {
+  background: linear-gradient(225deg, #ffef5e 0%, #f7936f 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

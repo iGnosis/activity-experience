@@ -686,6 +686,7 @@ export type GameState = {
 
 export type ScoreElementState = {
   /**
+   * Deprecated.
    * Inputs a string that appears as label for the score element
    */
   label?: string;
@@ -694,18 +695,41 @@ export type ScoreElementState = {
    */
   icon?: string;
   /**
+   * Deprecated. Use `score` instead.
    * Inputs a number or string as the current score
    */
   value?: number | string;
+  /**
+   * Deprecated.
+   */
+  goal?: number | string;
+
+  /**
+   * Inputs a number or string as the current score
+   */
+  score?: number;
   /**
    * Inputs a number as high score
    */
   highScore?: number;
   /**
-   * Inputs a number as the amount of time between each score update
+   * Inputs a number as the combo count
    */
-  goal?: number | string;
+  combo?: number;
   transitionDuration?: number;
+  /**
+   * Starting position of the score element.
+   */
+  position?: {
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+  };
+  /**
+   * Decides whether to show the score gained and the combo
+   */
+  showScoreGained?: boolean;
 };
 
 export type TimerElementState = {

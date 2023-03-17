@@ -217,60 +217,60 @@ export class SitToStandService implements ActivityBase {
         await this.elements.sleep(2500);
       },
       async (reCalibrationCount: number) => {
-        this.elements.overlay.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            cards: [
-              {
-                icon: '/assets/images/overlay_icons/Protect.jpg',
-                message: 'Safety above all',
-                tts: "Please make sure you're in a safe environment.",
-              },
-              {
-                icon: '/assets/images/overlay_icons/T_Pose.jpg',
-                message: 'Space to move',
-                tts: "You'll need enough space to freely move.",
-              },
-              {
-                icon: '/assets/images/overlay_icons/Waiting.jpg',
-                message: 'Rest if you feel tired',
-                tts: 'Take a break if you feel tired.',
-              },
-            ],
-            transitionDuration: 4000,
-          },
-        };
-        await this.elements.sleep(18000);
+        // this.elements.overlay.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     cards: [
+        //       {
+        //         icon: '/assets/images/overlay_icons/Protect.jpg',
+        //         message: 'Safety above all',
+        //         tts: "Please make sure you're in a safe environment.",
+        //       },
+        //       {
+        //         icon: '/assets/images/overlay_icons/T_Pose.jpg',
+        //         message: 'Space to move',
+        //         tts: "You'll need enough space to freely move.",
+        //       },
+        //       {
+        //         icon: '/assets/images/overlay_icons/Waiting.jpg',
+        //         message: 'Rest if you feel tired',
+        //         tts: 'Take a break if you feel tired.',
+        //       },
+        //     ],
+        //     transitionDuration: 4000,
+        //   },
+        // };
+        // await this.elements.sleep(18000);
       },
       async (reCalibrationCount: number) => {
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'intro',
-            htmlStr: `
-            <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-              <h1 class="pt-2">Next Activity</h2>
-              <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
-              <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-              <h1 class="pt-2">Balance and Reaction Time</h2>
-            </div>
-            `,
-            buttons: [
-              {
-                title: 'Starting Sit, Stand, Achieve',
-                progressDurationMs: 5000,
-              },
-            ],
-          },
-        };
-        this.ttsService.tts('Starting Sit, Stand, Achieve');
-        await this.elements.sleep(7000);
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'intro',
+        //     htmlStr: `
+        //     <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
+        //       <h1 class="pt-2">Next Activity</h2>
+        //       <h1 class="pt-6 display-4">Sit, Stand, Achieve</h1>
+        //       <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
+        //       <h1 class="pt-2">Balance and Reaction Time</h2>
+        //     </div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Starting Sit, Stand, Achieve',
+        //         progressDurationMs: 5000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // this.ttsService.tts('Starting Sit, Stand, Achieve');
+        // await this.elements.sleep(7000);
       },
       async (reCalibrationCount: number) => {
         this.elements.guide.state = {
@@ -1310,8 +1310,11 @@ export class SitToStandService implements ActivityBase {
         this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
         this.elements.score.state = {
           data: {
-            label: 'Motion',
-            value: this.successfulReps.toString(),
+            score: this.successfulReps,
+            position: {
+              top: '30%',
+              left: '80%',
+            },
           },
           attributes: {
             visibility: 'visible',
@@ -1464,8 +1467,11 @@ export class SitToStandService implements ActivityBase {
         this.sit2StandScene.playBacktrack(this.genre);
         this.elements.score.state = {
           data: {
-            label: 'Motion',
-            value: 0,
+            score: 0,
+            position: {
+              top: '30%',
+              left: '80%',
+            },
           },
           attributes: {
             visibility: 'visible',

@@ -651,8 +651,8 @@ export class BeatBoxerService {
       this.store.dispatch(game.setScore({ score: this.successfulReps }));
       this.elements.score.state = {
         data: {
-          label: 'Punches',
-          value: this.successfulReps,
+          score: this.successfulReps,
+          showScoreGained: false,
         },
         attributes: {
           visibility: 'visible',
@@ -760,8 +760,8 @@ export class BeatBoxerService {
         this.beatBoxerScene.playBacktrack();
         this.elements.score.state = {
           data: {
-            label: 'Punches',
-            value: '0',
+            score: 0,
+            showScoreGained: false,
           },
           attributes: {
             visibility: 'visible',

@@ -1303,8 +1303,8 @@ export class MovingTonesService implements ActivityBase {
               reCalibrationCount,
             },
             data: {
-              icon: '/assets/images/moving_tones/coin.png',
-              value: this.coinsCollected,
+              score: this.coinsCollected,
+              showScoreGained: false,
             },
           };
         });

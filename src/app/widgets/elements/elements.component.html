@@ -3,11 +3,6 @@
   <div class="calibration-tutorial" [class.show]="showCalibrationTutorial">
     <element-calibration-tutorial (onHide)="showCalibrationTutorial = false"></element-calibration-tutorial>
   </div>
-  <div class="score">
-    <!-- <label>{{state.score.data.label}}</label>
-        <span>{{state.score.data.value}}</span> -->
-    <element-score></element-score>
-  </div>
 
   <div class="health">
     <element-health></element-health>
@@ -19,6 +14,12 @@
 
   <div class="prompt">
     <element-prompt></element-prompt>
+  </div>
+
+  <div class="score">
+    <!-- <label>{{state.score.data.label}}</label>
+        <span>{{state.score.data.value}}</span> -->
+    <element-score></element-score>
   </div>
 
   <div class="timeout">
