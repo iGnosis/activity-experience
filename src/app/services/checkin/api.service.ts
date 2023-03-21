@@ -256,6 +256,20 @@ export class ApiService {
     }
   }
 
+  async getHighScoreXP(game: string) {
+    try {
+      const patientId = localStorage.getItem('patient');
+      const resp = await this.client.req(GqlConstants.GET_HIGHSCORE_XP, {
+        patientId,
+        game,
+      });
+
+      return resp.game[0].totalXpCoins;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async getOrganizationConfig(name: string) {
     try {
       const response = await this.client.req(GqlConstants.GET_ORGANIZATION_CONFIG, { name });

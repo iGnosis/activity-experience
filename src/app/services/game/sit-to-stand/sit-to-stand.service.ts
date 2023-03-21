@@ -60,6 +60,7 @@ export class SitToStandService implements ActivityBase {
   private score = 0;
 
   private analytics: AnalyticsDTO[] = [];
+  private highScore = 0;
 
   /**
    * @description
@@ -144,6 +145,8 @@ export class SitToStandService implements ActivityBase {
     this.store.dispatch(
       game.saveGameSettings({ settings: { ...this.config, level: this.currentLevel } }),
     );
+
+    this.highScore = await this.apiService.getHighScoreXP('sit_stand_achieve');
 
     this.sit2StandService.enable();
   }
@@ -1299,7 +1302,7 @@ export class SitToStandService implements ActivityBase {
                 data: {
                   color: '#67E9F1',
                   text: 'Excellent x4',
-                  xpos: '18vw',
+                  xpos: res.timeoutDuration + 'vw',
                 },
               },
               attributes: {
@@ -1316,7 +1319,7 @@ export class SitToStandService implements ActivityBase {
                 data: {
                   color: '#8CDFB3',
                   text: 'Great x3',
-                  xpos: '35vw',
+                  xpos: res.timeoutDuration + 'vw',
                 },
               },
               attributes: {
@@ -1333,7 +1336,7 @@ export class SitToStandService implements ActivityBase {
                 data: {
                   color: '#DEFFEE',
                   text: 'Good x2',
-                  xpos: '50wv',
+                  xpos: res.timeoutDuration + 'vw',
                 },
               },
               attributes: {
@@ -1390,6 +1393,7 @@ export class SitToStandService implements ActivityBase {
           data: {
             score: this.score,
             combo: this.comboStreak,
+            highScore: this.highScore,
           },
           attributes: {
             visibility: 'visible',
@@ -1593,6 +1597,7 @@ export class SitToStandService implements ActivityBase {
               top: '30%',
               left: '80%',
             },
+            highScore: this.highScore,
           },
           attributes: {
             visibility: 'visible',

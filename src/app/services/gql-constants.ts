@@ -159,7 +159,7 @@ export const GqlConstants = {
       id
       settings
     }
-  }  
+  }
   `,
   GET_BENCHMARK_GAME: `
   query GetBenchmarkGame($id: uuid = "") {
@@ -202,4 +202,10 @@ export const GqlConstants = {
     }
   }
 `,
+  GET_HIGHSCORE_XP: `
+  query GetHighScore($patientId: uuid!, $game: game_name_enum = beat_boxer) {
+  game(where: {patient: {_eq: $patientId}, game: {_eq: $game}, endedAt: {_is_null: false}}, order_by: {totalXpCoins: desc}, limit: 1) {
+    totalXpCoins
+  }
+}`,
 };

@@ -136,7 +136,7 @@ export class SitToStandService {
             resolve({
               result: 'success',
               currentClass: this.currentClass,
-              timeoutDuration: (new Date().getTime() - startTime / timeout) * 100,
+              timeoutDuration: ((new Date().getTime() - startTime) / timeout) * 100,
             });
             clearInterval(interval);
           }
