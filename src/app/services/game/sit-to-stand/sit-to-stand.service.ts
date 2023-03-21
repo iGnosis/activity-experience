@@ -46,7 +46,7 @@ export class SitToStandService implements ActivityBase {
   private failedReps = 0;
   private totalReps = 0;
 
-  private targetReps = this.config.minCorrectReps;
+  // private targetReps = this.config.minCorrectReps;
   private totalDuration = 0;
 
   private shouldReplay = false;
@@ -54,6 +54,10 @@ export class SitToStandService implements ActivityBase {
   private gameStartTime: number | null;
   private firstPromptTime: number | null;
   private loopStartTime: number | null;
+
+  private comboStreak = 0;
+  private health = 3;
+  private score = 0;
 
   private analytics: AnalyticsDTO[] = [];
 
@@ -1233,7 +1237,7 @@ export class SitToStandService implements ActivityBase {
 
   private async game(reCalibrationCount?: number) {
     this.sit2StandScene.enableMusic();
-    while (this.successfulReps < this.targetReps!) {
+    while (this.health > 0) {
       if (reCalibrationCount !== this.globalReCalibrationCount) {
         throw new Error('reCalibrationCount changed');
       }
@@ -1241,20 +1245,6 @@ export class SitToStandService implements ActivityBase {
       const result = this.getRandomPromptExpression();
       let promptNum = result.promptNum;
       let stringExpression = result.stringExpression;
-
-      if (this.targetReps! - this.successfulReps === 3) {
-        this.ttsService.tts('Last few reps remaining.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Last few reps remaining.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-      }
 
       // checking if not more than two even or two odd in a row.
       if (this.analytics && this.analytics.length >= 2) {
@@ -1291,10 +1281,122 @@ export class SitToStandService implements ActivityBase {
         reCalibrationCount,
         stringExpression,
       );
-      this.analytics.push(analyticsObj);
 
-      this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
       if (res.result === 'success') {
+        this.comboStreak += 1;
+
+        // get timeout duration and calculate score
+
+        let score = 0;
+        if (res.timeoutDuration) {
+          if (res.timeoutDuration < 25) {
+            score = this.comboStreak * 4;
+            this.score += this.comboStreak * 4;
+
+            this.elements.timeout.state = {
+              data: {
+                mode: 'show_score',
+                data: {
+                  color: '#67E9F1',
+                  text: 'Excellent x4',
+                  xpos: '18vw',
+                },
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          } else if (res.timeoutDuration < 50) {
+            score = this.comboStreak * 3;
+            this.score += this.comboStreak * 3;
+            this.elements.timeout.state = {
+              data: {
+                mode: 'show_score',
+                data: {
+                  color: '#8CDFB3',
+                  text: 'Great x3',
+                  xpos: '35vw',
+                },
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          } else if (res.timeoutDuration < 75) {
+            score = this.comboStreak * 2;
+            this.score += this.comboStreak * 2;
+            this.elements.timeout.state = {
+              data: {
+                mode: 'show_score',
+                data: {
+                  color: '#DEFFEE',
+                  text: 'Good x2',
+                  xpos: '50wv',
+                },
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          } else {
+            score = this.comboStreak;
+            this.score += this.comboStreak;
+
+            this.elements.timeout.state = {
+              data: {
+                mode: 'show_score',
+                data: {
+                  color: '#ffff00',
+                  text: 'Average x1',
+                  xpos: '80vw',
+                },
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        } else {
+          if (res.isConsecutive) {
+            score = this.comboStreak * 2;
+            this.score += this.comboStreak * 2;
+
+            this.elements.timeout.state = {
+              data: {
+                mode: 'show_score',
+                data: {
+                  color: '#DEFFEE',
+                  text: 'Good x2',
+                  xpos: '80vw',
+                },
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+          }
+        }
+
+        analyticsObj.result.coin = score;
+        this.analytics.push(analyticsObj);
+        this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+
+        this.elements.score.state = {
+          data: {
+            score: this.score,
+            combo: this.comboStreak,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
         this.sit2StandScene.playTrigger(this.genre);
         this.elements.prompt.state = {
           data: {
@@ -1325,6 +1427,25 @@ export class SitToStandService implements ActivityBase {
         if (++this.streak === this.levelUpStreak) this.shouldLevelUp = true;
       } else {
         this.soundsService.playCalibrationSound('error');
+
+        // reducing health if user fails
+        this.health -= 1;
+        this.elements.health.state = {
+          data: {
+            total: 3,
+            value: this.health,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        // reset combo
+        this.comboStreak = 0;
+
+        this.analytics.push(analyticsObj);
+        this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+
         this.elements.prompt.state = {
           data: {
             repStatus: res.result,
@@ -1478,22 +1599,34 @@ export class SitToStandService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        const updateElapsedTime = (elapsedTime: number) => {
-          this.totalDuration += elapsedTime;
-          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
-        };
-        this.elements.timer.state = {
+
+        this.elements.health.state = {
           data: {
-            mode: 'start',
-            duration: 60 * 60 * 1000,
-            onPause: updateElapsedTime,
-            onComplete: updateElapsedTime,
+            total: 3,
+            value: this.health,
           },
           attributes: {
             visibility: 'visible',
             reCalibrationCount,
           },
         };
+
+        const updateElapsedTime = (elapsedTime: number) => {
+          this.totalDuration += elapsedTime;
+          this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
+        };
+        // this.elements.timer.state = {
+        //   data: {
+        //     mode: 'start',
+        //     duration: 60 * 60 * 1000,
+        //     onPause: updateElapsedTime,
+        //     onComplete: updateElapsedTime,
+        //   },
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        // };
 
         const startResult: 'success' | 'failure' = 'success';
         const startPrompt = {
@@ -1554,87 +1687,88 @@ export class SitToStandService implements ActivityBase {
 
         if (!shouldAllowReplay) return;
 
-        this.ttsService.tts(
-          'Raise both your hands if you want to add 10 more reps to this activity.',
-        );
-        this.elements.guide.state = {
-          data: {
-            title: 'Raise both your hands to add 10 reps.',
-            showIndefinitely: true,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'action',
-            htmlStr: `
-              <div class="text-center row">
-                <h1 class="pt-4 display-3">Times Up!</h1>
-                <h2 class="pb-8 display-6">Want to improve your score?</h2>
-                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 10 more reps</span></button>
-              <div>
-            `,
-            buttons: [
-              {
-                title: 'Continue',
-                progressDurationMs: 9000,
-              },
-            ],
-          },
-        };
-        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
-        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
-          this.shouldReplay = this.qaGameSettings.extendGameDuration;
-        }
-        this.elements.banner.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        if (this.shouldReplay) {
-          this.soundsService.playCalibrationSound('success');
+        // TODO: remove this replay code, If it's not needed
+        // this.ttsService.tts(
+        //   'Raise both your hands if you want to add 10 more reps to this activity.',
+        // );
+        // this.elements.guide.state = {
+        //   data: {
+        //     title: 'Raise both your hands to add 10 reps.',
+        //     showIndefinitely: true,
+        //   },
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        // };
+        // this.elements.banner.state = {
+        //   attributes: {
+        //     visibility: 'visible',
+        //     reCalibrationCount,
+        //   },
+        //   data: {
+        //     type: 'action',
+        //     htmlStr: `
+        //       <div class="text-center row">
+        //         <h1 class="pt-4 display-3">Times Up!</h1>
+        //         <h2 class="pb-8 display-6">Want to improve your score?</h2>
+        //         <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 10 more reps</span></button>
+        //       <div>
+        //     `,
+        //     buttons: [
+        //       {
+        //         title: 'Continue',
+        //         progressDurationMs: 9000,
+        //       },
+        //     ],
+        //   },
+        // };
+        // this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
+        // if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
+        //   this.shouldReplay = this.qaGameSettings.extendGameDuration;
+        // }
+        // this.elements.banner.attributes = {
+        //   visibility: 'hidden',
+        //   reCalibrationCount,
+        // };
+        // this.elements.guide.attributes = {
+        //   visibility: 'hidden',
+        //   reCalibrationCount,
+        // };
+        // if (this.shouldReplay) {
+        //   this.soundsService.playCalibrationSound('success');
 
-          this.targetReps! += 10;
+        // this.targetReps! += 10;
 
-          const updateElapsedTime = (elapsedTime: number) => {
-            this.totalDuration += elapsedTime;
-            this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
-          };
-          this.elements.timer.state = {
-            data: {
-              mode: 'start',
-              duration: 60 * 60 * 1000,
-              onPause: updateElapsedTime,
-              onComplete: updateElapsedTime,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-        }
+        //   const updateElapsedTime = (elapsedTime: number) => {
+        //     this.totalDuration += elapsedTime;
+        //     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: this.totalDuration }));
+        //   };
+        //   this.elements.timer.state = {
+        //     data: {
+        //       mode: 'start',
+        //       duration: 60 * 60 * 1000,
+        //       onPause: updateElapsedTime,
+        //       onComplete: updateElapsedTime,
+        //     },
+        //     attributes: {
+        //       visibility: 'visible',
+        //       reCalibrationCount,
+        //     },
+        //   };
+        // }
       },
       async (reCalibrationCount: number) => {
         await this.game(reCalibrationCount);
-        this.elements.timer.state = {
-          data: {
-            mode: 'stop',
-          },
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
+        // this.elements.timer.state = {
+        //   data: {
+        //     mode: 'stop',
+        //   },
+        //   attributes: {
+        //     visibility: 'hidden',
+        //     reCalibrationCount,
+        //   },
+        // };
         this.elements.score.state = {
           data: {},
           attributes: {

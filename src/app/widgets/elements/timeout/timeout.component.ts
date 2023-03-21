@@ -1,4 +1,4 @@
-import { animate, keyframes, style, transition, trigger } from '@angular/animations';
+import { animate, keyframes, state, style, transition, trigger } from '@angular/animations';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription, timer } from 'rxjs';
 import { TimeoutService } from 'src/app/services/elements/timeout/timeout.service';
@@ -17,12 +17,31 @@ import { ElementAttributes, TimeoutColor, TimeoutElementState } from 'src/app/ty
         ),
       ]),
     ]),
+    trigger('riseUp', [
+      state(
+        'closed',
+        style({
+          opacity: 0,
+        }),
+      ),
+      state('open', style({ opacity: 1 })),
+      transition('closed => open', [
+        animate(
+          '0.5s ease-in',
+          keyframes([
+            style({ transform: 'translate({{x}},100vh)', opacity: 1 }),
+            style({ transform: 'translate({{x}}, 85vh)', opacity: 1 }),
+          ]),
+        ),
+      ]),
+    ]),
   ],
 })
 export class TimeoutComponent implements OnInit, OnDestroy {
   subscription: Subscription;
   state: TimeoutElementState;
   attributes: ElementAttributes;
+  data: TimeoutElementState['data'];
   source: Observable<number>;
   timer: Subscription;
   isTimeOutRunning = false;
@@ -42,7 +61,7 @@ export class TimeoutComponent implements OnInit, OnDestroy {
     this.subscription = this.timeoutService.subject.subscribe((state) => {
       this.state = state.data;
       this.attributes = state.attributes;
-      const { mode, timeout } = state.data;
+      const { mode, timeout, data } = state.data;
       switch (mode) {
         case 'start':
           if (timeout) {
@@ -52,8 +71,29 @@ export class TimeoutComponent implements OnInit, OnDestroy {
         case 'stop':
           this.handleStopTimer();
           break;
+
+        case 'show_score':
+          if (data) {
+            this.handleShowScore(data);
+            this.data = data;
+          }
+          break;
       }
     });
+  }
+
+  text: string;
+  color: string;
+  xpos: string;
+  animationState = 'closed';
+  handleShowScore(data: { text: string; color: string; xpos: string }) {
+    this.animationState = 'open';
+    this.text = data.text;
+    this.color = data.color;
+    this.xpos = data.xpos;
+    setTimeout(() => {
+      this.animationState = 'closed';
+    }, 1000);
   }
 
   handleStartTimer(timeOutDuration: number) {
@@ -61,7 +101,6 @@ export class TimeoutComponent implements OnInit, OnDestroy {
       return;
     }
     this.source = timer(0, 1000);
-    console.log('timer Started');
     this.isTimeOutRunning = true;
     this.timer = this.source.subscribe((val) => {
       if (val * 1000 >= timeOutDuration) {
@@ -77,6 +116,5 @@ export class TimeoutComponent implements OnInit, OnDestroy {
     this.timer && this.timer.unsubscribe();
     this.isTimeOutRunning = false;
     this.timeoutService.hide();
-    console.log('timer stopped');
   }
 }

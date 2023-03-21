@@ -98,6 +98,8 @@ export class SitToStandService {
   ): Promise<{
     result: 'success' | 'failure';
     currentClass: 'unknown' | 'disabled' | 'sit' | 'stand';
+    timeoutDuration?: number;
+    isConsecutive?: boolean;
   }> {
     return new Promise((resolve) => {
       if (this.currentClass === desiredClass) {
@@ -108,6 +110,7 @@ export class SitToStandService {
               resolve({
                 result: 'success',
                 currentClass: this.currentClass,
+                isConsecutive: true,
               });
               clearInterval(interval);
             } else {
@@ -133,6 +136,7 @@ export class SitToStandService {
             resolve({
               result: 'success',
               currentClass: this.currentClass,
+              timeoutDuration: (new Date().getTime() - startTime / timeout) * 100,
             });
             clearInterval(interval);
           }

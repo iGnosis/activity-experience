@@ -894,11 +894,16 @@ export type TimeoutElementState = {
    * Timeout can be controlled using the modes.
    * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
-  mode?: 'start' | 'stop';
+  mode?: 'start' | 'stop' | 'show_score';
   /**
    * Duration of the timeout in ms.
    */
   timeout?: number;
+  data?: {
+    text: string;
+    color: string;
+    xpos: string;
+  };
   /**
    * Determines the number of progress bars and the color of each bar (max 2)
    */

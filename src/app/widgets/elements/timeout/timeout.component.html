@@ -1,8 +1,18 @@
 <div *ngIf="attributes && attributes.visibility === 'visible'" class="timer row">
-    <div *ngIf="state.bars && state.bars[0]" class="first col p-0 position-relative">
-        <div class="position-absolute start-0" [ngStyle]="{ 'background-color': colors[state.bars[0]] }" [@timeOut]="{value:'', params:{duration : state.timeout}}" #timer></div>
-    </div>
-    <div *ngIf="state.bars && state.bars[1]" class="second col p-0 position-relative">
-        <div class="position-absolute end-0" [ngStyle]="{ 'background-color': colors[state.bars[1]] }" [@timeOut]="{value:'', params:{duration : state.timeout}}" #timer></div>
-    </div>
+  <div *ngIf="state.bars && state.bars[0]" class="first col p-0 position-relative">
+    <div class="position-absolute start-0" [ngStyle]="{ 'background-color': colors[state.bars[0]] }"
+      [@timeOut]="{value:'', params:{duration : state.timeout}}" #timer></div>
+  </div>
+  <div *ngIf="state.bars && state.bars[1]" class="second col p-0 position-relative">
+    <div class="position-absolute end-0" [ngStyle]="{ 'background-color': colors[state.bars[1]] }"
+      [@timeOut]="{value:'', params:{duration : state.timeout}}" #timer></div>
+  </div>
+</div>
+
+
+
+<div *ngIf="attributes && attributes.visibility === 'visible'" style="position: absolute;"
+  [style.transform]="'translate(' + (data && data.xpos || '20vw') + ',85vh)'"
+  [@riseUp]="{value: animationState, params: {x: (data && data.xpos) || '20vw'}}">
+  <p class="show-score" [style.color]="(data && data.color) || '#DEFFEE'">{{text}}</p>
 </div>
