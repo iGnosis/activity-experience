@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
@@ -72,6 +72,10 @@ export class BeatBoxerScene extends Phaser.Scene {
   private totalMusicFiles!: number;
   private loadError = false;
 
+  beatBoxerEvents = new Subject<{
+    result: 'success' | 'failure';
+  }>();
+
   private blueGloveCollisionCallback = async (
     _blueGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     _gameObject: GameObjectWithBodyAndTexture,
@@ -95,6 +99,7 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'blue',
           result: 'success',
         };
+        this.beatBoxerEvents.next({ result: 'success' });
       } else {
         this.music && this.playFailureMusic();
         this.showWrongSign(x, y);
@@ -103,6 +108,7 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'blue',
           result: 'failure',
         };
+        this.beatBoxerEvents.next({ result: 'failure' });
       }
     }
   };
@@ -130,6 +136,7 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'red',
           result: 'success',
         };
+        this.beatBoxerEvents.next({ result: 'success' });
       } else {
         this.music && this.playFailureMusic();
         this.showWrongSign(x, y);
@@ -138,6 +145,7 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'red',
           result: 'failure',
         };
+        this.beatBoxerEvents.next({ result: 'failure' });
       }
     }
   };
