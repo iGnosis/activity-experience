@@ -74,6 +74,8 @@ export class BeatBoxerScene extends Phaser.Scene {
 
   beatBoxerEvents = new Subject<{
     result: 'success' | 'failure';
+    position?: 'left' | 'right';
+    timeoutDuration?: number;
   }>();
 
   private blueGloveCollisionCallback = async (
@@ -99,7 +101,13 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'blue',
           result: 'success',
         };
-        this.beatBoxerEvents.next({ result: 'success' });
+
+        const centerOfMotion: 'right' | 'left' = _gameObject.getData('centerOfMotion');
+        this.beatBoxerEvents.next({
+          result: 'success',
+          timeoutDuration: ((new Date().getTime() - this.startTime) / this.timeout) * 100,
+          position: centerOfMotion,
+        });
       } else {
         this.music && this.playFailureMusic();
         this.showWrongSign(x, y);
@@ -136,7 +144,13 @@ export class BeatBoxerScene extends Phaser.Scene {
           gloveColor: 'red',
           result: 'success',
         };
-        this.beatBoxerEvents.next({ result: 'success' });
+
+        const centerOfMotion: 'right' | 'left' = _gameObject.getData('centerOfMotion');
+        this.beatBoxerEvents.next({
+          result: 'success',
+          timeoutDuration: ((new Date().getTime() - this.startTime) / this.timeout) * 100,
+          position: centerOfMotion,
+        });
       } else {
         this.music && this.playFailureMusic();
         this.showWrongSign(x, y);
@@ -530,6 +544,7 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
     }
     if (gameObject) {
+      gameObject.setData('centerOfMotion', centerOfMotion);
       this.group && this.group.add(gameObject);
       this.animateEntry(gameObject);
       gameObject.refreshBody();
@@ -698,6 +713,8 @@ export class BeatBoxerScene extends Phaser.Scene {
     });
   }
 
+  startTime!: number;
+  timeout!: number;
   /**
    * @param timeout timeout in `ms`. If `timeout` is not provided, it will wait until collision is detected.
    * @returns returns collision data if collision detected or else returns failure.
@@ -710,10 +727,11 @@ export class BeatBoxerScene extends Phaser.Scene {
     { result: undefined } | { bagType: string; gloveColor: string; result: 'success' | 'failure' }
   > {
     return new Promise((resolve) => {
-      const startTime = new Date().getTime();
+      this.startTime = new Date().getTime();
+      this.timeout = timeout || 2500;
       const interval = setInterval(() => {
         // if timeout...
-        if (timeout && new Date().getTime() - startTime > timeout) {
+        if (timeout && new Date().getTime() - this.startTime > timeout) {
           resolve({
             result: undefined,
           });
