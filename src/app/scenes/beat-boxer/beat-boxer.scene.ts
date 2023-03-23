@@ -26,6 +26,7 @@ enum TextureKeys {
   CONFETTI = 'confetti',
   MUSIC = 'music',
   WRONG_SIGN_ATLAS = 'wrog_sign_atlas',
+  XP_COIN = 'xp_coin',
 }
 
 enum AnimationKeys {
@@ -99,11 +100,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           result: 'success',
         };
 
-        const centerOfMotion: 'right' | 'left' = _gameObject.getData('centerOfMotion');
         this.beatBoxerEvents.next({
           result: 'success',
           timeoutDuration: ((new Date().getTime() - this.startTime) / this.timeout) * 100,
-          position: centerOfMotion,
+          position: { x, y },
         });
       } else {
         this.music && this.playFailureMusic();
@@ -142,11 +142,10 @@ export class BeatBoxerScene extends Phaser.Scene {
           result: 'success',
         };
 
-        const centerOfMotion: 'right' | 'left' = _gameObject.getData('centerOfMotion');
         this.beatBoxerEvents.next({
           result: 'success',
           timeoutDuration: ((new Date().getTime() - this.startTime) / this.timeout) * 100,
-          position: centerOfMotion,
+          position: { x, y },
         });
       } else {
         this.music && this.playFailureMusic();
@@ -245,6 +244,11 @@ export class BeatBoxerScene extends Phaser.Scene {
       svgConfig: {
         scale: obstacleScale,
       },
+    });
+
+    this.load.image({
+      key: TextureKeys.XP_COIN,
+      url: 'assets/images/xp_coin.png',
     });
 
     this.load.once('complete', (_id: number, _completed: number, failed: number) => {
@@ -506,7 +510,7 @@ export class BeatBoxerScene extends Phaser.Scene {
    * @param level Number that'll multiply with maxReach. `-ve` shifts the bag towards left and `+ve` shifts the bag to the right.
    */
   showBag(centerOfMotion: CenterOfMotion, type: BagType, level: number) {
-    console.log(`position: ${centerOfMotion}, type: ${type}, level: ${level}`);
+    // console.log(`position: ${centerOfMotion}, type: ${type}, level: ${level}`);
     let x = 0;
     const y = 0;
     if (this.results) {
@@ -541,7 +545,6 @@ export class BeatBoxerScene extends Phaser.Scene {
       }
     }
     if (gameObject) {
-      gameObject.setData('centerOfMotion', centerOfMotion);
       this.group && this.group.add(gameObject);
       this.animateEntry(gameObject);
       gameObject.refreshBody();
@@ -707,6 +710,52 @@ export class BeatBoxerScene extends Phaser.Scene {
           }
         },
       });
+    });
+  }
+
+  animateScore(x: number, y: number, coins = 1) {
+    const container = this.add.container(x, y);
+    container.setSize(64, 64);
+    const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
+    const text = this.add.text(32, -16, '+1', {
+      font: '32px',
+      color: '#FFEF5E',
+    });
+
+    const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+    gradient.addColorStop(0, '#FFEF5E');
+    gradient.addColorStop(1, '#F7936F');
+    text.setFill(gradient);
+
+    container.add([img, text]);
+
+    this.tweens.addCounter({
+      from: 1.1,
+      to: 1,
+      delay: 200,
+      duration: 250,
+      onUpdate: (tw) => {
+        container.setScale(tw.getValue());
+      },
+      onComplete: () => {
+        this.tweens.addCounter({
+          from: 1,
+          to: 1.1,
+          duration: 250,
+          onUpdate: (tw) => {
+            container.setScale(tw.getValue());
+          },
+        });
+        this.tweens.add({
+          targets: [container],
+          delay: 750,
+          duration: 500,
+          alpha: 0,
+          onComplete: () => {
+            container.destroy();
+          },
+        });
+      },
     });
   }
 

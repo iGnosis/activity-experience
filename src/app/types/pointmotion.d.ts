@@ -1055,8 +1055,8 @@ export type CenterOfMotion = 'left' | 'right';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
 export type BeatBoxerEvent = {
   result: 'success' | 'failure';
-  position?: 'left' | 'right';
   timeoutDuration?: number;
+  position?: { x: number; y: number };
 };
 
 export type GameStatus = {

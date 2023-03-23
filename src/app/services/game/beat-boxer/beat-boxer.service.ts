@@ -838,6 +838,12 @@ export class BeatBoxerService {
                   reCalibrationCount,
                 },
               };
+
+              const score = this.combo * this.timeoutMultiplier(event.timeoutDuration);
+              if (event.position) {
+                this.beatBoxerScene.animateScore(event.position.x, event.position.y, score);
+              }
+
               if (this.highScore && this.score > this.highScore) {
                 this.elements.confetti.state = {
                   data: {},
