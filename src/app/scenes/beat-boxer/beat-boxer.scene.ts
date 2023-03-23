@@ -8,6 +8,7 @@ import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
 import { TtsService } from 'src/app/services/tts/tts.service';
 import {
   BagType,
+  BeatBoxerEvent,
   CenterOfMotion,
   GameObjectWithBodyAndTexture,
   Genre,
@@ -72,11 +73,7 @@ export class BeatBoxerScene extends Phaser.Scene {
   private totalMusicFiles!: number;
   private loadError = false;
 
-  beatBoxerEvents = new Subject<{
-    result: 'success' | 'failure';
-    position?: 'left' | 'right';
-    timeoutDuration?: number;
-  }>();
+  beatBoxerEvents = new Subject<BeatBoxerEvent>();
 
   private blueGloveCollisionCallback = async (
     _blueGlove: Phaser.Types.Physics.Arcade.GameObjectWithBody,

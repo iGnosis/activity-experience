@@ -2,13 +2,13 @@
   class="top-5 start-5 position-absolute">
   <div class="d-flex align-items-center">
     <img [src]="state.data.icon" alt="icon" class="w-16 h-16 pe-4" style="object-fit: contain;">
-    <h1 class="text-white text-outline display-6">{{ state.data.score }}</h1>
+    <h1 class="text-white display-6" [ngClass]="state.data.score && state.data.highScore && state.data.score > state.data.highScore ? 'text-gradient font-bold' : 'text-outline'">{{ state.data.score }}</h1>
   </div>
   <div class="row" *ngIf="state.data.highScore">
     <h2 class="text-white text-outline">{{ 'Best: ' + state.data.highScore }}</h2>
   </div>
   
-  <div *ngIf="scoreGain || state.data.combo" [@collectScore]="{ value: scoreGain, params: state.data.position ? state.data.position :  { top: '50%', left: '75%' } }" class="collected-score position-fixed">
+  <div *ngIf="(scoreGain || state.data.combo) && state.data.showScoreGained" [@collectScore]="{ value: scoreGain, params: state.data.position ? state.data.position :  { top: '50%', left: '75%' } }" class="collected-score position-fixed">
     <div class="d-flex justify-content-center align-items-center">
       <img [src]="state.data.icon" alt="icon" class="w-14 h-14 pe-2" style="object-fit: contain;">
       <p class="font-italic h5 text-2xl text-gradient pe-2">+{{ scoreGain - (state.data.score || 0) }}</p>

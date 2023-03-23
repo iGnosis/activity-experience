@@ -1053,6 +1053,11 @@ export type BagPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-rig
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
 export type CenterOfMotion = 'left' | 'right';
 export type ObstacleType = 'obstacle-top' | 'obstacle-bottom';
+export type BeatBoxerEvent = {
+  result: 'success' | 'failure';
+  position?: 'left' | 'right';
+  timeoutDuration?: number;
+};
 
 export type GameStatus = {
   stage: ActivityStage;
