@@ -1384,6 +1384,15 @@ export class SitToStandService implements ActivityBase {
             };
           }
         }
+        if (this.score > this.highScore) {
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+        }
 
         analyticsObj.result.coin = score;
         this.analytics.push(analyticsObj);
@@ -1416,7 +1425,9 @@ export class SitToStandService implements ActivityBase {
         this.store.dispatch(game.repCompleted({ repsCompleted: this.successfulReps }));
         this.elements.score.state = {
           data: {
-            score: this.successfulReps,
+            score: this.score,
+            combo: this.comboStreak,
+            highScore: this.highScore,
             position: {
               top: '30%',
               left: '80%',
@@ -1774,13 +1785,8 @@ export class SitToStandService implements ActivityBase {
         //     reCalibrationCount,
         //   },
         // };
-        this.elements.score.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
+        this.elements.health.hide();
+        this.elements.score.hide();
       },
     ];
   }
@@ -1864,8 +1870,8 @@ export class SitToStandService implements ActivityBase {
               htmlStr: `
             <div class="pl-10 text-start px-14" style="padding-left: 20px;">
               <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
-              <h2 class="pt-7">Time: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
-              <h2 class="pt-5">Fastest Time: ${fastestTime.minutes}:${fastestTime.seconds} minutes</h2>
+              <h2 class="pt-7">Score: ${this.score} XP</h2>
+              <h2 class="pt-5">High Score: ${Math.max(this.highScore, this.score)} XP</h2>
               <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
             <div>
             `,
