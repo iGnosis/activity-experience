@@ -732,7 +732,6 @@ export class BeatBoxerScene extends Phaser.Scene {
     this.tweens.addCounter({
       from: 1.1,
       to: 1,
-      delay: 200,
       duration: 250,
       onUpdate: (tw) => {
         container.setScale(tw.getValue());

@@ -1394,6 +1394,8 @@ export class SitToStandService implements ActivityBase {
           };
         }
 
+        this.sit2StandScene.animateScore(score);
+
         analyticsObj.result.coin = score;
         this.analytics.push(analyticsObj);
         this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));

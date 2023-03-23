@@ -4,6 +4,9 @@ import { Howl } from 'howler';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { TtsService } from 'src/app/services/tts/tts.service';
 
+enum TextureKeys {
+  XP_COIN = 'xp_coin',
+}
 @Injectable({
   providedIn: 'root',
 })
@@ -36,8 +39,23 @@ export class SitToStandScene extends Phaser.Scene {
   currentTrigger = 1;
   currentClassicalRep = 1;
   currentClassicalSet = 1;
+  designAssetsLoaded = false;
 
-  preload() {}
+  preload() {
+    this.load.image({
+      key: TextureKeys.XP_COIN,
+      url: 'assets/images/xp_coin.png',
+    });
+
+    this.load.once('complete', (_id: number, _completed: number, failed: number) => {
+      if (failed === 0) {
+        this.designAssetsLoaded = true;
+      } else {
+        console.log('Design Assets Failed to Load', failed);
+        this.loadError = true;
+      }
+    });
+  }
 
   src: { [key in Genre]: string[] } = {
     classical: [
@@ -127,7 +145,7 @@ export class SitToStandScene extends Phaser.Scene {
   };
 
   checkIfAssetsAreLoaded(genre: Genre) {
-    return this.musicFilesLoaded === 1;
+    return this.musicFilesLoaded === 1 && this.designAssetsLoaded;
   }
 
   async loadAssets(genre: Genre) {
@@ -409,6 +427,52 @@ export class SitToStandScene extends Phaser.Scene {
           });
         return;
     }
+  }
+
+  animateScore(coins = 1) {
+    const { width, height } = this.scale;
+    const container = this.add.container((width * 70) / 100, height / 2);
+    container.setSize(64, 64);
+    const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
+    const text = this.add.text(32, -16, '+1', {
+      font: '32px',
+      color: '#FFEF5E',
+    });
+
+    const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+    gradient.addColorStop(0, '#FFEF5E');
+    gradient.addColorStop(1, '#F7936F');
+    text.setFill(gradient);
+
+    container.add([img, text]);
+
+    this.tweens.addCounter({
+      from: 1.1,
+      to: 1,
+      duration: 250,
+      onUpdate: (tw) => {
+        container.setScale(tw.getValue());
+      },
+      onComplete: () => {
+        // this.tweens.addCounter({
+        //   from: 1,
+        //   to: 1.1,
+        //   duration: 250,
+        //   onUpdate: (tw) => {
+        //     container.setScale(tw.getValue());
+        //   },
+        // });
+        this.tweens.add({
+          targets: [container],
+          delay: 500,
+          duration: 250,
+          alpha: 0,
+          onComplete: () => {
+            container.destroy();
+          },
+        });
+      },
+    });
   }
 
   enableMusic(value = true) {
