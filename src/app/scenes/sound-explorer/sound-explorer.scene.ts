@@ -3,7 +3,7 @@ import { Results } from '@mediapipe/pose';
 import { Vector2D } from '@tensorflow-models/posenet/dist/types';
 import { Howl } from 'howler';
 import { Vector } from 'matter';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { soundExporerAudio } from 'src/app/services/sounds/sound-explorer.audiosprite';
 import { SoundsService } from 'src/app/services/sounds/sounds.service';
@@ -20,6 +20,7 @@ enum TextureKeys {
   CONFETTI = 'confetti',
   CONCENTRIC_CIRCLES = 'concentric_circles',
   BURST = 'burst',
+  XP_COIN = 'xp_coin',
 }
 
 enum AnimationKeys {
@@ -67,6 +68,11 @@ export class SoundExplorerScene extends Phaser.Scene {
   private tenorId: number;
   private failureMusicId: number;
 
+  soundExplorerEvents = new Subject<{
+    result: 'success' | 'failure';
+    position?: { x: number; y: number };
+  }>();
+
   private collisionCallback = (
     _hand: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     shape: GameObjectWithBodyAndTexture,
@@ -95,6 +101,11 @@ export class SoundExplorerScene extends Phaser.Scene {
       } else {
         this.soundsService.playCalibrationSound('success');
       }
+
+      this.soundExplorerEvents.next({
+        result: 'success',
+        position: { x, y },
+      });
     } else {
       // play failure animation
       this.score.next(this.currentScore);
@@ -104,6 +115,10 @@ export class SoundExplorerScene extends Phaser.Scene {
       } else {
         this.soundsService.playCalibrationSound('error');
       }
+
+      this.soundExplorerEvents.next({
+        result: 'failure',
+      });
     }
     // destroying the shape
     shape.destroy(true);
@@ -163,6 +178,11 @@ export class SoundExplorerScene extends Phaser.Scene {
       'assets/images/sound-slicer/burst.png',
       'assets/images/sound-slicer/burst.json',
     );
+
+    this.load.image({
+      key: TextureKeys.XP_COIN,
+      url: 'assets/images/xp_coin.png',
+    });
 
     this.load.once('complete', (_id: any, _completed: number, failed: number) => {
       // no game asset is failed.
@@ -503,6 +523,51 @@ export class SoundExplorerScene extends Phaser.Scene {
           clearInterval(interval);
         }
       }, 300);
+    });
+  }
+
+  animateScore(x: number, y: number, coins = 1) {
+    const container = this.add.container(x, y);
+    container.setSize(64, 64);
+    const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
+    const text = this.add.text(32, -16, '+1', {
+      font: '32px',
+      color: '#FFEF5E',
+    });
+
+    const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+    gradient.addColorStop(0, '#FFEF5E');
+    gradient.addColorStop(1, '#F7936F');
+    text.setFill(gradient);
+
+    container.add([img, text]);
+
+    this.tweens.addCounter({
+      from: 1.1,
+      to: 1,
+      duration: 250,
+      onUpdate: (tw) => {
+        container.setScale(tw.getValue());
+      },
+      onComplete: () => {
+        this.tweens.addCounter({
+          from: 1,
+          to: 1.1,
+          duration: 250,
+          onUpdate: (tw) => {
+            container.setScale(tw.getValue());
+          },
+        });
+        this.tweens.add({
+          targets: [container],
+          delay: 750,
+          duration: 500,
+          alpha: 0,
+          onComplete: () => {
+            container.destroy();
+          },
+        });
+      },
     });
   }
 

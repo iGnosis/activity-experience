@@ -517,6 +517,15 @@ export class SoundExplorerService {
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.playBacktrack();
         this.soundExplorerScene.enableMusic();
+
+        const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
+          if (event.result === 'success') {
+            if (event.position) {
+              this.soundExplorerScene.animateScore(event.position.x, event.position.y, 1);
+            }
+          }
+        });
+
         this.ttsService.tts('Next activity. Sound Explorer.');
         this.elements.banner.state = {
           attributes: {
