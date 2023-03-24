@@ -32,13 +32,13 @@ describe('ElementsService', () => {
     const result = service.getElementsObservables();
 
     expect(result).toEqual(jasmine.any(Object));
-    expect(Object.keys(result).length).toEqual(13);
+    expect(Object.keys(result).length).toEqual(14);
   });
 
   it('should give elements state', () => {
     const result = service.getElementsState();
 
     expect(result).toEqual(jasmine.any(Object));
-    expect(Object.keys(result).length).toEqual(13);
+    expect(Object.keys(result).length).toEqual(14);
   });
 });
