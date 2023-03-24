@@ -16,7 +16,9 @@ export class HandTrackerService {
   poseSubscription: Subscription;
   handSubscription: Subscription;
   result = new Subject<HandTrackerStatus>();
+  sidewaysGestureResult = new Subject<HandTrackerStatus>();
   status: HandTrackerStatus = undefined;
+  sidewaysStatus: HandTrackerStatus = undefined;
   debouncedStatus: HandTrackerStatus = undefined;
   // setting default to both-hands as the hand model is disabled. status has to be undefined by default.
   openHandStatus = new BehaviorSubject<OpenHandStatus>('both-hands');
@@ -37,11 +39,19 @@ export class HandTrackerService {
     // });
     this.poseSubscription = this.poseModelAdapter.getPose().subscribe((results) => {
       const newStatus = this.classify(results);
-      if (!newStatus) return;
-      if (newStatus.status != this.status) {
-        this.result.next(newStatus.status);
+      if (newStatus) {
+        if (newStatus.status != this.status) {
+          this.result.next(newStatus.status);
+        }
+        this.status = newStatus.status;
       }
-      this.status = newStatus.status;
+      const newSidewaysStatus = this.classifySidewaysGesture(results);
+      if (newSidewaysStatus) {
+        if (newSidewaysStatus.status != this.sidewaysStatus) {
+          this.sidewaysGestureResult.next(newSidewaysStatus.status);
+        }
+        this.sidewaysStatus = newSidewaysStatus.status;
+      }
     });
   }
 
@@ -113,6 +123,40 @@ export class HandTrackerService {
     return { status: undefined };
   }
 
+  classifySidewaysGesture(pose: Results): { status: HandTrackerStatus } {
+    if (!this.isEnabled || !pose || !pose.poseLandmarks) {
+      return { status: undefined };
+    }
+
+    const poseLandmarkArray = pose.poseLandmarks;
+    const rightWrist = poseLandmarkArray[16];
+    const leftWrist = poseLandmarkArray[15];
+    const rightHip = poseLandmarkArray[24];
+    const leftHip = poseLandmarkArray[23];
+
+    // First, considers nose - elbow. As, the elbow is more likely to be always visible.
+    if (this._isHipsVisible(poseLandmarkArray) && this._isWristsVisible(poseLandmarkArray)) {
+      const status = this._wristHipDistance(leftHip, rightHip, leftWrist, rightWrist);
+      if (status) {
+        return { status };
+      }
+    }
+
+    return { status: undefined };
+  }
+
+  _isHipsVisible(poseLandmarkArray: NormalizedLandmarkList): boolean {
+    const rightHip = poseLandmarkArray[24];
+    const leftHip = poseLandmarkArray[23];
+    if (
+      (rightHip && rightHip.visibility && rightHip.visibility < this.visibilityThreshold) ||
+      (leftHip && leftHip.visibility && leftHip.visibility < this.visibilityThreshold)
+    ) {
+      return false;
+    }
+    return true;
+  }
+
   _isWristsVisible(poseLandmarkArray: NormalizedLandmarkList): boolean {
     const nose = poseLandmarkArray[0];
     const rightWrist = poseLandmarkArray[16];
@@ -168,6 +212,28 @@ export class HandTrackerService {
     }
 
     if (yRightShoulderWristDiff >= 0) {
+      return 'right-hand';
+    }
+    return undefined;
+  }
+
+  _wristHipDistance(
+    leftHip: NormalizedLandmark,
+    rightHip: NormalizedLandmark,
+    leftWrist: NormalizedLandmark,
+    rightWrist: NormalizedLandmark,
+  ): HandTrackerStatus {
+    const yLeftWristHipDiff = parseFloat((leftHip.y - leftWrist.y).toFixed(2));
+    const yRightWristHipDiff = parseFloat((rightHip.y - rightWrist.y).toFixed(2));
+    if (yLeftWristHipDiff > 0.1 && yRightWristHipDiff > 0.1) {
+      return 'both-hands';
+    }
+
+    if (yLeftWristHipDiff > 0.1) {
+      return 'left-hand';
+    }
+
+    if (yRightWristHipDiff > 0.1) {
       return 'right-hand';
     }
     return undefined;

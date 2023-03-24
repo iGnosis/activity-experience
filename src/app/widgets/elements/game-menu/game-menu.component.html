@@ -1,0 +1,28 @@
+<div class="position-fixed top-0 start-0 w-screen h-screen d-flex" *ngIf="state && state.attributes.visibility === 'visible'">
+    <div class="w-full h-full position-absolute bg-overlay"></div>
+    <div class="w-full h-full position-absolute d-flex">
+        <div class="w-full d-flex justify-content-between px-5 my-auto">
+            <img class="w-1/5" src="/assets/images/left-palm.png" alt="left palm">
+            <img class="w-1/5" src="/assets/images/right-palm.png" alt="right palm">
+        </div>
+    </div>
+    <div class="w-full h-1/2 my-auto row gx-5">
+        <div class="col-3 offset-3">
+            <div class="card-container position-relative rounded-2 w-full h-full">
+                <div [@slideInFromLeft] class="card-item w-full h-full rounded-2 bg-white d-flex position-absolute red-shadow">
+                    <h1 class="text-black display-4 text-center m-auto">Exit<br>to<br>Main Menu</h1>
+                </div>
+                <div [@borderWipe]="{ value: leftBorderAnimState, params: { duration: (state.data.holdDuration || 2000) } }" class="w-full h-full rounded-2 position-absolute red-border-progress"></div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card-container position-relative rounded-2 w-full h-full">
+                <div [@slideInFromRight] class="card-item w-full h-full rounded-2 bg-white d-flex position-absolute green-shadow">
+                    <h1 class="text-black display-4 text-center m-auto">Play<br>Again</h1>
+                </div>
+                <div [@borderWipe]="{ value: rightBorderAnimState, params: { duration: (state.data.holdDuration || 2000) } }" class="w-full h-full rounded-2 position-absolute green-border-progress"></div>
+            </div>
+        </div>
+    </div>
+    
+</div>

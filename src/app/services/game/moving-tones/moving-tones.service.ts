@@ -78,6 +78,7 @@ export class MovingTonesService implements ActivityBase {
     private poseModelAdapter: PoseModelAdapter,
     private activityHelperService: ActivityHelperService,
   ) {
+    this.resetVariables();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -92,6 +93,33 @@ export class MovingTonesService implements ActivityBase {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  resetVariables() {
+    this.isServiceSetup = false;
+    this.genre = 'jazz';
+    this.coinsCollected = 0;
+    this.failedReps = 0;
+    this.globalReCalibrationCount = 0;
+    this.isGameComplete = false;
+    this.shouldReplay = false;
+    this.gameSettings = environment.settings['moving_tones'];
+    this.qaGameSettings = undefined;
+    this.currentLevel = environment.settings['moving_tones'].currentLevel;
+    this.config = {
+      gameDuration:
+        environment.settings['moving_tones'].levels[this.currentLevel].configuration.gameDuration,
+      speed: environment.settings['moving_tones'].levels[this.currentLevel].configuration.speed,
+    };
+    this.gameDuration = this.config.gameDuration || 0;
+    this.totalDuration = this.config.gameDuration || 0;
+    this.timedOut = false;
+    this.timeOutFirstTime = false;
+    this.lastRepPrompted = false;
+    this.collisionDebounce = this.config.speed || 1500;
+    if (this.progressBarSubscription) {
+      this.progressBarSubscription.unsubscribe();
+    }
   }
 
   private async waitForCollisionOrRecalibration(reCalibrationCount?: number) {
@@ -1484,9 +1512,6 @@ export class MovingTonesService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.elements.sleep(3000);
-      },
-      async (reCalibrationCount: number) => {
         const totalReps = this.coinsCollected + this.failedReps;
         const achievementRatio = this.coinsCollected / totalReps;
 
@@ -1495,51 +1520,6 @@ export class MovingTonesService implements ActivityBase {
             moving_tones: false,
           });
         }
-
-        const totalDuration: {
-          minutes: string;
-          seconds: string;
-        } = this.activityHelperService.getDurationForTimer(this.totalDuration);
-        const highScoreResp = await this.apiService.getHighScore('moving_tones');
-        const prevHighScore = highScoreResp?.length ? highScoreResp[0].repsCompleted : 0;
-        const highScore = Math.max(this.coinsCollected, prevHighScore);
-
-        this.ttsService.tts(
-          `Coins collected: ${this.coinsCollected}, time completed: ${Number(
-            totalDuration.minutes,
-          )} minutes and ${Number(totalDuration.seconds)} seconds.`,
-        );
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'outro',
-            htmlStr: `
-          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-            <h1 class="pt-8 display-3">Moving Tones</h1>
-            <h2 class="pt-7">Coins Collected: ${this.coinsCollected}</h2>
-            <h2 class="pt-5">High Score: ${highScore} Coins</h2>
-            <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${totalDuration.seconds} minutes</h2>
-          <div>
-          `,
-            buttons: [
-              {
-                title: this.activityHelperService.isLastActivity
-                  ? 'Back to Homepage'
-                  : 'Next Activity',
-                progressDurationMs: 10000,
-              },
-            ],
-          },
-        };
-
-        await this.elements.sleep(12000);
-        this.elements.banner.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
       },
     ];
   }

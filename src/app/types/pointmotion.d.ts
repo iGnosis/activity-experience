@@ -971,6 +971,29 @@ export type HealthElementState = {
   total: number;
 };
 
+export type GameMenuElementState = {
+  /**
+   * Set the current gesture.
+   */
+  gesture: HandTrackerStatus;
+  /**
+   * Set the hold duration for the gesture.
+   */
+  holdDuration?: number;
+  /**
+   * Set the menu duration.
+   */
+  timeoutDuration?: number;
+  /**
+   * Action on exit.
+   */
+  onExit?: () => void;
+  /**
+   * Action on replay.
+   */
+  onReplay?: () => void;
+};
+
 export type ElementsState = {
   score: { data: ScoreElementState; attributes: ElementAttributes };
   timer: { data: TimerElementState; attributes: ElementAttributes };
@@ -985,6 +1008,7 @@ export type ElementsState = {
   toast: { data: ToastElementState; attributes: ElementAttributes };
   calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
   health: { data: HealthElementState; attributes: ElementAttributes };
+  gameMenu: { data: GameMenuElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1004,9 +1028,14 @@ export type ElementsObservables = {
     attributes: ElementAttributes;
   }>;
   health: Observable<{ data: HealthElementState; attributes: ElementAttributes }>;
+  gameMenu: Observable<{ data: GameMenuElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {
+  /**
+   * Resets the variables for replaying the activity.
+   */
+  resetVariables(): void;
   /**
    * initially sets up the activity. This function is needed only for QA purposes.
    */

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
+  ActivityBase,
   AnalyticsDTO,
   AnalyticsResultDTO,
   GameState,
@@ -26,7 +27,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
 @Injectable({
   providedIn: 'root',
 })
-export class SoundExplorerService {
+export class SoundExplorerService implements ActivityBase {
   private isServiceSetup = false;
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
@@ -137,6 +138,7 @@ export class SoundExplorerService {
     private soundExplorerScene: SoundExplorerScene,
     private activityHelperService: ActivityHelperService,
   ) {
+    this.resetVariables();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -151,6 +153,41 @@ export class SoundExplorerService {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  resetVariables() {
+    this.isServiceSetup = false;
+    this.genre = 'jazz';
+    this.globalReCalibrationCount = 0;
+    this.qaGameSettings = undefined;
+    this.gameSettings = environment.settings['sound_explorer'];
+    this.currentLevel = environment.settings['sound_explorer'].currentLevel;
+    this.config = {
+      gameDuration:
+        environment.settings['sound_explorer'].levels[this.currentLevel].configuration.gameDuration,
+      speed: environment.settings['sound_explorer'].levels[this.currentLevel].configuration.speed,
+    };
+    this.gameStartTime = null;
+    this.firstPromptTime = null;
+    this.loopStartTime = null;
+    this.isGameComplete = false;
+    this.shouldReplay = false;
+    this.gameDuration = this.config.gameDuration || 0;
+    this.totalDuration = this.config.gameDuration || 0;
+    this.difficulty = 1;
+    this.streak = 0;
+    this.successfulReps = 0;
+    this.totalReps = 0;
+    this.currentScore = 0;
+    this.pointsGained = 0;
+    this.shapes = ['circle', 'triangle', 'rectangle', 'hexagon'];
+    this.originsWithAngleRange = {
+      'left-center': [-65, -60],
+      'right-center': [-110, -105],
+      'top-left': [40, 50],
+      'top-right': [150, 160],
+    };
+    this.scoreSubscription?.unsubscribe();
   }
 
   async setupConfig() {
@@ -889,53 +926,6 @@ export class SoundExplorerService {
             sound_explorer: false,
           });
         }
-
-        const highScore = await this.apiService.getHighScore('sound_explorer');
-        let totalDuration: {
-          minutes: string;
-          seconds: string;
-        };
-        // eslint-disable-next-line prefer-const
-        totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
-
-        this.ttsService.tts(
-          `Your score is ${this.currentScore}, time completed: ${Number(
-            totalDuration.minutes,
-          )} minutes and ${Number(totalDuration.seconds)} seconds`,
-        );
-
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'outro',
-            htmlStr: `
-          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-            <h1 class="pt-8 display-3">Sound Explorer</h1>
-            <h2 class="pt-7">Score: ${this.currentScore}</h2>
-            <h2 class="pt-5">High Score: ${Math.max(
-              highScore && highScore.length ? highScore[0].repsCompleted : 0,
-              this.currentScore,
-            )}</h2>
-            <h2 class="pt-5">Time Completed: ${totalDuration.minutes}:${
-              totalDuration.seconds
-            } minutes</h2>
-          <div>
-          `,
-            buttons: [
-              {
-                title: this.activityHelperService.isLastActivity
-                  ? 'Back to Homepage'
-                  : 'Next Activity',
-                progressDurationMs: 10000,
-              },
-            ],
-          },
-        };
-
-        await this.elements.sleep(12000);
       },
     ];
   }

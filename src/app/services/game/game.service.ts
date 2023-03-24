@@ -759,6 +759,7 @@ export class GameService {
       this.gameStages = [];
     }
     console.log('remainingStages', remainingStages);
+    let replayActivity = undefined;
 
     // TODO: Track the stage under execution, so that if the calibration goes off, we can restart
     // the game at the exact same stage.
@@ -844,15 +845,18 @@ export class GameService {
         level_name: nextGame.name,
       });
       this.gamesCompleted.push(nextGame.name);
-      if (this.gamesCompleted.length === environment.order.length) {
-        await this.activityHelperService.exitGame(nextGame.name);
-      } else {
-        this.gameStateService.postLoopHook();
-      }
-      console.log('game.service:gameCompleted:', nextGame.name);
+      this.gameStateService.postLoopHook();
+      await this.activityHelperService.exitOrReplay(reCalibrationCount);
+      replayActivity = nextGame.name;
     }
     // If more games available, start the next game.
     nextGame = await this.findNextGame();
+
+    if (replayActivity) {
+      this.currentGame = replayActivity;
+      this.getActivities()[replayActivity]?.resetVariables();
+    }
+
     if (nextGame) {
       if (this.gamesCompleted.length === environment.order.length - 1) {
         this.activityHelperService.isLastActivity = true;

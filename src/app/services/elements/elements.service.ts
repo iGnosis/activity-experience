@@ -3,6 +3,7 @@ import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 import { BannerService } from './banner/banner.service';
 import { CalibrationTutorialService } from './calibration-tutorial/calibration-tutorial.service';
 import { ConfettiService } from './confetti/confetti.service';
+import { GameMenuService } from './game-menu/game-menu.service';
 import { GuideService } from './guide/guide.service';
 import { HealthService } from './health/health.service';
 import { OverlayService } from './overlay/overlay.service';
@@ -32,6 +33,7 @@ export class ElementsService {
     public toast: ToastService,
     public calibrationTutorialService: CalibrationTutorialService,
     public health: HealthService,
+    public gameMenu: GameMenuService,
   ) {}
 
   async sleep(timeout: number) {
@@ -57,6 +59,7 @@ export class ElementsService {
       toast: this.toast.subject,
       calibrationTutorial: this.calibrationTutorialService.subject,
       health: this.health.subject,
+      gameMenu: this.gameMenu.subject,
     };
   }
 
@@ -75,6 +78,7 @@ export class ElementsService {
       toast: this.toast.state,
       calibrationTutorial: this.calibrationTutorialService.state,
       health: this.health.state,
+      gameMenu: this.gameMenu.state,
     };
   }
 }

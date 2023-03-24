@@ -129,8 +129,8 @@ export class BeatBoxerService {
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
-    private activityHelperService: ActivityHelperService,
   ) {
+    this.resetVariables();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -145,6 +145,46 @@ export class BeatBoxerService {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  resetVariables() {
+    this.isServiceSetup = false;
+    this.genre = 'jazz';
+    this.bagPositions = ['left', 'right'];
+    this.positiveLevel = [1.35, 1.4];
+    this.negativeLevel = [0.5];
+    this.bagTypes = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
+    this.analytics = [];
+    this.gameStartTime = null;
+    this.firstPromptTime = null;
+    this.loopStartTime = null;
+    this.leftBagTimeout = undefined;
+    this.rightBagTimeout = undefined;
+    this.obstacleTimeout = undefined;
+    this.isGameComplete = false;
+    this.shouldReplay = false;
+    this.health = 3;
+    this.score = 0;
+    this.highScore = 0;
+    this.combo = 0;
+    if (this.scoreSubscription) {
+      this.scoreSubscription.unsubscribe();
+    }
+    this.coin = 0;
+    this.bagsAvailable = {};
+    this.qaGameSettings = undefined;
+    this.gameSettings = environment.settings['beat_boxer'];
+    this.currentLevel = environment.settings['beat_boxer'].currentLevel;
+    this.config = {
+      gameDuration:
+        environment.settings['beat_boxer'].levels[this.currentLevel].configuration.gameDuration,
+      speed: environment.settings['beat_boxer'].levels[this.currentLevel].configuration.speed,
+    };
+    this.gameDuration = this.config.gameDuration || 0;
+    this.totalDuration = this.config.gameDuration || 0;
+    this.successfulReps = 0;
+    this.failedReps = 0;
+    this.totalReps = 0;
   }
 
   async setupConfig() {
@@ -1032,64 +1072,6 @@ export class BeatBoxerService {
           await this.apiService.updateOnboardingStatus({
             beat_boxer: false,
           });
-        }
-
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'outro',
-            htmlStr: `
-          <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-            <h1 class="pt-8 display-3">Beat Boxer</h1>
-            <h2 class="pt-7">Score: ${this.score} XP</h2>
-            <h2 class="pt-5">High Score: ${Math.max(this.highScore, this.score)} XP</h2>
-            <h2 class="pt-5">Motion Completed: ${this.successfulReps} punches</h2>
-          <div>
-          `,
-            buttons: [
-              {
-                title: this.activityHelperService.isLastActivity
-                  ? 'Back to Homepage'
-                  : 'Next Activity',
-                progressDurationMs: 8000,
-              },
-            ],
-          },
-        };
-        await this.elements.sleep(11000);
-        this.elements.banner.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        await this.elements.sleep(500);
-        if (!this.activityHelperService.isLastActivity) {
-          this.elements.banner.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              type: 'intro',
-              htmlStr: `
-              <div class="w-full h-full d-flex flex-column justify-content-center align-items-center">
-                <h1 class="pt-2">Next Activity</h2>
-                <h1 class="pt-6 display-4">Sound Explorer</h1>
-                <h1 class="pt-8" style="font-weight: 200">Area of Focus</h2>
-                <h1 class="py-2">Range of Motion and Balance</h2>
-              </div>
-              `,
-              buttons: [
-                {
-                  title: 'Starting Sound Explorer',
-                  progressDurationMs: 5000,
-                },
-              ],
-            },
-          };
-          await this.elements.sleep(6000);
         }
       },
     ];

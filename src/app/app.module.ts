@@ -26,6 +26,7 @@ import { environment } from 'src/environments/environment';
 import { ToastComponent } from './widgets/elements/toast/toast.component';
 import { CalibrationTutorialComponent } from './widgets/elements/calibration-tutorial/calibration-tutorial.component';
 import { HealthComponent } from './widgets/elements/health/health.component';
+import { GameMenuComponent } from './widgets/elements/game-menu/game-menu.component';
 
 export let AppInjector: Injector;
 
@@ -48,6 +49,7 @@ export let AppInjector: Injector;
     SafePipe,
     CalibrationTutorialComponent,
     HealthComponent,
+    GameMenuComponent,
   ],
   imports: [
     BrowserModule,

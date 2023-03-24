@@ -102,6 +102,7 @@ export class SitToStandService implements ActivityBase {
     private apiService: ApiService,
     private activityHelperService: ActivityHelperService,
   ) {
+    this.resetVariables();
     this.store
       .select((state) => state.preference)
       .subscribe((preference) => {
@@ -114,6 +115,40 @@ export class SitToStandService implements ActivityBase {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+  }
+
+  resetVariables() {
+    this.isServiceSetup = false;
+    this.genre = 'jazz';
+    this.globalReCalibrationCount = 0;
+
+    this.qaGameSettings = undefined;
+    this.gameSettings = environment.settings['sit_stand_achieve'];
+    this.currentLevel = environment.settings['sit_stand_achieve'].currentLevel;
+    this.streak = 0;
+    this.levelUpStreak = 10;
+    this.shouldLevelUp = false;
+    this.config = {
+      minCorrectReps: this.gameSettings.levels[this.currentLevel].configuration.minCorrectReps,
+      speed: this.gameSettings.levels[this.currentLevel].configuration.speed,
+    };
+
+    this.successfulReps = 0;
+    this.failedReps = 0;
+    this.totalReps = 0;
+
+    this.totalDuration = 0;
+    this.shouldReplay = false;
+
+    this.gameStartTime = null;
+    this.firstPromptTime = null;
+    this.loopStartTime = null;
+
+    this.comboStreak = 0;
+    this.health = 3;
+    this.score = 0;
+    this.analytics = [];
+    this.highScore = 0;
   }
 
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
@@ -1845,48 +1880,6 @@ export class SitToStandService implements ActivityBase {
 
         console.log('updating game settings:', this.gameSettings);
         await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
-
-        console.log('updating game settings:', this.gameSettings);
-        await this.apiService.updateGameSettings('sit_stand_achieve', this.gameSettings);
-
-        let totalDuration: {
-          minutes: string;
-          seconds: string;
-        };
-        this.store.pipe(take(1)).subscribe(async (state) => {
-          totalDuration = this.sit2StandService.updateTimer(state.game.totalDuration || 0);
-          const fastestTimeInSecs = await this.apiService.getFastestTime('sit_stand_achieve');
-          console.log('fastest: ', fastestTimeInSecs);
-          const fastestTime = this.sit2StandService.updateTimer(
-            Math.min(fastestTimeInSecs || Number.MAX_VALUE, state.game.totalDuration!),
-          );
-          this.elements.banner.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              type: 'outro',
-              htmlStr: `
-            <div class="pl-10 text-start px-14" style="padding-left: 20px;">
-              <h1 class="pt-8 display-3">Sit, Stand, Achieve</h1>
-              <h2 class="pt-7">Score: ${this.score} XP</h2>
-              <h2 class="pt-5">High Score: ${Math.max(this.highScore, this.score)} XP</h2>
-              <h2 class="pt-5">Motion Completed: ${this.successfulReps}</h2>
-            <div>
-            `,
-              buttons: [
-                {
-                  title: this.activityHelperService.isLastActivity
-                    ? 'Back to Homepage'
-                    : 'Next Activity',
-                  progressDurationMs: 10000,
-                },
-              ],
-            },
-          };
-        });
-        await this.elements.sleep(12000);
       },
     ];
   }

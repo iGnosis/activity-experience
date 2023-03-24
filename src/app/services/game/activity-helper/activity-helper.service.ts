@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { game } from 'src/app/store/actions/game.actions';
-import { Activities, GameState, PreferenceState } from 'src/app/types/pointmotion';
+import {
+  Activities,
+  GameState,
+  HandTrackerStatus,
+  PreferenceState,
+} from 'src/app/types/pointmotion';
+import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
@@ -22,6 +29,7 @@ export class ActivityHelperService {
       preference: PreferenceState;
     }>,
     private gameStateService: GameStateService,
+    private handTrackerService: HandTrackerService,
   ) {}
 
   /**
@@ -91,6 +99,81 @@ export class ActivityHelperService {
       },
       '*',
     );
+  }
+
+  async exitOrReplay(reCalibrationCount?: number) {
+    // show the menu
+    this.elements.gameMenu.state = {
+      data: {
+        holdDuration: 2000,
+        gesture: undefined,
+        timeoutDuration: 15_000,
+        onExit: () => {
+          window.parent.postMessage(
+            {
+              type: 'end-game',
+            },
+            '*',
+          );
+        },
+      },
+      attributes: {
+        visibility: 'visible',
+        reCalibrationCount,
+      },
+    };
+    await this.elements.sleep(600);
+    // show guide message
+    this.ttsService.tts('Move your hands to one of the sides to make a selection.');
+    this.elements.guide.state = {
+      data: {
+        title: 'Move your hands to one of the sides to make a selection.',
+        showIndefinitely: true,
+      },
+      attributes: {
+        visibility: 'visible',
+        reCalibrationCount,
+      },
+    };
+    await new Promise((resolve) => {
+      const handSubscription = this.handTrackerService.sidewaysGestureResult
+        .pipe(debounceTime(200), distinctUntilChanged())
+        .subscribe((status: HandTrackerStatus) => {
+          this.elements.gameMenu.state = {
+            data: {
+              gesture: status,
+              onExit: () => {
+                handSubscription.unsubscribe();
+                window.parent.postMessage(
+                  {
+                    type: 'end-game',
+                  },
+                  '*',
+                );
+              },
+              onReplay: () => {
+                handSubscription.unsubscribe();
+                console.log('sideways-status::replay');
+                resolve({});
+              },
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+        });
+    });
+    this.elements.gameMenu.state = {
+      data: {
+        gesture: undefined,
+      },
+      attributes: {
+        visibility: 'hidden',
+        reCalibrationCount,
+      },
+    };
+    this.elements.guide.hide();
   }
 
   /**
