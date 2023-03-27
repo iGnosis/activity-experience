@@ -54,9 +54,17 @@ export class SoundExplorerService implements ActivityBase {
   private difficulty = 1;
   private streak = 0;
 
+  private health = 3;
+  private score = 0;
+  private currentScore = 0;
+  private currentRepScore = 0;
+  private highScore = 0;
+  private comboMissed = 0;
+  private comboStreak = 0;
+  private combo = 1;
+
   private successfulReps = 0;
   private totalReps = 0;
-  private currentScore = 0;
   private pointsGained = 0;
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]?: number[] } = {
@@ -158,7 +166,6 @@ export class SoundExplorerService implements ActivityBase {
   resetVariables() {
     this.isServiceSetup = false;
     this.genre = 'jazz';
-    this.globalReCalibrationCount = 0;
     this.qaGameSettings = undefined;
     this.gameSettings = environment.settings['sound_explorer'];
     this.currentLevel = environment.settings['sound_explorer'].currentLevel;
@@ -178,7 +185,16 @@ export class SoundExplorerService implements ActivityBase {
     this.streak = 0;
     this.successfulReps = 0;
     this.totalReps = 0;
+
+    this.health = 3;
+    this.score = 0;
     this.currentScore = 0;
+    this.currentRepScore = 0;
+    this.highScore = 0;
+    this.comboMissed = 0;
+    this.comboStreak = 0;
+    this.combo = 1;
+
     this.pointsGained = 0;
     this.shapes = ['circle', 'triangle', 'rectangle', 'hexagon'];
     this.originsWithAngleRange = {
@@ -204,6 +220,7 @@ export class SoundExplorerService implements ActivityBase {
         }
       }
     }
+    this.highScore = await this.apiService.getHighScoreXP('sound_explorer');
     this.soundExplorerScene.enable();
     this.soundExplorerScene.scene.start('soundExplorer');
   }
@@ -336,19 +353,19 @@ export class SoundExplorerService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         // one prompt
-        let score = 0;
+        let currentScore = 0;
         this.soundExplorerScene.score.next(0);
         const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
+          (score) => (currentScore = score),
         );
-        while (score === 0) {
+        while (currentScore === 0) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
           this.drawShapes(1);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
-          if (score === 0) {
+          if (currentScore === 0) {
             this.ttsService.tts("Let's try that again.");
             this.elements.guide.state = {
               data: {
@@ -378,19 +395,19 @@ export class SoundExplorerService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        let score = 0;
+        let currentScore = 0;
         this.soundExplorerScene.score.next(0);
         const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
+          (score) => (currentScore = score),
         );
-        while (score === 0) {
+        while (currentScore === 0) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
           this.drawShapes(2);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
-          if (score === 0) {
+          if (currentScore === 0) {
             this.ttsService.tts("Let's try that again.");
             this.elements.guide.state = {
               data: {
@@ -420,19 +437,19 @@ export class SoundExplorerService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        let score = 0;
+        let currentScore = 0;
         this.soundExplorerScene.score.next(0);
         const scoreSubscription = this.soundExplorerScene.score.subscribe(
-          (currentScore) => (score = currentScore),
+          (score) => (currentScore = score),
         );
-        while (score === 0) {
+        while (currentScore === 0) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
           this.drawShapes(3);
           const rep = await this.soundExplorerScene.waitForCollisionOrTimeout();
           await this.elements.sleep(1000);
-          if (score === 0) {
+          if (currentScore === 0) {
             this.ttsService.tts("Let's try that again.");
             this.elements.guide.state = {
               data: {
@@ -560,7 +577,23 @@ export class SoundExplorerService implements ActivityBase {
             if (event.position) {
               this.soundExplorerScene.animateScore(event.position.x, event.position.y, 1);
             }
+            this.successfulReps++;
+          } else {
+            this.elements.health.state = {
+              data: {
+                value: --this.health,
+                total: 3,
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            this.comboStreak = 0;
+            this.comboMissed = 0;
+            this.combo = 1;
           }
+          this.totalReps++;
         });
 
         this.ttsService.tts('Next activity. Sound Explorer.');
@@ -608,8 +641,9 @@ export class SoundExplorerService implements ActivityBase {
     ];
   }
 
-  async showPrompt(promptDetails: any, promptId: string) {
+  async showPrompt(promptDetails: any, promptId: string, reCalibrationCount?: number) {
     const isPromptFromBenchmark: boolean = Object.keys(promptDetails).length > 1;
+    this.difficulty = this.getRandomNumberBetweenRange(2, 5);
     const currentPromptDetails = await this.drawShapes(
       this.difficulty,
       isPromptFromBenchmark ? 0 : 200,
@@ -628,20 +662,6 @@ export class SoundExplorerService implements ActivityBase {
 
     await this.soundExplorerScene.waitForCollisionOrTimeout();
     const resultTimestamp = Date.now();
-    this.totalReps++;
-
-    // if low points, reset difficulty
-    if (this.pointsGained < this.difficulty / 2 && this.difficulty > 1) {
-      this.difficulty--;
-      this.streak = 0;
-    } else {
-      this.streak++;
-      this.successfulReps++;
-    }
-    // if continously high points, increase difficulty
-    if (this.streak !== 0 && this.streak % 3 === 0 && this.difficulty <= 4) {
-      this.difficulty++;
-    }
 
     // Todo: replace placeholder analytics values.
     const analyticsObj: AnalyticsDTO = {
@@ -670,6 +690,47 @@ export class SoundExplorerService implements ActivityBase {
       },
     };
 
+    if (this.currentRepScore < 2) {
+      this.comboStreak = 0;
+      this.comboMissed++;
+      if (this.comboMissed >= 2) {
+        this.comboMissed = 0;
+        this.combo = 1;
+      }
+    } else {
+      this.comboMissed = 0;
+      this.comboStreak++;
+      if (this.comboStreak % 5 == 0) {
+        this.comboStreak = 0;
+        this.combo *= 2;
+      }
+      this.score += this.currentRepScore * this.combo * (this.combo > 1 ? this.difficulty : 1);
+      this.elements.score.state = {
+        attributes: {
+          visibility: 'visible',
+          reCalibrationCount,
+        },
+        data: {
+          score: this.score,
+          highScore: this.highScore,
+          showScoreGained: false,
+        },
+      };
+    }
+
+    if (this.highScore !== undefined && this.score > this.highScore) {
+      this.elements.confetti.state = {
+        data: {},
+        attributes: {
+          visibility: 'visible',
+          reCalibrationCount,
+        },
+      };
+    }
+    analyticsObj.result.coin =
+      this.currentRepScore * this.combo * (this.combo > 1 ? this.difficulty : 1);
+
+    this.currentRepScore = 0;
     this.pointsGained = 0;
 
     return { analyticsObj };
@@ -694,54 +755,12 @@ export class SoundExplorerService implements ActivityBase {
         await this.elements.sleep(9000);
       },
 
-      // Initializes score & timer.
-      // When the timer runs out, loop() is ended.
-      async (reCalibrationCount: number) => {
-        this.elements.timer.state = {
-          data: {
-            mode: 'start',
-            isCountdown: true,
-            duration: this.gameDuration * 1000,
-            intermediateFns: {
-              [this.gameDuration! - 11]: () => {
-                this.ttsService.tts('Last few seconds left.');
-                this.elements.guide.state = {
-                  data: {
-                    title: 'Last few seconds left.',
-                    titleDuration: 3000,
-                  },
-                  attributes: {
-                    visibility: 'visible',
-                    reCalibrationCount,
-                  },
-                };
-              },
-            },
-            onPause: this.updateElapsedTime,
-            onComplete: this.updateElapsedTime,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-      },
-
       // The actual meat. This function keeps runnning until the timer runs out.
       async (reCalibrationCount: number) => {
-        this.soundExplorerScene.score.next(this.currentScore);
+        this.soundExplorerScene.score.next(this.score);
         this.scoreSubscription = this.soundExplorerScene.score.subscribe((score) => {
-          this.elements.score.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              score,
-              showScoreGained: false,
-            },
-          };
-          this.pointsGained += score - this.currentScore; // points obtained in current rep
+          this.pointsGained = score - this.currentScore; // points obtained in current rep
+          this.currentRepScore += this.pointsGained;
           this.currentScore = score;
           this.store.dispatch(game.setScore({ score }));
         });
@@ -775,143 +794,53 @@ export class SoundExplorerService implements ActivityBase {
 
         this.isGameComplete = false;
 
-        while (!this.isGameComplete) {
+        this.elements.score.state = {
+          data: {
+            score: this.score,
+            combo: this.combo,
+            highScore: this.highScore,
+            showScoreGained: false,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.health.state = {
+          data: {
+            value: this.health,
+            total: 3,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+
+        while (this.health > 0) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
           }
 
           const showObstacle = Math.random() > 0.5;
           const promptId = uuidv4();
-          const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
+          const { analyticsObj } = await this.showPrompt(
+            { showObstacle },
+            promptId,
+            reCalibrationCount,
+          );
           await this.elements.sleep(100);
           this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
         }
-      },
-      async (reCalibrationCount: number) => {
-        const highScoreResp = await this.apiService.getHighScore('sound_explorer');
-        const highScore =
-          highScoreResp && highScoreResp.length ? highScoreResp[0].repsCompleted : 0;
-
-        const shouldAllowReplay =
-          Math.abs(this.pointsGained - highScore) <= 5 || Math.random() < 0.5;
-
-        if (!shouldAllowReplay) return;
-
-        this.ttsService.tts(
-          'Raise both your hands if you want to add 30 more seconds to this activity.',
-        );
-        this.elements.guide.state = {
-          data: {
-            title: 'Raise both your hands to add 30 seconds.',
-            showIndefinitely: true,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'action',
-            htmlStr: `
-              <div class="text-center row">
-                <h1 class="pt-4 display-3">Times Up!</h1>
-                <h2 class="pb-8 display-6">Want to improve your score?</h2>
-                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
-              <div>
-            `,
-            buttons: [
-              {
-                title: 'Continue',
-                progressDurationMs: 9000,
-              },
-            ],
-          },
-        };
-        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
-        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
-          this.shouldReplay = this.qaGameSettings.extendGameDuration;
-        }
-        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
-          this.shouldReplay;
-        this.elements.banner.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        if (this.shouldReplay) {
-          this.soundsService.playCalibrationSound('success');
-
-          this.isGameComplete = false;
-
-          this.elements.timer.state = {
-            data: {
-              mode: 'start',
-              isCountdown: true,
-              duration: 30_000,
-              onPause: this.updateElapsedTime,
-              onComplete: this.updateElapsedTime,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          this.gameDuration = 30;
-          this.totalDuration += 30;
-        }
-      },
-      async (reCalibrationCount: number) => {
-        if (this.shouldReplay) {
-          while (!this.isGameComplete) {
-            if (reCalibrationCount !== this.globalReCalibrationCount) {
-              throw new Error('reCalibrationCount changed');
-            }
-
-            const showObstacle = Math.random() > 0.5;
-            const promptId = uuidv4();
-            const { analyticsObj } = await this.showPrompt({ showObstacle }, promptId);
-            await this.elements.sleep(100);
-            this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
-          }
-        }
+        this.elements.banner.hide();
+        this.elements.guide.hide();
       },
 
       // this probably should be in postLoop() ?
       async (reCalibrationCount: number) => {
         this.scoreSubscription.unsubscribe();
-        this.elements.score.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        this.elements.timer.state = {
-          data: {
-            mode: 'stop',
-          },
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
-        this.ttsService.tts("Your time's up");
-        this.elements.ribbon.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            titles: ['TIMES UP!'],
-          },
-        };
-        await this.elements.sleep(5000);
+        this.elements.score.hide();
+        this.elements.health.hide();
       },
     ];
   }
