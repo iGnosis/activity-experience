@@ -30,10 +30,11 @@ export class BeatBoxerService {
   private genre: Genre = 'jazz';
   private globalReCalibrationCount: number;
   private bagPositions: CenterOfMotion[] = ['left', 'right'];
-  private positiveLevel = [1.35, 1.4]; // right-wrist <---> right side of the screen
+  private positiveLevel = [1.35]; // right-wrist <---> right side of the screen
 
   // TODO: this is temporary fix, until we have levels for each of the objects.
   private negativeLevel = [0.5]; // left side of the screen  <---> left-wrist
+  private levelIncrement = 0.0;
   private bagTypes: BagType[] = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
   private analytics: AnalyticsDTO[] = [];
 
@@ -52,6 +53,7 @@ export class BeatBoxerService {
   private score = 0;
   private highScore = 0;
   private combo = 0;
+  private comboStreak = 0;
   private scoreSubscription: Subscription;
   private coin = 0;
 
@@ -151,8 +153,9 @@ export class BeatBoxerService {
     this.isServiceSetup = false;
     this.genre = 'jazz';
     this.bagPositions = ['left', 'right'];
-    this.positiveLevel = [1.35, 1.4];
+    this.positiveLevel = [1.35];
     this.negativeLevel = [0.5];
+    this.levelIncrement = 0.0;
     this.bagTypes = ['heavy-red', 'speed-red', 'heavy-blue', 'speed-blue'];
     this.analytics = [];
     this.gameStartTime = null;
@@ -167,6 +170,7 @@ export class BeatBoxerService {
     this.score = 0;
     this.highScore = 0;
     this.combo = 0;
+    this.comboStreak = 0;
     if (this.scoreSubscription) {
       this.scoreSubscription.unsubscribe();
     }
@@ -861,7 +865,9 @@ export class BeatBoxerService {
                   },
                 };
               }
-              if (this.successfulReps > 0 && this.successfulReps % 5 === 0) {
+              this.comboStreak++;
+              if (this.comboStreak > 0 && this.comboStreak % 5 === 0) {
+                this.levelIncrement += 0.2;
                 this.combo++;
               }
               this.score += this.combo * this.timeoutMultiplier(event.timeoutDuration);
@@ -894,6 +900,8 @@ export class BeatBoxerService {
                 };
               }
             } else {
+              this.comboStreak = 0;
+              this.levelIncrement = 0;
               this.combo = 0;
             }
           },
@@ -966,8 +974,10 @@ export class BeatBoxerService {
           const rightBagType = this.getRandomItemFromArray(
             this.bagTypes.filter((bag) => bag !== this.bagsAvailable.left || ''),
           );
-          const leftBagPosition = this.getRandomItemFromArray(this.negativeLevel);
-          const rightBagPosition = this.getRandomItemFromArray(this.positiveLevel);
+          const leftBagPosition =
+            this.getRandomItemFromArray(this.negativeLevel) - this.levelIncrement;
+          const rightBagPosition =
+            this.getRandomItemFromArray(this.positiveLevel) + this.levelIncrement;
 
           const promptId = uuidv4();
           const { analyticsObj } = await this.showPrompt(
