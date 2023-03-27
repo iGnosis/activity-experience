@@ -549,17 +549,39 @@ export class SoundExplorerService implements ActivityBase {
     ];
   }
 
+  debounce<F extends (...params: any[]) => void>(fn: F, delay: number) {
+    let timeoutID: number | null = null;
+    return function (this: any, ...args: any[]) {
+      clearTimeout(timeoutID!);
+      timeoutID = window.setTimeout(() => fn.apply(this, args), delay);
+    } as F;
+  }
   preLoop() {
     return [
       async (reCalibrationCount: number) => {
         this.soundExplorerScene.playBacktrack();
         this.soundExplorerScene.enableMusic();
 
+        let score = 0;
+
+        const updateScore = (event: {
+          result: 'success' | 'failure';
+          position: { x: number; y: number };
+        }) => {
+          if (event.position) {
+            this.soundExplorerScene.animateScore(event.position.x, event.position.y, score);
+          }
+          score = 0;
+        };
+
+        const debounceUpdatedScore = this.debounce((event: any) => {
+          updateScore(event);
+        }, 500);
+
         const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
           if (event.result === 'success') {
-            if (event.position) {
-              this.soundExplorerScene.animateScore(event.position.x, event.position.y, 1);
-            }
+            score += 1;
+            debounceUpdatedScore(event);
           }
         });
 
