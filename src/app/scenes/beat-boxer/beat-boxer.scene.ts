@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Results } from '@mediapipe/pose';
 import { Howl } from 'howler';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, take } from 'rxjs';
 import { PoseModelAdapter } from 'src/app/services/pose-model-adapter/pose-model-adapter.service';
 import { audioSprites } from 'src/app/services/sounds/audio-sprites';
 import { beatBoxerAudio } from 'src/app/services/sounds/beat-boxer.audiosprite';
@@ -10,6 +10,7 @@ import {
   BagType,
   BeatBoxerEvent,
   CenterOfMotion,
+  Coordinate,
   GameObjectWithBodyAndTexture,
   Genre,
 } from 'src/app/types/pointmotion';
@@ -164,13 +165,14 @@ export class BeatBoxerScene extends Phaser.Scene {
     super({ key: 'beatBoxer' });
   }
 
-  preload() {
+  preload(scale = 1) {
     this.designAssetsLoaded = false;
     // default scale of desing assets (fine-tuned based on sujit's feedback)
-    const heavyBagScale = 1;
-    const speedBagScale = 0.8;
-    const handOverlayScale = 0.6;
-    const obstacleScale = 1.1;
+
+    const heavyBagScale = 1 * scale;
+    const speedBagScale = 0.8 * scale;
+    const handOverlayScale = 0.6 * scale;
+    const obstacleScale = 1.1 * scale;
 
     this.load.atlas(
       TextureKeys.CONFETTI,
@@ -1004,5 +1006,34 @@ export class BeatBoxerScene extends Phaser.Scene {
       this.failureTrack && this.failureTrack.unload();
       this.backtrack && this.backtrack.unload();
     }
+  }
+
+  calcScale(): Promise<number> {
+    return new Promise((resolve) => {
+      this.poseModelAdapter
+        .getPose()
+        .pipe(take(1))
+        .subscribe((results) => {
+          const { width, height } = this.game.canvas;
+
+          const top = {
+            x: width * results.poseLandmarks[1].x,
+            y: height * results.poseLandmarks[1].y,
+          };
+          const botton = {
+            x: width * results.poseLandmarks[31].x,
+            y: height * results.poseLandmarks[31].y,
+          };
+
+          const heightOfUser = botton.y - top.y;
+
+          if (heightOfUser / height < 0.8) {
+            this.preload(heightOfUser / height);
+          } else {
+            this.preload(1);
+          }
+          resolve(heightOfUser);
+        });
+    });
   }
 }
