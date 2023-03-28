@@ -103,32 +103,38 @@ export class GameService {
     // TODO: Update the time the person stayed calibrated in the stage (and db)
     this.setReclibrationCountForElements();
     this._calibrationStatus = status;
+    const reCalibrationCount = this.reCalibrationCount;
     if (status === 'error') {
       this.calibrationService.startCalibrationScene(this.game as Phaser.Game);
     } else if (status === 'success') {
       // Refactor: move this to the method where mila asks to raise your hand ln:416
       if (this.gameStatus.stage === 'loop') {
-        this.handTrackerService.waitUntilHandRaised('any-hand').then(() => {
-          this.soundsService.playCalibrationSound('success');
-          if (this.elements.timer.data.mode === 'pause') {
-            this.elements.timer.data = {
-              mode: 'resume',
-            };
-          }
-          if (this.benchmarkId) {
-            this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
-              window.parent.postMessage(
-                {
-                  type: 'end-game',
-                  ...result,
-                },
-                '*',
-              );
-            });
-          } else {
-            this.startGame();
-          }
-        });
+        this.handTrackerService
+          .waitUntilHandRaised('any-hand', reCalibrationCount)
+          .then(() => {
+            this.soundsService.playCalibrationSound('success');
+            if (this.elements.timer.data.mode === 'pause') {
+              this.elements.timer.data = {
+                mode: 'resume',
+              };
+            }
+            if (this.benchmarkId) {
+              this.benchmarkService.benchmark(this.benchmarkId).then((result: any) => {
+                window.parent.postMessage(
+                  {
+                    type: 'end-game',
+                    ...result,
+                  },
+                  '*',
+                );
+              });
+            } else {
+              this.startGame();
+            }
+          })
+          .catch((err: any) => {
+            console.log(err);
+          });
       }
     }
   }

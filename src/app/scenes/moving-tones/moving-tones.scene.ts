@@ -695,6 +695,8 @@ export class MovingTonesScene extends Phaser.Scene {
           rippleAnim && rippleAnim.destroy(true);
         }
       });
+      // then remove all the remaining objects
+      this.group.clear(true, true);
     } else {
       if (object === TextureKeys.MUSIC_CIRCLE) {
         const idxList: number[] = [];

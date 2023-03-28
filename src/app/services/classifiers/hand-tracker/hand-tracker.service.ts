@@ -5,6 +5,7 @@ import { Coordinate, HandTrackerStatus, OpenHandStatus } from 'src/app/types/poi
 import { Results as HandResults } from '@mediapipe/hands';
 import { HandsService } from '../../hands/hands.service';
 import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
+import { CalibrationService } from '../../calibration/calibration.service';
 
 @Injectable({
   providedIn: 'root',
@@ -22,11 +23,19 @@ export class HandTrackerService {
   debouncedStatus: HandTrackerStatus = undefined;
   // setting default to both-hands as the hand model is disabled. status has to be undefined by default.
   openHandStatus = new BehaviorSubject<OpenHandStatus>('both-hands');
+  globalReCalibrationCount: number;
 
-  constructor(private handsService: HandsService, private poseModelAdapter: PoseModelAdapter) {
+  constructor(
+    private handsService: HandsService,
+    private poseModelAdapter: PoseModelAdapter,
+    private calibrationService: CalibrationService,
+  ) {
     this.result.pipe(debounceTime(500)).subscribe((status: HandTrackerStatus) => {
       this.debouncedStatus = status;
       console.log('HandTrackerService:debouncedStatus:', this.status);
+    });
+    this.calibrationService.reCalibrationCount.subscribe((count) => {
+      this.globalReCalibrationCount = count;
     });
   }
 
@@ -63,10 +72,17 @@ export class HandTrackerService {
     this.handSubscription && this.handSubscription.unsubscribe();
   }
 
-  async waitUntilHandRaised(hand: HandTrackerStatus) {
-    return new Promise((resolve, _) => {
+  async waitUntilHandRaised(hand: HandTrackerStatus, reCalibrationCount?: number) {
+    return new Promise((resolve, reject) => {
       if (hand === 'any-hand') {
         const resultSubscription = this.result.subscribe((status: HandTrackerStatus) => {
+          if (
+            reCalibrationCount !== undefined &&
+            reCalibrationCount !== this.globalReCalibrationCount
+          ) {
+            resultSubscription.unsubscribe();
+            reject('reCalibration count changed while waiting for hand raise');
+          }
           if (status !== undefined && ['left-hand', 'right-hand', 'both-hands'].includes(status)) {
             resultSubscription.unsubscribe();
             resolve({});
@@ -74,6 +90,13 @@ export class HandTrackerService {
         });
       } else {
         const resultSubscription = this.result.subscribe((status: HandTrackerStatus) => {
+          if (
+            reCalibrationCount !== undefined &&
+            reCalibrationCount !== this.globalReCalibrationCount
+          ) {
+            resultSubscription.unsubscribe();
+            reject('reCalibration count changed while waiting for hand raise');
+          }
           if (status !== undefined && status === hand) {
             resultSubscription.unsubscribe();
             resolve({});
