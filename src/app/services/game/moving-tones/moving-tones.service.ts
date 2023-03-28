@@ -314,19 +314,19 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y - 130,
+          y: Math.max(this.center.y - 130, 20),
         },
         endLeft: {
           x: 50,
-          y: this.center.y + 200,
+          y: Math.max(this.center.y - 130, 20) + 330,
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y - 130,
+          y: Math.max(this.center.y - 130, 20),
         },
         endRight: {
           x: 2 * this.center.x - 50,
-          y: this.center.y + 200,
+          y: Math.max(this.center.y - 130, 20) + 330,
         },
         curveType: 'semicircle',
         pointsInBetween: 2,
@@ -354,7 +354,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y + 170,
+          y: Math.min(this.center.y + 170, 2 * this.center.y - 20),
         },
         endLeft: {
           x: this.center.x - 300,
@@ -362,7 +362,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y - 170,
+          y: Math.max(this.center.y - 170, 20),
         },
         endRight: {
           x: this.center.x + 300,
@@ -374,7 +374,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y - 170,
+          y: Math.max(this.center.y - 170, 20),
         },
         endLeft: {
           x: this.center.x - 300,
@@ -382,7 +382,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y + 170,
+          y: Math.min(this.center.y + 170, 2 * this.center.y - 20),
         },
         endRight: {
           x: this.center.x + 300,
@@ -394,7 +394,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 50,
-          y: this.center.y - 150,
+          y: Math.max(this.center.y - 150, 20),
         },
         endLeft: {
           x: this.center.x - 50,
@@ -402,7 +402,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 50,
-          y: this.center.y - 150,
+          y: Math.max(this.center.y - 150, 20),
         },
         endRight: {
           x: this.center.x + 50,
@@ -414,19 +414,19 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x / 2 - 50,
-          y: this.center.y,
+          y: Math.max(this.center.y - 150, 20) + 150,
         },
         endLeft: {
           x: this.center.x / 2,
-          y: this.center.y - 150,
+          y: Math.max(this.center.y - 150, 20),
         },
         startRight: {
           x: this.center.x + this.center.x / 2 + 50,
-          y: this.center.y,
+          y: Math.max(this.center.y - 150, 20) + 150,
         },
         endRight: {
           x: this.center.x + this.center.x / 2,
-          y: this.center.y - 150,
+          y: Math.max(this.center.y - 150, 20),
         },
         curveType: 'triangle',
         pointsInBetween: 1,
@@ -454,7 +454,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startRight: {
           x: this.center.x,
-          y: this.center.y - 100,
+          y: Math.max(this.center.y - 100, 20),
         },
         endRight: {
           x: this.center.x + 250,
@@ -466,7 +466,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startRight: {
           x: this.center.x + 250,
-          y: this.center.y - 100,
+          y: Math.max(this.center.y - 100, 20),
         },
         endRight: {
           x: this.center.x,
@@ -478,7 +478,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x,
-          y: this.center.y - 100,
+          y: Math.max(this.center.y - 100, 20),
         },
         endLeft: {
           x: this.center.x - 250,
@@ -490,7 +490,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 250,
-          y: this.center.y - 100,
+          y: Math.max(this.center.y - 100, 20),
         },
         endLeft: {
           x: this.center.x,
@@ -502,7 +502,7 @@ export class MovingTonesService implements ActivityBase {
       {
         startLeft: {
           x: this.center.x - 100,
-          y: this.center.y - 180,
+          y: Math.max(this.center.y - 180, 20),
         },
         endLeft: {
           x: this.center.x - 100,
@@ -510,7 +510,7 @@ export class MovingTonesService implements ActivityBase {
         },
         startRight: {
           x: this.center.x + 100,
-          y: this.center.y - 180,
+          y: Math.max(this.center.y - 180, 20),
         },
         endRight: {
           x: this.center.x + 100,
