@@ -1152,7 +1152,7 @@ export type MovingTonesCircle = {
   id: string;
   x: number;
   y: number;
-  type: 'start' | 'end' | 'coin';
+  type: 'start' | 'end' | 'music_coin' | 'danger_coin';
   hand: 'left' | 'right';
 };
 

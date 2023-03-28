@@ -32,6 +32,7 @@ enum TextureKeys {
   GREEN_BLAST = 'green_blast',
   LEFT_HAND = 'left-hand',
   RIGHT_HAND = 'right-hand',
+  DANGER_COIN = 'danger-coin',
 }
 
 enum AnimationKeys {
@@ -221,12 +222,12 @@ export class MovingTonesScene extends Phaser.Scene {
                     if (path[pathNumber] && !alreadyShown.includes(path[pathNumber])) {
                       alreadyShown.push(path[pathNumber]);
                       if (data.variation) {
-                        this.showGreenCircle(path[pathNumber], {
+                        this.showMusicCircle(path[pathNumber], {
                           variation: data.variation,
                           variationNumber: pathNumber + 2,
                         });
                       } else {
-                        this.showGreenCircle(path[pathNumber]);
+                        this.showMusicCircle(path[pathNumber]);
                       }
                       pathNumber += 1;
                     }
@@ -343,6 +344,46 @@ export class MovingTonesScene extends Phaser.Scene {
         });
       handSubscription.unsubscribe();
     }
+
+    if (gameObjectTexture === TextureKeys.DANGER_COIN) {
+      const interactableTexture =
+        handTexture === TextureKeys.RIGHT_HAND ? TextureKeys.RED_CIRCLE : TextureKeys.BLUE_CIRCLE;
+      const startCirclesExist = this.checkIfStartCircleExists(this.group, interactableTexture);
+      if (startCirclesExist) return;
+
+      const handSubscription = this.handTrackerService.openHandStatus
+        .pipe(distinctUntilChanged())
+        .subscribe((status) => {
+          const circle: Circle = gameObject.getData('circle');
+          this.circleEvents.next({ name: 'collisionStarted', circle });
+
+          if (!status) return;
+          if (
+            this.allowClosedHandsDuringCollision ||
+            [handTexture, 'both-hands'].includes(status)
+          ) {
+            const interactableWith: 'red' | 'blue' = gameObject.getData('interactableWith');
+            const color = handTexture === TextureKeys.RIGHT_HAND ? 'red' : 'blue';
+            if (interactableWith !== color) {
+              this.score.next(-1);
+              this.circleEvents.next({ name: 'invalidCollision', circle });
+              return;
+            } else {
+              this.score.next(-1);
+            }
+
+            const rippleAnim: Phaser.GameObjects.Sprite = gameObject.getData('rippleAnim');
+            rippleAnim.destroy(true);
+
+            const { x, y } = gameObject.body.center;
+            gameObject.destroy(true);
+
+            this.circleEvents.next({ name: 'collisionCompleted', circle });
+            // this.animate(x, y, 'green');
+          }
+        });
+      handSubscription.unsubscribe();
+    }
   };
 
   getTween(texture: TextureKeys.RIGHT_HAND | TextureKeys.LEFT_HAND) {
@@ -433,6 +474,10 @@ export class MovingTonesScene extends Phaser.Scene {
     this.load.image({
       key: TextureKeys.MUSIC_CIRCLE,
       url: 'assets/images/moving-tones/music-circle.svg',
+    });
+    this.load.image({
+      key: TextureKeys.DANGER_COIN,
+      url: 'assets/images/moving-tones/danger-circle.svg',
     });
     this.load.svg({
       key: TextureKeys.BLUE_DONE,
@@ -629,15 +674,22 @@ export class MovingTonesScene extends Phaser.Scene {
     return gameObject;
   }
 
-  showGreenCircle(circle: Circle, data?: { variation: string; variationNumber: number }) {
+  showMusicCircle(circle: Circle, data?: { variation: string; variationNumber: number }) {
     const { x, y, hand } = circle;
     const interactableWith = hand === 'right' ? 'red' : 'blue';
 
     this.circleEvents.next({ name: 'visible', circle });
 
-    const gameObject = this.physics.add
-      .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
-      .setScale(this.circleScale);
+    let gameObject;
+    if (circle.type === 'danger_coin') {
+      gameObject = this.physics.add
+        .staticSprite(x, y, TextureKeys.DANGER_COIN)
+        .setScale(this.circleScale);
+    } else {
+      gameObject = this.physics.add
+        .staticSprite(x, y, TextureKeys.MUSIC_CIRCLE)
+        .setScale(this.circleScale);
+    }
 
     if (!gameObject || !this.group) return;
 

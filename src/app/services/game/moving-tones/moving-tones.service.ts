@@ -285,7 +285,7 @@ export class MovingTonesService implements ActivityBase {
       x: coordinate.x,
       y: coordinate.y,
       id: uuidv4(),
-      type: idx === 0 ? 'start' : idx === coordinates.length - 1 ? 'end' : 'coin',
+      type: idx === 0 ? 'start' : idx === coordinates.length - 1 ? 'end' : 'music_coin',
       hand,
     }));
     return circlesInPath;
@@ -564,7 +564,10 @@ export class MovingTonesService implements ActivityBase {
   private initProgressBars(reCalibrationCount?: number) {
     this.progressBarSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
       console.log('circle event: ', event);
-      if (event.name === 'collisionStarted' && event.circle.type !== 'coin') {
+      if (
+        event.name === 'collisionStarted' &&
+        !['music_coin', 'danger_coin'].includes(event.circle.type)
+      ) {
         if (event.circle.hand === 'left') {
           const isRedProgressBarShown =
             this.elements.timeout.state.data.bars &&
@@ -606,7 +609,7 @@ export class MovingTonesService implements ActivityBase {
         }
       } else if (
         (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
-        event.circle.type !== 'coin'
+        !['music_coin', 'danger_coin'].includes(event.circle.type)
       ) {
         this.elements.timeout.state = {
           data: {
@@ -635,11 +638,11 @@ export class MovingTonesService implements ActivityBase {
 
       const startLeft = leftPath.filter((circle) => circle.type === 'start')[0];
       const endLeft = leftPath.filter((circle) => circle.type === 'end')[0];
-      const leftCoins = leftPath.filter((circle) => circle.type === 'coin');
+      const leftCoins = leftPath.filter((circle) => circle.type === 'music_coin');
 
       const startRight = rightPath.filter((circle) => circle.type === 'start')[0];
       const endRight = rightPath.filter((circle) => circle.type === 'end')[0];
-      const rightCoins = rightPath.filter((circle) => circle.type === 'coin');
+      const rightCoins = rightPath.filter((circle) => circle.type === 'danger_coin');
 
       console.log('right hand: ', leftPath, startRight, endRight, rightCoins);
       console.log('left hand: ', rightPath, startLeft, endLeft, leftCoins);
@@ -953,7 +956,7 @@ export class MovingTonesService implements ActivityBase {
 
         const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
         const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
-        const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+        const rightCoins = rightCoordinates.filter((c) => c.type === 'music_coin');
         const rightCoinIds = rightCoins.map((coin) => coin.id);
 
         let coinsCollected = 0;
@@ -1085,7 +1088,7 @@ export class MovingTonesService implements ActivityBase {
 
         const startLeftCircle = leftCoordinates.filter((c) => c.type === 'start')[0];
         const endLeftCircle = leftCoordinates.filter((c) => c.type === 'end')[0];
-        const leftCoins = leftCoordinates.filter((c) => c.type === 'coin');
+        const leftCoins = leftCoordinates.filter((c) => c.type === 'music_coin');
         const leftCoinIds = leftCoins.map((coin) => coin.id);
 
         let coinsCollected = 0;
@@ -1220,7 +1223,7 @@ export class MovingTonesService implements ActivityBase {
 
           const startLeftCircle = leftCoordinates.filter((c) => c.type === 'start')[0];
           const endLeftCircle = leftCoordinates.filter((c) => c.type === 'end')[0];
-          const leftCoins = leftCoordinates.filter((c) => c.type === 'coin');
+          const leftCoins = leftCoordinates.filter((c) => c.type === 'music_coin');
 
           const startRight = {
             x: this.center.x + 100,
@@ -1240,7 +1243,7 @@ export class MovingTonesService implements ActivityBase {
 
           const startRightCircle = rightCoordinates.filter((c) => c.type === 'start')[0];
           const endRightCircle = rightCoordinates.filter((c) => c.type === 'end')[0];
-          const rightCoins = rightCoordinates.filter((c) => c.type === 'coin');
+          const rightCoins = rightCoordinates.filter((c) => c.type === 'music_coin');
 
           this.movingTonesScene.initPath(startLeftCircle, endLeftCircle, leftCoins, {
             collisionDebounce: this.collisionDebounce,
