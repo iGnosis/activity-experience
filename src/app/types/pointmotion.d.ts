@@ -1186,6 +1186,8 @@ export type MovingTonesCircleEvent = {
   name: MovingTonesCircleEventName;
   circle: MovingTonesCircle;
   trackId?: number;
+  timeoutDuration?: number;
+  position?: { x: number; y: number };
 };
 
 export type MovingTonesCircleSettings = {

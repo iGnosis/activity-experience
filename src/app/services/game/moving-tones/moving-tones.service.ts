@@ -36,7 +36,6 @@ export class MovingTonesService implements ActivityBase {
   private failedReps = 0;
   private globalReCalibrationCount: number;
 
-  private isGameComplete = false;
   private shouldReplay: boolean;
 
   private gameSettings = environment.settings['moving_tones'];
@@ -57,12 +56,11 @@ export class MovingTonesService implements ActivityBase {
   private collisionDebounce = this.config.speed || 1500;
   private progressBarSubscription: Subscription;
 
-  private center: Coordinate;
-  private updateElapsedTime = (elapsedTime: number) => {
-    if (elapsedTime >= this.gameDuration!) this.isGameComplete = true;
-    this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
-  };
+  private comboStreak = 0;
+  private health = 3;
+  private score = 0;
 
+  private center: Coordinate;
   constructor(
     private store: Store<{
       game: GameState;
@@ -101,7 +99,6 @@ export class MovingTonesService implements ActivityBase {
     this.coinsCollected = 0;
     this.failedReps = 0;
     this.globalReCalibrationCount = 0;
-    this.isGameComplete = false;
     this.shouldReplay = false;
     this.gameSettings = environment.settings['moving_tones'];
     this.qaGameSettings = undefined;
@@ -127,25 +124,25 @@ export class MovingTonesService implements ActivityBase {
       setInterval(() => {
         if (reCalibrationCount !== this.globalReCalibrationCount) resolve('recalibrated');
       }, 100);
-      const interval = setInterval(() => {
-        if (this.isGameComplete && !this.lastRepPrompted) {
-          clearInterval(interval);
-          this.lastRepPrompted = true;
-          this.ttsService.tts('Do the last movement to complete the activity');
-          this.elements.guide.state = {
-            data: {
-              title: 'Do the last movement to complete the activity',
-              titleDuration: 2000,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-        }
-      }, 400);
+      // const interval = setInterval(() => {
+      //   if (this.health > 0 && !this.lastRepPrompted) {
+      //     clearInterval(interval);
+      //     this.lastRepPrompted = true;
+      //     this.ttsService.tts('Do the last movement to complete the activity');
+      //     this.elements.guide.state = {
+      //       data: {
+      //         title: 'Do the last movement to complete the activity',
+      //         titleDuration: 2000,
+      //       },
+      //       attributes: {
+      //         visibility: 'visible',
+      //         reCalibrationCount,
+      //       },
+      //     };
+      //   }
+      // }, 400);
 
-      this.movingTonesScene.waitForCollisionOrTimeout().then((result) => {
+      this.movingTonesScene.waitForCollisionOrTimeout(10000).then((result) => {
         if (this.timedOut) {
           this.timedOut = false;
           return resolve('timeout');
@@ -413,19 +410,19 @@ export class MovingTonesService implements ActivityBase {
       }, // semicircles - top to bottom
       {
         startLeft: {
-          x: this.center.x / 2 - 50,
+          x: this.center.x / 2 - 40,
           y: Math.max(this.center.y - 150, 20) + 150,
         },
         endLeft: {
-          x: this.center.x / 2,
+          x: this.center.x / 2 - 10,
           y: Math.max(this.center.y - 150, 20),
         },
         startRight: {
-          x: this.center.x + this.center.x / 2 + 50,
+          x: this.center.x + this.center.x / 2 + 40,
           y: Math.max(this.center.y - 150, 20) + 150,
         },
         endRight: {
-          x: this.center.x + this.center.x / 2,
+          x: this.center.x + this.center.x / 2 - 10,
           y: Math.max(this.center.y - 150, 20),
         },
         curveType: 'triangle',
@@ -433,19 +430,19 @@ export class MovingTonesService implements ActivityBase {
       }, // triangles - top
       {
         startLeft: {
-          x: this.center.x / 2 - 50,
+          x: this.center.x / 2 - 40,
           y: this.center.y,
         },
         endLeft: {
-          x: this.center.x / 2,
+          x: this.center.x / 2 - 10,
           y: this.center.y + 150,
         },
         startRight: {
-          x: this.center.x + this.center.x / 2 + 50,
+          x: this.center.x + this.center.x / 2 + 40,
           y: this.center.y,
         },
         endRight: {
-          x: this.center.x + this.center.x / 2,
+          x: this.center.x + this.center.x / 2 - 10,
           y: this.center.y + 150,
         },
         curveType: 'triangle',
@@ -524,6 +521,20 @@ export class MovingTonesService implements ActivityBase {
     const { startLeft, endLeft, startRight, endRight, curveType, pointsInBetween } =
       configurations[Math.floor(Math.random() * configurations.length)];
 
+    if (this.comboStreak > 0 && this.comboStreak % 3 === 0) {
+      const baseDistance = 5;
+      const distanceMultiplier = this.comboStreak / 3;
+      if (startLeft && endLeft) {
+        startLeft.x -= baseDistance * distanceMultiplier;
+        endLeft.x -= baseDistance * distanceMultiplier;
+      }
+
+      if (startRight && endRight) {
+        startRight.x += baseDistance * distanceMultiplier;
+        endRight.x += baseDistance * distanceMultiplier;
+      }
+    }
+
     let leftPath: MovingTonesCircle[] = [];
     let rightPath: MovingTonesCircle[] = [];
 
@@ -561,72 +572,73 @@ export class MovingTonesService implements ActivityBase {
     return { leftPath, rightPath };
   }
 
-  private initProgressBars(reCalibrationCount?: number) {
-    this.progressBarSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
-      console.log('circle event: ', event);
-      if (
-        event.name === 'collisionStarted' &&
-        !['music_coin', 'danger_coin'].includes(event.circle.type)
-      ) {
-        if (event.circle.hand === 'left') {
-          const isRedProgressBarShown =
-            this.elements.timeout.state.data.bars &&
-            this.elements.timeout.state.data.bars.includes('red');
-          if (isRedProgressBarShown) {
-            this.elements.timeout.state.data.bars = ['blue', 'red'];
-          } else {
-            this.elements.timeout.state = {
-              data: {
-                mode: 'start',
-                timeout: this.collisionDebounce,
-                bars: ['blue'],
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-          }
-        } else {
-          const isBlueProgressBarShown =
-            this.elements.timeout.state.data.bars &&
-            this.elements.timeout.state.data.bars.includes('blue');
-          if (isBlueProgressBarShown) {
-            this.elements.timeout.state.data.bars = ['blue', 'red'];
-          } else {
-            this.elements.timeout.state = {
-              data: {
-                mode: 'start',
-                timeout: this.collisionDebounce,
-                bars: ['red'],
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-          }
-        }
-      } else if (
-        (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
-        !['music_coin', 'danger_coin'].includes(event.circle.type)
-      ) {
-        this.elements.timeout.state = {
-          data: {
-            mode: 'stop',
-          },
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-      }
-    });
-  }
+  // private initProgressBars(reCalibrationCount?: number) {
+  //   this.progressBarSubscription = this.movingTonesScene.circleEvents.subscribe((event) => {
+  //     console.log('circle event: ', event);
+  //     if (
+  //       event.name === 'collisionStarted' &&
+  //       !['music_coin', 'danger_coin'].includes(event.circle.type)
+  //     ) {
+  //       if (event.circle.hand === 'left') {
+  //         const isRedProgressBarShown =
+  //           this.elements.timeout.state.data.bars &&
+  //           this.elements.timeout.state.data.bars.includes('red');
+  //         if (isRedProgressBarShown) {
+  //           this.elements.timeout.state.data.bars = ['blue', 'red'];
+  //         } else {
+  //           this.elements.timeout.state = {
+  //             data: {
+  //               mode: 'start',
+  //               timeout: this.collisionDebounce,
+  //               bars: ['blue'],
+  //             },
+  //             attributes: {
+  //               visibility: 'visible',
+  //               reCalibrationCount,
+  //             },
+  //           };
+  //         }
+  //       } else {
+  //         const isBlueProgressBarShown =
+  //           this.elements.timeout.state.data.bars &&
+  //           this.elements.timeout.state.data.bars.includes('blue');
+  //         if (isBlueProgressBarShown) {
+  //           this.elements.timeout.state.data.bars = ['blue', 'red'];
+  //         } else {
+  //           this.elements.timeout.state = {
+  //             data: {
+  //               mode: 'start',
+  //               timeout: this.collisionDebounce,
+  //               bars: ['red'],
+  //             },
+  //             attributes: {
+  //               visibility: 'visible',
+  //               reCalibrationCount,
+  //             },
+  //           };
+  //         }
+  //       }
+  //     } else if (
+  //       (event.name === 'collisionEnded' || event.name === 'collisionCompleted') &&
+  //       !['music_coin', 'danger_coin'].includes(event.circle.type)
+  //     ) {
+  //       this.elements.timeout.state = {
+  //         data: {
+  //           mode: 'stop',
+  //         },
+  //         attributes: {
+  //           visibility: 'hidden',
+  //           reCalibrationCount,
+  //         },
+  //       };
+  //     }
+  //   });
+  // }
 
   private async game(reCalibrationCount?: number) {
-    this.initProgressBars(reCalibrationCount);
-    while (!this.isGameComplete) {
+    // this.initProgressBars(reCalibrationCount);
+
+    while (this.health > 0) {
       if (reCalibrationCount !== this.globalReCalibrationCount) {
         this.movingTonesScene.destroyGameObjects();
         this.progressBarSubscription.unsubscribe();
@@ -642,7 +654,18 @@ export class MovingTonesService implements ActivityBase {
 
       const startRight = rightPath.filter((circle) => circle.type === 'start')[0];
       const endRight = rightPath.filter((circle) => circle.type === 'end')[0];
-      const rightCoins = rightPath.filter((circle) => circle.type === 'danger_coin');
+      const rightCoins = rightPath.filter((circle) => circle.type === 'music_coin');
+
+      // setting a random coin as 'danger coin'
+      if (leftCoins.length > 2) {
+        const randomIndex = Math.floor(Math.random() * leftCoins.length);
+        leftCoins[randomIndex].type = 'danger_coin';
+      }
+
+      if (rightCoins.length > 2) {
+        const randomIndex = Math.floor(Math.random() * rightCoins.length);
+        rightCoins[randomIndex].type = 'danger_coin';
+      }
 
       console.log('right hand: ', leftPath, startRight, endRight, rightCoins);
       console.log('left hand: ', rightPath, startLeft, endLeft, leftCoins);
@@ -657,11 +680,31 @@ export class MovingTonesService implements ActivityBase {
           collisionDebounce: this.collisionDebounce,
         });
       }
-      this.initTimeoutForPaths(leftPath, rightPath);
+      // this.initTimeoutForPaths(leftPath, rightPath);
       const promptTimestamp = Date.now();
 
+      this.elements.timeout.state = {
+        data: {
+          mode: 'start',
+          timeout: 10000,
+          bars: ['yellow'],
+        },
+        attributes: {
+          visibility: 'visible',
+          reCalibrationCount,
+        },
+      };
       const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
-
+      this.movingTonesScene.destroyGameObjects();
+      this.elements.timeout.state = {
+        data: {
+          mode: 'stop',
+        },
+        attributes: {
+          visibility: 'hidden',
+          reCalibrationCount,
+        },
+      };
       if (result === 'recalibrated') {
         this.movingTonesScene.destroyGameObjects();
         throw new Error('reCalibrationCount changed');
@@ -1354,30 +1397,10 @@ export class MovingTonesService implements ActivityBase {
         await this.elements.sleep(9000);
       },
       async (reCalibrationCount: number) => {
-        // game starts
-        this.timeOutFirstTime = true;
-        this.elements.timer.state = {
+        this.elements.health.state = {
           data: {
-            mode: 'start',
-            isCountdown: true,
-            duration: this.gameDuration! * 1000,
-            intermediateFns: {
-              [this.gameDuration! - 11]: () => {
-                this.ttsService.tts('Last few seconds left.');
-                this.elements.guide.state = {
-                  data: {
-                    title: 'Last few seconds left.',
-                    titleDuration: 3000,
-                  },
-                  attributes: {
-                    visibility: 'visible',
-                    reCalibrationCount,
-                  },
-                };
-              },
-            },
-            onPause: this.updateElapsedTime,
-            onComplete: this.updateElapsedTime,
+            total: 3,
+            value: this.health,
           },
           attributes: {
             visibility: 'visible',
@@ -1385,96 +1408,80 @@ export class MovingTonesService implements ActivityBase {
           },
         };
 
+        this.movingTonesScene.circleEvents.subscribe((event) => {
+          if (
+            event.name === 'collisionCompleted' &&
+            ['music_coin', 'danger_coin'].includes(event.circle.type)
+          ) {
+            if (event.circle.type === 'danger_coin') {
+              // change health and reset combo streak
+              this.health -= 1;
+              this.comboStreak = 0;
+
+              this.elements.health.state = {
+                data: {
+                  total: 3,
+                  value: this.health,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            } else {
+              // increase score and combo streak
+              this.comboStreak += 1;
+
+              let multiplier = 1;
+              // x2 multiplier for every 3 correct motions in a row
+              if (this.comboStreak > 0 && this.comboStreak % 3 === 0) {
+                multiplier = 2;
+              }
+
+              // timeout bonus multiplier
+              if (event.timeoutDuration) {
+                if (event.timeoutDuration < 25) {
+                  multiplier += 4;
+                } else if (event.timeoutDuration < 50) {
+                  multiplier += 3;
+                } else if (event.timeoutDuration < 75) {
+                  multiplier += 2;
+                } else {
+                  multiplier += 1;
+                }
+              }
+
+              const score = multiplier;
+              if (event.position) {
+                this.movingTonesScene.animateScore(event.position.x, event.position.y, score);
+              }
+
+              this.score += score;
+              this.elements.score.state = {
+                data: {
+                  value: this.score,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+          }
+        });
+      },
+      async (reCalibrationCount: number) => {
         await this.game(reCalibrationCount);
-      },
-      async (reCalibrationCount: number) => {
-        const highScore = await this.apiService.getHighScore('moving_tones');
 
-        const shouldAllowReplay =
-          Math.abs(this.coinsCollected - highScore) <= 5 || Math.random() < 0.5;
-
-        if (!shouldAllowReplay) return;
-        await this.elements.sleep(3000);
-
-        this.ttsService.tts(
-          'Raise both your hands if you want to add 30 more seconds to this activity.',
-        );
-        this.elements.guide.state = {
-          data: {
-            title: 'Raise both your hands to add 30 seconds.',
-            showIndefinitely: true,
-          },
+        this.elements.score.state = {
+          data: {},
           attributes: {
-            visibility: 'visible',
+            visibility: 'hidden',
             reCalibrationCount,
           },
         };
-        this.elements.banner.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            type: 'action',
-            htmlStr: `
-              <div class="text-center row">
-                <h1 class="pt-4 display-3">Times Up!</h1>
-                <h2 class="pb-8 display-6">Want to improve your score?</h2>
-                <button class="btn btn-primary d-flex align-items-center progress col mx-16"><span class="m-auto d-inline-block">Add 30 more seconds</span></button>
-              <div>
-            `,
-            buttons: [
-              {
-                title: 'Continue',
-                progressDurationMs: 9000,
-              },
-            ],
-          },
-        };
-        this.shouldReplay = await this.handTrackerService.replayOrTimeout(10000);
-        if (typeof this.qaGameSettings?.extendGameDuration === 'boolean') {
-          this.shouldReplay = this.qaGameSettings.extendGameDuration;
-        }
-        this.gameSettings.levels[this.currentLevel].configuration.extendGameDuration =
-          this.shouldReplay;
-        this.elements.banner.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
-        if (this.shouldReplay) {
-          this.soundsService.playCalibrationSound('success');
-
-          this.isGameComplete = false;
-
-          this.elements.timer.state = {
-            data: {
-              mode: 'start',
-              isCountdown: true,
-              duration: 30_000,
-              onPause: this.updateElapsedTime,
-              onComplete: this.updateElapsedTime,
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          this.gameDuration = 30;
-          this.totalDuration += 30;
-        }
       },
       async (reCalibrationCount: number) => {
-        if (this.shouldReplay) {
-          await this.game(reCalibrationCount);
-        }
-        this.elements.timer.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
-        };
         this.elements.score.attributes = {
           visibility: 'hidden',
           reCalibrationCount,
