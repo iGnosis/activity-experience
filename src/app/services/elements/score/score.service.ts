@@ -19,7 +19,6 @@ export class ScoreService extends GameElement<ScoreElementState, object> {
           top: '50%',
           left: '75%',
         },
-        showScoreGained: true,
       },
       attributes: {},
     };

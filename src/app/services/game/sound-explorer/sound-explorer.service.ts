@@ -738,7 +738,6 @@ export class SoundExplorerService implements ActivityBase {
         data: {
           score: this.score,
           highScore: this.highScore,
-          showScoreGained: false,
         },
       };
     }
@@ -824,7 +823,6 @@ export class SoundExplorerService implements ActivityBase {
             score: this.score,
             combo: this.combo,
             highScore: this.highScore,
-            showScoreGained: false,
           },
           attributes: {
             visibility: 'visible',

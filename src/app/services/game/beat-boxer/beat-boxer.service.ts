@@ -877,7 +877,6 @@ export class BeatBoxerService {
                   score: this.score,
                   highScore: this.highScore,
                   combo: this.combo,
-                  showScoreGained: false,
                 },
                 attributes: {
                   visibility: 'visible',
@@ -912,7 +911,6 @@ export class BeatBoxerService {
             score: this.score,
             combo: this.combo,
             highScore: this.highScore,
-            showScoreGained: false,
           },
           attributes: {
             visibility: 'visible',

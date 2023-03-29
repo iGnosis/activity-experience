@@ -726,10 +726,6 @@ export type ScoreElementState = {
     right?: string;
     bottom?: string;
   };
-  /**
-   * Decides whether to show the score gained and the combo
-   */
-  showScoreGained?: boolean;
 };
 
 export type TimerElementState = {

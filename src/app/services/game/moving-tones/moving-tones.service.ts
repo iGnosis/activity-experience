@@ -1335,7 +1335,6 @@ export class MovingTonesService implements ActivityBase {
             },
             data: {
               score: this.coinsCollected,
-              showScoreGained: false,
             },
           };
         });
