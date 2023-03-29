@@ -117,6 +117,10 @@ export class MovingTonesService implements ActivityBase {
     if (this.progressBarSubscription) {
       this.progressBarSubscription.unsubscribe();
     }
+
+    this.comboStreak = 0;
+    this.score = 0;
+    this.health = 3;
   }
 
   private async waitForCollisionOrRecalibration(reCalibrationCount?: number) {
@@ -1485,6 +1489,7 @@ export class MovingTonesService implements ActivityBase {
           visibility: 'hidden',
           reCalibrationCount,
         };
+        this.elements.health.hide();
       },
     ];
   }
