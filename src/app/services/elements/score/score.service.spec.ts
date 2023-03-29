@@ -28,7 +28,6 @@ describe('RepsService', () => {
           top: '50%',
           left: '75%',
         },
-        showScoreGained: true,
       },
       attributes: {},
     });
