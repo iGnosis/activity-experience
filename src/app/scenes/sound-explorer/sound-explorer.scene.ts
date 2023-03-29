@@ -530,7 +530,7 @@ export class SoundExplorerScene extends Phaser.Scene {
     const container = this.add.container(x, y);
     container.setSize(64, 64);
     const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
-    const text = this.add.text(32, -16, '+1', {
+    const text = this.add.text(32, -16, '+' + coins, {
       font: '32px',
       color: '#FFEF5E',
     });
