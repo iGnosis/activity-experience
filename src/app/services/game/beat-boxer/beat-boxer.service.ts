@@ -768,60 +768,6 @@ export class BeatBoxerService {
         this.bagsAvailable.right = undefined;
       }
       this.failedReps++;
-      if (this.failedReps >= 3) {
-        await this.elements.sleep(2000);
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: 'Right hand for red',
-            description: 'Use your right hand to punch the red punching bags.',
-            src: 'assets/videos/beat-boxer/red-for-right.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts(
-          'Remember to use your right hand when you see a red punching bag on the screen.',
-        );
-        await this.elements.sleep(8000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(3000);
-        this.elements.video.state = {
-          data: {
-            type: 'video',
-            title: 'Left hand for blue',
-            description: 'Use your left hand to punch the blue punching bags.',
-            src: 'assets/videos/beat-boxer/blue-for-left.mp4',
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts(
-          'And when you see a blue punching bag on the screen, use your left hand.',
-        );
-        await this.elements.sleep(8000);
-        this.elements.video.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
-
-        await this.elements.sleep(3000);
-        this.failedReps = 0;
-      }
     } else {
       this.elements.health.state = {
         data: {
