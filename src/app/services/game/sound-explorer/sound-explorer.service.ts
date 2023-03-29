@@ -597,9 +597,6 @@ export class SoundExplorerService implements ActivityBase {
 
         const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
           if (event.result === 'success') {
-            if (event.position) {
-              this.soundExplorerScene.animateScore(event.position.x, event.position.y, 1);
-            }
             this.successfulReps++;
             score += 1;
             debounceUpdatedScore(event);
