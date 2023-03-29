@@ -33,6 +33,7 @@ enum TextureKeys {
   LEFT_HAND = 'left-hand',
   RIGHT_HAND = 'right-hand',
   DANGER_COIN = 'danger-coin',
+  XP_COIN = 'xp-coin',
 }
 
 enum AnimationKeys {
@@ -338,7 +339,12 @@ export class MovingTonesScene extends Phaser.Scene {
             const { x, y } = gameObject.body.center;
             gameObject.destroy(true);
 
-            this.circleEvents.next({ name: 'collisionCompleted', circle });
+            this.circleEvents.next({
+              name: 'collisionCompleted',
+              circle,
+              timeoutDuration: ((new Date().getTime() - this.startTime) / this.timeout) * 100,
+              position: { x, y },
+            });
             this.animate(x, y, 'green');
           }
         });
@@ -493,6 +499,11 @@ export class MovingTonesScene extends Phaser.Scene {
       svgConfig: {
         scale: 0.6,
       },
+    });
+
+    this.load.image({
+      key: TextureKeys.XP_COIN,
+      url: 'assets/images/xp_coin.png',
     });
 
     this.load.atlas(
@@ -740,7 +751,11 @@ export class MovingTonesScene extends Phaser.Scene {
     if (!object) {
       // to clear the green circle animations
       (this.group.getChildren() as GameObjectWithBodyAndTexture[]).forEach((child) => {
-        if (child.texture && child.texture.key === TextureKeys.MUSIC_CIRCLE) {
+        if (
+          child.texture &&
+          (child.texture.key === TextureKeys.MUSIC_CIRCLE ||
+            child.texture.key === TextureKeys.DANGER_COIN)
+        ) {
           const rippleAnim: Phaser.GameObjects.Sprite = child.getData('rippleAnim');
           const circle: Circle = child.getData('circle');
           this.circleEvents.next({ name: 'hidden', circle });
@@ -824,12 +839,16 @@ export class MovingTonesScene extends Phaser.Scene {
     return false;
   }
 
+  startTime!: number;
+  timeout!: number;
   waitForCollisionOrTimeout(timeout?: number): Promise<void> {
     return new Promise<void>((resolve, _reject) => {
-      const startTime = new Date().getTime();
+      this.startTime = new Date().getTime();
+      this.timeout = timeout || 0;
       const interval = setInterval(() => {
         // if timeout...
-        if (timeout && new Date().getTime() - startTime > timeout) {
+        if (timeout && new Date().getTime() - this.startTime > timeout) {
+          this.destroyGameObjects();
           resolve();
           clearInterval(interval);
         }
@@ -900,6 +919,51 @@ export class MovingTonesScene extends Phaser.Scene {
         .setScale(this.circleScale)
         .play(AnimationKeys.GREEN_BLAST_ANIM);
     }
+  }
+
+  animateScore(x: number, y: number, coins = 1) {
+    const container = this.add.container(x, y);
+    container.setSize(64, 64);
+    const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
+    const text = this.add.text(32, -16, '+1', {
+      font: '32px',
+      color: '#FFEF5E',
+    });
+
+    const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+    gradient.addColorStop(0, '#FFEF5E');
+    gradient.addColorStop(1, '#F7936F');
+    text.setFill(gradient);
+
+    container.add([img, text]);
+
+    this.tweens.addCounter({
+      from: 1.1,
+      to: 1,
+      duration: 250,
+      onUpdate: (tw) => {
+        container.setScale(tw.getValue());
+      },
+      onComplete: () => {
+        this.tweens.addCounter({
+          from: 1,
+          to: 1.1,
+          duration: 250,
+          onUpdate: (tw) => {
+            container.setScale(tw.getValue());
+          },
+        });
+        this.tweens.add({
+          targets: [container],
+          delay: 750,
+          duration: 500,
+          alpha: 0,
+          onComplete: () => {
+            container.destroy();
+          },
+        });
+      },
+    });
   }
 
   private checkIfAssetsAreLoaded() {
