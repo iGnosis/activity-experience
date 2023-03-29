@@ -1367,20 +1367,20 @@ export class MovingTonesService implements ActivityBase {
 
         this.movingTonesScene.score.next(0);
 
-        this.movingTonesScene.score.subscribe((score) => {
-          if (score == 1) this.coinsCollected++;
-          else if (score == -1) this.failedReps++;
+        // this.movingTonesScene.score.subscribe((score) => {
+        //   if (score == 1) this.coinsCollected++;
+        //   else if (score == -1) this.failedReps++;
 
-          this.elements.score.state = {
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-            data: {
-              score: this.coinsCollected,
-            },
-          };
-        });
+        //   this.elements.score.state = {
+        //     attributes: {
+        //       visibility: 'visible',
+        //       reCalibrationCount,
+        //     },
+        //     data: {
+        //       score: this.coinsCollected,
+        //     },
+        //   };
+        // });
 
         this.elements.ribbon.state = {
           data: {
@@ -1471,14 +1471,6 @@ export class MovingTonesService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         await this.game(reCalibrationCount);
-
-        this.elements.score.state = {
-          data: {},
-          attributes: {
-            visibility: 'hidden',
-            reCalibrationCount,
-          },
-        };
       },
       async (reCalibrationCount: number) => {
         this.elements.score.attributes = {

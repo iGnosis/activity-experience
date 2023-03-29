@@ -434,7 +434,7 @@ export class SitToStandScene extends Phaser.Scene {
     const container = this.add.container((width * 70) / 100, height / 2);
     container.setSize(64, 64);
     const img = this.add.sprite(0, 0, TextureKeys.XP_COIN).setOrigin(0.5).setScale(0.06);
-    const text = this.add.text(32, -16, '+1', {
+    const text = this.add.text(32, -16, '+' + coins, {
       font: '32px',
       color: '#FFEF5E',
     });
