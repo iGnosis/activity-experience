@@ -600,10 +600,11 @@ export class SoundExplorerService implements ActivityBase {
             this.successfulReps++;
             score += 1;
             debounceUpdatedScore(event);
-          } else {
+          } else if (event.result === 'failure') {
+            this.health -= 1;
             this.elements.health.state = {
               data: {
-                value: --this.health,
+                value: this.health,
                 total: 3,
               },
               attributes: {
