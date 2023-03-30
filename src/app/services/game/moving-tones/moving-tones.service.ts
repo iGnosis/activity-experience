@@ -1438,7 +1438,7 @@ export class MovingTonesService implements ActivityBase {
               let multiplier = 1;
               // x2 multiplier for every 3 correct motions in a row
               if (this.comboStreak > 0 && this.comboStreak % 3 === 0) {
-                multiplier = 2;
+                multiplier = 2 * (this.comboStreak / 3);
               }
 
               // timeout bonus multiplier
