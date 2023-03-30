@@ -154,10 +154,12 @@ export class SitToStandScene extends Phaser.Scene {
       const startTime = new Date().getTime();
 
       // as afro music is unavailable, we are using classical music for afro.
-      if ((genre as Genre | 'afro') === 'afro') {
-        this.loadMusicFiles('jazz');
-      } else {
-        this.loadMusicFiles(genre);
+      if (this.musicFilesLoaded === 0) {
+        if ((genre as Genre | 'afro') === 'afro') {
+          this.loadMusicFiles('jazz');
+        } else {
+          this.loadMusicFiles(genre);
+        }
       }
 
       const intervalId = setInterval(() => {
