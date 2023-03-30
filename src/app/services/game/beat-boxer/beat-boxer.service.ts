@@ -52,7 +52,7 @@ export class BeatBoxerService {
   private health = 3;
   private score = 0;
   private highScore = 0;
-  private combo = 0;
+  private combo = 1;
   private comboStreak = 0;
   private scoreSubscription: Subscription;
   private coin = 0;
@@ -169,7 +169,7 @@ export class BeatBoxerService {
     this.health = 3;
     this.score = 0;
     this.highScore = 0;
-    this.combo = 0;
+    this.combo = 1;
     this.comboStreak = 0;
     if (this.scoreSubscription) {
       this.scoreSubscription.unsubscribe();
@@ -799,7 +799,11 @@ export class BeatBoxerService {
         this.scoreSubscription = this.beatBoxerScene.beatBoxerEvents.subscribe(
           (event: BeatBoxerEvent) => {
             if (event.result === 'success') {
-              if (!this.bagsAvailable.left && !this.bagsAvailable.right && event.timeoutDuration) {
+              if (
+                (!this.bagsAvailable.left || this.bagsAvailable.left === 'obstacle') &&
+                (!this.bagsAvailable.right || this.bagsAvailable.right === 'obstacle') &&
+                event.timeoutDuration
+              ) {
                 this.elements.timeout.state = {
                   data: {
                     mode: 'show_score',
@@ -814,7 +818,7 @@ export class BeatBoxerService {
               this.comboStreak++;
               if (this.comboStreak > 0 && this.comboStreak % 5 === 0) {
                 this.levelIncrement += 0.2;
-                this.combo++;
+                this.combo *= 2;
               }
               this.score += this.combo * this.timeoutMultiplier(event.timeoutDuration);
               this.coin += this.combo * this.timeoutMultiplier(event.timeoutDuration);
@@ -847,7 +851,7 @@ export class BeatBoxerService {
             } else {
               this.comboStreak = 0;
               this.levelIncrement = 0;
-              this.combo = 0;
+              this.combo = 1;
             }
           },
         );
