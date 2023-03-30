@@ -800,8 +800,8 @@ export class BeatBoxerService {
           (event: BeatBoxerEvent) => {
             if (event.result === 'success') {
               if (
-                (!this.bagsAvailable.left || this.bagsAvailable.left === 'obstacle') &&
-                (!this.bagsAvailable.right || this.bagsAvailable.right === 'obstacle') &&
+                ([undefined, 'obstacle'].includes(this.bagsAvailable.left) ||
+                  [undefined, 'obstacle'].includes(this.bagsAvailable.right)) &&
                 event.timeoutDuration
               ) {
                 this.elements.timeout.state = {
