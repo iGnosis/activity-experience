@@ -287,44 +287,44 @@ export class BeatBoxerService {
         };
       },
       async (reCalibrationCount: number) => {
-        // this.ttsService.tts('Some instructions before we start');
-        // this.elements.ribbon.state = {
-        //   attributes: {
-        //     visibility: 'visible',
-        //     reCalibrationCount,
-        //   },
-        //   data: {
-        //     titles: ['INSTRUCTIONS'],
-        //   },
-        // };
-        // await this.elements.sleep(2500);
-        // this.ttsService.tts(
-        //   'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
-        // );
-        // this.elements.overlay.state = {
-        //   attributes: {
-        //     visibility: 'visible',
-        //     reCalibrationCount,
-        //   },
-        //   data: {
-        //     cards: [
-        //       {
-        //         icon: '/assets/images/overlay_icons/no-chair.png',
-        //         message: 'No chair required',
-        //       },
-        //       {
-        //         icon: '/assets/images/overlay_icons/space-to-move.png',
-        //         message: 'Space to move',
-        //       },
-        //       {
-        //         icon: '/assets/images/overlay_icons/stand-up.png',
-        //         message: 'Please stand up',
-        //       },
-        //     ],
-        //     transitionDuration: 2500,
-        //   },
-        // };
-        // await this.elements.sleep(9000);
+        this.ttsService.tts('Some instructions before we start');
+        this.elements.ribbon.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            titles: ['INSTRUCTIONS'],
+          },
+        };
+        await this.elements.sleep(2500);
+        this.ttsService.tts(
+          'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
+        );
+        this.elements.overlay.state = {
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+          data: {
+            cards: [
+              {
+                icon: '/assets/images/overlay_icons/no-chair.png',
+                message: 'No chair required',
+              },
+              {
+                icon: '/assets/images/overlay_icons/space-to-move.png',
+                message: 'Space to move',
+              },
+              {
+                icon: '/assets/images/overlay_icons/stand-up.png',
+                message: 'Please stand up',
+              },
+            ],
+            transitionDuration: 2500,
+          },
+        };
+        await this.elements.sleep(9000);
       },
     ];
   }
