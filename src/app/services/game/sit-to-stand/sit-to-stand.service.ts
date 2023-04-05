@@ -21,6 +21,8 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -101,6 +103,7 @@ export class SitToStandService implements ActivityBase {
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private activityHelperService: ActivityHelperService,
+    private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
     this.store
@@ -1118,6 +1121,7 @@ export class SitToStandService implements ActivityBase {
     console.log('running tutorial');
     return [
       async (reCalibrationCount: number) => {
+        this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
         console.log('current level: ', this.currentLevel);
         this.soundsService.playActivityInstructionSound(this.genre);
         this.elements.guide.state = {
@@ -1139,6 +1143,7 @@ export class SitToStandService implements ActivityBase {
           sit_stand_achieve: true,
         });
         this.soundsService.stopActivityInstructionSound(this.genre);
+        this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
       },
     ];
   }

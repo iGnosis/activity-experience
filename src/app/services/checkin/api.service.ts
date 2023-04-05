@@ -281,7 +281,23 @@ export class ApiService {
 
   async highScoreReachedEvent(gameName: string) {
     try {
-      await this.client.req(GqlConstants.HIGHSCORE_REACHED_EVENT, { gameName });
+      this.client.req(GqlConstants.HIGHSCORE_REACHED_EVENT, { gameName });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async quitDuringTutorialEvent() {
+    try {
+      this.client.req(GqlConstants.QUIT_DURING_TUTORIAL_EVENT);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async quitDuringCalibrationEvent() {
+    try {
+      this.client.req(GqlConstants.QUIT_DURING_CALIBRATION_EVENT);
     } catch (err) {
       console.log(err);
     }

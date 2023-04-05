@@ -4,6 +4,8 @@ import { Subject, Subscription } from 'rxjs';
 import { CalibrationScene } from 'src/app/scenes/calibration/calibration.scene';
 import { CalibrationBox, CalibrationMode, CalibrationStatusType } from 'src/app/types/pointmotion';
 import { PoseModelAdapter } from '../pose-model-adapter/pose-model-adapter.service';
+import { GameLifecycleService } from '../game-lifecycle/game-lifecycle.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 @Injectable({
   providedIn: 'root',
 })
@@ -29,6 +31,7 @@ export class CalibrationService {
   constructor(
     private calibrationScene: CalibrationScene,
     private poseModelAdapter: PoseModelAdapter,
+    private gameLifeCycleService: GameLifecycleService,
   ) {}
 
   enable(autoSwitchMode = true) {
@@ -60,12 +63,17 @@ export class CalibrationService {
 
       if (!newStatus) return;
 
+      if (newStatus.status === 'success') {
+        this.gameLifeCycleService.resetStage(GameLifeCycleStages.CALIBRATION);
+      }
+
       if (newStatus.status !== this.status) {
         this.calibrationScene.destroyGraphics();
 
         this.result.next(newStatus.status);
 
         this.calibrationScene.drawCalibrationBox(newStatus.status);
+        this.gameLifeCycleService.enterStage(GameLifeCycleStages.CALIBRATION);
 
         if (autoSwitchMode) {
           this.switchMode(newStatus.status);

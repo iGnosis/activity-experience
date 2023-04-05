@@ -25,7 +25,8 @@ import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene
 import { Subscription } from 'rxjs';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
-
+import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 @Injectable({
   providedIn: 'root',
 })
@@ -75,6 +76,7 @@ export class MovingTonesService implements ActivityBase {
     private movingTonesScene: MovingTonesScene,
     private poseModelAdapter: PoseModelAdapter,
     private activityHelperService: ActivityHelperService,
+    private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
     this.store
@@ -913,6 +915,7 @@ export class MovingTonesService implements ActivityBase {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
+        this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
         this.soundsService.playActivityInstructionSound(this.genre);
 
         this.elements.ribbon.state = {
@@ -1340,6 +1343,7 @@ export class MovingTonesService implements ActivityBase {
         });
         await this.elements.sleep(3500);
         this.soundsService.stopActivityInstructionSound(this.genre);
+        this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
       },
     ];
   }

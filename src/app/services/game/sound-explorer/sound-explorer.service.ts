@@ -23,6 +23,8 @@ import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer
 import { skip, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -145,6 +147,7 @@ export class SoundExplorerService implements ActivityBase {
     private soundsService: SoundsService,
     private soundExplorerScene: SoundExplorerScene,
     private activityHelperService: ActivityHelperService,
+    private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
     this.store
@@ -310,6 +313,7 @@ export class SoundExplorerService implements ActivityBase {
     return [
       async (reCalibrationCount: number) => {
         // this.soundExplorerScene.enableMusic();
+        this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
         this.soundsService.playActivityInstructionSound(this.genre);
 
         this.elements.ribbon.state = {
@@ -562,6 +566,7 @@ export class SoundExplorerService implements ActivityBase {
         this.soundsService.stopActivityInstructionSound(this.genre);
         // this.soundExplorerScene.enableMusic(false);
         this.soundExplorerScene.resetNotes();
+        this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
       },
     ];
   }

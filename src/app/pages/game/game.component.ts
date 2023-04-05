@@ -3,9 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { take } from 'rxjs';
 import { ApiService } from 'src/app/services/checkin/api.service';
+import { GameLifecycleService } from 'src/app/services/game-lifecycle/game-lifecycle.service';
 import { GameService } from 'src/app/services/game/game.service';
 import { GoogleAnalyticsService } from 'src/app/services/google-analytics/google-analytics.service';
 import { UserService } from 'src/app/services/user/user.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 
 @Component({
   selector: 'app-game',
@@ -18,6 +20,7 @@ export class GameComponent implements OnInit {
   @ViewChild('gameElm') gameElm!: ElementRef;
   videoAvailable = false;
   cameraStatus?: 'success' | 'failure';
+  gameStage: GameLifeCycleStages;
 
   constructor(
     private gameService: GameService,
@@ -26,7 +29,12 @@ export class GameComponent implements OnInit {
     private store: Store,
     private apiService: ApiService,
     private googleAnalyticsService: GoogleAnalyticsService,
-  ) {}
+    private gameLifeCycleService: GameLifecycleService,
+  ) {
+    this.gameLifeCycleService.stage$.subscribe((stage) => {
+      this.gameStage = stage;
+    });
+  }
   async ngOnInit(): Promise<void> {
     // Ask the parent window to send a token... we're ready, well almost.
     window.parent.postMessage(
@@ -89,6 +97,13 @@ export class GameComponent implements OnInit {
           this.apiService.updateGame(id, gameState);
         }
       });
+
+    if (this.gameStage === GameLifeCycleStages.CALIBRATION) {
+      this.apiService.quitDuringCalibrationEvent();
+    } else if (this.gameStage === GameLifeCycleStages.TUTORIAL) {
+      this.apiService.quitDuringTutorialEvent();
+    }
+
     return false;
   }
 

@@ -20,6 +20,8 @@ import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
 import { Subscription } from 'rxjs';
+import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -130,6 +132,7 @@ export class BeatBoxerService {
     private soundsService: SoundsService,
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
+    private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
     this.store
@@ -331,6 +334,7 @@ export class BeatBoxerService {
   tutorial() {
     return [
       async (reCalibrationCount: number) => {
+        this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
         this.soundsService.playActivityInstructionSound(this.genre);
         this.ttsService.tts("First, let's begin with a guide to beat boxer");
         this.elements.ribbon.state = {
@@ -570,6 +574,7 @@ export class BeatBoxerService {
         });
         await this.elements.sleep(5000);
         this.soundsService.stopActivityInstructionSound(this.genre);
+        this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
       },
     ];
   }
