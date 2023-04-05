@@ -15,6 +15,7 @@ export class GameLifecycleService {
   public enterStage(stage: GameLifeCycleStages) {
     this.stage = stage;
     this.stageSubject.next(this.stage);
+    console.log('enterStage: ', this.stage);
   }
 
   public resetStage(stage: GameLifeCycleStages) {

@@ -39,6 +39,7 @@ export class CalibrationService {
 
     this._setupCanvasDimensions();
     this._setupCalibrationSubscription(autoSwitchMode);
+    this.gameLifeCycleService.enterStage(GameLifeCycleStages.CALIBRATION);
   }
 
   _setupCanvasDimensions() {
