@@ -278,4 +278,12 @@ export class ApiService {
       console.log(err);
     }
   }
+
+  async highScoreReachedEvent(gameName: string) {
+    try {
+      await this.client.req(GqlConstants.HIGHSCORE_REACHED_EVENT, { gameName });
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

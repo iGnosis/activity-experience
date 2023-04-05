@@ -203,9 +203,24 @@ export const GqlConstants = {
   }
 `,
   GET_HIGHSCORE_XP: `
-  query GetHighScore($patientId: uuid!, $game: game_name_enum = beat_boxer) {
-  game(where: {patient: {_eq: $patientId}, game: {_eq: $game}, endedAt: {_is_null: false}}, order_by: {totalXpCoins: desc}, limit: 1) {
-    totalXpCoins
-  }
-}`,
+    query GetHighScore($patientId: uuid!, $game: game_name_enum = beat_boxer) {
+    game(where: {patient: {_eq: $patientId}, game: {_eq: $game}, endedAt: {_is_null: false}}, order_by: {totalXpCoins: desc}, limit: 1) {
+      totalXpCoins
+    }
+  }`,
+  HIGHSCORE_REACHED_EVENT: `mutation HighScoreReached($gameName: String!) {
+    highscoreReachedEvent(gameName: $gameName) {
+      status
+    }
+  }`,
+  QUIT_DURING_TUTORIAL_EVENT: `mutation QuitDuringTutorial {
+    quitTutorialEvent {
+      status
+    }
+  }`,
+  QUIT_DURING_CALIBRATION_EVENT: `mutation QuitDuringCalibration {
+    quitCalibrationEvent {
+      status
+    }
+  }`,
 };

@@ -741,6 +741,7 @@ export class SoundExplorerService implements ActivityBase {
     }
 
     if (this.highScore !== undefined && this.score > this.highScore) {
+      this.apiService.highScoreReachedEvent('Sound Explorer');
       this.elements.confetti.state = {
         data: {},
         attributes: {

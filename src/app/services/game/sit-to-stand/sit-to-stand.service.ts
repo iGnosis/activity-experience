@@ -1420,6 +1420,7 @@ export class SitToStandService implements ActivityBase {
           }
         }
         if (this.score > this.highScore) {
+          this.apiService.highScoreReachedEvent('Sit to Stand');
           this.elements.confetti.state = {
             data: {},
             attributes: {

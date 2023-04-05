@@ -19,7 +19,6 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
-import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { Subscription } from 'rxjs';
 
 @Injectable({
@@ -840,6 +839,7 @@ export class BeatBoxerService {
               }
 
               if (this.highScore && this.score > this.highScore) {
+                this.apiService.highScoreReachedEvent('Beat Boxer');
                 this.elements.confetti.state = {
                   data: {},
                   attributes: {
