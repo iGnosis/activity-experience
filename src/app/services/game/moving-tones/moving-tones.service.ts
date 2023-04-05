@@ -1480,6 +1480,7 @@ export class MovingTonesService implements ActivityBase {
                 },
               };
               if (this.highScore !== undefined && this.score > 0 && this.score > this.highScore) {
+                this.apiService.highScoreReachedEvent('Moving Tones');
                 this.elements.confetti.state = {
                   data: {},
                   attributes: {
