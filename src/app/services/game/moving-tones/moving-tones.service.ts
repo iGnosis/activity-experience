@@ -59,6 +59,7 @@ export class MovingTonesService implements ActivityBase {
   private comboStreak = 0;
   private health = 3;
   private score = 0;
+  private highScore = 0;
 
   private center: Coordinate;
   constructor(
@@ -120,6 +121,7 @@ export class MovingTonesService implements ActivityBase {
 
     this.comboStreak = 0;
     this.score = 0;
+    this.highScore = 0;
     this.health = 3;
   }
 
@@ -698,6 +700,8 @@ export class MovingTonesService implements ActivityBase {
           reCalibrationCount,
         },
       };
+      const oldScore = this.score;
+      console.log('scoreeeee::::', this.score);
       const result = await this.waitForCollisionOrRecalibration(reCalibrationCount);
       this.movingTonesScene.destroyGameObjects();
       this.elements.timeout.state = {
@@ -740,7 +744,7 @@ export class MovingTonesService implements ActivityBase {
           type: resultStatus,
           timestamp: resultTimestamp,
           score: 1,
-          coin: 0,
+          coin: this.score - oldScore,
         },
       };
       this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
@@ -784,6 +788,7 @@ export class MovingTonesService implements ActivityBase {
         }
       }
     }
+    this.highScore = await this.apiService.getHighScoreXP('moving_tones');
     this.movingTonesScene.enable();
     this.movingTonesScene.allowClosedHandsDuringCollision = true;
     this.movingTonesScene.allowClosedHandsWhileHoldingPose = true;
@@ -1462,13 +1467,23 @@ export class MovingTonesService implements ActivityBase {
               this.score += score;
               this.elements.score.state = {
                 data: {
-                  value: this.score,
+                  score: this.score,
+                  highScore: this.highScore,
                 },
                 attributes: {
                   visibility: 'visible',
                   reCalibrationCount,
                 },
               };
+              if (this.highScore !== undefined && this.score > 0 && this.score > this.highScore) {
+                this.elements.confetti.state = {
+                  data: {},
+                  attributes: {
+                    visibility: 'visible',
+                    reCalibrationCount,
+                  },
+                };
+              }
             }
           }
         });
