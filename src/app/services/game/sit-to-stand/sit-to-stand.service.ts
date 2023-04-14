@@ -104,8 +104,8 @@ export class SitToStandService implements ActivityBase {
       // decrease timeout by 10%
       this.config.speed = this.getPercentageChange(-10, this.config.speed);
       // minimum fixed speed... for better UX.
-      if (this.config.speed < 1500) {
-        this.config.speed = 1500;
+      if (this.config.speed < 3000) {
+        this.config.speed = 3000;
       }
     } else {
       // increase timeout by 10%

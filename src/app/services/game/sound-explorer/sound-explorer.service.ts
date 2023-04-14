@@ -1061,9 +1061,7 @@ export class SoundExplorerService {
         // eslint-disable-next-line prefer-const
         totalDuration = this.activityHelperService.getDurationForTimer(this.totalDuration);
 
-        const isLastActivity =
-          environment.stageName === 'stage' || environment.stageName === 'prod';
-
+        const isLastActivity = false;
         this.elements.banner.state = {
           attributes: {
             visibility: 'visible',
