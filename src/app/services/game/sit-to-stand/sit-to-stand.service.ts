@@ -88,32 +88,6 @@ export class SitToStandService implements ActivityBase {
     return (percentage * Math.abs(value)) / 100 + value;
   }
 
-  optimizeSpeed(pastNPromptsToConsider = 1) {
-    const pastNPrompts = this.analytics.slice(this.analytics.length - pastNPromptsToConsider);
-
-    if (pastNPrompts.length < pastNPromptsToConsider) {
-      return;
-    }
-
-    const numOfSuccessPrompts = pastNPrompts.filter(
-      (prompt) => prompt.result.type === 'success',
-    ).length;
-    const avgSuccess = numOfSuccessPrompts / pastNPrompts.length;
-
-    if (avgSuccess > 0.5) {
-      // decrease timeout by 10%
-      this.config.speed = this.getPercentageChange(-10, this.config.speed);
-      // minimum fixed speed... for better UX.
-      if (this.config.speed < 1500) {
-        this.config.speed = 1500;
-      }
-    } else {
-      // increase timeout by 10%
-      this.config.speed = this.getPercentageChange(10, this.config.speed);
-    }
-    console.log('optimizeSpeed::newSpeed:: ', this.config.speed);
-  }
-
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
 
   async setupConfig() {
@@ -1314,14 +1288,6 @@ export class SitToStandService implements ActivityBase {
       );
       this.analytics.push(analyticsObj);
 
-      if (
-        this.analytics.length >= 2 &&
-        this.analytics.slice(this.analytics.length - 2)[0].prompt.type !=
-          this.analytics.slice(this.analytics.length - 2)[1].prompt.type
-      ) {
-        this.optimizeSpeed();
-      }
-
       this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
       if (res.result === 'success') {
         this.sit2StandScene.playTrigger(this.genre);
@@ -1363,8 +1329,6 @@ export class SitToStandService implements ActivityBase {
         this.failedReps += 1;
         this.streak = 0;
         if (this.failedReps >= 3) {
-          // for better user experience - increase timeout duration by 2 second.
-          this.config.speed += 2000;
           this.elements.timer.state = {
             data: {
               mode: 'pause',
