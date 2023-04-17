@@ -890,6 +890,8 @@ export class SoundExplorerService {
         };
         this.store.dispatch(game.pushAnalytics({ analytics: [startPrompt] }));
 
+        this.isGameComplete = false;
+
         while (!this.isGameComplete) {
           if (reCalibrationCount !== this.globalReCalibrationCount) {
             throw new Error('reCalibrationCount changed');
