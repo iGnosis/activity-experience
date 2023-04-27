@@ -694,8 +694,10 @@ export class MovingTonesService implements ActivityBase {
       this.elements.timeout.state = {
         data: {
           mode: 'start',
-          timeout: 10000,
-          bars: ['yellow'],
+          timeout: this.config.speed,
+          isGradient: true,
+          startColor: '#fcaf59',
+          endColor: '#f47560',
         },
         attributes: {
           visibility: 'visible',
