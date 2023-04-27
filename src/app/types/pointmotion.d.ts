@@ -891,6 +891,14 @@ export type TimeoutElementState = {
    * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
   mode?: 'start' | 'stop' | 'show_score';
+
+  /**
+   * Whether the bar is gradient or not & inputs for start & end color.
+   */
+  isGradient?: boolean;
+  startColor?: string;
+  endColor?: string;
+
   /**
    * Duration of the timeout in ms.
    */

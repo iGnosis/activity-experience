@@ -697,7 +697,9 @@ export class BeatBoxerService {
       data: {
         mode: 'start',
         timeout: this.config.speed,
-        bars: ['yellow'],
+        isGradient: true,
+        startColor: '#fcaf59',
+        endColor: '#f47560',
       },
       attributes: {
         visibility: 'visible',

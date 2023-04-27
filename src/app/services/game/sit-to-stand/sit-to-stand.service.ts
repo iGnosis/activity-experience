@@ -426,7 +426,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -547,7 +549,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -661,7 +665,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -868,7 +874,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -1052,12 +1060,13 @@ export class SitToStandService implements ActivityBase {
           const ttsExpression = promptExpressions[i]
             .replace('*', ' multiplied with ')
             .replace('/', ' divided by ');
-          this.ttsService.tts(ttsExpression);
           this.elements.timeout.state = {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -1184,7 +1193,9 @@ export class SitToStandService implements ActivityBase {
       data: {
         mode: 'start',
         timeout: this.config.speed,
-        bars: ['yellow'],
+        isGradient: true,
+        startColor: '#fcaf59',
+        endColor: '#f47560',
       },
       attributes: {
         visibility: 'visible',

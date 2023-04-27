@@ -117,4 +117,8 @@ export class TimeoutComponent implements OnInit, OnDestroy {
     this.isTimeOutRunning = false;
     this.timeoutService.hide();
   }
+
+  gradientColor(startColor: string | undefined, endColor: string | undefined): string {
+    return `linear-gradient(to right, ${startColor}, ${endColor})`;
+  }
 }
