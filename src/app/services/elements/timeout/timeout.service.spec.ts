@@ -23,6 +23,7 @@ describe('TimeoutService', () => {
     expect(service._state).toEqual({
       data: {
         mode: 'start',
+        isGradient: false,
       },
       attributes: {},
     });
