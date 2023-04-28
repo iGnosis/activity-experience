@@ -5,11 +5,6 @@ import { ElementAttributes } from 'src/app/types/pointmotion';
 import { BadgePopupElementState } from 'src/app/types/pointmotion';
 import { trigger, transition, style, animate } from '@angular/animations';
 
-export const fadeInOut = trigger('fadeInOut', [
-  transition(':enter', [style({ opacity: 0 }), animate('0.5s ease-in', style({ opacity: 1 }))]),
-  transition(':leave', [animate('0.5s ease-out', style({ opacity: 0 }))]),
-]);
-
 @Component({
   selector: 'element-badge-popup',
   templateUrl: './badge-popup.component.html',
