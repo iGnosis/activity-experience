@@ -797,8 +797,19 @@ export type BannerButton = {
 };
 
 export type BadgePopupElementState = {
+  /**
+   * Sets badge title
+   */
   title?: string;
+
+  /**
+   * Sets badge title's text color.
+   */
   textColor?: string;
+
+  /**
+   * Sets badge theme.
+   */
   theme?: 'green' | 'purple' | 'gold' | 'bronze';
 };
 
