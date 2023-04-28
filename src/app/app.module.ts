@@ -27,6 +27,7 @@ import { ToastComponent } from './widgets/elements/toast/toast.component';
 import { CalibrationTutorialComponent } from './widgets/elements/calibration-tutorial/calibration-tutorial.component';
 import { HealthComponent } from './widgets/elements/health/health.component';
 import { GameMenuComponent } from './widgets/elements/game-menu/game-menu.component';
+import { BadgePopupComponent } from './widgets/elements/badge-popup/badge-popup.component';
 
 export let AppInjector: Injector;
 
@@ -50,6 +51,7 @@ export let AppInjector: Injector;
     CalibrationTutorialComponent,
     HealthComponent,
     GameMenuComponent,
+    BadgePopupComponent,
   ],
   imports: [
     BrowserModule,

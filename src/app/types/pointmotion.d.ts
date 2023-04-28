@@ -796,6 +796,12 @@ export type BannerButton = {
   infiniteProgress?: boolean;
 };
 
+export type BadgePopupElementState = {
+  title?: string;
+  textColor?: string;
+  theme?: 'green' | 'purple' | 'gold' | 'bronze';
+};
+
 export type BannerElementState = {
   /**
    * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
@@ -1013,6 +1019,7 @@ export type ElementsState = {
   calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
   health: { data: HealthElementState; attributes: ElementAttributes };
   gameMenu: { data: GameMenuElementState; attributes: ElementAttributes };
+  badgePopup: { data: BadgePopupElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1033,6 +1040,7 @@ export type ElementsObservables = {
   }>;
   health: Observable<{ data: HealthElementState; attributes: ElementAttributes }>;
   gameMenu: Observable<{ data: GameMenuElementState; attributes: ElementAttributes }>;
+  badgePopup: Observable<{ data: BadgePopupElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {

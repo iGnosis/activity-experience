@@ -20,7 +20,6 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
-import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
 
@@ -102,7 +101,6 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
-    private activityHelperService: ActivityHelperService,
     private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
