@@ -1,0 +1,13 @@
+<div class="blur-effect" *ngIf="attributes && attributes.visibility === 'visible'">
+  <div class="container">
+    <div class="score-container">
+      <p class="score-text">Your Score:</p>
+      <p class="score-value">{{state.score}}</p>
+    </div>
+    <div class="bar-container">
+      <div class="bar">
+        <div class="bar-pointer" [@movePointer]="{value: pointerAnimationState, params: {pointerPosition: pointerPosition}}"></div>
+      </div>
+    </div>
+  </div>
+</div>

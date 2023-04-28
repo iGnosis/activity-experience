@@ -28,6 +28,7 @@ import { CalibrationTutorialComponent } from './widgets/elements/calibration-tut
 import { HealthComponent } from './widgets/elements/health/health.component';
 import { GameMenuComponent } from './widgets/elements/game-menu/game-menu.component';
 import { BadgePopupComponent } from './widgets/elements/badge-popup/badge-popup.component';
+import { ClinicalScoreComponent } from './widgets/elements/clinical-score/clinical-score.component';
 
 export let AppInjector: Injector;
 
@@ -52,6 +53,7 @@ export let AppInjector: Injector;
     HealthComponent,
     GameMenuComponent,
     BadgePopupComponent,
+    ClinicalScoreComponent,
   ],
   imports: [
     BrowserModule,

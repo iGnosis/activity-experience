@@ -49,7 +49,7 @@ export class BadgePopupComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscription = this.badgePopupService.subject.subscribe((results) => {
-      console.log('BannerComponent:subscription:results:', results);
+      console.log('BadgePopupComponent:subscription:results:', results);
       this.state = results.data;
       this.attributes = results.attributes;
     });

@@ -15,6 +15,7 @@ import { TimerService } from './timer/timer.service';
 import { ToastService } from './toast/toast.service';
 import { VideoService } from './video/video.service';
 import { BadgePopupService } from './badge-popup/badge-popup.service';
+import { ClinicalScoreService } from './clinical-score/clinical-score.service';
 
 @Injectable({
   providedIn: 'root',
@@ -36,6 +37,7 @@ export class ElementsService {
     public health: HealthService,
     public gameMenu: GameMenuService,
     public badgePopup: BadgePopupService,
+    public clinicalScore: ClinicalScoreService,
   ) {}
 
   async sleep(timeout: number) {
@@ -63,6 +65,7 @@ export class ElementsService {
       health: this.health.subject,
       gameMenu: this.gameMenu.subject,
       badgePopup: this.badgePopup.subject,
+      clinicalScore: this.clinicalScore.subject,
     };
   }
 
@@ -83,6 +86,7 @@ export class ElementsService {
       health: this.health.state,
       gameMenu: this.gameMenu.state,
       badgePopup: this.badgePopup.state,
+      clinicalScore: this.clinicalScore.state,
     };
   }
 }
