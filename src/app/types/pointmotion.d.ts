@@ -864,6 +864,21 @@ export type ToastElementState = {
   delay?: number;
 };
 
+export type UnlockNotificationElementState = {
+  /**
+   * Set unlocked item type
+   */
+  type: 'badge' | 'goal';
+  /**
+   * Set notification title
+   */
+  title: string;
+  /**
+   * Set notification duration
+   */
+  duration?: number;
+};
+
 export type CalibrationTutorialElementState = unknown;
 
 export type PromptPosition = 'center' | 'top-right';
@@ -991,6 +1006,10 @@ export type GameMenuElementState = {
 };
 
 export type ElementsState = {
+  unlockNotification: {
+    data: UnlockNotificationElementState;
+    attributes: ElementAttributes;
+  };
   score: { data: ScoreElementState; attributes: ElementAttributes };
   timer: { data: TimerElementState; attributes: ElementAttributes };
   prompt: { data: PromptElementState; attributes: ElementAttributes };
@@ -1008,6 +1027,10 @@ export type ElementsState = {
 };
 
 export type ElementsObservables = {
+  unlockNotification: Observable<{
+    data: UnlockNotificationElementState;
+    attributes: ElementAttributes;
+  }>;
   score: Observable<{ data: ScoreElementState; attributes: ElementAttributes }>;
   timer: Observable<{ data: TimerElementState; attributes: ElementAttributes }>;
   prompt: Observable<{ data: PromptElementState; attributes: ElementAttributes }>;
