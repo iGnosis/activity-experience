@@ -1,18 +1,8 @@
 .title {
-  min-height: 6rem;
-  max-width: 82vw;
-}
-h1 {
-  &::after {
-    content: '';
-    display: block;
-    width: 1.5rem;
-    height: 1.5rem;
-    background-color: #fff;
-    position: absolute;
-    z-index: -1;
-    top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%) rotate(45deg);
+  max-width: 70vw;
+  font-size: 2.5rem;
+  span {
+    background: rgba(26, 32, 44, 0.8);
+    box-decoration-break: clone;
   }
 }

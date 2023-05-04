@@ -1,10 +1,7 @@
 <div
     *ngIf="state && state.attributes.visibility === 'visible'"
     class="position-fixed top-0 start-0 w-screen h-screen d-flex">
-    <div class="w-32 h-24 bg-white rounded-3 start-10 bottom-10 position-absolute d-flex p-2">
-        <img class="m-auto" [src]="logoUrl" alt="sound health">
-    </div>
-    <div *ngIf="state && state.data.title" class="title bg-white rounded-2 position-absolute start-48 bottom-10 d-flex p-2">
-        <h1 class="text-primary my-auto px-5 display-6">{{state && state.data.title}}</h1>
-    </div>
+    <p *ngIf="state && state.data.title" class="title position-absolute start-1/2 translate-middle-x bottom-5 text-white text-center w-full">
+        <span class="p-2">{{state && state.data.title}}</span>
+    </p>
 </div>
