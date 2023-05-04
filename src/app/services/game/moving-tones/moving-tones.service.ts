@@ -58,6 +58,7 @@ export class MovingTonesService implements ActivityBase {
   private progressBarSubscription: Subscription;
 
   private comboStreak = 0;
+  private maxCombo = 0;
   private health = 3;
   private score = 0;
   private highScore = 0;
@@ -694,8 +695,10 @@ export class MovingTonesService implements ActivityBase {
       this.elements.timeout.state = {
         data: {
           mode: 'start',
-          timeout: 10000,
-          bars: ['yellow'],
+          timeout: this.config.speed,
+          isGradient: true,
+          startColor: '#fcaf59',
+          endColor: '#f47560',
         },
         attributes: {
           visibility: 'visible',
@@ -1444,6 +1447,11 @@ export class MovingTonesService implements ActivityBase {
               // increase score and combo streak
               this.comboStreak += 1;
 
+              // update max combo
+              if (this.maxCombo < this.comboStreak) {
+                this.maxCombo = this.comboStreak;
+              }
+
               let multiplier = 1;
               // x2 multiplier for every 3 correct motions in a row
               if (this.comboStreak > 0 && this.comboStreak % 3 === 0) {
@@ -1526,6 +1534,10 @@ export class MovingTonesService implements ActivityBase {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        const gameId = this.apiService.gameId;
+        if (gameId) {
+          await this.apiService.updateMaxCombo(gameId, this.maxCombo);
+        }
         this.stopGame();
         this.ttsService.tts('Activity completed.');
         this.elements.guide.state = {

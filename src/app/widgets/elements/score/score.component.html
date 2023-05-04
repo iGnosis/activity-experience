@@ -4,7 +4,10 @@
     <img [src]="state.data.icon" alt="icon" class="w-16 h-16 pe-4" style="object-fit: contain;">
     <h1 class="text-white display-6" [ngClass]="state.data.score && state.data.highScore && state.data.score > state.data.highScore ? 'text-gradient font-bold' : 'text-outline'">{{ state.data.score }}</h1>
   </div>
-  <div class="row" *ngIf="state.data.highScore">
+  <div class="row mb-2" *ngIf="state.data.highScore">
     <h2 class="text-white text-outline">{{ 'Best: ' + state.data.highScore }}</h2>
+  </div>
+  <div class="row" *ngIf="state.data.score">
+    <h2 class="text-white text-outline-green">Score: <span class="score-text text-outline-white">{{ state.data.score }}</span></h2>
   </div>
 </div>

@@ -1,0 +1,44 @@
+.text {
+  text-align: center;
+  font-size: 50px;
+  font-weight: bold;
+}
+
+.blur-effect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(5px);
+  z-index: 0;
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.icon {
+  position: relative;
+  bottom: -35px;
+  height: 100px;
+}
+
+.rectangle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #161641;
+  border-bottom-width: 6px;
+  border-right-width: 3px;
+  height: 120px;
+  width: 390px;
+  border-radius: 5px;
+}

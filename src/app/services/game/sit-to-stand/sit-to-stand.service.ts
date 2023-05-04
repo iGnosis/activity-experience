@@ -20,7 +20,6 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
-import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
 
@@ -63,6 +62,7 @@ export class SitToStandService implements ActivityBase {
 
   private analytics: AnalyticsDTO[] = [];
   private highScore = 0;
+  private maxCombo = 0;
 
   /**
    * @description
@@ -102,7 +102,6 @@ export class SitToStandService implements ActivityBase {
     private ttsService: TtsService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
-    private activityHelperService: ActivityHelperService,
     private gameLifeCycleService: GameLifecycleService,
   ) {
     this.resetVariables();
@@ -426,7 +425,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -547,7 +548,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -661,7 +664,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -868,7 +873,9 @@ export class SitToStandService implements ActivityBase {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -1052,12 +1059,13 @@ export class SitToStandService implements ActivityBase {
           const ttsExpression = promptExpressions[i]
             .replace('*', ' multiplied with ')
             .replace('/', ' divided by ');
-          this.ttsService.tts(ttsExpression);
           this.elements.timeout.state = {
             data: {
               mode: 'start',
               timeout: this.config.speed,
-              bars: ['yellow'],
+              isGradient: true,
+              startColor: '#fcaf59',
+              endColor: '#f47560',
             },
             attributes: {
               visibility: 'visible',
@@ -1184,7 +1192,9 @@ export class SitToStandService implements ActivityBase {
       data: {
         mode: 'start',
         timeout: this.config.speed,
-        bars: ['yellow'],
+        isGradient: true,
+        startColor: '#fcaf59',
+        endColor: '#f47560',
       },
       attributes: {
         visibility: 'visible',
@@ -1440,6 +1450,10 @@ export class SitToStandService implements ActivityBase {
         analyticsObj.result.coin = score;
         this.analytics.push(analyticsObj);
         this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
+
+        if (this.maxCombo < this.comboStreak) {
+          this.maxCombo = this.comboStreak;
+        }
 
         this.elements.score.state = {
           data: {
@@ -1762,6 +1776,10 @@ export class SitToStandService implements ActivityBase {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async (reCalibrationCount: number) => {
+        const gameId = this.apiService.gameId;
+        if (gameId) {
+          await this.apiService.updateMaxCombo(gameId, this.maxCombo);
+        }
         this.stopGame();
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;

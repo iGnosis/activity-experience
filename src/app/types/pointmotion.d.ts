@@ -796,6 +796,35 @@ export type BannerButton = {
   infiniteProgress?: boolean;
 };
 
+export type BadgePopupElementState = {
+  /**
+   * Sets badge title
+   */
+  title?: string;
+
+  /**
+   * Sets badge title's text color.
+   */
+  textColor?: string;
+
+  /**
+   * Sets badge theme.
+   */
+  theme?: 'green' | 'purple' | 'gold' | 'bronze';
+};
+
+export type ClinialScoreElementState = {
+  /**
+   * Sets clinical score.
+   */
+  score?: number;
+
+  /**
+   * Sets bar pointer between 0-100.
+   */
+  scorePercentage?: number;
+};
+
 export type BannerElementState = {
   /**
    * Inputs a string that gets rendered as HTML, bypassses Angular HTML sanitization.
@@ -934,6 +963,14 @@ export type TimeoutElementState = {
    * * Note: During 'start' mode the 'duration' & 'bars' have to be specified.
    */
   mode?: 'start' | 'stop' | 'show_score';
+
+  /**
+   * Whether the bar is gradient or not & inputs for start & end color.
+   */
+  isGradient?: boolean;
+  startColor?: string;
+  endColor?: string;
+
   /**
    * Duration of the timeout in ms.
    */
@@ -1070,6 +1107,8 @@ export type ElementsState = {
   calibrationTutorial: { data: CalibrationTutorialElementState; attributes: ElementAttributes };
   health: { data: HealthElementState; attributes: ElementAttributes };
   gameMenu: { data: GameMenuElementState; attributes: ElementAttributes };
+  badgePopup: { data: BadgePopupElementState; attributes: ElementAttributes };
+  clinicalScore: { data: ClinialScoreElementState; attributes: ElementAttributes };
 };
 
 export type ElementsObservables = {
@@ -1096,6 +1135,8 @@ export type ElementsObservables = {
   }>;
   health: Observable<{ data: HealthElementState; attributes: ElementAttributes }>;
   gameMenu: Observable<{ data: GameMenuElementState; attributes: ElementAttributes }>;
+  badgePopup: Observable<{ data: BadgePopupElementState; attributes: ElementAttributes }>;
+  clinicalScore: Observable<{ data: ClinialScoreElementState; attributes: ElementAttributes }>;
 };
 
 export interface ActivityBase {

@@ -14,6 +14,7 @@ export class TimeoutService extends GameElement<TimeoutElementState, object> {
     this._state = {
       data: {
         mode: 'start',
+        isGradient: false,
       },
       attributes: {},
     };

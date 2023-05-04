@@ -1,0 +1,66 @@
+.blur-effect {
+  position: fixed;
+  display: grid;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(5px);
+  z-index: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  height: 100%;
+}
+
+.score-container {
+  display: flex;
+  align-items: center;
+}
+
+.score-text {
+  font-size: 32px;
+  font-weight: bold;
+  color: #fff;
+  margin-right: 10px;
+  margin-top: 12px;
+  text-shadow: 2px 2px #17173f;
+}
+
+.score-value {
+  font-size: 58px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px #17173f;
+}
+
+.bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.bar {
+  position: relative;
+  width: 95vh;
+  height: 28px;
+  background: linear-gradient(to right, #f6584c, #f79655, #ebc963, #84cb94, #28ae9b);
+  border-radius: 10px;
+}
+
+.bar-pointer {
+  position: absolute;
+  bottom: -18px;
+  left: -8px; // consider this as zero.
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 10px 15px 10px;
+  border-color: transparent transparent #000 transparent;
+}

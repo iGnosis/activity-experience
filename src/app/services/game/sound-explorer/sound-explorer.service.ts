@@ -63,6 +63,9 @@ export class SoundExplorerService implements ActivityBase {
   private highScore = 0;
   private comboMissed = 0;
   private comboStreak = 0;
+  private maxCombo = 0;
+  private redOrbsCollected = 0;
+  private normalOrbsCollected = 0;
   private combo = 1;
 
   private successfulReps = 0;
@@ -602,10 +605,12 @@ export class SoundExplorerService implements ActivityBase {
 
         const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
           if (event.result === 'success') {
+            this.normalOrbsCollected += 1;
             this.successfulReps++;
             score += 1;
             debounceUpdatedScore(event);
           } else if (event.result === 'failure') {
+            this.redOrbsCollected += 1;
             this.health -= 1;
             this.elements.health.state = {
               data: {
@@ -728,6 +733,9 @@ export class SoundExplorerService implements ActivityBase {
     } else {
       this.comboMissed = 0;
       this.comboStreak++;
+      if (this.maxCombo < this.comboStreak) {
+        this.maxCombo = this.comboStreak;
+      }
       if (this.comboStreak % 5 == 0) {
         this.comboStreak = 0;
         this.combo *= 2;
@@ -884,6 +892,14 @@ export class SoundExplorerService implements ActivityBase {
   postLoop() {
     return [
       async (reCalibrationCount: number) => {
+        const gameId = this.apiService.gameId;
+        if (gameId) {
+          await this.apiService.updateOrbCount(gameId, {
+            redOrbs: this.redOrbsCollected,
+            normalOrbs: this.normalOrbsCollected,
+          });
+          await this.apiService.updateMaxCombo(gameId, this.maxCombo);
+        }
         this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.25) {

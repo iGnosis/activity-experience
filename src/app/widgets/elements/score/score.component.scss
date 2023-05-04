@@ -4,14 +4,32 @@ $outline-color: #ffb000;
     1px 1px 0 $outline-color;
 }
 
+$outline-color-green: #004037;
+.text-outline-green {
+  text-shadow: -1px -1px 0 $outline-color-green, 1px -1px 0 $outline-color-green,
+    -1px 1px 0 $outline-color-green, 1px 1px 0 $outline-color-green;
+}
+
+$outline-color-white: #fff;
+.text-outline-white {
+  text-shadow: -1px -1px 0 $outline-color-white, 1px -1px 0 $outline-color-white,
+    -1px 1px 0 $outline-color-white, 1px 1px 0 $outline-color-white;
+}
+
 .collected-score {
   top: 3rem;
   left: 3rem;
   opacity: 0;
 }
+
 .text-gradient {
   background: linear-gradient(225deg, #ffef5e 0%, #f7936f 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.score-text {
+  color: #2ea98f;
+  letter-spacing: 2px;
 }

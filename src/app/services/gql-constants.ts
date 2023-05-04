@@ -223,4 +223,15 @@ export const GqlConstants = {
       status
     }
   }`,
+  UPDATE_MAX_COMBO: `mutation UpdateMaxCombo($id: uuid!, $maxCombo: Int!) {
+  update_game_by_pk(pk_columns: {id: $id}, _set: {maxCombo: $maxCombo}) {
+    maxCombo
+  }
+}`,
+  UPDATE_ORB_COUNT: `
+  mutation UpdateOrbsCount($id: uuid!, $orbsCount: jsonb!) {
+  update_game_by_pk(pk_columns: {id: $id}, _set: {orbsCount: $orbsCount}) {
+    orbsCount
+  }
+}`,
 };

@@ -31,6 +31,8 @@ import { GameMenuComponent } from './widgets/elements/game-menu/game-menu.compon
 import { UnlockNotificationComponent } from './widgets/elements/unlock-notification/unlock-notification.component';
 import { GoalSelectionComponent } from './widgets/elements/goal-selection/goal-selection.component';
 import { TitleBarComponent } from './widgets/elements/title-bar/title-bar.component';
+import { BadgePopupComponent } from './widgets/elements/badge-popup/badge-popup.component';
+import { ClinicalScoreComponent } from './widgets/elements/clinical-score/clinical-score.component';
 
 export let AppInjector: Injector;
 
@@ -57,6 +59,8 @@ export let AppInjector: Injector;
     UnlockNotificationComponent,
     GoalSelectionComponent,
     TitleBarComponent,
+    BadgePopupComponent,
+    ClinicalScoreComponent,
   ],
   imports: [
     BrowserModule,
