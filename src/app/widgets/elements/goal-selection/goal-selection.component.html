@@ -1,0 +1,10 @@
+<div class="goals-container position-fixed start-0 top-0 w-screen h-screen" *ngIf="attributes && attributes.visibility === 'visible'" [@fadeIn]="attributes.visibility">
+    <owl-carousel-o [options]="customOptions">
+        <ng-template carouselSlide *ngFor="let goal of data.goals;let i=index">
+            <div class="w-full h-screen goal-container d-flex position-relative" [ngClass]="{ 'selected-goal': data.action === 'select-goal' && currentGoalIdx() === i, 'hidden-goal': data.action === 'select-goal' && currentGoalIdx() !== i }">
+                <p class="position-relative m-auto display-6 rounded-2 p-5 w-full text-white d-flex align-items-center">{{goal.title}}<span class="ms-auto d-flex align-items-center"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal.xp}}</span></p>
+                <p [class.goal-completed]="animateGoalCompletion" class="position-absolute top-1/2 start-1/2 translate-middle display-6 rounded-2 p-5 w-full text-white d-flex align-items-center">{{goal.title}}<span class="ms-auto d-flex align-items-center position-relative"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal.xp}}</span></p>
+            </div>
+        </ng-template>
+    </owl-carousel-o>
+</div>

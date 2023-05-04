@@ -840,6 +840,34 @@ export type GuideElementState = {
   showIndefinitely?: boolean;
 };
 
+//TODO: dummy goal structure, needs to be updated
+export type Goal = {
+  title: string;
+  id: string;
+  xp: number | string;
+};
+
+type GoalCompletionState = {
+  goals: [Goal];
+  action?: 'completed-goal';
+  onSelect?: (goal: Goal) => void;
+};
+
+type GoalSelectionState = {
+  goals: Goal[];
+  action?: 'select-goal' | 'change-goal';
+  onSelect?: (goal: Goal) => void;
+};
+
+export type GoalSelectionElementState = GoalCompletionState | GoalSelectionState;
+
+export type TitleBarElementState = {
+  hideBgOverlay?: boolean;
+  title: string;
+  transitionFrom?: 'top' | 'bottom';
+  xp?: string | number;
+};
+
 export type ConfettiElementState = {
   /**
    * Optional: Inputs a number indicating the total duration for which the confetti has to be shown.
@@ -996,16 +1024,34 @@ export type GameMenuElementState = {
    */
   timeoutDuration?: number;
   /**
-   * Action on exit.
+   * Action on left selection
    */
-  onExit?: () => void;
+  onLeft?: () => void;
   /**
-   * Action on replay.
+   * Action on right selection.
    */
-  onReplay?: () => void;
+  onRight?: () => void;
+  /**
+   * left button title.
+   */
+  leftTitle?: string;
+  /**
+   * right button title.
+   */
+  rightTitle?: string;
+  /**
+   * Decides whether to hide background overlay.
+   */
+  hideBgOverlay?: boolean;
+  /**
+   * position of the overlay.
+   */
+  position?: 'center' | 'bottom';
 };
 
 export type ElementsState = {
+  titleBar: { data: TitleBarElementState; attributes: ElementAttributes };
+  goalSelection: { data: GoalSelectionElementState; attributes: ElementAttributes };
   unlockNotification: {
     data: UnlockNotificationElementState;
     attributes: ElementAttributes;
@@ -1027,6 +1073,8 @@ export type ElementsState = {
 };
 
 export type ElementsObservables = {
+  titleBar: Observable<{ data: TitleBarElementState; attributes: ElementAttributes }>;
+  goalSelection: Observable<{ data: GoalSelectionElementState; attributes: ElementAttributes }>;
   unlockNotification: Observable<{
     data: UnlockNotificationElementState;
     attributes: ElementAttributes;

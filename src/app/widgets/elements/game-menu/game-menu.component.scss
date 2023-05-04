@@ -1,19 +1,34 @@
 .bg-overlay {
-  background-color: #101010;
-  opacity: 0.4;
+  background-color: rgba(16, 16, 16, 0.4);
   z-index: -1;
+  backdrop-filter: blur(5px);
 }
-.red-shadow {
-  box-shadow: 0px 0px 160px 2px rgba(235, 59, 59, 0.8);
+.left-shadow {
+  box-shadow: 0px 0px 24px 2px #ffb000;
 }
-.green-shadow {
-  box-shadow: 0px 0px 120px 2px rgba(61, 204, 108, 0.64);
+.right-shadow {
+  box-shadow: 0px 0px 24px 2px #00bd3e;
 }
-.red-border-progress {
-  border: 8px solid rgba(235, 59, 59, 1);
+.left-border-progress {
+  border: 8px solid #ffb000;
   opacity: 0;
 }
-.green-border-progress {
+.right-border-progress {
   border: 8px solid #00bd3e;
   opacity: 0;
+}
+.hands-container {
+  transform: translateY(-20%);
+  &.rotated {
+    transform: translateY(-50%);
+    :first-child {
+      transform: rotate(15deg);
+    }
+    :last-child {
+      transform: rotate(-15deg);
+    }
+  }
+}
+.card-item {
+  transform: translateY(300%);
 }

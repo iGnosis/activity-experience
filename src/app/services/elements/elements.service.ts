@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { ElementsObservables, ElementsState } from 'src/app/types/pointmotion';
 import { BannerService } from './banner/banner.service';
 import { CalibrationTutorialService } from './calibration-tutorial/calibration-tutorial.service';
+import { TitleBarService } from './title-bar/title-bar.service';
+import { GoalSelectionService } from './goal-selection/goal-selection.service';
 import { UnlockNotificationService } from './unlock-notification/unlock-notification.service';
 import { ConfettiService } from './confetti/confetti.service';
 import { GameMenuService } from './game-menu/game-menu.service';
@@ -21,6 +23,8 @@ import { VideoService } from './video/video.service';
 })
 export class ElementsService {
   constructor(
+    public titleBar: TitleBarService,
+    public goalSelection: GoalSelectionService,
     public unlockNotification: UnlockNotificationService,
     public score: ScoreService,
     public timer: TimerService,
@@ -48,6 +52,8 @@ export class ElementsService {
 
   getElementsObservables(): ElementsObservables {
     return {
+      titleBar: this.titleBar.subject,
+      goalSelection: this.goalSelection.subject,
       unlockNotification: this.unlockNotification.subject,
       score: this.score.subject,
       timer: this.timer.subject,
@@ -68,6 +74,8 @@ export class ElementsService {
 
   getElementsState(): ElementsState {
     return {
+      titleBar: this.titleBar.state,
+      goalSelection: this.goalSelection.state,
       unlockNotification: this.unlockNotification.state,
       score: this.score.state,
       timer: this.timer.state,

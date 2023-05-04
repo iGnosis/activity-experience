@@ -108,7 +108,7 @@ export class ActivityHelperService {
         holdDuration: 2000,
         gesture: undefined,
         timeoutDuration: 15_000,
-        onExit: () => {
+        onLeft: () => {
           window.parent.postMessage(
             {
               type: 'end-game',
@@ -142,7 +142,7 @@ export class ActivityHelperService {
           this.elements.gameMenu.state = {
             data: {
               gesture: status,
-              onExit: () => {
+              onLeft: () => {
                 handSubscription.unsubscribe();
                 window.parent.postMessage(
                   {
@@ -151,7 +151,7 @@ export class ActivityHelperService {
                   '*',
                 );
               },
-              onReplay: () => {
+              onRight: () => {
                 handSubscription.unsubscribe();
                 console.log('sideways-status::replay');
                 resolve({});

@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { GuideComponent } from './widgets/elements/guide/guide.component';
 import { ConfettiComponent } from './widgets/elements/confetti/confetti.component';
 import { StoreModule } from '@ngrx/store';
+import { CarouselModule } from 'ngx-owl-carousel-o';
 import { gameReducer } from './store/reducers/game.reducer';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SafePipeModule } from 'safe-pipe';
@@ -28,6 +29,8 @@ import { CalibrationTutorialComponent } from './widgets/elements/calibration-tut
 import { HealthComponent } from './widgets/elements/health/health.component';
 import { GameMenuComponent } from './widgets/elements/game-menu/game-menu.component';
 import { UnlockNotificationComponent } from './widgets/elements/unlock-notification/unlock-notification.component';
+import { GoalSelectionComponent } from './widgets/elements/goal-selection/goal-selection.component';
+import { TitleBarComponent } from './widgets/elements/title-bar/title-bar.component';
 
 export let AppInjector: Injector;
 
@@ -52,6 +55,8 @@ export let AppInjector: Injector;
     HealthComponent,
     GameMenuComponent,
     UnlockNotificationComponent,
+    GoalSelectionComponent,
+    TitleBarComponent,
   ],
   imports: [
     BrowserModule,
@@ -67,6 +72,7 @@ export let AppInjector: Injector;
     }),
     FontAwesomeModule,
     SafePipeModule,
+    CarouselModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

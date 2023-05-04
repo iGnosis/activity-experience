@@ -1,0 +1,69 @@
+.goals-container {
+  opacity: 0;
+}
+.goal-container {
+  p {
+    background: linear-gradient(
+      200deg,
+      rgba(0, 0, 51, 1) 0%,
+      rgba(0, 0, 51, 1) 48%,
+      rgba(47, 81, 174, 1) 100%
+    );
+    background-size: 200% 100%;
+    background-position: right;
+    span {
+      color: #ffb000;
+    }
+    &:first-of-type {
+      box-shadow: 0px 0px 50px 2px rgba(255, 255, 255, 0.64);
+    }
+    &:last-of-type {
+      opacity: 0;
+      background: linear-gradient(225deg, #ffef5e 0%, #f7936f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      &.goal-completed {
+        animation: 1.5s 1s forwards goalCompletionAnimation;
+        @keyframes goalCompletionAnimation {
+          0% {
+            opacity: 0;
+          }
+          60% {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+.selected-goal {
+  p {
+    animation: 300ms forwards slideInBg;
+    @keyframes slideInBg {
+      0% {
+        background-position: right;
+      }
+      100% {
+        background-position: left;
+      }
+    }
+  }
+}
+.hidden-goal {
+  p {
+    animation: 300ms forwards fadeOut;
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+  }
+}

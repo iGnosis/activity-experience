@@ -1,0 +1,9 @@
+<div class="position-fixed start-0 top-0 w-screen h-screen" *ngIf="attributes && attributes.visibility === 'visible'">
+    <div *ngIf="!data.hideBgOverlay" class="w-full h-full position-absolute bg-overlay"></div>
+    <div [@slideIn]="transitionState" class="title-container position-absolute w-3/5 h-20 top-14 start-1/2">
+        <p class="game-title w-full h-full position-absolute d-flex rounded">
+            <span class="d-flex m-auto text-black display-5">{{data.title}}</span>
+        </p>
+        <span *ngIf="data.xp" class="xp position-absolute top-full start-1/2 translate-middle-x px-4 rounded-bottom display-5 d-flex"><img class="me-2 w-12 h-12 my-auto" src="/assets/images/xp-coin.png" alt="xp coin">{{data.xp}}</span>
+    </div>
+</div>

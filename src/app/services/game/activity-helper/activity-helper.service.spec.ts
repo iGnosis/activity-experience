@@ -23,7 +23,7 @@ describe('ActivityHelperService', () => {
     elementsSpy.gameMenu = jasmine.createSpyObj('GameMenuElement', ['state']);
     elementsSpy.gameMenu.state = {
       attributes: { visibility: 'hidden', reCalibrationCount: 1 },
-      data: { gesture: undefined, onExit: () => {} },
+      data: { gesture: undefined, onLeft: () => {} },
     };
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
@@ -50,7 +50,7 @@ describe('ActivityHelperService', () => {
     expect(elementsSpy.guide.state.attributes.visibility).toEqual('visible');
     expect(elementsSpy.gameMenu.state.attributes.visibility).toEqual('visible');
     tick(200);
-    elementsSpy.gameMenu.state.data.onExit?.();
+    elementsSpy.gameMenu.state.data.onLeft?.();
     tick(0);
     expect(window.parent.postMessage).toHaveBeenCalledWith(
       { type: 'end-game' },
@@ -68,7 +68,7 @@ describe('ActivityHelperService', () => {
     expect(elementsSpy.guide.state.attributes.visibility).toEqual('visible');
     expect(elementsSpy.gameMenu.state.attributes.visibility).toEqual('visible');
     tick(200);
-    elementsSpy.gameMenu.state.data.onReplay?.();
+    elementsSpy.gameMenu.state.data.onRight?.();
     tick(0);
     expect(window.parent.postMessage).not.toHaveBeenCalled();
     flush();
