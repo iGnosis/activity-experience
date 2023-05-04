@@ -13,6 +13,7 @@ import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 import { GqlConstants } from '../gql-constants';
+import { GameService } from '../game/game.service';
 
 @Injectable({
   providedIn: 'root',
@@ -26,10 +27,17 @@ export class ApiService {
     private handTrackerService: HandTrackerService,
   ) {}
 
+  gameId: string | undefined;
   async newGame(game: string) {
-    return this.client.req(GqlConstants.NEW_GAME, {
-      game,
-    });
+    try {
+      const resp = await this.client.req(GqlConstants.NEW_GAME, {
+        game,
+      });
+      this.gameId = resp.insert_game_one.id;
+      return resp;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async updateGame(id: string, game: GameState) {
@@ -298,6 +306,22 @@ export class ApiService {
   async quitDuringCalibrationEvent() {
     try {
       this.client.req(GqlConstants.QUIT_DURING_CALIBRATION_EVENT);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateMaxCombo(gameId: string, maxCombo: number) {
+    try {
+      await this.client.req(GqlConstants.UPDATE_MAX_COMBO, { id: gameId, maxCombo });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateOrbCount(gameId: string, orbCount: { redOrbs: number; normalOrbs: number }) {
+    try {
+      await this.client.req(GqlConstants.UPDATE_ORB_COUNT, { id: gameId, orbCount });
     } catch (err) {
       console.log(err);
     }

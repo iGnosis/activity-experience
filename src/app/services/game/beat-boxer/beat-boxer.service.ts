@@ -55,6 +55,7 @@ export class BeatBoxerService {
   private highScore = 0;
   private combo = 1;
   private comboStreak = 0;
+  private maxCombo = 0;
   private scoreSubscription: Subscription;
   private coin = 0;
 
@@ -822,6 +823,10 @@ export class BeatBoxerService {
                 };
               }
               this.comboStreak++;
+              if (this.maxCombo < this.comboStreak) {
+                this.maxCombo = this.comboStreak;
+              }
+
               if (this.comboStreak > 0 && this.comboStreak % 5 === 0) {
                 this.levelIncrement += 0.2;
                 this.combo *= 2;
@@ -1037,6 +1042,10 @@ export class BeatBoxerService {
     return [
       // Todo: replace hardcoded values
       async (reCalibrationCount: number) => {
+        const gameId = this.apiService.gameId;
+        if (gameId) {
+          await this.apiService.updateMaxCombo(gameId, this.maxCombo);
+        }
         this.stopGame();
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.25) {

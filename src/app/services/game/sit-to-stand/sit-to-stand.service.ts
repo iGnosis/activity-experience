@@ -62,6 +62,7 @@ export class SitToStandService implements ActivityBase {
 
   private analytics: AnalyticsDTO[] = [];
   private highScore = 0;
+  private maxCombo = 0;
 
   /**
    * @description
@@ -1450,6 +1451,10 @@ export class SitToStandService implements ActivityBase {
         this.analytics.push(analyticsObj);
         this.store.dispatch(game.pushAnalytics({ analytics: [analyticsObj] }));
 
+        if (this.maxCombo < this.comboStreak) {
+          this.maxCombo = this.comboStreak;
+        }
+
         this.elements.score.state = {
           data: {
             score: this.score,
@@ -1771,6 +1776,10 @@ export class SitToStandService implements ActivityBase {
     console.log('running Sit,Stand,Achieve postLoop');
     return [
       async (reCalibrationCount: number) => {
+        const gameId = this.apiService.gameId;
+        if (gameId) {
+          await this.apiService.updateMaxCombo(gameId, this.maxCombo);
+        }
         this.stopGame();
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
