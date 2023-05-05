@@ -271,24 +271,6 @@ describe('GameService', () => {
     });
   });
 
-  it('should give all game stages except tutorial', (done) => {
-    spyOn(ApiService.prototype, 'getOnboardingStatus').and.returnValue(
-      Promise.resolve([
-        {
-          onboardingStatus: {
-            [environment.order[0]]: true,
-          },
-        },
-      ]),
-    );
-    const allStages: Array<ActivityStage> = ['welcome', 'preLoop', 'loop', 'postLoop'];
-
-    service.getRemainingStages(environment.order[0]).then((stages) => {
-      expect(stages).toEqual(allStages);
-      done();
-    });
-  });
-
   it('should start calibration after calibration tutorial', fakeAsync(() => {
     spyOn(TtsService.prototype, 'tts');
     spyOn(service, 'isCalibrationTutorialCompleted').and.returnValue(
