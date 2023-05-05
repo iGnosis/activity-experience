@@ -1,27 +1,31 @@
 import { Injectable } from '@angular/core';
-import { ElementsService } from '../../elements/elements.service';
-import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
-import { TtsService } from '../../tts/tts.service';
-import { ApiService } from '../../checkin/api.service';
 import { Store } from '@ngrx/store';
+import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
+import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
+import { game } from 'src/app/store/actions/game.actions';
+import { GameLifeCycleStages } from 'src/app/types/enum';
 import {
-  GameState,
-  Genre,
   AnalyticsDTO,
-  PreferenceState,
-  CenterOfMotion,
   BagType,
   BeatBoxerEvent,
+  CenterOfMotion,
+  GameMenuElementState,
+  GameState,
+  Genre,
+  Goal,
+  HandTrackerStatus,
+  PreferenceState,
 } from 'src/app/types/pointmotion';
-import { game } from 'src/app/store/actions/game.actions';
-import { SoundsService } from '../../sounds/sounds.service';
-import { CalibrationService } from '../../calibration/calibration.service';
-import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
-import { Subscription } from 'rxjs';
+import { CalibrationService } from '../../calibration/calibration.service';
+import { ApiService } from '../../checkin/api.service';
+import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
+import { ElementsService } from '../../elements/elements.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
-import { GameLifeCycleStages } from 'src/app/types/enum';
+import { SoundsService } from '../../sounds/sounds.service';
+import { TtsService } from '../../tts/tts.service';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -58,6 +62,8 @@ export class BeatBoxerService {
   private maxCombo = 0;
   private scoreSubscription: Subscription;
   private coin = 0;
+  private selectedGoal: Partial<Goal>;
+  private shouldShowTutorial = true;
 
   private timeoutMultiplier = (timeout?: number): 1 | 2 | 3 | 4 => {
     if (!timeout) return 1;
@@ -134,6 +140,7 @@ export class BeatBoxerService {
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
     private gameLifeCycleService: GameLifecycleService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.resetVariables();
     this.store
@@ -192,6 +199,9 @@ export class BeatBoxerService {
     this.successfulReps = 0;
     this.failedReps = 0;
     this.totalReps = 0;
+
+    this.selectedGoal = {};
+    this.shouldShowTutorial = true;
   }
 
   async setupConfig() {
@@ -271,10 +281,31 @@ export class BeatBoxerService {
         };
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts("Raise one of your hands when you're ready to begin.");
+        this.elements.titleBar.state = {
+          data: {
+            title: 'Beat Boxer',
+            xp: this.highScore,
+            transitionFrom: 'top',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        const goals = await this.apiService.getGameGoals('beat_boxer');
+        this.elements.goalSelection.state = {
+          data: {
+            goals,
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        this.ttsService.tts('Move your hand to either side to select');
         this.elements.guide.state = {
           data: {
-            title: "Raise one of your hands when you're ready to start.",
+            title: 'Move your hand to either side to select',
             showIndefinitely: true,
           },
           attributes: {
@@ -282,302 +313,447 @@ export class BeatBoxerService {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
+        this.elements.gameMenu.state = {
+          data: {
+            gesture: undefined,
+            hideBgOverlay: true,
+            leftTitle: 'Change Goal',
+            rightTitle: 'Set Goal',
+            holdDuration: 1500,
+            position: 'bottom',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
         };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  gesture: status,
+                  hideBgOverlay: true,
+                  leftTitle: 'Change Goal',
+                  rightTitle: 'Set Goal',
+                  holdDuration: 1500,
+                  position: 'bottom',
+                  onLeft: async () => {
+                    this.elements.goalSelection.state = {
+                      data: {
+                        goals,
+                        action: 'change-goal',
+                      },
+                      attributes: {
+                        reCalibrationCount,
+                        visibility: 'visible',
+                      },
+                    };
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    await new Promise((resolve) => {
+                      this.elements.goalSelection.state = {
+                        data: {
+                          goals,
+                          action: 'select-goal',
+                          onSelect: async (goal) => {
+                            this.selectedGoal = goal;
+                            const expiringGoals = goals.reduce((acc: any[], curr) => {
+                              if (curr.id && curr.id !== goal.id) {
+                                acc.push(curr.id);
+                              }
+                              return acc;
+                            }, []);
+
+                            await this.apiService.selectGoal(goal.id!, expiringGoals);
+                          },
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      this.elements.gameMenu.hide();
+                      this.elements.titleBar.state = {
+                        data: {
+                          title: 'Your selected goal',
+                          transitionFrom: 'bottom',
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      setTimeout(() => {
+                        this.elements.titleBar.hide();
+                        this.elements.goalSelection.hide();
+                        resolve({});
+                      }, 3000);
+                    });
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+        this.elements.guide.hide();
+        this.elements.sleep(1000);
       },
       async (reCalibrationCount: number) => {
-        this.ttsService.tts('Some instructions before we start');
-        this.elements.ribbon.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
+        const gameMenuState: Partial<GameMenuElementState> = {
+          hideBgOverlay: false,
+          leftTitle: 'Start Tutorial',
+          rightTitle: 'Play Game',
+          holdDuration: 1500,
+          position: 'center',
+        };
+        this.elements.gameMenu.state = {
           data: {
-            titles: ['INSTRUCTIONS'],
+            ...gameMenuState,
+            gesture: undefined,
+            onLeft: async () => {
+              this.shouldShowTutorial = true;
+            },
+            onRight: async () => {
+              this.shouldShowTutorial = false;
+            },
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
           },
         };
-        await this.elements.sleep(2500);
-        this.ttsService.tts(
-          'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
-        );
-        this.elements.overlay.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            cards: [
-              {
-                icon: '/assets/images/overlay_icons/no-chair.png',
-                message: 'No chair required',
-              },
-              {
-                icon: '/assets/images/overlay_icons/space-to-move.png',
-                message: 'Space to move',
-              },
-              {
-                icon: '/assets/images/overlay_icons/stand-up.png',
-                message: 'Please stand up',
-              },
-            ],
-            transitionDuration: 2500,
-          },
-        };
-        await this.elements.sleep(9000);
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  ...gameMenuState,
+                  gesture: status,
+                  onLeft: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = true;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = false;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+      },
+      async (reCalibrationCount: number) => {
+        if (this.shouldShowTutorial) {
+          this.ttsService.tts('Some instructions before we start');
+          this.elements.ribbon.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              titles: ['INSTRUCTIONS'],
+            },
+          };
+          await this.elements.sleep(2500);
+          this.ttsService.tts(
+            'For this activity, we will not require a chair. Make sure you have enough space to freely move around as you stand up for this activity.',
+          );
+          this.elements.overlay.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              cards: [
+                {
+                  icon: '/assets/images/overlay_icons/no-chair.png',
+                  message: 'No chair required',
+                },
+                {
+                  icon: '/assets/images/overlay_icons/space-to-move.png',
+                  message: 'Space to move',
+                },
+                {
+                  icon: '/assets/images/overlay_icons/stand-up.png',
+                  message: 'Please stand up',
+                },
+              ],
+              transitionDuration: 2500,
+            },
+          };
+          await this.elements.sleep(9000);
+        }
       },
     ];
   }
 
   tutorial() {
-    return [
-      async (reCalibrationCount: number) => {
-        this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
-        this.soundsService.playActivityInstructionSound(this.genre);
-        this.ttsService.tts("First, let's begin with a guide to beat boxer");
-        this.elements.ribbon.state = {
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-          data: {
-            titles: ['A Guide to Beat Boxer'],
-          },
-        };
-        await this.elements.sleep(4000);
-      },
-      async (reCalibrationCount: number) => {
-        this.elements.guide.state = {
-          data: {
-            title: 'The objective of this game is to punch the objects on the screen.',
-            titleDuration: 4000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts('The objective of this game is to punch the objects on the screen.');
-        await this.elements.sleep(4000);
-        this.elements.guide.state = {
-          data: {
-            title: 'Use your right hand to punch the red bags.',
-            titleDuration: 2500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts('Use your right hand to punch the red bags.');
-        await this.elements.sleep(2500);
-        this.elements.guide.state = {
-          data: {
-            title: "Let's try it out.",
-            titleDuration: 1500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts("Let's try it out.");
-        await this.elements.sleep(1500);
+    if (this.shouldShowTutorial)
+      return [
+        async (reCalibrationCount: number) => {
+          this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
+          this.soundsService.playActivityInstructionSound(this.genre);
+          this.ttsService.tts("First, let's begin with a guide to beat boxer");
+          this.elements.ribbon.state = {
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+            data: {
+              titles: ['A Guide to Beat Boxer'],
+            },
+          };
+          await this.elements.sleep(4000);
+        },
+        async (reCalibrationCount: number) => {
+          this.elements.guide.state = {
+            data: {
+              title: 'The objective of this game is to punch the objects on the screen.',
+              titleDuration: 4000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.ttsService.tts('The objective of this game is to punch the objects on the screen.');
+          await this.elements.sleep(4000);
+          this.elements.guide.state = {
+            data: {
+              title: 'Use your right hand to punch the red bags.',
+              titleDuration: 2500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.ttsService.tts('Use your right hand to punch the red bags.');
+          await this.elements.sleep(2500);
+          this.elements.guide.state = {
+            data: {
+              title: "Let's try it out.",
+              titleDuration: 1500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.ttsService.tts("Let's try it out.");
+          await this.elements.sleep(1500);
 
-        // show red bag until user punches it with right hand
-        let repCompleted = false;
-        while (!repCompleted) {
-          if (reCalibrationCount !== this.globalReCalibrationCount) {
-            throw new Error('reCalibrationCount changed');
+          // show red bag until user punches it with right hand
+          let repCompleted = false;
+          while (!repCompleted) {
+            if (reCalibrationCount !== this.globalReCalibrationCount) {
+              throw new Error('reCalibrationCount changed');
+            }
+            this.beatBoxerScene.showBag(
+              'right',
+              'speed-red',
+              this.getRandomItemFromArray(this.positiveLevel),
+            );
+            const res = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-red');
+            console.log('success', res);
+
+            if (res.result === 'success') {
+              this.soundsService.playCalibrationSound('success');
+              repCompleted = true;
+            } else {
+              this.ttsService.tts("Let's try that again.");
+              this.elements.guide.state = {
+                data: {
+                  title: "Let's try that again.",
+                  titleDuration: 2500,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              await this.elements.sleep(2500);
+            }
+            await this.elements.sleep(1000);
           }
-          this.beatBoxerScene.showBag(
-            'right',
-            'speed-red',
-            this.getRandomItemFromArray(this.positiveLevel),
-          );
-          const res = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-red');
-          console.log('success', res);
 
-          if (res.result === 'success') {
-            this.soundsService.playCalibrationSound('success');
-            repCompleted = true;
-          } else {
-            this.ttsService.tts("Let's try that again.");
-            this.elements.guide.state = {
-              data: {
-                title: "Let's try that again.",
-                titleDuration: 2500,
-              },
-              attributes: {
-                visibility: 'visible',
-                reCalibrationCount,
-              },
-            };
-            await this.elements.sleep(2500);
+          this.ttsService.tts('Well done.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Well done.',
+              titleDuration: 1500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(2000);
+        },
+        async (reCalibrationCount: number) => {
+          this.elements.guide.state = {
+            data: {
+              title: 'Use your left hand to punch the blue bags.',
+              titleDuration: 2500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.ttsService.tts('Use your left hand to punch the blue bags.');
+          await this.elements.sleep(2500);
+          this.elements.guide.state = {
+            data: {
+              title: "Let's try it out.",
+              titleDuration: 1500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.ttsService.tts("Let's try it out.");
+          await this.elements.sleep(1500);
+
+          // show blue bag until user punches it with left hand
+          let repCompleted = false;
+          while (!repCompleted) {
+            if (reCalibrationCount !== this.globalReCalibrationCount) {
+              throw new Error('reCalibrationCount changed');
+            }
+            this.beatBoxerScene.showBag(
+              'left',
+              'speed-blue',
+              this.getRandomItemFromArray(this.negativeLevel),
+            );
+            const res = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
+
+            if (res.result === 'success') {
+              this.soundsService.playCalibrationSound('success');
+              repCompleted = true;
+            } else {
+              this.ttsService.tts("Let's try that again.");
+              this.elements.guide.state = {
+                data: {
+                  title: "Let's try that again.",
+                  titleDuration: 2500,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+              await this.elements.sleep(2500);
+            }
+            await this.elements.sleep(1000);
           }
-          await this.elements.sleep(1000);
-        }
 
-        this.ttsService.tts('Well done.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Well done.',
-            titleDuration: 1500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(2000);
-      },
-      async (reCalibrationCount: number) => {
-        this.elements.guide.state = {
-          data: {
-            title: 'Use your left hand to punch the blue bags.',
-            titleDuration: 2500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts('Use your left hand to punch the blue bags.');
-        await this.elements.sleep(2500);
-        this.elements.guide.state = {
-          data: {
-            title: "Let's try it out.",
-            titleDuration: 1500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        this.ttsService.tts("Let's try it out.");
-        await this.elements.sleep(1500);
-
-        // show blue bag until user punches it with left hand
-        let repCompleted = false;
-        while (!repCompleted) {
-          if (reCalibrationCount !== this.globalReCalibrationCount) {
-            throw new Error('reCalibrationCount changed');
-          }
+          this.ttsService.tts('Well done.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Well done.',
+              titleDuration: 1500,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(2000);
+        },
+        async (reCalibrationCount: number) => {
+          this.ttsService.tts('Avoid punching the caution signs.');
+          this.elements.guide.state = {
+            data: {
+              title: 'Avoid punching the caution signs.',
+              titleDuration: 3000,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(5000);
           this.beatBoxerScene.showBag(
             'left',
             'speed-blue',
             this.getRandomItemFromArray(this.negativeLevel),
           );
-          const res = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue');
+          this.beatBoxerScene.showObstacle(
+            'right',
+            this.getRandomItemFromArray(this.positiveLevel),
+          );
 
-          if (res.result === 'success') {
-            this.soundsService.playCalibrationSound('success');
-            repCompleted = true;
-          } else {
-            this.ttsService.tts("Let's try that again.");
+          const rep = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue', 'obstacle');
+          if (rep.result === 'failure') {
+            this.beatBoxerScene.destroyGameObjects('speed-blue');
+            this.beatBoxerScene.destroyGameObjects('obstacle');
+            this.soundsService.playCalibrationSound('error');
+            this.ttsService.tts("I knew you couldn't resist it.");
             this.elements.guide.state = {
               data: {
-                title: "Let's try that again.",
-                titleDuration: 2500,
+                title: "I knew you couldn't resist it.",
               },
               attributes: {
                 visibility: 'visible',
                 reCalibrationCount,
               },
             };
-            await this.elements.sleep(2500);
+            await this.elements.sleep(3000);
+          } else {
+            this.beatBoxerScene.destroyGameObjects('obstacle');
+            this.soundsService.playCalibrationSound('success');
+            this.ttsService.tts('Well done!');
+            this.elements.guide.state = {
+              data: {
+                title: 'Well done!',
+              },
+              attributes: {
+                visibility: 'visible',
+                reCalibrationCount,
+              },
+            };
+            await this.elements.sleep(4000);
           }
-          await this.elements.sleep(1000);
-        }
-
-        this.ttsService.tts('Well done.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Well done.',
-            titleDuration: 1500,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(2000);
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts('Avoid punching the caution signs.');
-        this.elements.guide.state = {
-          data: {
-            title: 'Avoid punching the caution signs.',
-            titleDuration: 3000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.elements.sleep(5000);
-        this.beatBoxerScene.showBag(
-          'left',
-          'speed-blue',
-          this.getRandomItemFromArray(this.negativeLevel),
-        );
-        this.beatBoxerScene.showObstacle('right', this.getRandomItemFromArray(this.positiveLevel));
-
-        const rep = await this.beatBoxerScene.waitForCollisionOrTimeout('speed-blue', 'obstacle');
-        if (rep.result === 'failure') {
-          this.beatBoxerScene.destroyGameObjects('speed-blue');
-          this.beatBoxerScene.destroyGameObjects('obstacle');
-          this.soundsService.playCalibrationSound('error');
-          this.ttsService.tts("I knew you couldn't resist it.");
+        },
+        async (reCalibrationCount: number) => {
+          this.ttsService.tts("Good job! Looks like you're ready to start the activity.");
           this.elements.guide.state = {
             data: {
-              title: "I knew you couldn't resist it.",
+              title: "Good job! Looks like you're ready to start the activity.",
+              titleDuration: 5000,
             },
             attributes: {
               visibility: 'visible',
               reCalibrationCount,
             },
           };
-          await this.elements.sleep(3000);
-        } else {
-          this.beatBoxerScene.destroyGameObjects('obstacle');
-          this.soundsService.playCalibrationSound('success');
-          this.ttsService.tts('Well done!');
-          this.elements.guide.state = {
-            data: {
-              title: 'Well done!',
-            },
-            attributes: {
-              visibility: 'visible',
-              reCalibrationCount,
-            },
-          };
-          await this.elements.sleep(4000);
-        }
-      },
-      async (reCalibrationCount: number) => {
-        this.ttsService.tts("Good job! Looks like you're ready to start the activity.");
-        this.elements.guide.state = {
-          data: {
-            title: "Good job! Looks like you're ready to start the activity.",
-            titleDuration: 5000,
-          },
-          attributes: {
-            visibility: 'visible',
-            reCalibrationCount,
-          },
-        };
-        await this.apiService.updateOnboardingStatus({
-          beat_boxer: true,
-        });
-        await this.elements.sleep(5000);
-        this.soundsService.stopActivityInstructionSound(this.genre);
-        this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
-      },
-    ];
+          await this.apiService.updateOnboardingStatus({
+            beat_boxer: true,
+          });
+          await this.elements.sleep(5000);
+          this.soundsService.stopActivityInstructionSound(this.genre);
+          this.gameLifeCycleService.resetStage(GameLifeCycleStages.TUTORIAL);
+        },
+      ];
+    else return [];
   }
 
   preLoop() {
@@ -959,6 +1135,36 @@ export class BeatBoxerService {
         this.scoreSubscription?.unsubscribe();
         this.elements.score.hide();
         this.elements.health.hide();
+      },
+      async (reCalibrationCount: number) => {
+        // Todo: Update placeholder value
+        const isGoalCompleted = true;
+        if (isGoalCompleted) {
+          this.elements.titleBar.state = {
+            data: {
+              title: 'Beat Boxer',
+              xp: this.highScore,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.goalSelection.state = {
+            data: {
+              action: 'completed-goal',
+              goals: [this.selectedGoal],
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
+          await this.elements.sleep(3000);
+          this.elements.titleBar.hide();
+          this.elements.goalSelection.hide();
+        }
       },
       async (reCalibrationCount: number) => {
         const highScoreResp = await this.apiService.getHighScore('beat_boxer');

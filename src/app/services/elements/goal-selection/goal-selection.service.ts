@@ -15,7 +15,7 @@ export class GoalSelectionService extends GameElement<GoalSelectionElementState,
     }>();
     this._state = {
       data: {
-        goals: [{ title: 'Goal 1', id: 'Description 1', xp: 300 }],
+        goals: [],
       },
       attributes: {},
     };

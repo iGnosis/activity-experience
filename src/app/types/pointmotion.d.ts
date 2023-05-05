@@ -869,23 +869,45 @@ export type GuideElementState = {
   showIndefinitely?: boolean;
 };
 
-//TODO: dummy goal structure, needs to be updated
-export type Goal = {
-  title: string;
+export enum GoalStatus {
+  COMPLETED = 'completed',
+  PENDING = 'pending',
+  INPROGRESS = 'inprogress',
+  EXPIRED = 'expired',
+}
+
+export interface Badge {
   id: string;
-  xp: number | string;
-};
+  dimension: string;
+  metric: string | null;
+  maxVal: number | null;
+  minVal: number | null;
+  name: string;
+  status: 'active' | 'retired';
+  tier: string;
+  xp: number;
+}
+
+export interface Goal {
+  id?: string;
+  patientId: string;
+  createdAt?: Date;
+  expiryAt?: Date;
+  status: GoalStatus;
+  name: string;
+  rewards: Array<Partial<Badge>>;
+}
 
 type GoalCompletionState = {
-  goals: [Goal];
+  goals: [Partial<Goal>];
   action?: 'completed-goal';
-  onSelect?: (goal: Goal) => void;
+  onSelect?: (goal: Partial<Goal>) => void;
 };
 
 type GoalSelectionState = {
-  goals: Goal[];
+  goals: Partial<Goal>[];
   action?: 'select-goal' | 'change-goal';
-  onSelect?: (goal: Goal) => void;
+  onSelect?: (goal: Partial<Goal>) => void;
 };
 
 export type GoalSelectionElementState = GoalCompletionState | GoalSelectionState;

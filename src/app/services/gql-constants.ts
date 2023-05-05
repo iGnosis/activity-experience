@@ -234,4 +234,25 @@ export const GqlConstants = {
     orbsCount
   }
 }`,
+  GET_GAME_GOALS: `
+  mutation GenerateGoal($gameName: GameNameEnum!) {
+    generateGoal(gameName: $gameName) {
+      data
+    }
+  }`,
+  SELECT_GOAL: `
+  mutation SelectGoal($expiringGoals: [uuid!]!, $selectedGoal: uuid!) {
+    update_goal_many(updates: {where: {id: {_in: $expiringGoals}}, _set: {status: expired}}) {
+      affected_rows
+    }
+    update_goal(where: {id: {_eq: $selectedGoal}}, _set: {status: inprogress}) {
+      affected_rows
+    }
+  }`,
+  SET_GOAL_STATUS: `
+  mutation SetGoalStatus($goalId: uuid!, $goalStatus: goal_status_enum!) {
+    update_goal_by_pk(pk_columns: {id: $goalId}, _set: {status: $goalStatus}) {
+      id
+    }
+  }`,
 };

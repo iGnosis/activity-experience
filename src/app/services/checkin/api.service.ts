@@ -7,13 +7,13 @@ import {
   AnalyticsDTO,
   GameState,
   Genre,
+  Goal,
   PreferenceState,
 } from 'src/app/types/pointmotion';
-import { GqlClientService } from '../gql-client/gql-client.service';
 import { environment } from 'src/environments/environment';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
+import { GqlClientService } from '../gql-client/gql-client.service';
 import { GqlConstants } from '../gql-constants';
-import { GameService } from '../game/game.service';
 
 @Injectable({
   providedIn: 'root',
@@ -322,6 +322,32 @@ export class ApiService {
   async updateOrbCount(gameId: string, orbCount: { redOrbs: number; normalOrbs: number }) {
     try {
       await this.client.req(GqlConstants.UPDATE_ORB_COUNT, { id: gameId, orbCount });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getGameGoals(gameName: Activities) {
+    try {
+      const res = await this.client.req(GqlConstants.GET_GAME_GOALS, { gameName });
+      return res?.generateGoal?.data as Partial<Goal>[];
+    } catch (err) {
+      console.log(err);
+      return [] as Partial<Goal>[];
+    }
+  }
+
+  async selectGoal(selectedGoal: string, expiringGoals: string[]) {
+    try {
+      await this.client.req(GqlConstants.SELECT_GOAL, { selectedGoal, expiringGoals });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async setGoalStatus(goalId: string, goalStatus: string) {
+    try {
+      await this.client.req(GqlConstants.SET_GOAL_STATUS, { goalId, goalStatus });
     } catch (err) {
       console.log(err);
     }

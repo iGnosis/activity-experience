@@ -2,8 +2,8 @@
     <owl-carousel-o [options]="customOptions">
         <ng-template carouselSlide *ngFor="let goal of data.goals;let i=index">
             <div class="w-full h-screen goal-container d-flex position-relative" [ngClass]="{ 'selected-goal': data.action === 'select-goal' && currentGoalIdx() === i, 'hidden-goal': data.action === 'select-goal' && currentGoalIdx() !== i }">
-                <p class="position-relative m-auto display-6 rounded-2 p-5 w-full text-white d-flex align-items-center">{{goal.title}}<span class="ms-auto d-flex align-items-center"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal.xp}}</span></p>
-                <p [class.goal-completed]="animateGoalCompletion" class="position-absolute top-1/2 start-1/2 translate-middle display-6 rounded-2 p-5 w-full text-white d-flex align-items-center">{{goal.title}}<span class="ms-auto d-flex align-items-center position-relative"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal.xp}}</span></p>
+                <p class="position-relative m-auto display-6 rounded-2 p-5 w-full text-white d-flex align-items-center"><span class="goal-name text-truncate me-5">{{goal?.name || ''}}</span><span class="goal-reward me-5 ms-auto d-flex align-items-center"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal?.rewards?.[0]?.xp || 0}}</span></p>
+                <p [class.goal-completed]="animateGoalCompletion" class="position-absolute top-1/2 start-1/2 translate-middle display-6 rounded-2 p-5 w-full text-white d-flex align-items-center"><span class="goal-name text-truncate me-5">{{goal?.name || ''}}</span><span class="goal-reward me-5 ms-auto d-flex align-items-center position-relative"><img class="me-2 w-14 h-14" src="/assets/images/xp-coin.png" alt="xp coin">{{goal?.rewards?.[0]?.xp || 0}}</span></p>
             </div>
         </ng-template>
     </owl-carousel-o>

@@ -4,6 +4,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { game } from 'src/app/store/actions/game.actions';
 import {
   Activities,
+  GameMenuElementState,
   GameState,
   HandTrackerStatus,
   PreferenceState,
@@ -103,11 +104,16 @@ export class ActivityHelperService {
 
   async exitOrReplay(reCalibrationCount?: number) {
     // show the menu
+    const gameMenuState: Partial<GameMenuElementState> = {
+      holdDuration: 2000,
+      timeoutDuration: 15_000,
+      leftTitle: 'Select Activity',
+      rightTitle: 'Replay',
+    };
     this.elements.gameMenu.state = {
       data: {
-        holdDuration: 2000,
+        ...gameMenuState,
         gesture: undefined,
-        timeoutDuration: 15_000,
         onLeft: () => {
           window.parent.postMessage(
             {
@@ -141,6 +147,7 @@ export class ActivityHelperService {
         .subscribe((status: HandTrackerStatus) => {
           this.elements.gameMenu.state = {
             data: {
+              ...gameMenuState,
               gesture: status,
               onLeft: () => {
                 handSubscription.unsubscribe();
@@ -164,15 +171,7 @@ export class ActivityHelperService {
           };
         });
     });
-    this.elements.gameMenu.state = {
-      data: {
-        gesture: undefined,
-      },
-      attributes: {
-        visibility: 'hidden',
-        reCalibrationCount,
-      },
-    };
+    this.elements.gameMenu.hide();
     this.elements.guide.hide();
   }
 

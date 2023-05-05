@@ -38,7 +38,7 @@ export class GoalSelectionComponent implements OnInit, OnDestroy {
       },
     },
   };
-  currentGoal?: Goal;
+  currentGoal?: Partial<Goal>;
   animateGoalCompletion = false;
 
   @ViewChild(CarouselComponent) carousel: CarouselComponent;
@@ -56,10 +56,10 @@ export class GoalSelectionComponent implements OnInit, OnDestroy {
         this.shiftSlide();
       } else if (state.data.action === 'select-goal') {
         this.data.onSelect?.(this.currentGoal);
-      } else if (state.data.action === 'completed-goal') {
-        this.customOptions.loop = false;
-        this.animateGoalCompletion = true;
       }
+
+      this.customOptions.loop = !(state.data.action === 'completed-goal');
+      this.animateGoalCompletion = state.data.action === 'completed-goal';
 
       this.attributes = state.attributes;
     });
