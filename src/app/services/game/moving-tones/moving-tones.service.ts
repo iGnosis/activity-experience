@@ -5,8 +5,11 @@ import {
   ActivityConfiguration,
   AnalyticsDTO,
   Coordinate,
+  GameMenuElementState,
   GameState,
   Genre,
+  Goal,
+  HandTrackerStatus,
   MovingTonesCircle,
   MovingTonesConfiguration,
   MovingTonesCurve,
@@ -22,7 +25,7 @@ import { ApiService } from '../../checkin/api.service';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { v4 as uuidv4 } from 'uuid';
 import { MovingTonesScene } from 'src/app/scenes/moving-tones/moving-tones.scene';
-import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
@@ -62,6 +65,9 @@ export class MovingTonesService implements ActivityBase {
   private health = 3;
   private score = 0;
   private highScore = 0;
+
+  private selectedGoal: Partial<Goal>;
+  private shouldShowTutorial = true;
 
   private center: Coordinate;
   constructor(
@@ -126,6 +132,9 @@ export class MovingTonesService implements ActivityBase {
     this.score = 0;
     this.highScore = 0;
     this.health = 3;
+
+    this.selectedGoal = {};
+    this.shouldShowTutorial = true;
   }
 
   private async waitForCollisionOrRecalibration(reCalibrationCount?: number) {
@@ -861,6 +870,184 @@ export class MovingTonesService implements ActivityBase {
         };
       },
       async (reCalibrationCount: number) => {
+        this.elements.titleBar.state = {
+          data: {
+            title: 'Moving Tones',
+            xp: this.highScore,
+            transitionFrom: 'top',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        const goals = await this.apiService.getGameGoals('moving_tones');
+        this.elements.goalSelection.state = {
+          data: {
+            goals,
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        this.ttsService.tts('Move your hand to either side to select');
+        this.elements.guide.state = {
+          data: {
+            title: 'Move your hand to either side to select',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.gameMenu.state = {
+          data: {
+            gesture: undefined,
+            hideBgOverlay: true,
+            leftTitle: 'Change Goal',
+            rightTitle: 'Set Goal',
+            holdDuration: 1500,
+            position: 'bottom',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  gesture: status,
+                  hideBgOverlay: true,
+                  leftTitle: 'Change Goal',
+                  rightTitle: 'Set Goal',
+                  holdDuration: 1500,
+                  position: 'bottom',
+                  onLeft: async () => {
+                    this.elements.goalSelection.state = {
+                      data: {
+                        goals,
+                        action: 'change-goal',
+                      },
+                      attributes: {
+                        reCalibrationCount,
+                        visibility: 'visible',
+                      },
+                    };
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    await new Promise((resolve) => {
+                      this.elements.goalSelection.state = {
+                        data: {
+                          goals,
+                          action: 'select-goal',
+                          onSelect: async (goal) => {
+                            this.selectedGoal = goal;
+                            const expiringGoals = goals.reduce((acc: any[], curr) => {
+                              if (curr.id && curr.id !== goal.id) {
+                                acc.push(curr.id);
+                              }
+                              return acc;
+                            }, []);
+
+                            await this.apiService.selectGoal(goal.id!, expiringGoals);
+                          },
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      this.elements.gameMenu.hide();
+                      this.elements.titleBar.state = {
+                        data: {
+                          title: 'Your selected goal',
+                          transitionFrom: 'bottom',
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      setTimeout(() => {
+                        this.elements.titleBar.hide();
+                        this.elements.goalSelection.hide();
+                        resolve({});
+                      }, 3000);
+                    });
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+        this.elements.guide.hide();
+        this.elements.sleep(1000);
+      },
+      async (reCalibrationCount: number) => {
+        const gameMenuState: Partial<GameMenuElementState> = {
+          hideBgOverlay: false,
+          leftTitle: 'Start Tutorial',
+          rightTitle: 'Play Game',
+          holdDuration: 1500,
+          position: 'center',
+        };
+        this.elements.gameMenu.state = {
+          data: {
+            ...gameMenuState,
+            gesture: undefined,
+            onLeft: async () => {
+              this.shouldShowTutorial = true;
+            },
+            onRight: async () => {
+              this.shouldShowTutorial = false;
+            },
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  ...gameMenuState,
+                  gesture: status,
+                  onLeft: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = true;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = false;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+      },
+      async (reCalibrationCount: number) => {
         this.ttsService.tts('Next activity. Moving Tones.');
         this.elements.banner.state = {
           attributes: {
@@ -921,6 +1108,8 @@ export class MovingTonesService implements ActivityBase {
   }
 
   tutorial() {
+    if (!this.shouldShowTutorial) return [];
+
     return [
       async (reCalibrationCount: number) => {
         this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
@@ -1510,6 +1699,36 @@ export class MovingTonesService implements ActivityBase {
           reCalibrationCount,
         };
         this.elements.health.hide();
+      },
+      async (reCalibrationCount: number) => {
+        // Todo: Update placeholder value
+        const isGoalCompleted = true;
+        if (isGoalCompleted) {
+          this.elements.titleBar.state = {
+            data: {
+              title: 'Beat Boxer',
+              xp: this.highScore,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.goalSelection.state = {
+            data: {
+              action: 'completed-goal',
+              goals: [this.selectedGoal],
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
+          await this.elements.sleep(3000);
+          this.elements.titleBar.hide();
+          this.elements.goalSelection.hide();
+        }
       },
     ];
   }

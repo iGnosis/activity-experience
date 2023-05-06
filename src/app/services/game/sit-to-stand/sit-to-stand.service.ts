@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { take } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import {
   ActivityBase,
   AnalyticsDTO,
   GameLevels,
+  GameMenuElementState,
   GameState,
   Genre,
+  Goal,
+  HandTrackerStatus,
   PreferenceState,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
@@ -22,6 +25,7 @@ import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene'
 import { v4 as uuidv4 } from 'uuid';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -64,6 +68,9 @@ export class SitToStandService implements ActivityBase {
   private highScore = 0;
   private maxCombo = 0;
 
+  private selectedGoal: Partial<Goal>;
+  private shouldShowTutorial = true;
+
   /**
    * @description
    * Gets an even/odd random number between min and max.
@@ -103,6 +110,7 @@ export class SitToStandService implements ActivityBase {
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private gameLifeCycleService: GameLifecycleService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.resetVariables();
     this.store
@@ -151,6 +159,9 @@ export class SitToStandService implements ActivityBase {
     this.score = 0;
     this.analytics = [];
     this.highScore = 0;
+
+    this.selectedGoal = {};
+    this.shouldShowTutorial = true;
   }
 
   factors = (num: number): number[] => [...Array(num + 1).keys()].filter((i) => num % i === 0);
@@ -247,6 +258,184 @@ export class SitToStandService implements ActivityBase {
             visibility: 'hidden',
           },
         };
+      },
+      async (reCalibrationCount: number) => {
+        this.elements.titleBar.state = {
+          data: {
+            title: 'Sit Stand Achieve',
+            xp: this.highScore,
+            transitionFrom: 'top',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        const goals = await this.apiService.getGameGoals('sit_stand_achieve');
+        this.elements.goalSelection.state = {
+          data: {
+            goals,
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        this.ttsService.tts('Move your hand to either side to select');
+        this.elements.guide.state = {
+          data: {
+            title: 'Move your hand to either side to select',
+            showIndefinitely: true,
+          },
+          attributes: {
+            visibility: 'visible',
+            reCalibrationCount,
+          },
+        };
+        this.elements.gameMenu.state = {
+          data: {
+            gesture: undefined,
+            hideBgOverlay: true,
+            leftTitle: 'Change Goal',
+            rightTitle: 'Set Goal',
+            holdDuration: 1500,
+            position: 'bottom',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  gesture: status,
+                  hideBgOverlay: true,
+                  leftTitle: 'Change Goal',
+                  rightTitle: 'Set Goal',
+                  holdDuration: 1500,
+                  position: 'bottom',
+                  onLeft: async () => {
+                    this.elements.goalSelection.state = {
+                      data: {
+                        goals,
+                        action: 'change-goal',
+                      },
+                      attributes: {
+                        reCalibrationCount,
+                        visibility: 'visible',
+                      },
+                    };
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    await new Promise((resolve) => {
+                      this.elements.goalSelection.state = {
+                        data: {
+                          goals,
+                          action: 'select-goal',
+                          onSelect: async (goal) => {
+                            this.selectedGoal = goal;
+                            const expiringGoals = goals.reduce((acc: any[], curr) => {
+                              if (curr.id && curr.id !== goal.id) {
+                                acc.push(curr.id);
+                              }
+                              return acc;
+                            }, []);
+
+                            await this.apiService.selectGoal(goal.id!, expiringGoals);
+                          },
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      this.elements.gameMenu.hide();
+                      this.elements.titleBar.state = {
+                        data: {
+                          title: 'Your selected goal',
+                          transitionFrom: 'bottom',
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      setTimeout(() => {
+                        this.elements.titleBar.hide();
+                        this.elements.goalSelection.hide();
+                        resolve({});
+                      }, 3000);
+                    });
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+        this.elements.guide.hide();
+        this.elements.sleep(1000);
+      },
+      async (reCalibrationCount: number) => {
+        const gameMenuState: Partial<GameMenuElementState> = {
+          hideBgOverlay: false,
+          leftTitle: 'Start Tutorial',
+          rightTitle: 'Play Game',
+          holdDuration: 1500,
+          position: 'center',
+        };
+        this.elements.gameMenu.state = {
+          data: {
+            ...gameMenuState,
+            gesture: undefined,
+            onLeft: async () => {
+              this.shouldShowTutorial = true;
+            },
+            onRight: async () => {
+              this.shouldShowTutorial = false;
+            },
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  ...gameMenuState,
+                  gesture: status,
+                  onLeft: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = true;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = false;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
       },
       async (reCalibrationCount: number) => {
         this.elements.ribbon.state = {
@@ -1127,6 +1316,9 @@ export class SitToStandService implements ActivityBase {
 
   tutorial() {
     console.log('running tutorial');
+
+    if (!this.shouldShowTutorial) return [];
+
     return [
       async (reCalibrationCount: number) => {
         this.gameLifeCycleService.enterStage(GameLifeCycleStages.TUTORIAL);
@@ -1762,6 +1954,36 @@ export class SitToStandService implements ActivityBase {
         // };
         this.elements.health.hide();
         this.elements.score.hide();
+      },
+      async (reCalibrationCount: number) => {
+        // Todo: Update placeholder value
+        const isGoalCompleted = true;
+        if (isGoalCompleted) {
+          this.elements.titleBar.state = {
+            data: {
+              title: 'Sit Stand Achieve',
+              xp: this.highScore,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.goalSelection.state = {
+            data: {
+              action: 'completed-goal',
+              goals: [this.selectedGoal],
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
+          await this.elements.sleep(3000);
+          this.elements.titleBar.hide();
+          this.elements.goalSelection.hide();
+        }
       },
     ];
   }

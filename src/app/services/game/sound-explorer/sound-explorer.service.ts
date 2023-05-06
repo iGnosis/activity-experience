@@ -4,8 +4,11 @@ import {
   ActivityBase,
   AnalyticsDTO,
   AnalyticsResultDTO,
+  GameMenuElementState,
   GameState,
   Genre,
+  Goal,
+  HandTrackerStatus,
   Origin,
   PreferenceState,
   Shape,
@@ -20,7 +23,7 @@ import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
 import { game } from 'src/app/store/actions/game.actions';
 import { SoundExplorerScene } from 'src/app/scenes/sound-explorer/sound-explorer.scene';
-import { skip, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, skip, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
@@ -71,6 +74,10 @@ export class SoundExplorerService implements ActivityBase {
   private successfulReps = 0;
   private totalReps = 0;
   private pointsGained = 0;
+
+  private selectedGoal: Partial<Goal>;
+  private shouldShowTutorial = true;
+
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]?: number[] } = {
     // 'bottom-right': [-110, -115],
@@ -210,6 +217,9 @@ export class SoundExplorerService implements ActivityBase {
       'top-right': [150, 160],
     };
     this.scoreSubscription?.unsubscribe();
+
+    this.selectedGoal = {};
+    this.shouldShowTutorial = true;
   }
 
   async setupConfig() {
@@ -291,10 +301,31 @@ export class SoundExplorerService implements ActivityBase {
       },
 
       async (reCalibrationCount: number) => {
-        this.ttsService.tts("Raise one of your hands when you're ready to start.");
+        this.elements.titleBar.state = {
+          data: {
+            title: 'Sound Explorer',
+            xp: this.highScore,
+            transitionFrom: 'top',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        const goals = await this.apiService.getGameGoals('sound_explorer');
+        this.elements.goalSelection.state = {
+          data: {
+            goals,
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        this.ttsService.tts('Move your hand to either side to select');
         this.elements.guide.state = {
           data: {
-            title: "Raise your hand when you're ready to start.",
+            title: 'Move your hand to either side to select',
             showIndefinitely: true,
           },
           attributes: {
@@ -302,17 +333,157 @@ export class SoundExplorerService implements ActivityBase {
             reCalibrationCount,
           },
         };
-        await this.handTrackerService.waitUntilHandRaised('any-hand');
-        this.soundsService.playCalibrationSound('success');
-        this.elements.guide.attributes = {
-          visibility: 'hidden',
-          reCalibrationCount,
+        this.elements.gameMenu.state = {
+          data: {
+            gesture: undefined,
+            hideBgOverlay: true,
+            leftTitle: 'Change Goal',
+            rightTitle: 'Set Goal',
+            holdDuration: 1500,
+            position: 'bottom',
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
         };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  gesture: status,
+                  hideBgOverlay: true,
+                  leftTitle: 'Change Goal',
+                  rightTitle: 'Set Goal',
+                  holdDuration: 1500,
+                  position: 'bottom',
+                  onLeft: async () => {
+                    this.elements.goalSelection.state = {
+                      data: {
+                        goals,
+                        action: 'change-goal',
+                      },
+                      attributes: {
+                        reCalibrationCount,
+                        visibility: 'visible',
+                      },
+                    };
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    await new Promise((resolve) => {
+                      this.elements.goalSelection.state = {
+                        data: {
+                          goals,
+                          action: 'select-goal',
+                          onSelect: async (goal) => {
+                            this.selectedGoal = goal;
+                            const expiringGoals = goals.reduce((acc: any[], curr) => {
+                              if (curr.id && curr.id !== goal.id) {
+                                acc.push(curr.id);
+                              }
+                              return acc;
+                            }, []);
+
+                            await this.apiService.selectGoal(goal.id!, expiringGoals);
+                          },
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      this.elements.gameMenu.hide();
+                      this.elements.titleBar.state = {
+                        data: {
+                          title: 'Your selected goal',
+                          transitionFrom: 'bottom',
+                        },
+                        attributes: {
+                          reCalibrationCount,
+                          visibility: 'visible',
+                        },
+                      };
+                      setTimeout(() => {
+                        this.elements.titleBar.hide();
+                        this.elements.goalSelection.hide();
+                        resolve({});
+                      }, 3000);
+                    });
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
+        this.elements.guide.hide();
+        this.elements.sleep(1000);
+      },
+      async (reCalibrationCount: number) => {
+        const gameMenuState: Partial<GameMenuElementState> = {
+          hideBgOverlay: false,
+          leftTitle: 'Start Tutorial',
+          rightTitle: 'Play Game',
+          holdDuration: 1500,
+          position: 'center',
+        };
+        this.elements.gameMenu.state = {
+          data: {
+            ...gameMenuState,
+            gesture: undefined,
+            onLeft: async () => {
+              this.shouldShowTutorial = true;
+            },
+            onRight: async () => {
+              this.shouldShowTutorial = false;
+            },
+          },
+          attributes: {
+            reCalibrationCount,
+            visibility: 'visible',
+          },
+        };
+        await new Promise((resolve) => {
+          const handSubscription = this.handTrackerService.sidewaysGestureResult
+            .pipe(debounceTime(200), distinctUntilChanged())
+            .subscribe((status: HandTrackerStatus) => {
+              this.elements.gameMenu.state = {
+                data: {
+                  ...gameMenuState,
+                  gesture: status,
+                  onLeft: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = true;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                  onRight: async () => {
+                    handSubscription.unsubscribe();
+                    this.shouldShowTutorial = false;
+                    this.elements.gameMenu.hide();
+                    resolve({});
+                  },
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            });
+        });
       },
     ];
   }
 
   tutorial() {
+    if (!this.shouldShowTutorial) return [];
+
     return [
       async (reCalibrationCount: number) => {
         // this.soundExplorerScene.enableMusic();
@@ -876,6 +1047,36 @@ export class SoundExplorerService implements ActivityBase {
         this.scoreSubscription.unsubscribe();
         this.elements.score.hide();
         this.elements.health.hide();
+      },
+      async (reCalibrationCount: number) => {
+        // Todo: Update placeholder value
+        const isGoalCompleted = true;
+        if (isGoalCompleted) {
+          this.elements.titleBar.state = {
+            data: {
+              title: 'Beat Boxer',
+              xp: this.highScore,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.goalSelection.state = {
+            data: {
+              action: 'completed-goal',
+              goals: [this.selectedGoal],
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
+          await this.elements.sleep(3000);
+          this.elements.titleBar.hide();
+          this.elements.goalSelection.hide();
+        }
       },
     ];
   }
