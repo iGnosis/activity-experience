@@ -3,7 +3,7 @@
   <div class="badge">
     <img [src]="themeMapping[state.theme || 'bronze'].iconUrl" alt="icon" class="icon">
     <div class="rectangle" [style.background-color]="themeMapping[state.theme || 'bronze'].backgroundColor">
-      <p class="text" [style.color]="state.textColor">{{state.title}}</p>
+      <p class="text" [style.color]="themeMapping[state.theme || 'bronze'].textColor">{{state.title}}</p>
     </div>
   </div>
 </div>

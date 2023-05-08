@@ -803,11 +803,6 @@ export type BadgePopupElementState = {
   title?: string;
 
   /**
-   * Sets badge title's text color.
-   */
-  textColor?: string;
-
-  /**
    * Sets badge theme.
    */
   theme?: 'green' | 'purple' | 'gold' | 'bronze';

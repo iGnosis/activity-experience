@@ -2003,6 +2003,44 @@ export class SitToStandService implements ActivityBase {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        // TODO: use unlocked badges.
+        for (let i = 0; i < 2; i++) {
+          this.elements.badgePopup.state = {
+            data: {
+              theme: 'gold',
+              title: `Badge ${i}`,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(3000);
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          this.elements.badgePopup.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(500);
+        }
+
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;
         const nextLevel = Number(this.currentLevel.charAt(this.currentLevel.length - 1)) + 1;
