@@ -14,6 +14,7 @@ import { environment } from 'src/environments/environment';
 import { HandTrackerService } from '../classifiers/hand-tracker/hand-tracker.service';
 import { GqlClientService } from '../gql-client/gql-client.service';
 import { GqlConstants } from '../gql-constants';
+import { Metrics } from 'src/app/types/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -348,6 +349,19 @@ export class ApiService {
   async setGoalStatus(goalId: string, goalStatus: string) {
     try {
       await this.client.req(GqlConstants.SET_GOAL_STATUS, { goalId, goalStatus });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateUserContext(metrics: Metrics[]) {
+    try {
+      const query = `mutation UpdatePatientContext($metrics: [MetricEnum!]!) {
+        updatePatientContext(metrics: {metrics: $metrics}) {
+          data
+        }
+      }`;
+      await this.client.req(query, { metrics });
     } catch (err) {
       console.log(err);
     }

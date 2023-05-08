@@ -1155,7 +1155,7 @@ export class SoundExplorerService implements ActivityBase {
         this.stopGame();
 
         console.log('updating user context');
-        await this.activityHelperService.updateUserContext([
+        await this.apiService.updateUserContext([
           Metrics.SOUND_EXPLORER_COMBO,
           Metrics.SOUND_EXPLORER_ORBS,
           Metrics.SOUND_EXPLORER_BLUE_ORBS,

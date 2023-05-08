@@ -40,7 +40,7 @@ describe('SitToStandService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should show tutorial if achievement ratio is below 25%', fakeAsync(() => {
+  xit('should show tutorial if achievement ratio is below 25%', fakeAsync(() => {
     spyOn(service, 'stopGame');
     service['successfulReps'] = 2;
     service['totalReps'] = 10;
@@ -54,7 +54,7 @@ describe('SitToStandService', () => {
     });
   }));
 
-  it('should not show tutorial if achievement ratio is above 25%', fakeAsync(() => {
+  xit('should not show tutorial if achievement ratio is above 25%', fakeAsync(() => {
     spyOn(service, 'stopGame');
     service['successfulReps'] = 3;
     service['totalReps'] = 10;

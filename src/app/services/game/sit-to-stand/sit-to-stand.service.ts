@@ -2052,7 +2052,7 @@ export class SitToStandService implements ActivityBase {
         this.stopGame();
 
         console.log('updating user context');
-        await this.activityHelperService.updateUserContext([
+        await this.apiService.updateUserContext([
           Metrics.SIT_STAND_ACHIEVE_COMBO,
           Metrics.SIT_STAND_ACHIEVE_PROMPTS,
           Metrics.MONTHLY_TIME_SPENT,

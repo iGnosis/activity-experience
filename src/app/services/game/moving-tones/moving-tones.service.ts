@@ -1807,7 +1807,7 @@ export class MovingTonesService implements ActivityBase {
         this.stopGame();
 
         console.log('updating user context');
-        await this.activityHelperService.updateUserContext([
+        await this.apiService.updateUserContext([
           Metrics.MOVING_TONES_COMBO,
           Metrics.MOVING_TONES_PROMPTS,
           Metrics.MONTHLY_TIME_SPENT,

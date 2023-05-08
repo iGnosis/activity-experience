@@ -1300,7 +1300,7 @@ export class BeatBoxerService {
         this.stopGame();
 
         console.log('updating user context');
-        await this.activityHelperService.updateUserContext([
+        await this.apiService.updateUserContext([
           Metrics.BEAT_BOXER_COMBO,
           Metrics.BEAT_BOXER_PROMPTS,
           Metrics.MONTHLY_TIME_SPENT,
