@@ -329,7 +329,7 @@ export class ApiService {
 
   async getGameGoals(gameName: Activities) {
     try {
-      const res = await this.client.req(GqlConstants.GET_GAME_GOALS, { gameName });
+      const res = await this.client.req(GqlConstants.GENERATE_GOALS, { gameName });
       return res?.generateGoal?.data as Partial<Goal>[];
     } catch (err) {
       console.log(err);

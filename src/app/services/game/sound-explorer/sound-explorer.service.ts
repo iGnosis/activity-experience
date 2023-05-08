@@ -4,6 +4,7 @@ import {
   ActivityBase,
   AnalyticsDTO,
   AnalyticsResultDTO,
+  Badge,
   GameMenuElementState,
   GameState,
   Genre,
@@ -12,6 +13,7 @@ import {
   Origin,
   PreferenceState,
   Shape,
+  UserContext,
 } from 'src/app/types/pointmotion';
 import { CalibrationService } from '../../calibration/calibration.service';
 import { ApiService } from '../../checkin/api.service';
@@ -28,6 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GoalService } from '../../goal/goal.service';
 
 @Injectable({
   providedIn: 'root',
@@ -77,6 +80,7 @@ export class SoundExplorerService implements ActivityBase {
 
   private selectedGoal: Partial<Goal>;
   private shouldShowTutorial = true;
+  private badgesUnlocked: Partial<Badge>[];
 
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]?: number[] } = {
@@ -143,6 +147,8 @@ export class SoundExplorerService implements ActivityBase {
     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
+  private userContext!: UserContext;
+
   constructor(
     private store: Store<{
       game: GameState;
@@ -156,8 +162,8 @@ export class SoundExplorerService implements ActivityBase {
     private handTrackerService: HandTrackerService,
     private soundsService: SoundsService,
     private soundExplorerScene: SoundExplorerScene,
-    private activityHelperService: ActivityHelperService,
     private gameLifeCycleService: GameLifecycleService,
+    private goalService: GoalService,
   ) {
     this.resetVariables();
     this.store
@@ -174,6 +180,17 @@ export class SoundExplorerService implements ActivityBase {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+
+    const patientId = localStorage.getItem('patient')!;
+    this.goalService
+      .getUserContext(patientId)
+      .then((userContext: UserContext) => {
+        this.userContext = userContext;
+      })
+      .catch((err) => {
+        console.log('Error while getting user context::, ', err);
+        this.userContext = {};
+      });
   }
 
   resetVariables() {
@@ -774,13 +791,17 @@ export class SoundExplorerService implements ActivityBase {
           updateScore(event);
         }, 500);
 
+        let blueOrbs: number;
+        let redOrbs: number;
         const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
           if (event.result === 'success') {
             this.normalOrbsCollected += 1;
+            blueOrbs = (this.userContext.SOUND_EXPLORER_BLUE_ORBS || 0) + 1;
             this.successfulReps++;
             score += 1;
             debounceUpdatedScore(event);
           } else if (event.result === 'failure') {
+            redOrbs = (this.userContext.SOUND_EXPLORER_RED_ORBS || 0) + 1;
             this.redOrbsCollected += 1;
             this.health -= 1;
             this.elements.health.state = {
@@ -798,6 +819,37 @@ export class SoundExplorerService implements ActivityBase {
             this.combo = 1;
           }
           this.totalReps++;
+
+          const soundExplorerCombo = this.userContext.SOUND_EXPLORER_COMBO || 0;
+          const totalPrompts = this.userContext.SOUND_EXPLORER_ORBS || 0;
+          this.userContext = {
+            ...this.userContext,
+            SOUND_EXPLORER_COMBO:
+              soundExplorerCombo > this.maxCombo ? soundExplorerCombo : this.maxCombo,
+            SOUND_EXPLORER_ORBS: totalPrompts + 1,
+            SOUND_EXPLORER_BLUE_ORBS: blueOrbs,
+            SOUND_EXPLORER_RED_ORBS: redOrbs,
+          };
+
+          if (this.selectedGoal) {
+            this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+              this.selectedGoal,
+              this.userContext,
+            );
+            if (this.badgesUnlocked.length > 0) {
+              // TODO: show notification for all badges unlocked, but the unlockNotification element doesn't support multiple notifications yet
+              this.elements.unlockNotification.state = {
+                data: {
+                  type: 'badge',
+                  title: this.badgesUnlocked[0].name!,
+                },
+                attributes: {
+                  visibility: 'visible',
+                  reCalibrationCount,
+                },
+              };
+            }
+          }
         });
 
         this.ttsService.tts('Next activity. Sound Explorer.');
