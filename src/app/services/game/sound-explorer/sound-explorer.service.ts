@@ -19,7 +19,6 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { ApiService } from '../../checkin/api.service';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
-import { GameStateService } from '../../game-state/game-state.service';
 import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { environment } from 'src/environments/environment';
@@ -80,7 +79,7 @@ export class SoundExplorerService implements ActivityBase {
 
   private selectedGoal: Partial<Goal>;
   private shouldShowTutorial = true;
-  private badgesUnlocked: Partial<Badge>[];
+  private badgesUnlocked: Partial<Badge>[] = [];
 
   private shapes: Shape[] = ['circle', 'triangle', 'rectangle', 'hexagon'];
   private originsWithAngleRange: { [key in Origin]?: number[] } = {
@@ -155,7 +154,6 @@ export class SoundExplorerService implements ActivityBase {
       preference: PreferenceState;
     }>,
     private elements: ElementsService,
-    private gameStateService: GameStateService,
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private ttsService: TtsService,
@@ -164,6 +162,7 @@ export class SoundExplorerService implements ActivityBase {
     private soundExplorerScene: SoundExplorerScene,
     private gameLifeCycleService: GameLifecycleService,
     private goalService: GoalService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.resetVariables();
     this.store
@@ -1154,6 +1153,43 @@ export class SoundExplorerService implements ActivityBase {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        this.badgesUnlocked.forEach(async (badge) => {
+          this.elements.badgePopup.state = {
+            data: {
+              theme: badge.tier as any,
+              title: this.activityHelperService.humanizeWord(badge.name || ''),
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(3000);
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          this.elements.badgePopup.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(500);
+        });
+
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.25) {
           await this.apiService.updateOnboardingStatus({

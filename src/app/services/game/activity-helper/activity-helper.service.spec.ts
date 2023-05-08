@@ -73,4 +73,15 @@ describe('ActivityHelperService', () => {
     expect(window.parent.postMessage).not.toHaveBeenCalled();
     flush();
   }));
+
+  it('should humanize words', () => {
+    // Given
+    const str = 'hello_world_100';
+
+    // When
+    const humanizedWord = service.humanizeWord(str);
+
+    // Then
+    expect(humanizedWord).toEqual('Hello World 100');
+  });
 });

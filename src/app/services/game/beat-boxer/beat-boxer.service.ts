@@ -29,7 +29,6 @@ import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GoalService } from '../../goal/goal.service';
-import { UserService } from '../../user/user.service';
 
 @Injectable({
   providedIn: 'root',
@@ -132,7 +131,7 @@ export class BeatBoxerService {
   };
 
   private userContext!: UserContext;
-  private badgesUnlocked: Partial<Badge>[];
+  private badgesUnlocked: Partial<Badge>[] = [];
   constructor(
     private store: Store<{
       game: GameState;
@@ -147,6 +146,7 @@ export class BeatBoxerService {
     private beatBoxerScene: BeatBoxerScene,
     private gameLifeCycleService: GameLifecycleService,
     private goalService: GoalService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.resetVariables();
     this.store
@@ -1298,6 +1298,43 @@ export class BeatBoxerService {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        this.badgesUnlocked.forEach(async (badge) => {
+          this.elements.badgePopup.state = {
+            data: {
+              theme: badge.tier as any,
+              title: this.activityHelperService.humanizeWord(badge.name || ''),
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(3000);
+          this.elements.confetti.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          this.elements.badgePopup.state = {
+            data: {},
+            attributes: {
+              visibility: 'hidden',
+              reCalibrationCount,
+            },
+          };
+          await this.elements.sleep(500);
+        });
+
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.25) {
           await this.apiService.updateOnboardingStatus({

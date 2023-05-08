@@ -27,8 +27,8 @@ import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene'
 import { v4 as uuidv4 } from 'uuid';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
-import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GoalService } from '../../goal/goal.service';
+import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -100,7 +100,7 @@ export class SitToStandService implements ActivityBase {
   }
 
   private userContext!: UserContext;
-  private badgesUnlocked: Partial<Badge>[];
+  private badgesUnlocked: Partial<Badge>[] = [];
   constructor(
     private store: Store<{
       game: GameState;
@@ -116,6 +116,7 @@ export class SitToStandService implements ActivityBase {
     private apiService: ApiService,
     private gameLifeCycleService: GameLifecycleService,
     private goalService: GoalService,
+    private activityHelperService: ActivityHelperService,
   ) {
     this.resetVariables();
     this.store
@@ -2050,12 +2051,11 @@ export class SitToStandService implements ActivityBase {
         }
         this.stopGame();
 
-        // TODO: use unlocked badges.
-        for (let i = 0; i < 2; i++) {
+        this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {
             data: {
-              theme: 'gold',
-              title: `Badge ${i}`,
+              theme: badge.tier as any,
+              title: this.activityHelperService.humanizeWord(badge.name || ''),
             },
             attributes: {
               visibility: 'visible',
@@ -2085,7 +2085,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
           await this.elements.sleep(500);
-        }
+        });
 
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;

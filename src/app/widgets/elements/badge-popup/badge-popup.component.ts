@@ -22,22 +22,22 @@ export class BadgePopupComponent implements OnInit, OnDestroy {
   attributes: ElementAttributes;
 
   themeMapping = {
-    green: {
-      iconUrl: 'assets/images/badges/green.png',
-      textColor: '#000033',
-      backgroundColor: '#60d660',
-    },
     bronze: {
       iconUrl: 'assets/images/badges/bronze.png',
       textColor: '#ffffff',
       backgroundColor: 'rgb(249,216,132)',
+    },
+    silver: {
+      iconUrl: 'assets/images/badges/green.png',
+      textColor: '#000033',
+      backgroundColor: '#60d660',
     },
     gold: {
       iconUrl: 'assets/images/badges/gold.png',
       textColor: '#000033',
       backgroundColor: 'rgb(250,220,146)',
     },
-    purple: {
+    platinum: {
       iconUrl: 'assets/images/badges/purple.png',
       textColor: '#ffffff',
       backgroundColor: '#9f72df',

@@ -805,7 +805,7 @@ export type BadgePopupElementState = {
   /**
    * Sets badge theme.
    */
-  theme?: 'green' | 'purple' | 'gold' | 'bronze';
+  theme?: 'bronze' | 'silver' | 'gold' | 'platinum';
 };
 
 export type ClinialScoreElementState = {

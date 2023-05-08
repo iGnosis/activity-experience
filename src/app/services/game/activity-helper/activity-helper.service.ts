@@ -189,4 +189,12 @@ export class ActivityHelperService {
     const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     return distance;
   }
+
+  humanizeWord(str: string) {
+    const words = str.split('_');
+    for (let i = 0; i < words.length; i++) {
+      words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+    }
+    return words.join(' ');
+  }
 }
