@@ -28,7 +28,7 @@ import { debounceTime, distinctUntilChanged, skip, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
-import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GameLifeCycleStages, Metrics } from 'src/app/types/enum';
 import { GoalService } from '../../goal/goal.service';
 
 @Injectable({
@@ -1153,6 +1153,18 @@ export class SoundExplorerService implements ActivityBase {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        console.log('updating user context');
+        await this.activityHelperService.updateUserContext([
+          Metrics.SOUND_EXPLORER_COMBO,
+          Metrics.SOUND_EXPLORER_ORBS,
+          Metrics.SOUND_EXPLORER_BLUE_ORBS,
+          Metrics.SOUND_EXPLORER_RED_ORBS,
+          Metrics.MONTHLY_TIME_SPENT,
+          Metrics.WEEKLY_TIME_SPENT,
+          Metrics.PATIENT_TOTAL_ACTIVITY_DURATION,
+          Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
+        ]);
 
         this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {

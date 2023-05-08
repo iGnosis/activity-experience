@@ -31,7 +31,7 @@ import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
-import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GameLifeCycleStages, Metrics } from 'src/app/types/enum';
 import { GoalService } from '../../goal/goal.service';
 @Injectable({
   providedIn: 'root',
@@ -1805,6 +1805,16 @@ export class MovingTonesService implements ActivityBase {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        console.log('updating user context');
+        await this.activityHelperService.updateUserContext([
+          Metrics.MOVING_TONES_COMBO,
+          Metrics.MOVING_TONES_PROMPTS,
+          Metrics.MONTHLY_TIME_SPENT,
+          Metrics.WEEKLY_TIME_SPENT,
+          Metrics.PATIENT_TOTAL_ACTIVITY_DURATION,
+          Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
+        ]);
 
         this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {

@@ -3,3 +3,28 @@ export enum GameLifeCycleStages {
   TUTORIAL = 'tutorial',
   RESET = '',
 }
+
+export enum Metrics {
+  PATIENT_STREAK = 'patient_streak',
+  WEEKLY_TIME_SPENT = 'weekly_time_spent',
+  MONTHLY_TIME_SPENT = 'monthly_time_spent',
+  PATIENT_TOTAL_ACTIVITY_DURATION = 'patient_total_activity_duration',
+  PATIENT_TOTAL_ACTIVITY_COUNT = 'patient_total_activity_count',
+  SIT_STAND_ACHIEVE_COMBO = 'sit_stand_achieve_combo',
+  SIT_STAND_ACHIEVE_PROMPTS = 'sit_stand_achieve_prompts',
+  BEAT_BOXER_COMBO = 'beat_boxer_combo',
+  BEAT_BOXER_PROMPTS = 'beat_boxer_prompts',
+  SOUND_EXPLORER_COMBO = 'sound_explorer_combo',
+  SOUND_EXPLORER_RED_ORBS = 'sound_explorer_red_orbs',
+  SOUND_EXPLORER_BLUE_ORBS = 'sound_explorer_blue_orbs',
+  SOUND_EXPLORER_ORBS = 'sound_explorer_orbs',
+  MOVING_TONES_COMBO = 'moving_tones_combo',
+  MOVING_TONES_PROMPTS = 'moving_tones_prompts',
+  // HIGHSCORE = 'highscore',
+  // GAME_XP = 'game_xp',
+  // LEADERBOARD_POSITION = 'leaderboard_position',
+  // SIT_STAND_ACHIEVE_LEADERBOARD_POSITION = 'sit_stand_achieve_leaderboard_position',
+  // BEAT_BOXER_LEADERBOARD_POSITION = 'beat_boxer_leaderboard_position',
+  // SOUND_EXPLORER_LEADERBOARD_POSITION = 'sound_explorer_leaderboard_position',
+  // MOVING_TONES_LEADERBOARD_POSITION = 'moving_tones_leaderboard_position',
+}

@@ -14,6 +14,8 @@ import { ElementsService } from '../../elements/elements.service';
 import { GameStateService } from '../../game-state/game-state.service';
 import { GoogleAnalyticsService } from '../../google-analytics/google-analytics.service';
 import { TtsService } from '../../tts/tts.service';
+import { GqlClientService } from '../../gql-client/gql-client.service';
+import { Metrics } from 'src/app/types/enum';
 
 @Injectable({
   providedIn: 'root',
@@ -31,6 +33,7 @@ export class ActivityHelperService {
     }>,
     private gameStateService: GameStateService,
     private handTrackerService: HandTrackerService,
+    private gqlService: GqlClientService,
   ) {}
 
   /**
@@ -196,5 +199,14 @@ export class ActivityHelperService {
       words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
     }
     return words.join(' ');
+  }
+
+  async updateUserContext(metrics: Metrics[]) {
+    const query = `mutation UpdatePatientContext($metrics: [MetricEnum!]!) {
+      updatePatientContext(metrics: {metrics: $metrics}) {
+        data
+      }
+    }`;
+    await this.gqlService.req(query, { metrics });
   }
 }

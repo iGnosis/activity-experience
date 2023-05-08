@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { BeatBoxerScene } from 'src/app/scenes/beat-boxer/beat-boxer.scene';
 import { game } from 'src/app/store/actions/game.actions';
-import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GameLifeCycleStages, Metrics } from 'src/app/types/enum';
 import {
   AnalyticsDTO,
   Badge,
@@ -1298,6 +1298,16 @@ export class BeatBoxerService {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        console.log('updating user context');
+        await this.activityHelperService.updateUserContext([
+          Metrics.BEAT_BOXER_COMBO,
+          Metrics.BEAT_BOXER_PROMPTS,
+          Metrics.MONTHLY_TIME_SPENT,
+          Metrics.WEEKLY_TIME_SPENT,
+          Metrics.PATIENT_TOTAL_ACTIVITY_DURATION,
+          Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
+        ]);
 
         this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {

@@ -26,7 +26,7 @@ import { CalibrationService } from '../../calibration/calibration.service';
 import { SitToStandScene } from 'src/app/scenes/sit-to-stand/sit-to-stand.scene';
 import { v4 as uuidv4 } from 'uuid';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
-import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GameLifeCycleStages, Metrics } from 'src/app/types/enum';
 import { GoalService } from '../../goal/goal.service';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
 
@@ -2050,6 +2050,16 @@ export class SitToStandService implements ActivityBase {
           await this.apiService.updateMaxCombo(gameId, this.maxCombo);
         }
         this.stopGame();
+
+        console.log('updating user context');
+        await this.activityHelperService.updateUserContext([
+          Metrics.SIT_STAND_ACHIEVE_COMBO,
+          Metrics.SIT_STAND_ACHIEVE_PROMPTS,
+          Metrics.MONTHLY_TIME_SPENT,
+          Metrics.WEEKLY_TIME_SPENT,
+          Metrics.PATIENT_TOTAL_ACTIVITY_DURATION,
+          Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
+        ]);
 
         this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {
