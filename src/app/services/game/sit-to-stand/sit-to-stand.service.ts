@@ -4,6 +4,7 @@ import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import {
   ActivityBase,
   AnalyticsDTO,
+  Badge,
   GameLevels,
   GameMenuElementState,
   GameState,
@@ -11,6 +12,7 @@ import {
   Goal,
   HandTrackerStatus,
   PreferenceState,
+  UserContext,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
@@ -26,6 +28,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { GoalService } from '../../goal/goal.service';
 
 @Injectable({
   providedIn: 'root',
@@ -96,6 +99,8 @@ export class SitToStandService implements ActivityBase {
       : num;
   }
 
+  private userContext!: UserContext;
+  private badgesUnlocked: Partial<Badge>[];
   constructor(
     private store: Store<{
       game: GameState;
@@ -110,7 +115,7 @@ export class SitToStandService implements ActivityBase {
     private calibrationService: CalibrationService,
     private apiService: ApiService,
     private gameLifeCycleService: GameLifecycleService,
-    private activityHelperService: ActivityHelperService,
+    private goalService: GoalService,
   ) {
     this.resetVariables();
     this.store
@@ -125,6 +130,17 @@ export class SitToStandService implements ActivityBase {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+
+    const patientId = localStorage.getItem('patient')!;
+    this.goalService
+      .getUserContext(patientId)
+      .then((userContext: UserContext) => {
+        this.userContext = userContext;
+      })
+      .catch((err) => {
+        console.log('Error while getting user context::, ', err);
+        this.userContext = {};
+      });
   }
 
   resetVariables() {
@@ -1722,7 +1738,37 @@ export class SitToStandService implements ActivityBase {
         this.failedReps += 1;
         this.streak = 0;
       }
+
+      const ssaCombo = this.userContext.SIT_STAND_ACHIEVE_COMBO || 0;
+      const totalPrompts = this.userContext.SIT_STAND_ACHIEVE_PROMPTS || 0;
+      this.userContext = {
+        ...this.userContext,
+        SIT_STAND_ACHIEVE_COMBO: ssaCombo > this.maxCombo ? ssaCombo : this.maxCombo,
+        SIT_STAND_ACHIEVE_PROMPTS: totalPrompts + 1,
+      };
+
+      if (this.selectedGoal) {
+        this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+          this.selectedGoal,
+          this.userContext,
+        );
+        if (this.badgesUnlocked.length > 0) {
+          // TODO: show notification for all badges unlocked, but the unlockNotification element doesn't support multiple notifications yet
+          this.elements.unlockNotification.state = {
+            data: {
+              type: 'badge',
+              title: this.badgesUnlocked[0].name!,
+            },
+            attributes: {
+              visibility: 'visible',
+              reCalibrationCount,
+            },
+          };
+        }
+      }
+
       await this.elements.sleep(1000);
+
       this.elements.prompt.state = {
         data: {},
         attributes: {

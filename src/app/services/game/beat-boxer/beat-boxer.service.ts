@@ -6,6 +6,7 @@ import { game } from 'src/app/store/actions/game.actions';
 import { GameLifeCycleStages } from 'src/app/types/enum';
 import {
   AnalyticsDTO,
+  Badge,
   BagType,
   BeatBoxerEvent,
   CenterOfMotion,
@@ -15,6 +16,7 @@ import {
   Goal,
   HandTrackerStatus,
   PreferenceState,
+  UserContext,
 } from 'src/app/types/pointmotion';
 import { environment } from 'src/environments/environment';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +28,8 @@ import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.servic
 import { SoundsService } from '../../sounds/sounds.service';
 import { TtsService } from '../../tts/tts.service';
 import { ActivityHelperService } from '../activity-helper/activity-helper.service';
+import { GoalService } from '../../goal/goal.service';
+import { UserService } from '../../user/user.service';
 
 @Injectable({
   providedIn: 'root',
@@ -127,6 +131,8 @@ export class BeatBoxerService {
     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
+  private userContext!: UserContext;
+  private badgesUnlocked: Partial<Badge>[];
   constructor(
     private store: Store<{
       game: GameState;
@@ -140,7 +146,7 @@ export class BeatBoxerService {
     private calibrationService: CalibrationService,
     private beatBoxerScene: BeatBoxerScene,
     private gameLifeCycleService: GameLifecycleService,
-    private activityHelperService: ActivityHelperService,
+    private goalService: GoalService,
   ) {
     this.resetVariables();
     this.store
@@ -157,6 +163,17 @@ export class BeatBoxerService {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+
+    const patientId = localStorage.getItem('patient')!;
+    this.goalService
+      .getUserContext(patientId)
+      .then((userContext: UserContext) => {
+        this.userContext = userContext;
+      })
+      .catch((err) => {
+        console.log('Error while getting user context::, ', err);
+        this.userContext = {};
+      });
   }
 
   resetVariables() {
@@ -1040,6 +1057,34 @@ export class BeatBoxerService {
               this.comboStreak = 0;
               this.levelIncrement = 0;
               this.combo = 1;
+            }
+
+            const beatBoxerCombo = this.userContext.BEAT_BOXER_COMBO || 0;
+            const totalPrompts = this.userContext.BEAT_BOXER_PROMPTS || 0;
+            this.userContext = {
+              ...this.userContext,
+              BEAT_BOXER_COMBO: beatBoxerCombo > this.maxCombo ? beatBoxerCombo : this.maxCombo,
+              BEAT_BOXER_PROMPTS: totalPrompts + 1,
+            };
+
+            if (this.selectedGoal) {
+              this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+                this.selectedGoal,
+                this.userContext,
+              );
+              if (this.badgesUnlocked.length > 0) {
+                // TODO: show notification for all badges unlocked, but the unlockNotification element doesn't support multiple notifications yet
+                this.elements.unlockNotification.state = {
+                  data: {
+                    type: 'badge',
+                    title: this.badgesUnlocked[0].name!,
+                  },
+                  attributes: {
+                    visibility: 'visible',
+                    reCalibrationCount,
+                  },
+                };
+              }
             }
           },
         );

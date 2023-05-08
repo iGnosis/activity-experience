@@ -4,6 +4,7 @@ import {
   ActivityBase,
   ActivityConfiguration,
   AnalyticsDTO,
+  Badge,
   Coordinate,
   GameMenuElementState,
   GameState,
@@ -14,6 +15,7 @@ import {
   MovingTonesConfiguration,
   MovingTonesCurve,
   PreferenceState,
+  UserContext,
 } from 'src/app/types/pointmotion';
 import { HandTrackerService } from '../../classifiers/hand-tracker/hand-tracker.service';
 import { ElementsService } from '../../elements/elements.service';
@@ -30,6 +32,7 @@ import { ActivityHelperService } from '../activity-helper/activity-helper.servic
 import { PoseModelAdapter } from '../../pose-model-adapter/pose-model-adapter.service';
 import { GameLifecycleService } from '../../game-lifecycle/game-lifecycle.service';
 import { GameLifeCycleStages } from 'src/app/types/enum';
+import { GoalService } from '../../goal/goal.service';
 @Injectable({
   providedIn: 'root',
 })
@@ -69,6 +72,8 @@ export class MovingTonesService implements ActivityBase {
   private selectedGoal: Partial<Goal>;
   private shouldShowTutorial = true;
 
+  private userContext: UserContext;
+  private badgesUnlocked: Partial<Badge>[];
   private center: Coordinate;
   constructor(
     private store: Store<{
@@ -83,8 +88,8 @@ export class MovingTonesService implements ActivityBase {
     private apiService: ApiService,
     private movingTonesScene: MovingTonesScene,
     private poseModelAdapter: PoseModelAdapter,
-    private activityHelperService: ActivityHelperService,
     private gameLifeCycleService: GameLifecycleService,
+    private goalService: GoalService,
   ) {
     this.resetVariables();
     this.store
@@ -101,6 +106,17 @@ export class MovingTonesService implements ActivityBase {
     this.calibrationService.reCalibrationCount.subscribe((count) => {
       this.globalReCalibrationCount = count;
     });
+
+    const patientId = localStorage.getItem('patient')!;
+    this.goalService
+      .getUserContext(patientId)
+      .then((userContext: UserContext) => {
+        this.userContext = userContext;
+      })
+      .catch((err) => {
+        console.log('Error while getting user context::, ', err);
+        this.userContext = {};
+      });
   }
 
   resetVariables() {
@@ -1676,10 +1692,40 @@ export class MovingTonesService implements ActivityBase {
                   reCalibrationCount,
                 },
               };
+
               if (this.highScore !== undefined && this.score > 0 && this.score > this.highScore) {
                 this.apiService.highScoreReachedEvent('Moving Tones');
                 this.elements.confetti.state = {
                   data: {},
+                  attributes: {
+                    visibility: 'visible',
+                    reCalibrationCount,
+                  },
+                };
+              }
+            }
+
+            const movingTonesCombo = this.userContext.MOVING_TONES_COMBO || 0;
+            const totalPrompts = this.userContext.MOVING_TONES_PROMPTS || 0;
+            this.userContext = {
+              ...this.userContext,
+              MOVING_TONES_COMBO:
+                movingTonesCombo > this.maxCombo ? movingTonesCombo : this.maxCombo,
+              MOVING_TONES_PROMPTS: totalPrompts + 1,
+            };
+
+            if (this.selectedGoal) {
+              this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+                this.selectedGoal,
+                this.userContext,
+              );
+              if (this.badgesUnlocked.length > 0) {
+                // TODO: show notification for all badges unlocked, but the unlockNotification element doesn't support multiple notifications yet
+                this.elements.unlockNotification.state = {
+                  data: {
+                    type: 'badge',
+                    title: this.badgesUnlocked[0].name!,
+                  },
                   attributes: {
                     visibility: 'visible',
                     reCalibrationCount,

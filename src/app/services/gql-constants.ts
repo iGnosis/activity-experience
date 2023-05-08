@@ -234,7 +234,7 @@ export const GqlConstants = {
     orbsCount
   }
 }`,
-  GET_GAME_GOALS: `
+  GENERATE_GOALS: `
   mutation GenerateGoal($gameName: GameNameEnum!) {
     generateGoal(gameName: $gameName) {
       data
@@ -253,6 +253,12 @@ export const GqlConstants = {
   mutation SetGoalStatus($goalId: uuid!, $goalStatus: goal_status_enum!) {
     update_goal_by_pk(pk_columns: {id: $goalId}, _set: {status: $goalStatus}) {
       id
+    }
+  }`,
+  GET_USER_CONTEXT: `
+  query GetPatientContext($patientId: uuid!) {
+    patient_by_pk(id: $patientId) {
+      context
     }
   }`,
 };
