@@ -7,12 +7,22 @@ import { GameLifeCycleStages } from 'src/app/types/enum';
 })
 export class GameLifecycleService {
   stage: GameLifeCycleStages;
+  isCalibrationStageEntered = false;
   constructor() {}
 
   private stageSubject = new Subject<GameLifeCycleStages>();
   public stage$: Observable<GameLifeCycleStages> = this.stageSubject.asObservable();
 
   public enterStage(stage: GameLifeCycleStages) {
+    // calibration stage can only be entered once.
+    if (this.isCalibrationStageEntered && stage === GameLifeCycleStages.CALIBRATION) {
+      return;
+    }
+
+    if (stage === GameLifeCycleStages.CALIBRATION) {
+      this.isCalibrationStageEntered = true;
+    }
+
     this.stage = stage;
     this.stageSubject.next(this.stage);
     console.log('enterStage: ', this.stage);
