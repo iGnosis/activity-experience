@@ -52,7 +52,7 @@
     "lodash": "^4.17.21",
     "long": "^5.2.1",
     "ngx-owl-carousel-o": "^7.0.2",
-    "phaser": "~3.55.2",
+    "phaser": "^3.55.2",
     "popper.js": "^1.16.1",
     "rxjs": "~7.4.0",
     "safe-pipe": "^2.0.2",
