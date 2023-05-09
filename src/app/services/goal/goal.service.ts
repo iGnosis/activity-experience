@@ -28,16 +28,21 @@ export class GoalService {
     return resp.patient_by_pk.context;
   }
 
-  checkIfGoalIsReached(goal: Partial<Goal>, currentContext: { [key: string]: number }) {
-    const { metric, minVal, id, name, dimension } = goal.rewards![0];
+  getUnlockedBadges(goal: Partial<Goal>, currentContext: { [key: string]: number }) {
+    const { id, name } = goal.rewards![0];
     const badges: Partial<Badge>[] = [];
-    const currentValue = currentContext[metric!];
-    if (currentValue >= minVal!) {
+    if (this.isGoalReached(goal, currentContext)) {
       badges.push({
         id: id!,
         name: name!,
       });
     }
     return badges;
+  }
+
+  isGoalReached(goal: Partial<Goal>, currentContext: { [key: string]: number }) {
+    const { metric, minVal } = goal.rewards![0];
+    const currentValue = currentContext[metric!];
+    return currentValue >= minVal!;
   }
 }

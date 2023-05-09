@@ -1716,7 +1716,7 @@ export class MovingTonesService implements ActivityBase {
             };
 
             if (this.selectedGoal) {
-              this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+              this.badgesUnlocked = this.goalService.getUnlockedBadges(
                 this.selectedGoal,
                 this.userContext,
               );
@@ -1749,11 +1749,11 @@ export class MovingTonesService implements ActivityBase {
       },
       async (reCalibrationCount: number) => {
         // Todo: Update placeholder value
-        const isGoalCompleted = true;
+        const isGoalCompleted = this.goalService.isGoalReached(this.selectedGoal, this.userContext);
         if (isGoalCompleted) {
           this.elements.titleBar.state = {
             data: {
-              title: 'Beat Boxer',
+              title: 'Moving Tones',
               xp: this.highScore,
             },
             attributes: {
@@ -1771,7 +1771,6 @@ export class MovingTonesService implements ActivityBase {
               reCalibrationCount,
             },
           };
-          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
           await this.elements.sleep(3000);
           this.elements.titleBar.hide();
           this.elements.goalSelection.hide();

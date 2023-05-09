@@ -1068,7 +1068,7 @@ export class BeatBoxerService {
             };
 
             if (this.selectedGoal) {
-              this.badgesUnlocked = this.goalService.checkIfGoalIsReached(
+              this.badgesUnlocked = this.goalService.getUnlockedBadges(
                 this.selectedGoal,
                 this.userContext,
               );
@@ -1182,8 +1182,7 @@ export class BeatBoxerService {
         this.elements.health.hide();
       },
       async (reCalibrationCount: number) => {
-        // Todo: Update placeholder value
-        const isGoalCompleted = true;
+        const isGoalCompleted = this.goalService.isGoalReached(this.selectedGoal, this.userContext);
         if (isGoalCompleted) {
           this.elements.titleBar.state = {
             data: {
@@ -1205,7 +1204,6 @@ export class BeatBoxerService {
               reCalibrationCount,
             },
           };
-          await this.apiService.setGoalStatus(this.selectedGoal.id!, 'completed');
           await this.elements.sleep(3000);
           this.elements.titleBar.hide();
           this.elements.goalSelection.hide();
