@@ -2061,6 +2061,8 @@ export class SitToStandService implements ActivityBase {
           Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
         ]);
 
+        console.log('postLoop:this.badgesUnlocked:', this.badgesUnlocked);
+
         this.badgesUnlocked.forEach(async (badge) => {
           this.elements.badgePopup.state = {
             data: {
