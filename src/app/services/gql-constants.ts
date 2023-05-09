@@ -240,12 +240,11 @@ export const GqlConstants = {
       data
     }
   }`,
-  SELECT_GOAL: `
-  mutation SelectGoal($expiringGoals: [uuid!]!, $selectedGoal: uuid!) {
-    update_goal_many(updates: {where: {id: {_in: $expiringGoals}}, _set: {status: expired}}) {
+  SELECT_GOAL: `mutation SelectGoal($expiringGoals: [uuid!]!, $selectedGoal: uuid!) {
+    expiredGoals: update_goal(where: {id: {_in: $expiringGoals}}, _set: {status: expired}) {
       affected_rows
     }
-    update_goal(where: {id: {_eq: $selectedGoal}}, _set: {status: inprogress}) {
+    inprogressGoals: update_goal(where: {id: {_eq: $selectedGoal}}, _set: {status: inprogress}) {
       affected_rows
     }
   }`,
