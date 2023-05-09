@@ -1338,6 +1338,7 @@ export interface Badge {
   name: string;
   status: 'active' | 'retired';
   tier: string;
+  xp: number;
 }
 
 export type UserContext = {
