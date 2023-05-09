@@ -345,6 +345,17 @@ export class BeatBoxerService {
           },
         };
         await new Promise((resolve) => {
+          const interval = setInterval(() => {
+            if (this.globalReCalibrationCount !== reCalibrationCount) {
+              console.log('Recalibrated goal selection');
+              handSubscription.unsubscribe();
+              this.elements.goalSelection.hide();
+              this.elements.gameMenu.hide();
+              this.elements.titleBar.hide();
+              clearInterval(interval);
+              resolve({});
+            }
+          }, 50);
           const handSubscription = this.handTrackerService.sidewaysGestureResult
             .pipe(debounceTime(200), distinctUntilChanged())
             .subscribe((status: HandTrackerStatus) => {
@@ -447,6 +458,15 @@ export class BeatBoxerService {
           },
         };
         await new Promise((resolve) => {
+          const interval = setInterval(() => {
+            if (this.globalReCalibrationCount !== reCalibrationCount) {
+              console.log('Recalibrated goal selection');
+              handSubscription.unsubscribe();
+              this.elements.gameMenu.hide();
+              clearInterval(interval);
+              resolve({});
+            }
+          }, 50);
           const handSubscription = this.handTrackerService.sidewaysGestureResult
             .pipe(debounceTime(200), distinctUntilChanged())
             .subscribe((status: HandTrackerStatus) => {

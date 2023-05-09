@@ -49,7 +49,7 @@ export class GoalSelectionComponent implements OnInit, OnDestroy {
     this.subscription = this.goalSelectionService.subject.subscribe((state) => {
       this.data = state.data;
       console.log('changed, ', state.data);
-      if (!this.currentGoal) {
+      if (!this.currentGoal || !state.data.action) {
         this.currentGoal = state.data.goals[0];
       }
       if (state.data.action === 'change-goal') {
