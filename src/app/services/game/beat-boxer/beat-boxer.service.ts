@@ -1079,13 +1079,12 @@ export class BeatBoxerService {
               this.combo = 1;
             }
 
-            const beatBoxerCombo = this.userContext.BEAT_BOXER_COMBO || 0;
-            const totalPrompts = this.userContext.BEAT_BOXER_PROMPTS || 0;
-            this.userContext = {
-              ...this.userContext,
-              BEAT_BOXER_COMBO: beatBoxerCombo > this.maxCombo ? beatBoxerCombo : this.maxCombo,
-              BEAT_BOXER_PROMPTS: totalPrompts + 1,
-            };
+            const beatBoxerCombo = this.userContext[Metrics.BEAT_BOXER_COMBO] || 0;
+            const totalPrompts = this.userContext[Metrics.BEAT_BOXER_PROMPTS] || 0;
+
+            this.userContext[Metrics.BEAT_BOXER_COMBO] =
+              beatBoxerCombo > this.maxCombo ? beatBoxerCombo : this.maxCombo;
+            this.userContext[Metrics.BEAT_BOXER_PROMPTS] = totalPrompts + 1;
 
             if (this.selectedGoal) {
               this.badgesUnlocked = this.goalService.getUnlockedBadges(

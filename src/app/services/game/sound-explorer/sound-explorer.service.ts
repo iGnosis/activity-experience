@@ -146,7 +146,7 @@ export class SoundExplorerService implements ActivityBase {
     this.store.dispatch(game.setTotalElapsedTime({ totalDuration: elapsedTime }));
   };
 
-  private userContext!: UserContext;
+  private userContext: UserContext;
 
   constructor(
     private store: Store<{
@@ -815,12 +815,12 @@ export class SoundExplorerService implements ActivityBase {
         const subscription = this.soundExplorerScene.soundExplorerEvents.subscribe((event) => {
           if (event.result === 'success') {
             this.normalOrbsCollected += 1;
-            blueOrbs = (this.userContext.SOUND_EXPLORER_BLUE_ORBS || 0) + 1;
+            blueOrbs = (this.userContext[Metrics.SOUND_EXPLORER_BLUE_ORBS] || 0) + 1;
             this.successfulReps++;
             score += 1;
             debounceUpdatedScore(event);
           } else if (event.result === 'failure') {
-            redOrbs = (this.userContext.SOUND_EXPLORER_RED_ORBS || 0) + 1;
+            redOrbs = (this.userContext[Metrics.SOUND_EXPLORER_RED_ORBS] || 0) + 1;
             this.redOrbsCollected += 1;
             this.health -= 1;
             this.elements.health.state = {
@@ -839,16 +839,14 @@ export class SoundExplorerService implements ActivityBase {
           }
           this.totalReps++;
 
-          const soundExplorerCombo = this.userContext.SOUND_EXPLORER_COMBO || 0;
-          const totalPrompts = this.userContext.SOUND_EXPLORER_ORBS || 0;
-          this.userContext = {
-            ...this.userContext,
-            SOUND_EXPLORER_COMBO:
-              soundExplorerCombo > this.maxCombo ? soundExplorerCombo : this.maxCombo,
-            SOUND_EXPLORER_ORBS: totalPrompts + 1,
-            SOUND_EXPLORER_BLUE_ORBS: blueOrbs,
-            SOUND_EXPLORER_RED_ORBS: redOrbs,
-          };
+          const soundExplorerCombo = this.userContext[Metrics.SOUND_EXPLORER_COMBO] || 0;
+          const totalPrompts = this.userContext[Metrics.SOUND_EXPLORER_ORBS] || 0;
+
+          this.userContext[Metrics.SOUND_EXPLORER_COMBO] =
+            soundExplorerCombo > this.maxCombo ? soundExplorerCombo : this.maxCombo;
+          this.userContext[Metrics.SOUND_EXPLORER_ORBS] = totalPrompts + 1;
+          this.userContext[Metrics.SOUND_EXPLORER_BLUE_ORBS] = blueOrbs;
+          this.userContext[Metrics.SOUND_EXPLORER_RED_ORBS] = redOrbs;
 
           if (this.selectedGoal) {
             this.badgesUnlocked = this.goalService.getUnlockedBadges(

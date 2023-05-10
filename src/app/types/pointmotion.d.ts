@@ -1342,6 +1342,6 @@ export interface Badge {
 }
 
 export type UserContext = {
-  [key in keyof typeof Metrics]?: number;
+  [key in Metrics]?: number;
   // add additional fields other than metrics here
 };

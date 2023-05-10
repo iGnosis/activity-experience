@@ -1726,14 +1726,12 @@ export class MovingTonesService implements ActivityBase {
               }
             }
 
-            const movingTonesCombo = this.userContext.MOVING_TONES_COMBO || 0;
-            const totalPrompts = this.userContext.MOVING_TONES_PROMPTS || 0;
-            this.userContext = {
-              ...this.userContext,
-              MOVING_TONES_COMBO:
-                movingTonesCombo > this.maxCombo ? movingTonesCombo : this.maxCombo,
-              MOVING_TONES_PROMPTS: totalPrompts + 1,
-            };
+            const movingTonesCombo = this.userContext[Metrics.MOVING_TONES_COMBO] || 0;
+            const totalPrompts = this.userContext[Metrics.MOVING_TONES_PROMPTS] || 0;
+
+            this.userContext[Metrics.MOVING_TONES_COMBO] =
+              movingTonesCombo > this.maxCombo ? movingTonesCombo : this.maxCombo;
+            this.userContext[Metrics.MOVING_TONES_PROMPTS] = totalPrompts + 1;
 
             if (this.selectedGoal) {
               this.badgesUnlocked = this.goalService.getUnlockedBadges(

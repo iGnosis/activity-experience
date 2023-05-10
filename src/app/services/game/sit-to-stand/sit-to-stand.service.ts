@@ -1760,13 +1760,12 @@ export class SitToStandService implements ActivityBase {
         this.streak = 0;
       }
 
-      const ssaCombo = this.userContext.SIT_STAND_ACHIEVE_COMBO || 0;
-      const totalPrompts = this.userContext.SIT_STAND_ACHIEVE_PROMPTS || 0;
-      this.userContext = {
-        ...this.userContext,
-        SIT_STAND_ACHIEVE_COMBO: ssaCombo > this.maxCombo ? ssaCombo : this.maxCombo,
-        SIT_STAND_ACHIEVE_PROMPTS: totalPrompts + 1,
-      };
+      const ssaCombo = this.userContext[Metrics.SIT_STAND_ACHIEVE_COMBO] || 0;
+      const totalPrompts = this.userContext[Metrics.SIT_STAND_ACHIEVE_PROMPTS] || 0;
+
+      this.userContext[Metrics.SIT_STAND_ACHIEVE_COMBO] =
+        ssaCombo > this.maxCombo ? ssaCombo : this.maxCombo;
+      this.userContext[Metrics.SIT_STAND_ACHIEVE_PROMPTS] = totalPrompts + 1;
 
       if (this.selectedGoal) {
         this.badgesUnlocked = this.goalService.getUnlockedBadges(
