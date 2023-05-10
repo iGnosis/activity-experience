@@ -2082,7 +2082,7 @@ export class SitToStandService implements ActivityBase {
 
         console.log('postLoop:this.badgesUnlocked:', this.badgesUnlocked);
 
-        this.badgesUnlocked.forEach(async (badge) => {
+        for (const badge of this.badgesUnlocked) {
           this.elements.badgePopup.state = {
             data: {
               theme: badge.tier as any,
@@ -2116,7 +2116,7 @@ export class SitToStandService implements ActivityBase {
             },
           };
           await this.elements.sleep(500);
-        });
+        }
 
         // this.soundsService.stopGenreSound();
         const achievementRatio = this.successfulReps / this.totalReps;

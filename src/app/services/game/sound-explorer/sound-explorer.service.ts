@@ -1185,7 +1185,7 @@ export class SoundExplorerService implements ActivityBase {
           Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
         ]);
 
-        this.badgesUnlocked.forEach(async (badge) => {
+        for (const badge of this.badgesUnlocked) {
           this.elements.badgePopup.state = {
             data: {
               theme: badge.tier as any,
@@ -1219,7 +1219,7 @@ export class SoundExplorerService implements ActivityBase {
             },
           };
           await this.elements.sleep(500);
-        });
+        }
 
         const achievementRatio = this.successfulReps / this.totalReps;
         if (achievementRatio < 0.25) {
