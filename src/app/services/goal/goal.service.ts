@@ -24,8 +24,9 @@ export class GoalService {
   }
 
   async getUserContext(patientId: string): Promise<UserContext> {
-    const resp = await this.gqlService.req(GqlConstants.GET_USER_CONTEXT, { patientId });
-    return resp.patient_by_pk.context;
+    // const resp = await this.gqlService.req(GqlConstants.GET_USER_CONTEXT, { patientId });
+    // return resp.patient_by_pk.context;
+    return {};
   }
 
   getUnlockedBadges(goal: Partial<Goal>, currentContext: { [key: string]: number }) {
