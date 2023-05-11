@@ -1777,7 +1777,7 @@ export class SitToStandService implements ActivityBase {
           this.elements.unlockNotification.state = {
             data: {
               type: 'badge',
-              title: this.badgesUnlocked[0].name!,
+              title: this.activityHelperService.humanizeWord(this.badgesUnlocked[0].name || ''),
             },
             attributes: {
               visibility: 'visible',
