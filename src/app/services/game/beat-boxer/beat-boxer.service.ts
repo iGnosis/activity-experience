@@ -1326,6 +1326,8 @@ export class BeatBoxerService {
           Metrics.PATIENT_TOTAL_ACTIVITY_COUNT,
         ]);
 
+        console.log('postLoop:this.badgesUnlocked:', this.badgesUnlocked);
+
         for (const badge of this.badgesUnlocked) {
           this.elements.badgePopup.state = {
             data: {
