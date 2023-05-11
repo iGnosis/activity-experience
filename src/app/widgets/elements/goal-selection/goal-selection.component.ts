@@ -58,7 +58,8 @@ export class GoalSelectionComponent implements OnInit, OnDestroy {
         this.data.onSelect?.(this.currentGoal);
       }
 
-      this.customOptions.loop = !(state.data.action === 'completed-goal');
+      this.customOptions.loop =
+        !(state.data.action === 'completed-goal') && state.data.goals.length > 1;
       this.animateGoalCompletion = state.data.action === 'completed-goal';
 
       this.attributes = state.attributes;
@@ -70,6 +71,8 @@ export class GoalSelectionComponent implements OnInit, OnDestroy {
   }
 
   shiftSlide() {
+    if (this.data.goals.length <= 1) return;
+
     this.carousel.next();
     if (this.currentGoal) {
       this.currentGoal = this.data.goals[(this.currentGoalIdx() + 1) % this.data.goals.length];
