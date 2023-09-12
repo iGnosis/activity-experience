@@ -4,6 +4,9 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Getting Started
 
+### Requirements
+[Node.js](https://nodejs.org/en) >= v14.20
+
 ### Local setup
 
 1. Use the package manager [npm](https://www.npmjs.com/) to install the required dependencies
