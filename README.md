@@ -1,29 +1,48 @@
-# Activities ![check-code-coverage](https://img.shields.io/badge/code--coverage-26.18%25-red)
-
-![Build Status](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+# Sound Health - Activity Experience
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.4.
 
-## Development server
+## Getting Started
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### Local setup
 
-## Code scaffolding
+1. Use the package manager [npm](https://www.npmjs.com/) to install the required dependencies
+```bash
+npm install
+```
+2. Copy the `environment.ts` file for the local environment into `src/environments/local/environment.local.default.ts` and make necessary changes to the environment variables
+3. After completing the installation, you can start the local server by running the following command:
+```bash
+npm start
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+**NOTE:** Please make sure that the [player client](https://github.com/PointMotionInc/sh-player-client) is running locally as a prerequisite for using this Angular application through the web browser at `http://localhost:4300/app/session`
 
-## Build
+### Build for Production
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Create a copy of environment file `environment.ts` into the `src/environments` directory and name it `environment.prod.ts` and make necessary changes to the environment variables
+2. Run the following command to build the application for production:
+```bash
+npm run build
+```
 
-## Running unit tests
+This will create a `dist` directory in your project containing the production-ready files which can be uploaded to any static site hosting service of choice.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+**NOTE:** You can update the environment variable `activityEndpoint` in the [player client](https://github.com/PointMotionInc/sh-player-client) environment file to point to the hosted activity experience to make it accessible through the player client.
 
-## Running end-to-end tests
+### Troubleshooting
+#### Conflicting packages
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+If you encounter conflicts or issues with package dependencies during installation, you can try running the following command to bypass peer dependency checks:
+```bash
+npm install --legacy-peer-deps
+```
 
-## Further help
+This can help resolve conflicts and allow you to install the required packages.
+## Contributing
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+WIP
+
+## License
+
+WIP
